@@ -1,4 +1,530 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFT Profile - User Search</title>
+    <style>
+        :root {
+            --primary-color: #66bfff;
+            --background-dark: #000;
+            --text-dark: #fff;
+            --collection-bg: #1a1a1a;
+            --shadow: 0 2px 4px rgba(255,255,255,0.1);
+        }
+
+        @font-face {
+            font-family: 'Geomanist-Bold';
+            src: url('Geomanist-Bold.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        body {
+            font-family: 'Geomanist-Bold', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            background-color: var(--background-dark);
+            color: var(--text-dark);
+            padding: 20px;
+        }
+
+        h1, h2, h3 {
+            color: var(--text-dark);
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        h1 {
+            font-size: 2rem;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin: 5px 0;
+        }
+
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .profile-header img {
+            width: 110px;
+            height: 110px;
+            border-radius: 15px;
+            object-fit: cover;
+            margin: 0 auto 10px;
+            display: block;
+        }
+
+        .profile-header p {
+            margin: 5px 0;
+            color: var(--text-dark);
+            font-size: 1.1em;
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .controls input, .controls button, .controls select {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .controls input {
+            width: 100%;
+            max-width: 250px;
+        }
+
+        .controls button, .controls select {
+            background-color: var(--primary-color);
+            color: var(--text-dark);
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: 700;
+            transition: transform 0.2s;
+            width: 150px;
+        }
+
+        .controls button:hover, .controls select:hover {
+            transform: scale(1.05);
+        }
+
+        .controls button:active, .controls select:active {
+            transform: scale(0.95);
+        }
+
+        .nft-container {
+            display: grid;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Card sizes */
+        .nft-container.small-size {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        }
+
+        .nft-container.medium-size {
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        }
+
+        .nft-container.large-size {
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        }
+
+        .nft-card {
+            background-color: var(--collection-bg);
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            padding: 15px;
+            text-align: center;
+        }
+
+        .nft-card img {
+            width: 100%;
+            height: auto;
+            border-radius: 15px;
+            margin-bottom: 10px;
+        }
+
+        .nft-card h3 {
+            font-size: 1.2em;
+            margin: 10px 0;
+            color: var(--text-dark);
+        }
+
+        .nft-card p {
+            margin: 5px 0;
+            color: var(--text-dark);
+        }
+
+        .nft-card .price {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        /* Thumbnail mode */
+        .nft-container.thumbnail-mode {
+            gap: 0; /* No gap between cards */
+        }
+
+        .nft-container.thumbnail-mode .nft-card {
+            padding: 0;
+            background: none;
+            box-shadow: none;
+            border-radius: 0;
+        }
+
+        .nft-container.thumbnail-mode .nft-card img {
+            width: 100%;
+            height: 0;
+            padding-bottom: 100%; /* Forces square aspect ratio */
+            object-fit: cover;
+            border-radius: 0; /* No rounded corners */
+            margin-bottom: 0;
+        }
+
+        .nft-container.thumbnail-mode .nft-card h3,
+        .nft-container.thumbnail-mode .nft-card p {
+            display: none;
+        }
+
+        .loading, .error, .no-results {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .loading {
+            color: var(--primary-color);
+        }
+
+        .error {
+            color: #ff4444;
+        }
+
+        .no-results {
+            color: var(--text-dark);
+            font-size: 1.2em;
+        }
+
+        .timestamp {
+            text-align: center;
+            margin-top: 10px;
+            color: var(--text-dark);
+            font-size: 15px;
+        }
+
+        @media screen and (max-width: 600px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+            h2 {
+                font-size: 1.2rem;
+            }
+            .profile-header img {
+                width: 90px;
+                height: 90px;
+            }
+            .controls input, .controls button, .controls select {
+                width: 100%;
+                margin: 5px 0;
+            }
+        }
+
+        @media screen and (min-width: 601px) {
+            .controls input, .controls select {
+                width: 250px;
+            }
+            .controls select {
+                width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Search for an NFT Collection</h1>
+    <div class="profile-header" id="profileHeader">
+        <img id="profilePicture" src="" alt="Profile Picture" style="display: none;" />
+        <h2 id="displayName">Profile Name</h2>
+        <p id="username">@username</p>
+    </div>
+    <div class="controls">
+        <input type="text" id="usernameInput" placeholder="Enter username" value="infraputra" />
+        <button onclick="fetchProfileAndNFTs()">Search</button>
+        <button onclick="fetchProfileAndNFTs()" id="refreshButton" disabled>Refresh Data</button>
+        <select id="collectionFilter" onchange="filterNFTs()" disabled>
+            <option value="">All Collections</option>
+        </select>
+        <select id="displayMode" onchange="updateDisplay()">
+            <option value="full">Full Mode</option>
+            <option value="thumbnail">Thumbnail Mode</option>
+        </select>
+        <select id="cardSize" onchange="updateDisplay()">
+            <option value="small">Small</option>
+            <option value="medium" selected>Medium</option>
+            <option value="large">Large</option>
+        </select>
+    </div>
+    <div class="timestamp" id="timestamp"></div>
+    <div class="loading" id="loading" style="display: none;">Loading...</div>
+    <div class="error" id="error"></div>
+    <div class="no-results" id="noResults" style="display: none;">No results found</div>
+    <div class="nft-container" id="nftContainer"></div>
+
+    <script>
+        // GraphQL query for user information
+        const profileQuery = `
+            query User($id: ID!) {
+                public {
+                    user(id: $id) {
+                        username
+                        displayName
+                        avatar {
+                            url
+                        }
+                    }
+                }
+            }
+        `;
+
+        // GraphQL query for NFTs
+        const nftQuery = `
+            query GetProfileAssets($ownerId: ID!, $first: Int!, $skip: Int!, $sort: [SingleFieldSort!]) {
+                public {
+                    profileAssets(ownerId: $ownerId, first: $first, skip: $skip, sort: $sort) {
+                        id
+                        name
+                        copies
+                        copiesInCirculation
+                        cover {
+                            url
+                        }
+                        latestPurchasedEdition {
+                            id
+                            priceUSD
+                        }
+                        defaultListingV2 {
+                            id
+                            salePriceDecimalUSD
+                            seller {
+                                id
+                            }
+                        }
+                        collection {
+                            id
+                            name
+                            verified
+                        }
+                        isExternalNft
+                        externalNftMetadata {
+                            network
+                        }
+                        totalSalesDecimal
+                    }
+                }
+            }
+        `;
+
+        // GraphQL endpoint
+        const graphqlEndpoint = "https://crypto.com/nft-api/graphql";
+
+        // List of all NFTs for filtering
+        let allNFTs = [];
+        let currentUsername = '';
+
+        // Function to fetch profile and NFTs
+        async function fetchProfileAndNFTs() {
+            const usernameInput = document.getElementById('usernameInput').value.trim();
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const noResultsDiv = document.getElementById('noResults');
+            const container = document.getElementById('nftContainer');
+            const collectionFilter = document.getElementById('collectionFilter');
+            const refreshButton = document.getElementById('refreshButton');
+            const timestampDiv = document.getElementById('timestamp');
+            const profilePicture = document.getElementById('profilePicture');
+            const displayName = document.getElementById('displayName');
+            const username = document.getElementById('username');
+            const profileHeader = document.getElementById('profileHeader');
+
+            if (!usernameInput) {
+                errorDiv.textContent = 'Please enter a username.';
+                return;
+            }
+
+            const normalizedUsername = usernameInput.toLowerCase();
+            currentUsername = normalizedUsername;
+
+            loadingDiv.style.display = 'block';
+            errorDiv.textContent = '';
+            noResultsDiv.style.display = 'none';
+            container.innerHTML = '';
+            collectionFilter.innerHTML = '<option value="">All Collections</option>';
+            collectionFilter.disabled = true;
+            refreshButton.disabled = true;
+            profileHeader.style.display = 'none';
+
+            const now = new Date();
+            timestampDiv.textContent = `Search performed on ${now.toLocaleDateString('en-US')} at ${now.toLocaleTimeString('en-US')} (CEST)`;
+
+            const profileVariables = { id: currentUsername };
+            try {
+                const profileResponse = await fetch(graphqlEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: profileQuery, variables: profileVariables })
+                });
+
+                if (!profileResponse.ok) {
+                    throw new Error(`HTTP Error (profile): ${profileResponse.status}`);
+                }
+
+                const profileResult = await profileResponse.json();
+                if (profileResult.errors) {
+                    throw new Error(`GraphQL Error (profile): ${profileResult.errors.map(e => e.message).join(', ')}`);
+                }
+
+                if (profileResult.data?.public?.user) {
+                    const profileData = profileResult.data.public.user;
+                    displayName.textContent = profileData.displayName || profileData.username;
+                    username.textContent = `@${profileData.username}`;
+                    if (profileData.avatar?.url) {
+                        profilePicture.src = profileData.avatar.url;
+                        profilePicture.style.display = 'block';
+                    } else {
+                        profilePicture.style.display = 'none';
+                    }
+                    profileHeader.style.display = 'block';
+                } else {
+                    noResultsDiv.style.display = 'block';
+                    loadingDiv.style.display = 'none';
+                    return;
+                }
+            } catch (error) {
+                console.error('Error fetching profile:', error);
+                errorDiv.textContent = `Error fetching profile: ${error.message}`;
+                loadingDiv.style.display = 'none';
+                return;
+            }
+
+            const nftVariables = {
+                ownerId: currentUsername,
+                first: 60,
+                skip: 0,
+                sort: [{ order: "DESC", field: "createdAt" }]
+            };
+
+            try {
+                const nftResponse = await fetch(graphqlEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: nftQuery, variables: nftVariables })
+                });
+
+                if (!nftResponse.ok) {
+                    throw new Error(`HTTP Error (NFTs): ${nftResponse.status}`);
+                }
+
+                const nftResult = await nftResponse.json();
+                if (nftResult.errors) {
+                    throw new Error(`GraphQL Error (NFTs): ${nftResult.errors.map(e => e.message).join(', ')}`);
+                }
+
+                if (nftResult.data?.public?.profileAssets) {
+                    allNFTs = nftResult.data.public.profileAssets;
+                    updateDisplay();
+                    populateCollectionFilter(allNFTs);
+                    collectionFilter.disabled = false;
+                    refreshButton.disabled = false;
+                } else {
+                    throw new Error('No NFT data found for this user.');
+                }
+            } catch (error) {
+                console.error('Error fetching NFTs:', error);
+                errorDiv.textContent = `Error: ${error.message}`;
+            } finally {
+                loadingDiv.style.display = 'none';
+            }
+        }
+
+        // Function to populate collection filter
+        function populateCollectionFilter(nfts) {
+            const collectionFilter = document.getElementById('collectionFilter');
+            const collections = [...new Set(nfts.map(nft => nft.collection?.name).filter(name => name))];
+            collections.forEach(collection => {
+                const option = document.createElement('option');
+                option.value = collection;
+                option.textContent = collection;
+                collectionFilter.appendChild(option);
+            });
+        }
+
+        // Function to display NFTs
+        function displayNFTs(assets) {
+            const container = document.getElementById('nftContainer');
+            const displayMode = document.getElementById('displayMode').value;
+            const cardSize = document.getElementById('cardSize').value;
+
+            container.className = `nft-container ${displayMode}-mode ${cardSize}-size`;
+            container.innerHTML = '';
+
+            assets.forEach(asset => {
+                const card = document.createElement('div');
+                card.className = 'nft-card';
+
+                const img = document.createElement('img');
+                img.src = asset.cover?.url || 'https://via.placeholder.com/150';
+                img.alt = asset.name;
+
+                if (displayMode === 'full') {
+                    const title = document.createElement('h3');
+                    title.textContent = asset.name;
+
+                    const collection = document.createElement('p');
+                    collection.textContent = `Collection: ${asset.collection?.name || 'None'}`;
+
+                    const type = document.createElement('p');
+                    type.textContent = `Type: ${asset.isExternalNft ? 'External (' + (asset.externalNftMetadata?.network || 'Unknown') + ')' : 'Internal'}`;
+
+                    const price = document.createElement('p');
+                    price.className = 'price';
+                    if (asset.defaultListingV2) {
+                        price.textContent = `Price: ${asset.defaultListingV2.salePriceDecimalUSD} USD`;
+                    } else if (asset.latestPurchasedEdition) {
+                        price.textContent = `Last Sale: ${asset.latestPurchasedEdition.priceUSD} USD`;
+                    } else {
+                        price.textContent = 'Not for sale';
+                    }
+
+                    card.appendChild(img);
+                    card.appendChild(title);
+                    card.appendChild(collection);
+                    card.appendChild(type);
+                    card.appendChild(price);
+                } else {
+                    card.appendChild(img);
+                }
+
+                container.appendChild(card);
+            });
+        }
+
+        // Function to filter NFTs by collection
+        function filterNFTs() {
+            const collectionFilter = document.getElementById('collectionFilter').value;
+            const filteredNFTs = collectionFilter
+                ? allNFTs.filter(nft => nft.collection?.name === collectionFilter)
+                : allNFTs;
+            displayNFTs(filteredNFTs);
+        }
+
+        // Function to update display
+        function updateDisplay() {
+            filterNFTs();
+        }
+    </script>
+</body>
+</html><!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
