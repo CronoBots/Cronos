@@ -129,14 +129,14 @@
     <div class="nft-container" id="nftContainer"></div>
 
     <script>
-        // Requête GraphQL pour récupérer les informations de l'utilisateur (hypothétique)
+        // Requête GraphQL pour récupérer les informations de l'utilisateur
         const profileQuery = `
-            query GetProfile($username: ID!) {
+            query User($id: ID!) {
                 public {
-                    profile(username: $username) {
+                    user(id: $id) {
                         username
                         displayName
-                        profilePicture {
+                        avatar {
                             url
                         }
                     }
@@ -225,7 +225,7 @@
 
             // Étape 1 : Récupérer les informations de l'utilisateur
             const profileVariables = {
-                username: currentUsername
+                id: currentUsername
             };
 
             try {
@@ -247,12 +247,12 @@
                     throw new Error(`Erreur GraphQL (profil): ${profileResult.errors.map(e => e.message).join(', ')}`);
                 }
 
-                if (profileResult.data?.public?.profile) {
-                    const profileData = profileResult.data.public.profile;
-                    displayName.textContent = profileData.displayName || 'Nom non disponible';
+                if (profileResult.data?.public?.user) {
+                    const profileData = profileResult.data.public.user;
+                    displayName.textContent = profileData.displayName || profileData.username;
                     username.textContent = `@${profileData.username}`;
-                    if (profileData.profilePicture?.url) {
-                        profilePicture.src = profileData.profilePicture.url;
+                    if (profileData.avatar?.url) {
+                        profilePicture.src = profileData.avatar.url;
                         profilePicture.style.display = 'block';
                     } else {
                         profilePicture.style.display = 'none';
@@ -264,7 +264,7 @@
                 console.error('Erreur lors de la requête de profil:', error);
                 errorDiv.textContent = `Erreur lors de la récupération du profil: ${error.message}`;
                 loadingDiv.style.display = 'none';
-                return; // Arrêter si la récupération du profil échoue
+                return;
             }
 
             // Étape 2 : Récupérer les NFTs
@@ -272,7 +272,7 @@
                 ownerId: currentUsername,
                 first: 60,
                 skip: 0,
-                sort: [{ order: "DESC", field: "createdAt" }]
+                sort: [{ order: "DESC", "field": "createdAt" }]
             };
 
             try {
