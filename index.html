@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil NFT - Recherche Utilisateur</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .profile-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .profile-header img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+        .profile-header h2 {
+            margin: 5px 0;
+            font-size: 1.5em;
+            color: #333;
+        }
+        .profile-header p {
+            margin: 5px 0;
+            color: #666;
+            font-size: 1.1em;
+        }
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .controls input, .controls button, .controls select {
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 1em;
+            margin: 0 10px;
+        }
+        .controls input {
+            border: 1px solid #ccc;
+        }
+        .controls button, .controls select {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .controls button:hover, .controls select:hover {
+            background-color: #0056b3;
+        }
+        .nft-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .nft-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            text-align: center;
+            padding: 15px;
+        }
+        .nft-card img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        .nft-card h3 {
+            font-size: 1.2em;
+            margin: 10px 0;
+            color: #333;
+        }
+        .nft-card p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .nft-card .price {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .loading, .error {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .loading {
+            color: #007bff;
+        }
+        .error {
+            color: red;
+        }
+        .timestamp {
+            text-align: center;
+            margin-top: 10px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Rechercher une Collection NFT</h1>
+    <div class="profile-header" id="profileHeader">
+        <img id="profilePicture" src="" alt="Image de profil" style="display: none;" />
+        <h2 id="displayName">Nom de profil</h2>
+        <p id="username">@username</p>
+    </div>
+    <div class="controls">
+        <input type="text" id="usernameInput" placeholder="Entrez le nom d'utilisateur" value="infraputra" />
+        <button onclick="fetchProfileAndNFTs()">Rechercher</button>
+        <button onclick="fetchProfileAndNFTs()" id="refreshButton" disabled>Rafraîchir les données</button>
+        <select id="collectionFilter" onchange="filterNFTs()" disabled>
+            <option value="">Toutes les collections</option>
+        </select>
+    </div>
+    <div class="timestamp" id="timestamp"></div>
+    <div class="loading" id="loading" style="display: none;">Chargement...</div>
+    <div class="error" id="error"></div>
+    <div class="nft-container" id="nftContainer"></div>
+
+    <script>
+        // Requête GraphQL pour récupérer les informations de l'utilisateur (hypothétique)
+        const profileQuery = `
+            query GetProfile($username: ID!) {
+                public {
+                    profile(username: $username) {
+                        username
+                        displayName
+                        profilePicture {
+                            url
+                        }
+                    }
+                }
+            }
+        `;
+
+        // Requête GraphQL pour récupérer les NFTs
+        const nftQuery = `
+            query GetProfileAssets($ownerId: ID!, $first: Int!, $skip: Int!, $sort: [SingleFieldSort!]) {
+                public {
+                    profileAssets(ownerId: $ownerId, first: $first, skip: $skip, sort: $sort) {
+                        id
+                        name
+                        copies
+                        copiesInCirculation
+                        cover {
+                            url
+                        }
+                        latestPurchasedEdition {
+                            id
+                            priceUSD
+                        }
+                        defaultListingV2 {
+                            id
+                            salePriceDecimalUSD
+                            seller {
+                                id
+                            }
+                        }
+                        collection {
+                            id
+                            name
+                            verified
+                        }
+                        isExternalNft
+                        externalNftMetadata {
+                            network
+                        }
+                        totalSalesDecimal
+                    }
+                }
+            }
+        `;
+
+        // Endpoint GraphQL
+        const graphqlEndpoint = "https://crypto.com/nft-api/graphql";
+
+        // Liste complète des NFTs pour le filtrage
+        let allNFTs = [];
+        let currentUsername = '';
+
+        // Fonction pour effectuer la requête GraphQL
+        async function fetchProfileAndNFTs() {
+            const usernameInput = document.getElementById('usernameInput').value.trim();
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const container = document.getElementById('nftContainer');
+            const collectionFilter = document.getElementById('collectionFilter');
+            const refreshButton = document.getElementById('refreshButton');
+            const timestampDiv = document.getElementById('timestamp');
+            const profilePicture = document.getElementById('profilePicture');
+            const displayName = document.getElementById('displayName');
+            const username = document.getElementById('username');
+
+            // Vérifier si un nom d'utilisateur est saisi
+            if (!usernameInput) {
+                errorDiv.textContent = 'Veuillez entrer un nom d\'utilisateur.';
+                return;
+            }
+
+            // Mettre à jour le nom d'utilisateur courant
+            currentUsername = usernameInput;
+
+            // Afficher le message de chargement et vider les messages d'erreur
+            loadingDiv.style.display = 'block';
+            errorDiv.textContent = '';
+            container.innerHTML = '';
+            collectionFilter.innerHTML = '<option value="">Toutes les collections</option>';
+            collectionFilter.disabled = true;
+            refreshButton.disabled = true;
+
+            // Afficher l'horodatage
+            const now = new Date();
+            timestampDiv.textContent = `Recherche effectuée le ${now.toLocaleDateString('fr-FR')} à ${now.toLocaleTimeString('fr-FR')} (CEST)`;
+
+            // Étape 1 : Récupérer les informations de l'utilisateur
+            const profileVariables = {
+                username: currentUsername
+            };
+
+            try {
+                const profileResponse = await fetch(graphqlEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Ajoutez vos headers ici si nécessaire (trouvés via l'inspection réseau)
+                    },
+                    body: JSON.stringify({ query: profileQuery, variables: profileVariables })
+                });
+
+                if (!profileResponse.ok) {
+                    throw new Error(`Erreur HTTP (profil): ${profileResponse.status}`);
+                }
+
+                const profileResult = await profileResponse.json();
+                if (profileResult.errors) {
+                    throw new Error(`Erreur GraphQL (profil): ${profileResult.errors.map(e => e.message).join(', ')}`);
+                }
+
+                if (profileResult.data?.public?.profile) {
+                    const profileData = profileResult.data.public.profile;
+                    displayName.textContent = profileData.displayName || 'Nom non disponible';
+                    username.textContent = `@${profileData.username}`;
+                    if (profileData.profilePicture?.url) {
+                        profilePicture.src = profileData.profilePicture.url;
+                        profilePicture.style.display = 'block';
+                    } else {
+                        profilePicture.style.display = 'none';
+                    }
+                } else {
+                    throw new Error('Aucune information de profil trouvée pour cet utilisateur.');
+                }
+            } catch (error) {
+                console.error('Erreur lors de la requête de profil:', error);
+                errorDiv.textContent = `Erreur lors de la récupération du profil: ${error.message}`;
+                loadingDiv.style.display = 'none';
+                return; // Arrêter si la récupération du profil échoue
+            }
+
+            // Étape 2 : Récupérer les NFTs
+            const nftVariables = {
+                ownerId: currentUsername,
+                first: 60,
+                skip: 0,
+                sort: [{ order: "DESC", field: "createdAt" }]
+            };
+
+            try {
+                const nftResponse = await fetch(graphqlEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Ajoutez vos headers ici si nécessaire (trouvés via l'inspection réseau)
+                    },
+                    body: JSON.stringify({ query: nftQuery, variables: nftVariables })
+                });
+
+                if (!nftResponse.ok) {
+                    throw new Error(`Erreur HTTP (NFTs): ${nftResponse.status}`);
+                }
+
+                const nftResult = await nftResponse.json();
+                if (nftResult.errors) {
+                    throw new Error(`Erreur GraphQL (NFTs): ${nftResult.errors.map(e => e.message).join(', ')}`);
+                }
+
+                if (nftResult.data?.public?.profileAssets) {
+                    allNFTs = nftResult.data.public.profileAssets;
+                    displayNFTs(allNFTs);
+                    populateCollectionFilter(allNFTs);
+                    collectionFilter.disabled = false;
+                    refreshButton.disabled = false;
+                } else {
+                    throw new Error('Aucune donnée NFT trouvée pour cet utilisateur.');
+                }
+            } catch (error) {
+                console.error('Erreur lors de la requête des NFTs:', error);
+                errorDiv.textContent = `Erreur: ${error.message}`;
+            } finally {
+                loadingDiv.style.display = 'none';
+            }
+        }
+
+        // Fonction pour remplir le filtre de collections
+        function populateCollectionFilter(nfts) {
+            const collectionFilter = document.getElementById('collectionFilter');
+            const collections = [...new Set(nfts.map(nft => nft.collection?.name).filter(name => name))];
+            collections.forEach(collection => {
+                const option = document.createElement('option');
+                option.value = collection;
+                option.textContent = collection;
+                collectionFilter.appendChild(option);
+            });
+        }
+
+        // Fonction pour afficher les NFTs
+        function displayNFTs(assets) {
+            const container = document.getElementById('nftContainer');
+            container.innerHTML = '';
+
+            assets.forEach(asset => {
+                const card = document.createElement('div');
+                card.className = 'nft-card';
+
+                const img = document.createElement('img');
+                img.src = asset.cover.url;
+                img.alt = asset.name;
+
+                const title = document.createElement('h3');
+                title.textContent = asset.name;
+
+                const collection = document.createElement('p');
+                collection.textContent = `Collection: ${asset.collection?.name || 'Aucune'}`;
+
+                const type = document.createElement('p');
+                type.textContent = `Type: ${asset.isExternalNft ? 'Externe (' + (asset.externalNftMetadata?.network || 'Inconnu') + ')' : 'Interne'}`;
+
+                const price = document.createElement('p');
+                price.className = 'price';
+                if (asset.defaultListingV2) {
+                    price.textContent = `Prix: ${asset.defaultListingV2.salePriceDecimalUSD} USD (par ${asset.defaultListingV2.seller.id})`;
+                } else if (asset.latestPurchasedEdition) {
+                    price.textContent = `Dernière vente: ${asset.latestPurchasedEdition.priceUSD} USD`;
+                } else {
+                    price.textContent = 'Non en vente';
+                }
+
+                card.appendChild(img);
+                card.appendChild(title);
+                card.appendChild(collection);
+                card.appendChild(type);
+                card.appendChild(price);
+                container.appendChild(card);
+            });
+        }
+
+        // Fonction pour filtrer les NFTs par collection
+        function filterNFTs() {
+            const collectionFilter = document.getElementById('collectionFilter').value;
+            const filteredNFTs = collectionFilter
+                ? allNFTs.filter(nft => nft.collection?.name === collectionFilter)
+                : allNFTs;
+            displayNFTs(filteredNFTs);
+        }
+    </script>
+</body>
+</html>
