@@ -6,8 +6,8 @@
     <title>NFT Profile - User Search</title>
     <style>
         :root {
-            --primary-color: #66bfff;
-            --background-dark: #000;
+            --color1: #FF5733; /* Remplacer par votre première couleur */
+            --color2: #2C2C2C; /* Remplacer par votre deuxième couleur */
             --text-dark: #fff;
             --collection-bg: #1a1a1a;
             --shadow: 0 2px 4px rgba(255,255,255,0.1);
@@ -25,7 +25,7 @@
             font-family: 'Geomanist-Bold', sans-serif;
             line-height: 1.6;
             margin: 0;
-            background-color: var(--background-dark);
+            background-color: var(--color2);
             color: var(--text-dark);
             padding: 20px;
         }
@@ -47,7 +47,7 @@
         }
 
         a {
-            color: var(--primary-color);
+            color: var(--color1);
             text-decoration: none;
         }
 
@@ -61,8 +61,8 @@
         }
 
         .profile-header img {
-            width: 110px;
-            height: 110px;
+            width: 180px;
+            height: 180px;
             border-radius: 15px;
             object-fit: cover;
             margin: 0 auto 10px;
@@ -95,7 +95,7 @@
         }
 
         .controls button, .controls select {
-            background-color: var(--primary-color);
+            background-color: var(--color1);
             color: var(--text-dark);
             cursor: pointer;
             text-transform: uppercase;
@@ -119,7 +119,6 @@
             margin: 0 auto;
         }
 
-        /* Card sizes */
         .nft-container.small-size {
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
         }
@@ -160,12 +159,11 @@
 
         .nft-card .price {
             font-weight: bold;
-            color: var(--primary-color);
+            color: var(--color1);
         }
 
-        /* Thumbnail mode */
         .nft-container.thumbnail-mode {
-            gap: 0; /* No gap between cards */
+            gap: 0;
         }
 
         .nft-container.thumbnail-mode .nft-card {
@@ -178,9 +176,9 @@
         .nft-container.thumbnail-mode .nft-card img {
             width: 100%;
             height: 0;
-            padding-bottom: 100%; /* Forces square aspect ratio */
+            padding-bottom: 100%;
             object-fit: cover;
-            border-radius: 0; /* No rounded corners */
+            border-radius: 0;
             margin-bottom: 0;
         }
 
@@ -195,7 +193,7 @@
         }
 
         .loading {
-            color: var(--primary-color);
+            color: var(--color1);
         }
 
         .error {
@@ -214,12 +212,68 @@
             font-size: 15px;
         }
 
+        #username {
+            font-size: 1.5rem;
+            margin: 5px 0;
+        }
+
+        #displayName {
+            font-size: 1em;
+            margin: 5px 0;
+            color: var(--text-dark);
+        }
+
+        .social-icon {
+            width: 50px;
+            height: 50px;
+            min-width: 25px;
+            min-height: 25px;
+            max-width: 8px;
+            max-height: 8px;
+            vertical-align: middle;
+            display: block;
+            transition: transform 0.2s;
+        }
+
+        .social-icon:hover {
+            transform: scale(1.1);
+        }
+
+        #twitterLink {
+            margin: 0;
+            padding: 0;
+            display: inline-block;
+            line-height: 0;
+        }
+
+        #twitterUrl {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            line-height: 0;
+        }
+
+        #bio {
+            margin: 5px 0;
+            font-size: 1em;
+            color: var(--text-dark);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
         @media screen and (max-width: 600px) {
             h1 {
                 font-size: 1.5rem;
             }
-            h2 {
+            #username {
                 font-size: 1.2rem;
+            }
+            #displayName {
+                font-size: 0.9em;
+            }
+            #bio {
+                font-size: 0.9em;
             }
             .profile-header img {
                 width: 90px;
@@ -245,8 +299,14 @@
     <h1>Search for an NFT Collection</h1>
     <div class="profile-header" id="profileHeader">
         <img id="profilePicture" src="" alt="Profile Picture" style="display: none;" />
-        <h2 id="displayName">Profile Name</h2>
-        <p id="username">@username</p>
+        <h2 id="username">Username</h2>
+        <p id="displayName">Display Name</p>
+        <p id="bio" style="display: none;">Bio</p>
+        <p id="twitterLink" style="display: none;">
+            <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
+            </a>
+        </p>
     </div>
     <div class="controls">
         <input type="text" id="usernameInput" placeholder="Enter username" />
@@ -279,9 +339,11 @@
                     user(id: $id) {
                         username
                         displayName
+                        bio
                         avatar {
                             url
                         }
+                        twitterUsername
                     }
                 }
             }
@@ -343,9 +405,12 @@
             const refreshButton = document.getElementById('refreshButton');
             const timestampDiv = document.getElementById('timestamp');
             const profilePicture = document.getElementById('profilePicture');
-            const displayName = document.getElementById('displayName');
             const username = document.getElementById('username');
+            const displayName = document.getElementById('displayName');
             const profileHeader = document.getElementById('profileHeader');
+            const twitterLink = document.getElementById('twitterLink');
+            const twitterUrl = document.getElementById('twitterUrl');
+            const bio = document.getElementById('bio');
 
             if (!usernameInput) {
                 errorDiv.textContent = 'Please enter a username.';
@@ -363,6 +428,8 @@
             collectionFilter.disabled = true;
             refreshButton.disabled = true;
             profileHeader.style.display = 'none';
+            twitterLink.style.display = 'none';
+            bio.style.display = 'none';
 
             const now = new Date();
             timestampDiv.textContent = `Search performed on ${now.toLocaleDateString('en-US')} at ${now.toLocaleTimeString('en-US')} (CEST)`;
@@ -386,13 +453,25 @@
 
                 if (profileResult.data?.public?.user) {
                     const profileData = profileResult.data.public.user;
+                    username.textContent = profileData.username;
                     displayName.textContent = profileData.displayName || profileData.username;
-                    username.textContent = `@${profileData.username}`;
                     if (profileData.avatar?.url) {
                         profilePicture.src = profileData.avatar.url;
                         profilePicture.style.display = 'block';
                     } else {
                         profilePicture.style.display = 'none';
+                    }
+                    if (profileData.bio) {
+                        bio.textContent = profileData.bio;
+                        bio.style.display = 'block';
+                    } else {
+                        bio.style.display = 'none';
+                    }
+                    if (profileData.twitterUsername) {
+                        twitterUrl.href = `https://x.com/${profileData.twitterUsername}`;
+                        twitterLink.style.display = 'block';
+                    } else {
+                        twitterLink.style.display = 'none';
                     }
                     profileHeader.style.display = 'block';
                 } else {
