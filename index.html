@@ -415,9 +415,16 @@
                 }
 
                 const profileResult = await profileResponse.json();
-                if (profileResult.errors) {
-                    throw new Error(`GraphQL Error (profile): ${profileResult.errors.map(e => e.message).join(', ')}`);
-                }
+if (profileResult.errors) {
+    const notFound = profileResult.errors.some(e => e.message.includes('not found'));
+    if (notFound) {
+        noResultsDiv.style.display = 'block';
+        loadingDiv.style.display = 'none';
+        return;
+    } else {
+        throw new Error(`GraphQL Error (profile): ${profileResult.errors.map(e => e.message).join(', ')}`);
+    }
+}
 
                 if (profileResult.data?.public?.user) {
                     const profileData = profileResult.data.public.user;
