@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NFT Profile - User Search</title>
     <style>
         :root {
@@ -207,12 +207,6 @@
             font-size: 15px;
         }
 
-        #collectionMessage {
-            text-align: center;
-            font-size: 1.1em;
-            margin-top: 15px;
-        }
-
         #username {
             font-size: 1.5rem;
         }
@@ -318,7 +312,6 @@
     </div>
 
     <div class="timestamp" id="timestamp"></div>
-    <div id="collectionMessage" class="timestamp" style="display: none;"></div>
     <div class="loading" id="loading" style="display: none;">Loading...</div>
     <div class="error" id="error"></div>
     <div class="no-results" id="noResults" style="display: none;">No results found</div>
@@ -330,17 +323,208 @@
     </footer>
 
     <script>
-        const profileQuery = `...`; // inchangé pour raccourcir
-        const nftQuery = `...`; // inchangé pour raccourcir
+        // GraphQL query for user information
+        const profileQuery = `
+            query User($id: ID!) {
+                public {
+                    user(id: $id) {
+                        username
+                        displayName
+                        bio
+                        avatar {
+                            url
+                        }
+                        twitterUsername
+                    }
+                }
+            }
+        `;
+
+        // GraphQL query for NFTs
+        const nftQuery = `
+            query GetProfileAssets($ownerId: ID!, $first: Int!, $skip: Int!, $sort: [SingleFieldSort!]) {
+                public {
+                    profileAssets(ownerId: $ownerId, first: $first, skip: $skip, sort: $sort) {
+                        id
+                        name
+                        copies
+                        copiesInCirculation
+                        cover {
+                            url
+                        }
+                        latestPurchasedEdition {
+                            id
+                            priceUSD
+                        }
+                        defaultListingV2 {
+                            id
+                            salePriceDecimalUSD
+                            seller {
+                                id
+                            }
+                        }
+                        collection {
+                            id
+                            name
+                            verified
+                        }
+                        isExternalNft
+                        externalNftMetadata {
+                            network
+                        }
+                        totalSalesDecimal
+                    }
+                }
+            }
+        `;
+
+        // GraphQL endpoint
         const graphqlEndpoint = "https://crypto.com/nft-api/graphql";
 
+        // List of all NFTs for filtering
         let allNFTs = [];
         let currentUsername = '';
 
+        // Function to fetch profile and NFTs
         async function fetchProfileAndNFTs() {
-            // inchangé
+            const usernameInput = document.getElementById('usernameInput').value.trim();
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const noResultsDiv = document.getElementById('noResults');
+            const container = document.getElementById('nftContainer');
+            const collectionFilter = document.getElementById('collectionFilter');
+            const refreshButton = document.getElementById('refreshButton');
+            const timestampDiv = document.getElementById('timestamp');
+            const profilePicture = document.getElementById('profilePicture');
+            const username = document.getElementById('username');
+            const displayName = document.getElementById('displayName');
+            const profileHeader = document.getElementById('profileHeader');
+            const twitterLink = document.getElementById('twitterLink');
+            const twitterUrl = document.getElementById('twitterUrl');
+            const bio = document.getElementById('bio');
+
+            if (!usernameInput) {
+                errorDiv.textContent = 'Please enter a username.';
+                return;
+            }
+
+            const normalizedUsername = usernameInput.toLowerCase();
+            currentUsername = normalizedUsername;
+
+            loadingDiv.style.display = 'block';
+            errorDiv.textContent = '';
+            noResultsDiv.style.display = 'none';
+            container.innerHTML = '';
+            collectionFilter.innerHTML = '<option value="">All Collections</option>';
+            collectionFilter.disabled = true;
+            refreshButton.disabled = true;
+            profileHeader.style.display = 'none';
+            twitterLink.style.display = 'none';
+            bio.style.display = 'none';
+
+            const now = new Date();
+            timestampDiv.textContent = ''; // ou tu peux supprimer complètement la ligne
+
+            const profileVariables = { id: currentUsername };
+            try {
+                const profileResponse = await fetch(graphqlEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: profileQuery, variables: profileVariables })
+                });
+
+                if (!profileResponse.ok) {
+                    throw new Error(`HTTP Error (profile): ${profileResponse.status}`);
+                }
+
+                const profileResult = await profileResponse.json();
+if (profileResult.errors) {
+    const notFound = profileResult.errors.some(e => e.message.includes('not found'));
+    if (notFound) {
+        noResultsDiv.style.display = 'block';
+        loadingDiv.style.display = 'none';
+        return;
+    } else {
+        throw new Error(`GraphQL Error (profile): ${profileResult.errors.map(e => e.message).join(', ')}`);
+    }
+}
+
+                if (profileResult.data?.public?.user) {
+                    const profileData = profileResult.data.public.user;
+                    username.textContent = profileData.username;
+                    displayName.textContent = profileData.displayName || profileData.username;
+                    if (profileData.avatar?.url) {
+                        profilePicture.src = profileData.avatar.url;
+                        profilePicture.style.display = 'block';
+                    } else {
+                        profilePicture.style.display = 'none';
+                    }
+                    if (profileData.bio) {
+                        bio.textContent = profileData.bio;
+                        bio.style.display = 'block';
+                    } else {
+                        bio.style.display = 'none';
+                    }
+                    if (profileData.twitterUsername) {
+                        twitterUrl.href = `https://x.com/${profileData.twitterUsername}`;
+                        twitterLink.style.display = 'block';
+                    } else {
+                        twitterLink.style.display = 'none';
+                    }
+                    profileHeader.style.display = 'block';
+                } else {
+                    noResultsDiv.style.display = 'block';
+                    loadingDiv.style.display = 'none';
+                    return;
+                }
+            } catch (error) {
+                console.error('Error fetching profile:', error);
+                errorDiv.textContent = `Error fetching profile: ${error.message}`;
+                loadingDiv.style.display = 'none';
+                return;
+            }
+
+            const nftVariables = {
+                ownerId: currentUsername,
+                first: 60,
+                skip: 0,
+                sort: [{ order: "DESC", field: "createdAt" }]
+            };
+
+            try {
+                const nftResponse = await fetch(graphqlEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: nftQuery, variables: nftVariables })
+                });
+
+                if (!nftResponse.ok) {
+                    throw new Error(`HTTP Error (NFTs): ${nftResponse.status}`);
+                }
+
+                const nftResult = await nftResponse.json();
+                if (nftResult.errors) {
+                    throw new Error(`GraphQL Error (NFTs): ${nftResult.errors.map(e => e.message).join(', ')}`);
+                }
+
+                if (nftResult.data?.public?.profileAssets) {
+                    allNFTs = nftResult.data.public.profileAssets;
+                    updateDisplay();
+                    populateCollectionFilter(allNFTs);
+                    collectionFilter.disabled = false;
+                    refreshButton.disabled = false;
+                } else {
+                    throw new Error('No NFT data found for this user.');
+                }
+            } catch (error) {
+                console.error('Error fetching NFTs:', error);
+                errorDiv.textContent = `Error: ${error.message}`;
+            } finally {
+                loadingDiv.style.display = 'none';
+            }
         }
 
+        // Function to populate collection filter
         function populateCollectionFilter(nfts) {
             const collectionFilter = document.getElementById('collectionFilter');
             const collections = [...new Set(nfts.map(nft => nft.collection?.name).filter(name => name))];
@@ -352,6 +536,7 @@
             });
         }
 
+        // Function to display NFTs
         function displayNFTs(assets) {
             const container = document.getElementById('nftContainer');
             const displayMode = document.getElementById('displayMode').value;
@@ -401,24 +586,16 @@
             });
         }
 
+        // Function to filter NFTs by collection
         function filterNFTs() {
             const collectionFilter = document.getElementById('collectionFilter').value;
-            const messageDiv = document.getElementById('collectionMessage');
-            let filteredNFTs;
-
-            if (collectionFilter) {
-                filteredNFTs = allNFTs.filter(nft => nft.collection?.name === collectionFilter);
-                messageDiv.textContent = `You have ${filteredNFTs.length} asset${filteredNFTs.length !== 1 ? 's' : ''} on this collection.`;
-                messageDiv.style.display = 'block';
-            } else {
-                filteredNFTs = allNFTs;
-                messageDiv.style.display = 'none';
-                messageDiv.textContent = '';
-            }
-
+            const filteredNFTs = collectionFilter
+                ? allNFTs.filter(nft => nft.collection?.name === collectionFilter)
+                : allNFTs;
             displayNFTs(filteredNFTs);
         }
 
+        // Function to update display
         function updateDisplay() {
             filterNFTs();
         }
