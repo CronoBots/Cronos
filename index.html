@@ -407,8 +407,12 @@
             text-align: center;
             font-size: 1.2em;
             color: var(--text-dark);
-            margin-bottom: 20px;
-            text-transform: uppercase;
+            margin: 20px 0;
+        }
+
+        .nft-count .count {
+            font-weight: bold;
+            color: var(--color1);
         }
     </style>
 </head>
@@ -449,6 +453,7 @@
     <div class="loading" id="loading" style="display: none;">Loading...</div>
     <div class="error" id="error"></div>
     <div class="no-results" id="noResults" style="display: none;">No results found</div>
+    <div id="nftCountContainer"></div>
     <div class="nft-container" id="nftContainer"></div>
 
     <div class="chat-container">
@@ -530,6 +535,7 @@
         // List of all NFTs for filtering
         let allNFTs = [];
         let currentUsername = '';
+        let currentDisplayName = '';
 
         // Function to fetch all NFTs with pagination
         async function fetchAllNFTs(ownerId) {
@@ -610,6 +616,7 @@
             profileHeader.style.display = 'none';
             twitterLink.style.display = 'none';
             bio.style.display = 'none';
+            document.getElementById('nftCountContainer').innerHTML = '';
 
             const now = new Date();
             timestampDiv.textContent = '';
@@ -642,6 +649,7 @@
                     const profileData = profileResult.data.public.user;
                     username.textContent = profileData.username;
                     displayName.textContent = profileData.displayName || profileData.username;
+                    currentDisplayName = profileData.displayName || profileData.username;
                     if (profileData.avatar?.url) {
                         profilePicture.src = profileData.avatar.url;
                         profilePicture.style.display = 'block';
@@ -706,10 +714,12 @@
         // Function to display NFTs
         function displayNFTs(assets) {
             const container = document.getElementById('nftContainer');
+            const countContainer = document.getElementById('nftCountContainer');
             const displayMode = document.getElementById('displayMode').value;
             const cardSize = document.getElementById('cardSize').value;
             const collectionFilter = document.getElementById('collectionFilter').value;
 
+            countContainer.innerHTML = '';
             container.className = `nft-container ${displayMode}-mode ${cardSize}-size`;
             container.innerHTML = '';
 
@@ -717,10 +727,10 @@
             const countElement = document.createElement('p');
             countElement.className = 'nft-count';
             const message = collectionFilter
-                ? `${currentUsername} have ${assets.length} assets on this collection.`
-                : `${currentUsername} have ${assets.length} assets on this profil.`;
-            countElement.textContent = message;
-            container.appendChild(countElement);
+                ? `${currentDisplayName} have <span class="count">${assets.length}</span> assets on this collection.`
+                : `${currentDisplayName} have <span class="count">${assets.length}</span> assets on this profil.`;
+            countElement.innerHTML = message;
+            countContainer.appendChild(countElement);
 
             assets.forEach(asset => {
                 const card = document.createElement('div');
