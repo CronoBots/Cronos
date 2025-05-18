@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Search and explore NFT profiles on Cronos with CronoBots">
     <title>CronoBots</title>
-    <link rel="icon" type="image/png" href="LOGO.png">
+    <link rel="icon" type="image/png" href="/assets/favicon.png">
     <link rel="preload" href="CRONOBOTS.png" as="image">
     <style>
         :root {
@@ -338,14 +338,15 @@
             grid-gap: 0;
             margin: 0 auto;
             padding: 0;
-            justify-content: center;
-            justify-items: center;
+            justify-content: start;
+            justify-items: start;
         }
 
         .nft-container.thumbnail-mode a {
             display: block;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
 
         .nft-container.thumbnail-mode .nft-card {
@@ -362,6 +363,7 @@
         .nft-container.thumbnail-mode .nft-card video {
             width: 100%;
             height: 100%;
+            max-width: none;
             border-radius: 0;
             margin: 0;
             padding: 0;
@@ -378,7 +380,7 @@
             padding: 0;
         }
 
-        .nft-container.thumbnail-mode .nft-card.empty {
+        .nft-container.thumbnail-mode .nf t-card.empty {
             background: transparent;
             margin: 0;
             padding: 0;
@@ -990,26 +992,42 @@
         function filterNFTs() {
             console.log('filterNFTs called');
             const collectionFilter = document.getElementById('collectionFilter');
-            if (!collectionFilter) {
-                console.error('Collection filter not found');
+            const displayMode = document.getElementById('displayMode');
+            const cardSize = document.getElementById('cardSize');
+
+            if (!collectionFilter || !displayMode || !cardSize) {
+                console.error('Filter elements not found:', {
+                    collectionFilter: !!collectionFilter,
+                    displayMode: !!displayMode,
+                    cardSize: !!cardSize
+                });
                 return;
             }
-            const collectionValue = collectionFilter.value;
 
+            if (!allNFTs || !allNFTs.length) {
+                console.warn('No NFTs available to filter');
+                displayNFTs([], '');
+                return;
+            }
+
+            const collectionValue = collectionFilter.value;
             const filteredNFTs = collectionValue
                 ? allNFTs.filter(nft => nft.collection?.name === collectionValue)
                 : [...allNFTs];
 
+            console.log(`Filtered ${filteredNFTs.length} NFTs for collection: ${collectionValue || 'All'}`);
             displayNFTs(filteredNFTs, collectionValue);
         }
 
         // Display NFTs
         function displayNFTs(assets, selectedCollection) {
-            console.log(`displayNFTs called with ${assets.length} assets`);
+            console.log(`displayNFTs called with ${assets.length} assets, collection: ${selectedCollection || 'All'}`);
             const container = document.getElementById('nftContainer');
             const countContainer = document.getElementById('nftCountContainer');
             const displayMode = document.getElementById('displayMode')?.value;
             const cardSize = document.getElementById('cardSize')?.value;
+
+            console.log(`Applying display mode: ${displayMode}, card size: ${cardSize}`);
 
             if (!container || !countContainer) {
                 console.error('NFT container or count container not found:', {
@@ -1019,7 +1037,6 @@
                 return;
             }
 
-            console.log(`Applying display mode: ${displayMode}, card size: ${cardSize}`);
             countContainer.innerHTML = '';
             container.className = `nft-container ${displayMode}-mode ${cardSize}-size`;
             container.innerHTML = '';
@@ -1037,6 +1054,7 @@
                 const totalWidth = gridSize * cardWidth;
                 container.style.width = `${totalWidth}px`;
                 container.style.gridTemplateColumns = `repeat(${gridSize}, ${cardWidth}px)`;
+                console.log(`Thumbnail mode: gridSize=${gridSize}, cardWidth=${cardWidth}px, totalWidth=${totalWidth}px`);
 
                 assets.forEach(asset => {
                     const imageUrl = asset.cover?.url;
