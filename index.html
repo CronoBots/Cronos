@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Search and explore NFT profiles on Cronos with CronoBots">
     <title>CronoBots</title>
-    <link rel="icon" type="image/png" href="/assets/favicon.png">
+    <link rel="icon" type="image/png" href="LOGO.png">
     <link rel="preload" href="CRONOBOTS.png" as="image">
     <style>
         :root {
@@ -335,7 +335,7 @@
             gap: 0;
             row-gap: 0;
             column-gap: 0;
-            grid-gap: 0; /* Renforcer l'absence d'écart */
+            grid-gap: 0;
             margin: 0 auto;
             padding: 0;
             justify-content: center;
@@ -688,7 +688,7 @@
                     }
                 }
             }
-        `
+        `;
 
         const nftQuery = `
             query GetProfileAssets($ownerId: ID!, $first: Int!, $skip: Int!) {
@@ -696,7 +696,7 @@
                     profileAssets(ownerId: $ownerId, first: $first, skip: $skip) {
                         id
                         name
-                        main {
+                        cover {
                             url
                         }
                         collection {
@@ -810,7 +810,7 @@
 
                     const assets = result.data?.public?.profileAssets || [];
                     assets.forEach(asset => {
-                        console.log(`NFT: ${asset.name || 'Unnamed'}, Image/Video URL: ${asset.main?.url || 'Missing'}`);
+                        console.log(`NFT: ${asset.name || 'Unnamed'}, Cover URL: ${asset.cover?.url || 'Missing'}`);
                     });
                     allAssets = [...allAssets, ...assets];
                     skip += first;
@@ -1039,10 +1039,10 @@
                 container.style.gridTemplateColumns = `repeat(${gridSize}, ${cardWidth}px)`;
 
                 assets.forEach(asset => {
-                    const imageUrl = asset.main?.url;
-                    console.log(`Loading NFT: ${asset.name || 'Unnamed NFT'}, Media URL: ${imageUrl || 'Missing'}`);
+                    const imageUrl = asset.cover?.url;
+                    console.log(`Loading NFT: ${asset.name || 'Unnamed NFT'}, Cover URL: ${imageUrl || 'Missing'}`);
                     if (!imageUrl) {
-                        console.error(`Missing media URL for NFT: ${asset.name || 'Unnamed NFT'}`);
+                        console.error(`Missing cover URL for NFT: ${asset.name || 'Unnamed NFT'}`);
                     }
 
                     const card = document.createElement('div');
@@ -1101,10 +1101,10 @@
                 }
             } else {
                 assets.forEach(asset => {
-                    const imageUrl = asset.main?.url;
-                    console.log(`Loading NFT: ${asset.name || 'Unnamed NFT'}, Media URL: ${imageUrl || 'Missing'}`);
+                    const imageUrl = asset.cover?.url;
+                    console.log(`Loading NFT: ${asset.name || 'Unnamed NFT'}, Cover URL: ${imageUrl || 'Missing'}`);
                     if (!imageUrl) {
-                        console.error(`Missing media URL for NFT: ${asset.name || 'Unnamed NFT'}`);
+                        console.error(`Missing cover URL for NFT: ${asset.name || 'Unnamed NFT'}`);
                     }
 
                     const card = document.createElement('div');
