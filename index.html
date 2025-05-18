@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Search and explore NFT profiles on Cronos with CronoBots">
-    <title>CronoBots | Cronos Development</title>
+    <title>CronoBots</title>
     <link rel="icon" type="image/png" href="/assets/favicon.png">
     <link rel="preload" href="CRONOBOTS.png" as="image">
     <link rel="preload" href="/assets/placeholder.svg" as="image">
@@ -207,7 +207,7 @@
             margin: 0 auto;
             opacity: 1;
             animation: fadeIn 0.5s ease-in;
-            justify-content: center; /* Centrer horizontalement les cartes */
+            justify-content: center;
         }
 
         .nft-container.small-size {
@@ -253,9 +253,11 @@
             gap: 0;
             row-gap: 0;
             column-gap: 0;
-            margin: 0;
+            margin: 0 auto;
             padding: 0;
-            justify-content: center; /* Centrer également en mode thumbnail */
+            justify-content: center;
+            justify-items: center;
+            max-width: 1200px;
         }
 
         .nft-container.thumbnail-mode .nft-card {
@@ -279,6 +281,7 @@
             margin: 0;
             padding: 0;
             display: block;
+            loading: eager; /* Chargement immédiat en mode thumbnail */
         }
 
         .nft-container.thumbnail-mode .nft-card.empty {
@@ -469,7 +472,7 @@
         <h1>CronoBots | Cronos Development</h1>
 
         <div class="profile-header" id="profileHeader" style="display: none;">
-            <img id="profilePicture" src="" alt="Profile Picture" />
+            <img id="profilePicture" src="" alt="Profile Picture" onerror="this.src='/assets/placeholder.svg'" />
             <h2 id="username"></h2>
             <p id="displayName"></p>
             <p id="bio" style="display: none;"></p>
@@ -892,17 +895,27 @@
 
             if (displayMode === 'thumbnail') {
                 const gridSize = Math.ceil(Math.sqrt(assets.length));
+                // Calculer la largeur totale pour respecter max-width
+                const maxWidth = 1200; // Correspond à max-width: 1200px
+                const cardWidth = cardSize === 'small' ? 120 : cardSize === 'large' ? 300 : 200;
+                const totalWidth = Math.min(gridSize * cardWidth, maxWidth);
+                container.style.width = `${totalWidth}px`;
                 container.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
 
                 assets.forEach(asset => {
+                    console.log(`Loading NFT image: ${asset.main?.url || '/assets/placeholder.svg'}`);
                     const card = document.createElement('div');
                     card.className = 'nft-card';
 
                     const img = document.createElement('img');
                     img.src = asset.main?.url || '/assets/placeholder.svg';
                     img.alt = asset.name || 'NFT Image';
-                    img.loading = 'lazy';
+                    img.loading = 'eager';
                     img.decoding = 'async';
+                    img.onerror = () => {
+                        console.warn(`Failed to load image: ${img.src}, using fallback`);
+                        img.src = '/assets/placeholder.svg';
+                    };
                     img.srcset = asset.main?.url ? `${asset.main.url} 1x, ${asset.main.url.replace('.jpg', '_2x.jpg')} 2x` : '';
                     img.sizes = '(max-width: 768px) 100px, 200px';
 
@@ -918,6 +931,7 @@
                 }
             } else {
                 assets.forEach(asset => {
+                    console.log(`Loading NFT image: ${asset.main?.url || '/assets/placeholder.svg'}`);
                     const card = document.createElement('div');
                     card.className = 'nft-card';
 
@@ -926,6 +940,10 @@
                     img.alt = asset.name || 'NFT Image';
                     img.loading = 'lazy';
                     img.decoding = 'async';
+                    img.onerror = () => {
+                        console.warn(`Failed to load image: ${img.src}, using fallback`);
+                        img.src = '/assets/placeholder.svg';
+                    };
                     img.srcset = asset.main?.url ? `${asset.main.url} 1x, ${asset.main.url.replace('.jpg', '_2x.jpg')} 2x` : '';
                     img.sizes = '(max-width: 768px) 100px, 200px';
 
