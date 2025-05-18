@@ -397,7 +397,7 @@
         </div>
         <div class="navbar-search">
             <input type="text" id="usernameInput" placeholder="Enter username" aria-describedby="usernameHelp" />
-            <button onclick="fetchProfileAndNFTs()" aria-label="Search profile">Search</button>
+            <button id="searchButton" aria-label="Search profile">Search</button>
         </div>
         <button class="navbar-toggle" aria-label="Toggle menu" onclick="toggleMenu()">☰</button>
         <button class="theme-toggle" aria-label="Toggle theme" onclick="toggleTheme()">🌙</button>
@@ -500,8 +500,6 @@
                         collection {
                             name
                         }
-
-
                         isExternalNft
                         externalNftMetadata {
                             network
@@ -522,6 +520,7 @@
 
         // Gestion du menu hamburger
         function toggleMenu() {
+            console.log('Toggling menu');
             const menu = document.getElementById('navbarMenu');
             menu.classList.toggle('active');
         }
@@ -529,6 +528,7 @@
         // Ferme le menu lorsqu'on clique sur un lien
         document.querySelectorAll('.navbar-menu a').forEach(link => {
             link.addEventListener('click', () => {
+                console.log('Menu link clicked');
                 const menu = document.getElementById('navbarMenu');
                 menu.classList.remove('active');
             });
@@ -541,13 +541,18 @@
 
         // Toggle thème
         function toggleTheme() {
+            console.log('Toggling theme');
             const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
             document.documentElement.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
         }
 
         // Fetch avec cache
         async function fetchWithCache(key, fetchFn) {
-            if (cache.has(key)) return cache.get(key);
+            console.log(`Fetching with cache for key: ${key}`);
+            if (cache.has(key)) {
+                console.log(`Cache hit for ${key}`);
+                return cache.get(key);
+            }
             const data = await fetchFn();
             cache.set(key, data);
             return data;
@@ -555,6 +560,7 @@
 
         // Fetch tous les NFTs avec pagination
         async function fetchAllNFTs(ownerId) {
+            console.log(`Fetching NFTs for ownerId: ${ownerId}`);
             const first = 60;
             let skip = 0;
             let allAssets = [];
@@ -568,22 +574,32 @@
                 };
 
                 try {
+                    console.log(`Sending NFT query with variables: ${JSON.stringify(nftVariables)}`);
                     const response = await fetch(graphqlEndpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ query: nftQuery, variables: nftVariables })
                     });
 
-                    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+                    }
+
                     const result = await response.json();
-                    if (result.errors) throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
+                    console.log('NFT query response:', result);
+
+                    if (result.errors) {
+                        throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
+                    }
 
                     const assets = result.data?.public?.profileAssets || [];
                     allAssets = [...allAssets, ...assets];
                     skip += first;
                     hasMore = assets.length === first;
+                    console.log(`Fetched ${assets.length} assets, total: ${allAssets.length}`);
                 } catch (error) {
-                    throw new Error(`Failed to fetch NFTs: ${error.message}`);
+                    console.error(`Failed to fetch NFTs: ${error.message}`);
+                    throw error;
                 }
             }
 
@@ -592,18 +608,27 @@
 
         // Fetch profile et NFTs
         async function fetchProfileAndNFTs() {
-            const usernameInput = sanitizeInput(document.getElementById('usernameInput').value.trim());
+            console.log('fetchProfileAndNFTs called');
+            const usernameInput = document.getElementById('usernameInput');
+            if (!usernameInput) {
+                console.error('usernameInput element not found');
+                return;
+            }
+
+            const username = sanitizeInput(usernameInput.value.trim());
             const loadingDiv = document.getElementById('loading');
             const errorDiv = document.getElementById('error');
             const noResultsDiv = document.getElementById('noResults');
             const timestampDiv = document.getElementById('timestamp');
 
-            if (!usernameInput) {
+            if (!username) {
+                console.log('No username provided');
                 errorDiv.textContent = 'Please enter a valid username.';
                 return;
             }
 
-            currentUsername = usernameInput.toLowerCase();
+            console.log(`Searching for username: ${username}`);
+            currentUsername = username.toLowerCase();
             loadingDiv.style.display = 'block';
             errorDiv.textContent = '';
             noResultsDiv.style.display = 'none';
@@ -611,37 +636,51 @@
 
             try {
                 const profileData = await fetchWithCache(`profile_${currentUsername}`, async () => {
+                    console.log(`Fetching profile for ${currentUsername}`);
                     const response = await fetch(graphqlEndpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ query: profileQuery, variables: { id: currentUsername } })
                     });
-                    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+                    }
+
                     const result = await response.json();
-                    if (result.errors) throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
+                    console.log('Profile query response:', result);
+
+                    if (result.errors) {
+                        throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
+                    }
+
                     return result.data?.public?.user;
                 });
 
                 if (!profileData) {
+                    console.log('No profile data found');
                     noResultsDiv.style.display = 'block';
                     loadingDiv.style.display = 'none';
                     return;
                 }
 
+                console.log('Updating profile UI');
                 updateProfileUI(profileData);
+
                 allNFTs = await fetchWithCache(`nfts_${currentUsername}`, () => fetchAllNFTs(currentUsername));
 
                 if (allNFTs.length > 0) {
+                    console.log(`Displaying ${allNFTs.length} NFTs`);
                     updateDisplay();
                     populateCollectionFilter(allNFTs);
                     document.getElementById('collectionFilter').disabled = false;
                     document.getElementById('refreshButton').disabled = false;
                 } else {
-                    noResultsDiv.style.display = ''
-
-                    'block';
+                    console.log('No NFTs found');
+                    noResultsDiv.style.display = 'block';
                 }
             } catch (error) {
+                console.error(`Error in fetchProfileAndNFTs: ${error.message}`);
                 errorDiv.textContent = `Error: ${error.message}`;
             } finally {
                 loadingDiv.style.display = 'none';
@@ -650,6 +689,7 @@
 
         // Mise à jour de l'UI du profil
         function updateProfileUI(profileData) {
+            console.log('updateProfileUI called', profileData);
             const profileHeader = document.getElementById('profileHeader');
             const profilePicture = document.getElementById('profilePicture');
             const username = document.getElementById('username');
@@ -680,6 +720,7 @@
 
         // Populate collection filter
         function populateCollectionFilter(nfts) {
+            console.log('Populating collection filter', nfts);
             const collectionFilter = document.getElementById('collectionFilter');
             const collections = [...new Set(nfts.map(nft => nft.collection?.name).filter(Boolean))];
             collectionFilter.innerHTML = '<option value="">All Collections</option>';
@@ -693,6 +734,7 @@
 
         // Filtrer et trier les NFTs
         function filterNFTs() {
+            console.log('Filtering NFTs');
             const collectionFilter = document.getElementById('collectionFilter').value;
             const sortBy = document.getElementById('sortBy').value;
 
@@ -713,6 +755,7 @@
 
         // Afficher les NFTs
         function displayNFTs(assets) {
+            console.log(`Displaying ${assets.length} NFTs`);
             const container = document.getElementById('nftContainer');
             const countContainer = document.getElementById('nftCountContainer');
             const displayMode = document.getElementById('displayMode').value;
@@ -727,7 +770,7 @@
             countElement.innerHTML = `${currentDisplayName} has <span class="count">${assets.length}</span> assets.`;
             countContainer.appendChild(countElement);
 
-            assets.forEach Beatriz(asset => {
+            assets.forEach(asset => {
                 const card = document.createElement('div');
                 card.className = 'nft-card';
 
@@ -769,11 +812,13 @@
 
         // Mettre à jour l'affichage
         function updateDisplay() {
+            console.log('Updating display');
             filterNFTs();
         }
 
         // Réinitialiser la recherche
         function clearSearch() {
+            console.log('Clearing search');
             document.getElementById('usernameInput').value = '';
             document.getElementById('collectionFilter').innerHTML = '<option value="">All Collections</option>';
             document.getElementById('collectionFilter').disabled = true;
@@ -790,11 +835,33 @@
             cache.clear();
         }
 
-        // Debounce input recherche
-        let debounceTimer;
-        document.getElementById('usernameInput').addEventListener('input', () => {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(fetchProfileAndNFTs, 500);
+        // Configurer les event listeners
+        function setupEventListeners() {
+            const searchButton = document.getElementById('searchButton');
+            const usernameInput = document.getElementById('usernameInput');
+
+            if (!searchButton || !usernameInput) {
+                console.error('Search button or input not found');
+                return;
+            }
+
+            searchButton.addEventListener('click', () => {
+                console.log('Search button clicked');
+                fetchProfileAndNFTs();
+            });
+
+            let debounceTimer;
+            usernameInput.addEventListener('input', () => {
+                console.log('Input detected in usernameInput');
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(fetchProfileAndNFTs, 500);
+            });
+        }
+
+        // Initialiser les event listeners au chargement de la page
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, setting up event listeners');
+            setupEventListeners();
         });
     </script>
 </body>
