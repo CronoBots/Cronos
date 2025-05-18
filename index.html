@@ -7,7 +7,6 @@
     <title>CronoBots</title>
     <link rel="icon" type="image/png" href="/assets/favicon.png">
     <link rel="preload" href="CRONOBOTS.png" as="image">
-    <link rel="preload" href="/assets/placeholder.svg" as="image">
     <style>
         :root {
             --color1: #FF5733;
@@ -24,7 +23,7 @@
             --color2: var(--bg-light);
             --text-dark: var(--text-light);
             --collection-bg: #fff;
-            --shadow: 0 2px 4px rgba( tempered,0,0,0.1);
+            --shadow: 0 2px 4px rgba(0,0,0,0.1);
             --color1: #e04e2d;
         }
 
@@ -556,7 +555,7 @@
         <div class="navbar-menu" id="navbarMenu">
             <a href="#collections" aria-label="Collections">Collections</a>
             <a href="#profiles" aria-label="Profiles">Profiles</a>
-            <a href="#about" aria-label="About">About</a>
+             <a href="#about" aria-label="About">About</a>
         </div>
         <button class="navbar-toggle" aria-label="Toggle menu" onclick="toggleMenu()">☰</button>
     </nav>
@@ -566,7 +565,7 @@
             <div class="profile-header" id="profileHeader" style="display: none;">
                 <div class="profile-header-content">
                     <div class="profile-picture">
-                        <img id="profilePicture" src="" alt="Profile Picture" onerror="this.src='/assets/placeholder.svg'" />
+                        <img id="profilePicture" src="" alt="Profile Picture" />
                     </div>
                     <div class="profile-info">
                         <h2 id="username" class="username"></h2>
@@ -892,8 +891,13 @@
             displayName.textContent = profileData.displayName || profileData.username;
             currentDisplayName = profileData.displayName || profileData.username;
 
-            profilePicture.src = profileData.avatar?.url || '/assets/placeholder.svg';
-            profilePicture.style.display = profileData.avatar?.url ? 'block' : 'none';
+            if (profileData.avatar?.url) {
+                profilePicture.src = profileData.avatar.url;
+                profilePicture.style.display = 'block';
+            } else {
+                profilePicture.src = '';
+                profilePicture.style.display = 'none';
+            }
 
             bio.textContent = profileData.bio || '';
             bio.style.display = profileData.bio ? 'block' : 'none';
@@ -979,20 +983,25 @@
                 container.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
 
                 assets.forEach(asset => {
-                    console.log(`Loading NFT image: ${asset.main?.url || '/assets/placeholder.svg'}`);
+                    if (!asset.main?.url) {
+                        console.warn(`Skipping NFT with missing image URL: ${asset.name || 'Unnamed NFT'}`);
+                        return;
+                    }
+
+                    console.log(`Loading NFT image: ${asset.main.url}`);
                     const card = document.createElement('div');
                     card.className = 'nft-card';
 
                     const img = document.createElement('img');
-                    img.src = asset.main?.url || '/assets/placeholder.svg';
+                    img.src = asset.main.url;
                     img.alt = asset.name || 'NFT Image';
                     img.decoding = 'async';
                     img.onerror = () => {
-                        console.warn(`Failed to load image: ${img.src}, using fallback`);
-                        img.src = '/assets/placeholder.svg';
+                        console.warn(`Failed to load image: ${img.src}, skipping card`);
+                        card.remove();
                     };
                     img.sizes = '(max-width: 768px) 80px, 200px';
-                    if (asset.main?.url?.endsWith('.gif')) {
+                    if (asset.main.url.endsWith('.gif')) {
                         console.log(`GIF detected: ${asset.main.url}`);
                     }
 
@@ -1008,20 +1017,25 @@
                 }
             } else {
                 assets.forEach(asset => {
-                    console.log(`Loading NFT image: ${asset.main?.url || '/assets/placeholder.svg'}`);
+                    if (!asset.main?.url) {
+                        console.warn(`Skipping NFT with missing image URL: ${asset.name || 'Unnamed NFT'}`);
+                        return;
+                    }
+
+                    console.log(`Loading NFT image: ${asset.main.url}`);
                     const card = document.createElement('div');
                     card.className = 'nft-card';
 
                     const img = document.createElement('img');
-                    img.src = asset.main?.url || '/assets/placeholder.svg';
+                    img.src = asset.main.url;
                     img.alt = asset.name || 'NFT Image';
                     img.decoding = 'async';
                     img.onerror = () => {
-                        console.warn(`Failed to load image: ${img.src}, using fallback`);
-                        img.src = '/assets/placeholder.svg';
+                        console.warn(`Failed to load image: ${img.src}, skipping card`);
+                        card.remove();
                     };
                     img.sizes = '(max-width: 768px) 80px, 200px';
-                    if (asset.main?.url?.endsWith('.gif')) {
+                    if (asset.main.url.endsWith('.gif')) {
                         console.log(`GIF detected: ${asset.main.url}`);
                     }
 
