@@ -767,6 +767,9 @@
                     }
 
                     const assets = result.data?.public?.profileAssets || [];
+                    assets.forEach(asset => {
+                        console.log(`NFT: ${asset.name || 'Unnamed'}, Image URL: ${asset.main?.url || 'Missing'}`);
+                    });
                     allAssets = [...allAssets, ...assets];
                     skip += first;
                     hasMore = assets.length === first;
@@ -891,6 +894,7 @@
             displayName.textContent = profileData.displayName || profileData.username;
             currentDisplayName = profileData.displayName || profileData.username;
 
+            console.log(`Profile avatar URL: ${profileData.avatar?.url || 'Missing'}`);
             profilePicture.src = profileData.avatar?.url || '';
             profilePicture.style.display = profileData.avatar?.url ? 'block' : 'none';
 
@@ -978,21 +982,25 @@
                 container.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
 
                 assets.forEach(asset => {
-                    console.log(`Loading NFT image: ${asset.main?.url || 'No URL provided'}`);
+                    const imageUrl = asset.main?.url;
+                    console.log(`Loading NFT: ${asset.name || 'Unnamed NFT'}, Image URL: ${imageUrl || 'Missing'}`);
+                    if (!imageUrl) {
+                        console.error(`Missing image URL for NFT: ${asset.name || 'Unnamed NFT'}`);
+                    }
+
                     const card = document.createElement('div');
                     card.className = 'nft-card';
 
                     const img = document.createElement('img');
-                    img.src = asset.main?.url || '';
+                    img.src = imageUrl || '';
                     img.alt = asset.name || 'NFT Image';
                     img.decoding = 'async';
                     img.onerror = () => {
-                        console.warn(`Failed to load image: ${img.src}, leaving empty`);
-                        img.src = '';
+                        console.error(`Failed to load image for NFT: ${asset.name || 'Unnamed NFT'}, URL: ${img.src}`);
                     };
                     img.sizes = '(max-width: 768px) 80px, 200px';
-                    if (asset.main?.url?.endsWith('.gif')) {
-                        console.log(`GIF detected: ${asset.main.url}`);
+                    if (imageUrl?.endsWith('.gif')) {
+                        console.log(`GIF detected: ${imageUrl}`);
                     }
 
                     card.appendChild(img);
@@ -1007,21 +1015,25 @@
                 }
             } else {
                 assets.forEach(asset => {
-                    console.log(`Loading NFT image: ${asset.main?.url || 'No URL provided'}`);
+                    const imageUrl = asset.main?.url;
+                    console.log(`Loading NFT: ${asset.name || 'Unnamed NFT'}, Image URL: ${imageUrl || 'Missing'}`);
+                    if (!imageUrl) {
+                        console.error(`Missing image URL for NFT: ${asset.name || 'Unnamed NFT'}`);
+                    }
+
                     const card = document.createElement('div');
                     card.className = 'nft-card';
 
                     const img = document.createElement('img');
-                    img.src = asset.main?.url || '';
+                    img.src = imageUrl || '';
                     img.alt = asset.name || 'NFT Image';
                     img.decoding = 'async';
                     img.onerror = () => {
-                        console.warn(`Failed to load image: ${img.src}, leaving empty`);
-                        img.src = '';
+                        console.error(`Failed to load image for NFT: ${asset.name || 'Unnamed NFT'}, URL: ${img.src}`);
                     };
                     img.sizes = '(max-width: 768px) 80px, 200px';
-                    if (asset.main?.url?.endsWith('.gif')) {
-                        console.log(`GIF detected: ${asset.main.url}`);
+                    if (imageUrl?.endsWith('.gif')) {
+                        console.log(`GIF detected: ${imageUrl}`);
                     }
 
                     const title = document.createElement('h3');
