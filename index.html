@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Search and explore NFT profiles on Cronos with CronoBots">
     <title>NFT Profile - User Search | CronoBots</title>
+    <link rel="preload" href="CRONOBOTS.png" as="image">
+    <link rel="preload" href="/assets/placeholder.svg" as="image">
     <style>
         :root {
             --color1: #FF5733;
@@ -154,7 +156,7 @@
             width: 180px;
             height: 180px;
             border-radius: 15px;
-            object-fit: cover;
+            object-fit: contain;
             margin: 0 auto 10px;
             display: block;
         }
@@ -235,6 +237,7 @@
             height: auto;
             border-radius: 15px;
             margin-bottom: 10px;
+            object-fit: contain;
             loading: lazy;
         }
 
@@ -247,7 +250,6 @@
             background: none;
             box-shadow: none;
             border-radius: 0;
-            aspect-ratio: 1/1;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -256,13 +258,12 @@
         .nft-container.thumbnail-mode .nft-card img {
             border-radius: 0;
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            height: auto;
+            object-fit: contain;
         }
 
         .nft-container.thumbnail-mode .nft-card.empty {
             background: transparent;
-            aspect-ratio: 1/1;
         }
 
         .loading, .error, .no-results {
@@ -323,10 +324,26 @@
         }
 
         .theme-toggle {
-            background: none;
-            border: 1px solid var(--color1);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .theme-toggle label {
+            color: var(--text-dark);
+            font-size: 1rem;
+            margin-right: 10px;
+        }
+
+        .theme-toggle select {
             padding: 8px;
+            border-radius: 8px;
+            border: none;
+            background-color: var(--color1);
+            color: var(--text-dark);
             cursor: pointer;
+            font-family: 'Geomanist-Bold', sans-serif;
         }
 
         @keyframes fadeIn {
@@ -425,7 +442,6 @@
             <button id="searchButton" aria-label="Search profile">Search</button>
         </div>
         <button class="navbar-toggle" aria-label="Toggle menu" onclick="toggleMenu()">☰</button>
-        <button class="theme-toggle" aria-label="Toggle theme" onclick="toggleTheme()">🌙</button>
     </nav>
 
     <div class="main-content">
@@ -484,6 +500,13 @@
         <footer class="footer">
             <img src="CRONOBOTS.png" alt="Cronobots Logo" class="footer-logo">
             <p>CRONOBOTS | CRONOS DEVELOPMENT</p>
+            <div class="theme-toggle">
+                <label for="themeSelect">Theme:</label>
+                <select id="themeSelect" onchange="toggleTheme()">
+                    <option value="dark">Dark</option>
+                    <option value="light">Light</option>
+                </select>
+            </div>
         </footer>
     </div>
 
@@ -571,8 +594,10 @@
         // Theme toggle
         function toggleTheme() {
             console.log('Toggling theme');
-            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-            document.documentElement.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
+            const select = document.getElementById('themeSelect');
+            const newTheme = select.value;
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
         }
 
         // Fetch with cache
@@ -729,7 +754,7 @@
             displayName.textContent = profileData.displayName || profileData.username;
             currentDisplayName = profileData.displayName || profileData.username;
 
-            profilePicture.src = profileData.avatar?.url || 'https://via.placeholder.com/150';
+            profilePicture.src = profileData.avatar?.url || '/assets/placeholder.svg';
             profilePicture.style.display = profileData.avatar?.url ? 'block' : 'none';
 
             bio.textContent = profileData.bio || '';
@@ -823,9 +848,13 @@
                     card.className = 'nft-card';
 
                     const img = document.createElement('img');
-                    img.src = asset.main?.url || 'https://via.placeholder.com/150';
+                    img.src = asset.main?.url || '/assets/placeholder.svg';
                     img.alt = asset.name || 'NFT Image';
                     img.loading = 'lazy';
+                    img.decoding = 'async';
+                    // Ajout de srcset si disponible
+                    img.srcset = asset.main?.url ? `${asset.main.url} 1x, ${asset.main.url.replace('.jpg', '_2x.jpg')} 2x` : '';
+                    img.sizes = '(max-width: 768px) 100px, 200px';
 
                     card.appendChild(img);
                     container.appendChild(card);
@@ -843,9 +872,12 @@
                     card.className = 'nft-card';
 
                     const img = document.createElement('img');
-                    img.src = asset.main?.url || 'https://via.placeholder.com/150';
+                    img.src = asset.main?.url || '/assets/placeholder.svg';
                     img.alt = asset.name || 'NFT Image';
                     img.loading = 'lazy';
+                    img.decoding = 'async';
+                    img.srcset = asset.main?.url ? `${asset.main.url} 1x, ${asset.main.url.replace('.jpg', '_2x.jpg')} 2x` : '';
+                    img.sizes = '(max-width: 768px) 100px, 200px';
 
                     const title = document.createElement('h3');
                     title.textContent = asset.name || 'Unnamed NFT';
@@ -886,9 +918,10 @@
             console.log('Setting up event listeners');
             const searchButton = document.getElementById('searchButton');
             const usernameInput = document.getElementById('usernameInput');
+            const themeSelect = document.getElementById('themeSelect');
 
-            if (!searchButton || !usernameInput) {
-                console.error('Search button or input not found');
+            if (!searchButton || !usernameInput || !themeSelect) {
+                console.error('Search button, input, or theme select not found');
                 return;
             }
 
@@ -896,11 +929,17 @@
                 console.log('Search button clicked');
                 fetchProfileAndNFTs();
             });
+
+            // Définir la valeur initiale du sélecteur de thème
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            themeSelect.value = savedTheme;
         }
 
-        // Initialize event listeners on page load
+        // Initialize event listeners and theme on page load
         document.addEventListener('DOMContentLoaded', () => {
             console.log('DOM loaded, setting up event listeners');
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
             setupEventListeners();
         });
     </script>
