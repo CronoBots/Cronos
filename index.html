@@ -153,9 +153,18 @@
             text-decoration: underline;
         }
 
-        .profile-header {
-            text-align: center;
+        .profile-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .profile-header {
+            flex: 1;
+            min-width: 0;
         }
 
         .profile-header-content {
@@ -199,19 +208,17 @@
         }
 
         .controls {
-            text-align: center;
-            margin-bottom: 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            display: flex;
+            flex-direction: column;
             gap: 10px;
-            justify-items: center;
+            align-items: flex-end;
+            min-width: 200px;
         }
 
         .controls label {
             display: block;
             font-size: 0.9em;
             margin-bottom: 5px;
-            font-family: 'Geomanist-Bold', sans-serif;
             text-transform: uppercase;
         }
 
@@ -229,7 +236,6 @@
             cursor: pointer;
             text-transform: uppercase;
             font-weight: 700;
-            font-family: 'Geomanist-Bold', sans-serif;
         }
 
         .controls select:hover {
@@ -286,6 +292,11 @@
             margin-bottom: 10px;
             object-fit: contain;
             aspect-ratio: 1 / 1;
+        }
+
+        .nft-card h3 {
+            font-size: 0.9em;
+            margin: 5px 0;
         }
 
         img[src$=".gif"] {
@@ -465,6 +476,11 @@
                 font-size: 1.5rem;
             }
 
+            .profile-section {
+                flex-direction: column;
+                align-items: center;
+            }
+
             .profile-header-content {
                 flex-direction: column;
                 align-items: center;
@@ -481,7 +497,8 @@
             }
 
             .controls {
-                grid-template-columns: 1fr;
+                align-items: center;
+                width: 100%;
             }
 
             .controls select {
@@ -534,45 +551,46 @@
     </nav>
 
     <div class="main-content">
-        <div class="profile-header" id="profileHeader" style="display: none;">
-            <div class="profile-header-content">
-                <div class="profile-picture">
-                    <img id="profilePicture" src="" alt="Profile Picture" onerror="this.src='/assets/placeholder.svg'" />
+        <div class="profile-section">
+            <div class="profile-header" id="profileHeader" style="display: none;">
+                <div class="profile-header-content">
+                    <div class="profile-picture">
+                        <img id="profilePicture" src="" alt="Profile Picture" onerror="this.src='/assets/placeholder.svg'" />
+                    </div>
+                    <div class="profile-info">
+                        <h2 id="username" class="username"></h2>
+                        <p id="displayName"></p>
+                        <p id="bio" style="display: none;"></p>
+                        <p id="twitterLink" style="display: none;">
+                            <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
+                            </a>
+                        </p>
+                    </div>
                 </div>
-                <div class="profile-info">
-                    <h2 id="username" class="username"></h2>
-                    <p id="displayName"></p>
-                    <p id="bio" style="display: none;"></p>
-                    <p id="twitterLink" style="display: none;">
-                        <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
-                        </a>
-                    </p>
+            </div>
+            <div class="controls" id="controls">
+                <div>
+                    <label for="collectionFilter">COLLECTION</label>
+                    <select id="collectionFilter" onchange="filterNFTs()" disabled>
+                        <option value="">All Collections</option>
+                    </select>
                 </div>
-            </div>
-        </div>
-
-        <div class="controls">
-            <div>
-                <label for="collectionFilter">COLLECTION</label>
-                <select id="collectionFilter" onchange="filterNFTs()" disabled>
-                    <option value="">All Collections</option>
-                </select>
-            </div>
-            <div>
-                <label for="displayMode">DISPLAY MODE</label>
-                <select id="displayMode" onchange="updateDisplay()">
-                    <option value="full">Full Mode</option>
-                    <option value="thumbnail">Thumbnail Mode</option>
-                </select>
-            </div>
-            <div>
-                <label for="cardSize">CARD SIZE</label>
-                <select id="cardSize" onchange="updateDisplay()">
-                    <option value="small">Small</option>
-                    <option value="medium" selected>Medium</option>
-                    <option value="large">Large</option>
-                </select>
+                <div>
+                    <label for="displayMode">DISPLAY MODE</label>
+                    <select id="displayMode" onchange="updateDisplay()">
+                        <option value="full">Normal</option>
+                        <option value="thumbnail">Thumbnail</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="cardSize">CARD SIZE</label>
+                    <select id="cardSize" onchange="updateDisplay()">
+                        <option value="small">Small</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="large">Large</option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -1024,22 +1042,9 @@
                     const collection = document.createElement('p');
                     collection.textContent = `Collection: ${asset.collection?.name || 'None'}`;
 
-                    const type = document.createElement('p');
-                    type.textContent = `Network: ${asset.isExternalNft ? 'Cronos (' + (asset.externalNftMetadata?.network || 'Unknown') + ')' : 'Cronos POS'}`;
-
-                    const price = document.createElement('p');
-                    price.className = 'price';
-                    price.textContent = asset.defaultListingV2
-                        ? `Price: ${asset.defaultListingV2.salePriceDecimalUSD} USD`
-                        : asset.latestPurchasedEdition
-                        ? `Last Sale: ${asset.latestPurchasedEdition.priceUSD} USD`
-                        : 'Not for sale';
-
                     card.appendChild(img);
                     card.appendChild(title);
                     card.appendChild(collection);
-                    card.appendChild(type);
-                    card.appendChild(price);
 
                     container.appendChild(card);
                 });
