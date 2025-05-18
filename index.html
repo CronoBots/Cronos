@@ -12,7 +12,7 @@
             --text-dark: #fff;
             --text-light: #333;
             --collection-bg: #1a1a1a;
-            --shadow: 0 2px 4px rgba(255,255,255,0.1);
+            --shadow: 0 2px 4px rgba(255 Reservation,255,255,0.1);
             --bg-light: #f4f4f4;
             --transition: all 0.3s ease;
         }
@@ -36,10 +36,58 @@
             font-family: 'Geomanist-Bold', sans-serif;
             background-color: var(--color2);
             color: var(--text-dark);
-            padding: 20px;
+            padding: 0;
             margin: 0;
             line-height: 1.6;
             transition: var(--transition);
+        }
+
+        /* Nouvelle barre de navigation */
+        .navbar {
+            background-color: var(--collection-bg);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-logo img {
+            height: 40px;
+        }
+
+        .navbar-menu {
+            display: flex;
+            gap: 20px;
+        }
+
+        .navbar-menu a {
+            color: var(--text-dark);
+            font-size: 1rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            transition: var(--transition);
+        }
+
+        .navbar-menu a:hover {
+            color: var(--color1);
+        }
+
+        .navbar-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-dark);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Contenu principal */
+        .main-content {
+            padding: 20px;
         }
 
         h1, h2, h3 {
@@ -51,6 +99,7 @@
         h1 {
             font-size: 2rem;
             text-align: center;
+            margin: 20px 0;
         }
 
         a {
@@ -79,10 +128,10 @@
         .controls {
             text-align: center;
             margin-bottom: 20px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 10px;
+            justify-items: center;
         }
 
         .controls label {
@@ -95,12 +144,13 @@
             padding: 8px;
             border-radius: 8px;
             border: none;
-            font-size: 16px;
+            font-size: 14px;
             transition: var(--transition);
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .controls input {
-            width: 100%;
             max-width: 250px;
         }
 
@@ -110,7 +160,6 @@
             cursor: pointer;
             text-transform: uppercase;
             font-weight: 700;
-            width: 150px;
         }
 
         .controls button:hover, .controls select:hover {
@@ -132,15 +181,15 @@
         }
 
         .nft-container.small-size {
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
         }
 
         .nft-container.medium-size {
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         }
 
         .nft-container.large-size {
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         }
 
         .nft-card {
@@ -196,12 +245,12 @@
         .timestamp {
             text-align: center;
             margin-top: 10px;
-            font-size: 15px;
+            font-size: 14px;
         }
 
         .social-icon {
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             transition: var(--transition);
         }
 
@@ -222,8 +271,10 @@
             border: 1px solid var(--color1);
             padding: 8px;
             cursor: pointer;
+            margin-left: auto;
         }
 
+        /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -234,115 +285,187 @@
             50% { opacity: 0.5; }
         }
 
-        @media screen and (max-width: 600px) {
-            h1 { font-size: 1.5rem; }
-            .profile-header img { width: 90px; height: 90px; }
-            .controls { flex-direction: column; }
+        /* Réactivité pour mobile */
+        @media screen and (max-width: 768px) {
+            .navbar-menu {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: var(--collection-bg);
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                gap: 30px;
+                z-index: 999;
+            }
+
+            .navbar-menu.active {
+                display: flex;
+            }
+
+            .navbar-toggle {
+                display: block;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .profile-header img {
+                width: 100px;
+                height: 100px;
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+            }
+
+            .controls input, .controls button, .controls select {
+                font-size: 12px;
+                padding: 6px;
+            }
+
+            .nft-container.small-size {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+
+            .nft-container.medium-size {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+
+            .nft-container.large-size {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+
+            .theme-toggle {
+                margin-left: 10px;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>CronoBots | Cronos Development</h1>
+    <!-- Nouvelle barre de navigation -->
+    <nav class="navbar">
+        <div class="navbar-logo">
+            <img src="CRONOBOTS.png" alt="Cronobots Logo">
+        </div>
+        <div class="navbar-menu" id="navbarMenu">
+            <a href="#home" aria-label="Accueil">Accueil</a>
+            <a href="#search" aria-label="Recherche">Recherche</a>
+            <a href="#about" aria-label="À propos">À propos</a>
+        </div>
+        <button class="navbar-toggle" aria-label="Toggle menu" onclick="toggleMenu()">☰</button>
+        <button class="theme-toggle" aria-label="Toggle theme" onclick="toggleTheme()">🌙</button>
+    </nav>
 
-    <button class="theme-toggle" aria-label="Toggle theme" onclick="toggleTheme()">🌙 Toggle Theme</button>
+    <!-- Contenu principal -->
+    <div class="main-content">
+        <h1>CronoBots | Cronos Development</h1>
 
-    <div class="profile-header" id="profileHeader" style="display: none;">
-        <img id="profilePicture" src="" alt="Profile Picture" />
-        <h2 id="username"></h2>
-        <p id="displayName"></p>
-        <p id="bio" style="display: none;"></p>
-        <p id="twitterLink" style="display: none;">
-            <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
-            </a>
-        </p>
+        <div class="profile-header" id="profileHeader" style="display: none;">
+            <img id="profilePicture" src="" alt="Profile Picture" />
+            <h2 id="username"></h2>
+            <p id="displayName"></p>
+            <p id="bio" style="display: none;"></p>
+            <p id="twitterLink" style="display: none;">
+                <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
+                </a>
+            </p>
+        </div>
+
+        <div class="controls">
+            <div>
+                <label for="usernameInput">Username</label>
+                <input type="text" id="usernameInput" placeholder="Enter username" aria-describedby="usernameHelp" />
+            </div>
+            <button onclick="fetchProfileAndNFTs()" aria-label="Search profile">Search</button>
+            <button onclick="fetchProfileAndNFTs()" id="refreshButton" disabled aria-label="Refresh data">Refresh</button>
+            <button onclick="clearSearch()" aria-label="Clear search">Clear</button>
+            <div>
+                <label for="collectionFilter">Collection</label>
+                <select id="collectionFilter" onchange="filterNFTs()" disabled>
+                    <option value="">All Collections</option>
+                </select>
+            </div>
+            <div>
+                <label for="displayMode">Display Mode</label>
+                <select id="displayMode" onchange="updateDisplay()">
+                    <option value="full">Full Mode</option>
+                    <option value="thumbnail">Thumbnail Mode</option>
+                </select>
+            </div>
+            <div>
+                <label for="cardSize">Card Size</label>
+                <select id="cardSize" onchange="updateDisplay()">
+                    <option value="small">Small</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="large">Large</option>
+                </select>
+            </div>
+            <div>
+                <label for="sortBy">Sort By</label>
+                <select id="sortBy" onchange="filterNFTs()">
+                    <option value="createdAt">Date (Newest)</option>
+                    <option value="price">Price (High to Low)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="timestamp" id="timestamp"></div>
+        <div class="loading" id="loading" style="display: none;">Loading...</div>
+        <div class="error" id="error" role="alert"></div>
+        <div class="no-results" id="noResults" style="display: none;">No results found</div>
+        <div id="nftCountContainer"></div>
+        <div class="nft-container" id="nftContainer"></div>
+
+        <footer class="footer">
+            <img src="CRONOBOTS.png" alt="Cronobots Logo" class="footer-logo">
+            <p>CRONOBOTS | CRONOS DEVELOPMENT</p>
+        </footer>
     </div>
-
-    <div class="controls">
-        <div>
-            <label for="usernameInput">Username</label>
-            <input type="text" id="usernameInput" placeholder="Enter username" aria-describedby="usernameHelp" />
-        </div>
-        <button onclick="fetchProfileAndNFTs()" aria-label="Search profile">Search</button>
-        <button onclick="fetchProfileAndNFTs()" id="refreshButton" disabled aria-label="Refresh data">Refresh</button>
-        <button onclick="clearSearch()" aria-label="Clear search">Clear</button>
-        <div>
-            <label for="collectionFilter">Collection</label>
-            <select id="collectionFilter" onchange="filterNFTs()" disabled>
-                <option value="">All Collections</option>
-            </select>
-        </div>
-        <div>
-            <label for="displayMode">Display Mode</label>
-            <select id="displayMode" onchange="updateDisplay()">
-                <option value="full">Full Mode</option>
-                <option value="thumbnail">Thumbnail Mode</option>
-            </select>
-        </div>
-        <div>
-            <label for="cardSize">Card Size</label>
-            <select id="cardSize" onchange="updateDisplay()">
-                <option value="small">Small</option>
-                <option value="medium" selected>Medium</option>
-                <option value="large">Large</option>
-            </select>
-        </div>
-        <div>
-            <label for="sortBy">Sort By</label>
-            <select id="sortBy" onchange="filterNFTs()">
-                <option value="createdAt">Date (Newest)</option>
-                <option value="price">Price (High to Low)</option>
-            </select>
-        </div>
-    </div>
-
-    <div class="timestamp" id="timestamp"></div>
-    <div class="loading" id="loading" style="display: none;">Loading...</div>
-    <div class="error" id="error" role="alert"></div>
-    <div class="no-results" id="noResults" style="display: none;">No results found</div>
-    <div id="nftCountContainer"></div>
-    <div class="nft-container" id="nftContainer"></div>
-
-    <footer class="footer">
-        <img src="CRONOBOTS.png" alt="Cronobots Logo" class="footer-logo">
-        <p>CRONOBOTS | CRONOS DEVELOPMENT</p>
-    </footer>
 
     <script>
-        // Cache for storing fetched data
+        // Cache pour les données
         const cache = new Map();
         let allNFTs = [];
         let currentUsername = '';
         let currentDisplayName = '';
 
-        // GraphQL queries
+        // GraphQL queries (inchangées)
         const profileQuery = `...`; // Identique à l'original
         const nftQuery = `...`; // Identique à l'original
         const graphqlEndpoint = "https://crypto.com/nft-api/graphql";
 
-        /**
-         * Sanitizes input to prevent injection
-         * @param {string} input
-         * @returns {string}
-         */
+        // Gestion du menu hamburger
+        function toggleMenu() {
+            const menu = document.getElementById('navbarMenu');
+            menu.classList.toggle('active');
+        }
+
+        // Ferme le menu lorsqu'on clique sur un lien
+        document.querySelectorAll('.navbar-menu a').forEach(link => {
+            link.addEventListener('click', () => {
+                const menu = document.getElementById('navbarMenu');
+                menu.classList.remove('active');
+            });
+        });
+
+        // Sanitize input
         function sanitizeInput(input) {
             return input.replace(/[<>"'&]/g, '');
         }
 
-        /**
-         * Toggles between light and dark theme
-         */
+        // Toggle thème
         function toggleTheme() {
             const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
             document.documentElement.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
         }
 
-        /**
-         * Fetches data with caching
-         * @param {string} key
-         * @param {Function} fetchFn
-         * @returns {Promise}
-         */
+        // Fetch avec cache
         async function fetchWithCache(key, fetchFn) {
             if (cache.has(key)) return cache.get(key);
             const data = await fetchFn();
@@ -350,11 +473,7 @@
             return data;
         }
 
-        /**
-         * Fetches all NFTs with pagination
-         * @param {string} ownerId
-         * @returns {Promise<Array>}
-         */
+        // Fetch tous les NFTs avec pagination
         async function fetchAllNFTs(ownerId) {
             const first = 60;
             let skip = 0;
@@ -388,9 +507,7 @@
             return allAssets;
         }
 
-        /**
-         * Fetches profile and NFTs
-         */
+        // Fetch profile et NFTs
         async function fetchProfileAndNFTs() {
             const usernameInput = sanitizeInput(document.getElementById('usernameInput').value.trim());
             const loadingDiv = document.getElementById('loading');
@@ -446,10 +563,7 @@
             }
         }
 
-        /**
-         * Updates profile UI
-         * @param {Object} profileData
-         */
+        // Mise à jour de l'UI du profil
         function updateProfileUI(profileData) {
             const profileHeader = document.getElementById('profileHeader');
             const profilePicture = document.getElementById('profilePicture');
@@ -479,10 +593,7 @@
             profileHeader.style.display = 'block';
         }
 
-        /**
-         * Populates collection filter
-         * @param {Array} nfts
-         */
+        // Populate collection filter
         function populateCollectionFilter(nfts) {
             const collectionFilter = document.getElementById('collectionFilter');
             const collections = [...new Set(nfts.map(nft => nft.collection?.name).filter(Boolean))];
@@ -495,9 +606,7 @@
             });
         }
 
-        /**
-         * Filters and sorts NFTs
-         */
+        // Filtrer et trier les NFTs
         function filterNFTs() {
             const collectionFilter = document.getElementById('collectionFilter').value;
             const sortBy = document.getElementById('sortBy').value;
@@ -517,10 +626,7 @@
             displayNFTs(filteredNFTs);
         }
 
-        /**
-         * Displays NFTs
-         * @param {Array} assets
-         */
+        // Afficher les NFTs
         function displayNFTs(assets) {
             const container = document.getElementById('nftContainer');
             const countContainer = document.getElementById('nftCountContainer');
@@ -541,7 +647,7 @@
                 card.className = 'nft-card';
 
                 const img = document.createElement('img');
-                img.src = asset.cover?.url || 'https://via.placeholder.com/150';
+                img.src = asset.image?.url || 'https://via.placeholder.com/150';
                 img.alt = asset.name || 'NFT Image';
                 img.loading = 'lazy';
 
@@ -576,16 +682,12 @@
             });
         }
 
-        /**
-         * Updates display
-         */
+        // Mettre à jour l'affichage
         function updateDisplay() {
             filterNFTs();
         }
 
-        /**
-         * Clears search and resets UI
-         */
+        // Réinitialiser la recherche
         function clearSearch() {
             document.getElementById('usernameInput').value = '';
             document.getElementById('collectionFilter').innerHTML = '<option value="">All Collections</option>';
@@ -603,7 +705,7 @@
             cache.clear();
         }
 
-        // Debounce search input
+        // Debounce input recherche
         let debounceTimer;
         document.getElementById('usernameInput').addEventListener('input', () => {
             clearTimeout(debounceTimer);
