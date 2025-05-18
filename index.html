@@ -240,7 +240,6 @@
 
         .nft-container.thumbnail-mode {
             gap: 0;
-            /* Grid columns set dynamically in JS */
         }
 
         .nft-container.thumbnail-mode .nft-card {
@@ -248,17 +247,17 @@
             background: none;
             box-shadow: none;
             border-radius: 0;
-            aspect-ratio: 1/1; /* Ensure square shape */
+            aspect-ratio: 1/1;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .nft-container.thumbnail-mode .nft-card img {
-            border-radius: 0; /* No rounded corners in thumbnail mode */
+            border-radius: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Ensure image fills square */
+            object-fit: cover;
         }
 
         .nft-container.thumbnail-mode .nft-card.empty {
@@ -461,7 +460,6 @@
             <div>
                 <label for="cardSize">Card Size</label>
                 <select id="cardSize" onchange="updateDisplay()">
-                    <摘要>
                     <option value="small">Small</option>
                     <option value="medium" selected>Medium</option>
                     <option value="large">Large</option>
@@ -547,7 +545,11 @@
         function toggleMenu() {
             console.log('Toggling menu');
             const menu = document.getElementById('navbarMenu');
-            menu.classList.toggle('active');
+            if (menu) {
+                menu.classList.toggle('active');
+            } else {
+                console.error('Navbar menu not found');
+            }
         }
 
         // Close menu on link click
@@ -555,7 +557,9 @@
             link.addEventListener('click', () => {
                 console.log('Menu link clicked');
                 const menu = document.getElementById('navbarMenu');
-                menu.classList.remove('active');
+                if (menu) {
+                    menu.classList.remove('active');
+                }
             });
         });
 
@@ -592,12 +596,7 @@
             let hasMore = true;
 
             while (hasMore) {
-                const nftVariables = {
-                    ownerId,
-                    first,
-                    skip
-                };
-
+                const nftVariables = { ownerId, first, skip };
                 try {
                     console.log(`Sending NFT query with variables: ${JSON.stringify(nftVariables)}`);
                     const response = await fetch(graphqlEndpoint, {
@@ -635,16 +634,17 @@
         async function fetchProfileAndNFTs() {
             console.log('fetchProfileAndNFTs called');
             const usernameInput = document.getElementById('usernameInput');
-            if (!usernameInput) {
-                console.error('usernameInput element not found');
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const noResultsDiv = document.getElementById('noResults');
+
+            if (!usernameInput || !loadingDiv || !errorDiv || !noResultsDiv) {
+                console.error('Required DOM elements not found');
+                errorDiv.textContent = 'Internal error: UI elements missing.';
                 return;
             }
 
             const username = sanitizeInput(usernameInput.value.trim());
-            const loadingDiv = document.getElementById('loading');
-            the errorDiv = document.getElementById('error');
-            const noResultsDiv = document.getElementById('noResults');
-
             if (!username) {
                 console.log('No username provided');
                 errorDiv.textContent = 'Please enter a valid username.';
@@ -720,6 +720,11 @@
             const twitterLink = document.getElementById('twitterLink');
             const twitterUrl = document.getElementById('twitterUrl');
 
+            if (!profileHeader || !profilePicture || !username || !displayName || !bio || !twitterLink || !twitterUrl) {
+                console.error('Profile UI elements not found');
+                return;
+            }
+
             username.textContent = profileData.username || 'Unknown';
             displayName.textContent = profileData.displayName || profileData.username;
             currentDisplayName = profileData.displayName || profileData.username;
@@ -744,6 +749,10 @@
         function populateCollectionFilter(nfts) {
             console.log('Populating collection filter', nfts);
             const collectionFilter = document.getElementById('collectionFilter');
+            if (!collectionFilter) {
+                console.error('Collection filter not found');
+                return;
+            }
             const collections = [...new Set(nfts.map(nft => nft.collection?.name).filter(Boolean))];
             collectionFilter.innerHTML = '<option value="">All Collections</option>';
             collections.forEach(collection => {
@@ -758,14 +767,19 @@
         function filterNFTs() {
             console.log('Filtering NFTs');
             const collectionFilter = document.getElementById('collectionFilter');
+            const sortBy = document.getElementById('sortBy');
+            if (!collectionFilter || !sortBy) {
+                console.error('Filter elements not found');
+                return;
+            }
             const collectionValue = collectionFilter.value;
-            const sortBy = document.getElementById('sortBy').value;
+            const sortByValue = sortBy.value;
 
             let filteredNFTs = collectionValue
                 ? allNFTs.filter(nft => nft.collection?.name === collectionValue)
                 : [...allNFTs];
 
-            if (sortBy === 'price') {
+            if (sortByValue === 'price') {
                 filteredNFTs.sort((a, b) => {
                     const priceA = a.defaultListingV2?.salePriceDecimalUSD || a.latestPurchasedEdition?.priceUSD || 0;
                     const priceB = b.defaultListingV2?.salePriceDecimalUSD || b.latestPurchasedEdition?.priceUSD || 0;
@@ -781,8 +795,13 @@
             console.log(`Displaying ${assets.length} NFTs`);
             const container = document.getElementById('nftContainer');
             const countContainer = document.getElementById('nftCountContainer');
-            const displayMode = document.getElementById('displayMode').value;
-            const cardSize = document.getElementById('cardSize').value;
+            const displayMode = document.getElementById('displayMode')?.value;
+            const cardSize = document.getElementById('cardSize')?.value;
+
+            if (!container || !countContainer) {
+                console.error('NFT container or count container not found');
+                return;
+            }
 
             countContainer.innerHTML = '';
             container.className = `nft-container ${displayMode}-mode ${cardSize}-size`;
@@ -796,11 +815,9 @@
             countContainer.appendChild(countElement);
 
             if (displayMode === 'thumbnail') {
-                // Calculate square grid size
                 const gridSize = Math.ceil(Math.sqrt(assets.length));
                 container.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
 
-                // Add NFTs
                 assets.forEach(asset => {
                     const card = document.createElement('div');
                     card.className = 'nft-card';
@@ -814,7 +831,6 @@
                     container.appendChild(card);
                 });
 
-                // Add empty cells to complete the square
                 const totalCells = gridSize * gridSize;
                 for (let i = assets.length; i < totalCells; i++) {
                     const emptyCard = document.createElement('div');
@@ -822,7 +838,6 @@
                     container.appendChild(emptyCard);
                 }
             } else {
-                // Full mode (unchanged)
                 assets.forEach(asset => {
                     const card = document.createElement('div');
                     card.className = 'nft-card';
@@ -868,6 +883,7 @@
 
         // Setup event listeners
         function setupEventListeners() {
+            console.log('Setting up event listeners');
             const searchButton = document.getElementById('searchButton');
             const usernameInput = document.getElementById('usernameInput');
 
