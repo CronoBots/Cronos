@@ -24,7 +24,7 @@
             --color2: var(--bg-light);
             --text-dark: var(--text-light);
             --collection-bg: #fff;
-            --shadow: 0 2px 4px rgba(0,0,0,0.1);
+            --shadow: 0 2px 4px rgba( tempered,0,0,0.1);
             --color1: #e04e2d;
         }
 
@@ -255,14 +255,8 @@
             gap: 20px;
             width: 100%;
             margin: 0 auto;
-            opacity: 1;
-            animation: fadeIn 0.5s ease-in;
             justify-content: center;
             box-sizing: border-box;
-        }
-
-        .nft-container.changing {
-            transition: none !important;
         }
 
         .nft-container.small-size {
@@ -283,12 +277,12 @@
             box-shadow: var(--shadow);
             padding: 15px;
             text-align: center;
-            transition: transform 0.2s;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             box-sizing: border-box;
+            overflow: hidden;
         }
 
         .nft-card:hover {
@@ -299,12 +293,11 @@
             width: 100%;
             max-width: 200px;
             height: auto;
-            border-radius: 15px;
+            border-radius: 10px;
             margin-bottom: 10px;
             object-fit: cover;
             aspect-ratio: 1 / 1;
             display: block;
-            transition: none;
         }
 
         .nft-card h3 {
@@ -330,7 +323,6 @@
             padding: 0;
             justify-content: center;
             justify-items: center;
-            width: 100%;
         }
 
         .nft-container.thumbnail-mode .nft-card {
@@ -340,20 +332,17 @@
             box-shadow: none;
             border: none;
             border-radius: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            overflow: hidden;
         }
 
         .nft-container.thumbnail-mode .nft-card img {
-            max-width: 100%;
-            border-radius: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            aspect-ratio: 1 / 1;
+            border-radius: 0;
             margin: 0;
             padding: 0;
+            object-fit: cover;
+            aspect-ratio: 1 / 1;
             display: block;
         }
 
@@ -732,47 +721,6 @@
             }
         }
 
-        // Lazy loading for non-GIF images
-        function refreshLazyLoading() {
-            console.log('refreshLazyLoading called');
-            const images = document.querySelectorAll('img.lazy:not([src$=".gif"])');
-            const observer = new IntersectionObserver((entries, observer) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const img = entry.target;
-                        img.src = img.dataset.src;
-                        img.classList.remove('lazy');
-                        observer.unobserve(img);
-                        console.log(`Image loaded: ${img.src}`);
-                    }
-                });
-            }, {
-                rootMargin: '0px 0px 10% 0px',
-                threshold: 0.1
-            });
-
-            images.forEach(img => {
-                observer.observe(img);
-                if (img.getBoundingClientRect().top < window.innerHeight) {
-                    img.src = img.dataset.src;
-                    img.classList.remove('lazy');
-                    observer.unobserve(img);
-                }
-            });
-        }
-
-        function setupLazyLoading() {
-            refreshLazyLoading();
-        }
-
-        // Force grid recalculation
-        function forceGridRecalculation(container) {
-            console.log('forceGridRecalculation called');
-            container.style.display = 'none';
-            void container.offsetHeight;
-            container.style.display = 'grid';
-        }
-
         // Fetch with cache
         async function fetchWithCache(key, fetchFn) {
             console.log(`fetchWithCache called for key: ${key}`);
@@ -1011,16 +959,10 @@
                 return;
             }
 
-            console.log(`Applying card size: ${cardSize}`);
+            console.log(`Applying display mode: ${displayMode}, card size: ${cardSize}`);
             countContainer.innerHTML = '';
-            container.classList.add('changing');
             container.className = `nft-container ${displayMode}-mode ${cardSize}-size`;
             container.innerHTML = '';
-
-            setTimeout(() => {
-                container.classList.remove('changing');
-                forceGridRecalculation(container);
-            }, 100);
 
             const countElement = document.createElement('p');
             countElement.className = 'nft-count';
@@ -1042,20 +984,16 @@
                     card.className = 'nft-card';
 
                     const img = document.createElement('img');
-                    img.dataset.src = asset.main?.url || '/assets/placeholder.svg';
+                    img.src = asset.main?.url || '/assets/placeholder.svg';
                     img.alt = asset.name || 'NFT Image';
                     img.decoding = 'async';
                     img.onerror = () => {
-                        console.warn(`Failed to load image: ${img.dataset.src}, using fallback`);
+                        console.warn(`Failed to load image: ${img.src}, using fallback`);
                         img.src = '/assets/placeholder.svg';
-                        img.classList.remove('lazy');
                     };
                     img.sizes = '(max-width: 768px) 80px, 200px';
                     if (asset.main?.url?.endsWith('.gif')) {
                         console.log(`GIF detected: ${asset.main.url}`);
-                        img.src = img.dataset.src;
-                    } else {
-                        img.classList.add('lazy');
                     }
 
                     card.appendChild(img);
@@ -1075,20 +1013,16 @@
                     card.className = 'nft-card';
 
                     const img = document.createElement('img');
-                    img.dataset.src = asset.main?.url || '/assets/placeholder.svg';
+                    img.src = asset.main?.url || '/assets/placeholder.svg';
                     img.alt = asset.name || 'NFT Image';
                     img.decoding = 'async';
                     img.onerror = () => {
-                        console.warn(`Failed to load image: ${img.dataset.src}, using fallback`);
+                        console.warn(`Failed to load image: ${img.src}, using fallback`);
                         img.src = '/assets/placeholder.svg';
-                        img.classList.remove('lazy');
                     };
                     img.sizes = '(max-width: 768px) 80px, 200px';
                     if (asset.main?.url?.endsWith('.gif')) {
                         console.log(`GIF detected: ${asset.main.url}`);
-                        img.src = img.dataset.src;
-                    } else {
-                        img.classList.add('lazy');
                     }
 
                     const title = document.createElement('h3');
@@ -1097,24 +1031,16 @@
                     title.innerHTML = highlightedName;
 
                     card.appendChild(img);
-                    container.appendChild(title);
-
+                    card.appendChild(title);
                     container.appendChild(card);
                 });
             }
-
-            refreshLazyLoading();
         }
 
         // Update display
         function updateDisplay() {
             console.log('updateDisplay called');
             filterNFTs();
-            setTimeout(() => {
-                const container = document.getElementById('nftContainer');
-                if (container) forceGridRecalculation(container);
-                refreshLazyLoading();
-            }, 100);
         }
 
         // Setup event listeners
