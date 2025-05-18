@@ -216,7 +216,7 @@
             gap: 10px;
             align-items: flex-end;
             min-width: 200px;
-            margin-right: 30px; /* Écart augmenté pour les filtres */
+            margin-right: 30px;
         }
 
         .controls div {
@@ -335,10 +335,17 @@
             gap: 0;
             row-gap: 0;
             column-gap: 0;
+            grid-gap: 0; /* Renforcer l'absence d'écart */
             margin: 0 auto;
             padding: 0;
             justify-content: center;
             justify-items: center;
+        }
+
+        .nft-container.thumbnail-mode a {
+            display: block;
+            margin: 0;
+            padding: 0;
         }
 
         .nft-container.thumbnail-mode .nft-card {
@@ -681,7 +688,7 @@
                     }
                 }
             }
-        `;
+        `
 
         const nftQuery = `
             query GetProfileAssets($ownerId: ID!, $first: Int!, $skip: Int!) {
@@ -1020,8 +1027,8 @@
             const countElement = document.createElement('p');
             countElement.className = 'nft-count';
             countElement.innerHTML = selectedCollection
-                ? `${currentUsername} has <span class="count">${assets.length}</span> assets on this collection.`
-                : `${currentDisplayName} has <span class="count">${assets.length}</span> assets.`;
+                ? `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets on this collection.`
+                : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets.`;
             countContainer.appendChild(countElement);
 
             if (displayMode === 'thumbnail') {
@@ -1029,7 +1036,7 @@
                 const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
                 const totalWidth = gridSize * cardWidth;
                 container.style.width = `${totalWidth}px`;
-                container.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+                container.style.gridTemplateColumns = `repeat(${gridSize}, ${cardWidth}px)`;
 
                 assets.forEach(asset => {
                     const imageUrl = asset.main?.url;
