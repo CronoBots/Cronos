@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Search and explore NFT profiles on Cronos with CronoBots">
     <title>CronoBots</title>
-    <link rel="icon" type="image/png" href="/assets/favicon.png">
+    <link rel="icon" type="image/png" href="LOGO.png">
     <link rel="preload" href="CRONOBOTS.png" as="image">
     <style>
         :root {
@@ -216,6 +216,7 @@
             gap: 10px;
             align-items: flex-end;
             min-width: 200px;
+            margin-right: 20px; /* Écart droit symétrique au padding gauche de .main-content */
         }
 
         .controls div {
@@ -282,6 +283,7 @@
             justify-content: center;
             box-sizing: border-box;
             overflow: hidden;
+            cursor: pointer; /* Indique que la carte est cliquable */
         }
 
         .nft-card:hover {
@@ -536,6 +538,7 @@
             .controls {
                 align-items: center;
                 width: 100%;
+                margin-right: 0; /* Pas de marge droite en mobile */
             }
 
             .controls div {
@@ -943,7 +946,7 @@
             profileHeader.style.display = 'block';
         }
 
-        // Populate collection filter
+        // Populate collection filter with sorting by NFT count
         function populateCollectionFilter(nfts) {
             console.log('populateCollectionFilter called', nfts);
             const collectionFilter = document.getElementById('collectionFilter');
@@ -951,12 +954,27 @@
                 console.error('Collection filter not found');
                 return;
             }
-            const collections = [...new Set(nfts.map(nft => nft.collection?.name).filter(Boolean))];
+
+            // Compter les NFTs par collection
+            const collectionCounts = {};
+            nfts.forEach(nft => {
+                const collectionName = nft.collection?.name;
+                if (collectionName) {
+                    collectionCounts[collectionName] = (collectionCounts[collectionName] || 0) + 1;
+                }
+            });
+
+            // Trier les collections par nombre de NFTs (décroissant)
+            const sortedCollections = Object.keys(collectionCounts).sort((a, b) => {
+                return collectionCounts[b] - collectionCounts[a];
+            });
+
+            // Remplir le select
             collectionFilter.innerHTML = '<option value="">All Collections</option>';
-            collections.forEach(collection => {
+            sortedCollections.forEach(collection => {
                 const option = document.createElement('option');
                 option.value = collection;
-                option.textContent = collection;
+                option.textContent = `${collection} (${collectionCounts[collection]})`; // Afficher le compte
                 collectionFilter.appendChild(option);
             });
         }
@@ -1059,8 +1077,14 @@
                         }
                     }
 
+                    // Envelopper la carte dans un lien
+                    const link = document.createElement('a');
+                    link.href = `https://crypto.com/nft/asset/${asset.id}`; // URL hypothétique
+                    link.target = '_blank';
+                    link.appendChild(card);
+
                     card.appendChild(mediaElement);
-                    container.appendChild(card);
+                    container.appendChild(link);
                 });
 
                 const totalCells = gridSize * gridSize;
@@ -1121,9 +1145,15 @@
                     const highlightedName = name.replace(/(#|\d+)/g, '<span class="highlight">$1</span>');
                     title.innerHTML = highlightedName;
 
+                    // Envelopper la carte dans un lien
+                    const link = document.createElement('a');
+                    link.href = `https://crypto.com/nft/asset/${asset.id}`; // URL hypothétique
+                    link.target = '_blank';
+                    link.appendChild(card);
+
                     card.appendChild(mediaElement);
                     card.appendChild(title);
-                    container.appendChild(card);
+                    container.appendChild(link);
                 });
             }
         }
