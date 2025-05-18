@@ -182,7 +182,7 @@
             font-size: 14px;
             transition: var(--transition);
             width: 100%;
-            max-width: 200px; /* Uniform size for all filters */
+            max-width: 200px;
             box-sizing: border-box;
             background-color: var(--color1);
             color: var(--text-dark);
@@ -240,6 +240,7 @@
 
         .nft-container.thumbnail-mode {
             gap: 0;
+            /* Grid columns set dynamically in JS */
         }
 
         .nft-container.thumbnail-mode .nft-card {
@@ -247,6 +248,22 @@
             background: none;
             box-shadow: none;
             border-radius: 0;
+            aspect-ratio: 1/1; /* Ensure square shape */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nft-container.thumbnail-mode .nft-card img {
+            border-radius: 0; /* No rounded corners in thumbnail mode */
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensure image fills square */
+        }
+
+        .nft-container.thumbnail-mode .nft-card.empty {
+            background: transparent;
+            aspect-ratio: 1/1;
         }
 
         .loading, .error, .no-results {
@@ -268,7 +285,7 @@
         }
 
         .timestamp {
-            display: none; /* Hide timestamp */
+            display: none;
         }
 
         .nft-count {
@@ -349,7 +366,7 @@
             }
 
             .navbar-search input {
-                max-width: 200px; /* Smaller search bar on mobile */
+                max-width: 200px;
             }
 
             .navbar-toggle {
@@ -373,7 +390,7 @@
             }
 
             .controls select {
-                max-width: none; /* Full width on mobile for consistency */
+                max-width: none;
             }
 
             .nft-container.small-size {
@@ -422,9 +439,7 @@
             <p id="bio" style="display: none;"></p>
             <p id="twitterLink" style="display: none;">
                 <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
-                    <img src="https://
-
-upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
                 </a>
             </p>
         </div>
@@ -446,6 +461,7 @@ upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.sv
             <div>
                 <label for="cardSize">Card Size</label>
                 <select id="cardSize" onchange="updateDisplay()">
+                    <摘要>
                     <option value="small">Small</option>
                     <option value="medium" selected>Medium</option>
                     <option value="large">Large</option>
@@ -463,7 +479,6 @@ upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.sv
         <div class="timestamp" id="timestamp"></div>
         <div class="loading" id="loading" style="display: none;">Loading...</div>
         <div class="error" id="error" role="alert"></div>
-        <div Dark Mode
         <div class="no-results" id="noResults" style="display: none;">No results found</div>
         <div id="nftCountContainer"></div>
         <div class="nft-container" id="nftContainer"></div>
@@ -627,7 +642,7 @@ upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.sv
 
             const username = sanitizeInput(usernameInput.value.trim());
             const loadingDiv = document.getElementById('loading');
-            const errorDiv = document.getElementById('error');
+            the errorDiv = document.getElementById('error');
             const noResultsDiv = document.getElementById('noResults');
 
             if (!username) {
@@ -698,9 +713,7 @@ upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.sv
         function updateProfileUI(profileData) {
             console.log('updateProfileUI called', profileData);
             const profileHeader = document.getElementById('profileHeader');
-            const profilePicture = document
-
-.getElementById('profilePicture');
+            const profilePicture = document.getElementById('profilePicture');
             const username = document.getElementById('username');
             const displayName = document.getElementById('displayName');
             const bio = document.getElementById('bio');
@@ -782,16 +795,43 @@ upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.sv
                 : `${currentDisplayName} has <span class="count">${assets.length}</span> assets.`;
             countContainer.appendChild(countElement);
 
-            assets.forEach(asset => {
-                const card = document.createElement('div');
-                card.className = 'nft-card';
+            if (displayMode === 'thumbnail') {
+                // Calculate square grid size
+                const gridSize = Math.ceil(Math.sqrt(assets.length));
+                container.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
 
-                const img = document.createElement('img');
-                img.src = asset.main?.url || 'https://via.placeholder.com/150';
-                img.alt = asset.name || 'NFT Image';
-                img.loading = 'lazy';
+                // Add NFTs
+                assets.forEach(asset => {
+                    const card = document.createElement('div');
+                    card.className = 'nft-card';
 
-                if (displayMode === 'full') {
+                    const img = document.createElement('img');
+                    img.src = asset.main?.url || 'https://via.placeholder.com/150';
+                    img.alt = asset.name || 'NFT Image';
+                    img.loading = 'lazy';
+
+                    card.appendChild(img);
+                    container.appendChild(card);
+                });
+
+                // Add empty cells to complete the square
+                const totalCells = gridSize * gridSize;
+                for (let i = assets.length; i < totalCells; i++) {
+                    const emptyCard = document.createElement('div');
+                    emptyCard.className = 'nft-card empty';
+                    container.appendChild(emptyCard);
+                }
+            } else {
+                // Full mode (unchanged)
+                assets.forEach(asset => {
+                    const card = document.createElement('div');
+                    card.className = 'nft-card';
+
+                    const img = document.createElement('img');
+                    img.src = asset.main?.url || 'https://via.placeholder.com/150';
+                    img.alt = asset.name || 'NFT Image';
+                    img.loading = 'lazy';
+
                     const title = document.createElement('h3');
                     title.textContent = asset.name || 'Unnamed NFT';
 
@@ -814,12 +854,10 @@ upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.sv
                     card.appendChild(collection);
                     card.appendChild(type);
                     card.appendChild(price);
-                } else {
-                    card.appendChild(img);
-                }
 
-                container.appendChild(card);
-            });
+                    container.appendChild(card);
+                });
+            }
         }
 
         // Update display
