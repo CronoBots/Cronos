@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Search and explore NFT profiles on Cronos with CronoBots">
-    <title>NFT Profile - User Search | CronoBots</title>
+    <title>CronoBots | Cronos Development</title>
     <link rel="icon" type="image/png" href="/assets/favicon.png">
     <link rel="preload" href="CRONOBOTS.png" as="image">
     <link rel="preload" href="/assets/placeholder.svg" as="image">
@@ -585,10 +585,11 @@
 
         // Hamburger menu toggle
         function toggleMenu() {
-            console.log('Toggling menu');
+            console.log('toggleMenu called');
             const menu = document.getElementById('navbarMenu');
             if (menu) {
                 menu.classList.toggle('active');
+                console.log('Menu toggled:', menu.classList.contains('active') ? 'visible' : 'hidden');
             } else {
                 console.error('Navbar menu not found');
             }
@@ -612,28 +613,38 @@
 
         // Theme toggle
         function toggleTheme() {
-            console.log('Toggling theme');
+            console.log('toggleTheme called');
             const select = document.getElementById('themeSelect');
-            const newTheme = select.value;
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
+            if (select) {
+                const newTheme = select.value;
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                console.log('Theme set to:', newTheme);
+            } else {
+                console.error('Theme select not found');
+            }
         }
 
         // Fetch with cache
         async function fetchWithCache(key, fetchFn) {
-            console.log(`Fetching with cache for key: ${key}`);
+            console.log(`fetchWithCache called for key: ${key}`);
             if (cache.has(key)) {
                 console.log(`Cache hit for ${key}`);
                 return cache.get(key);
             }
-            const data = await fetchFn();
-            cache.set(key, data);
-            return data;
+            try {
+                const data = await fetchFn();
+                cache.set(key, data);
+                return data;
+            } catch (error) {
+                console.error(`Fetch error for ${key}:`, error.message);
+                throw error;
+            }
         }
 
         // Fetch all NFTs with pagination
         async function fetchAllNFTs(ownerId) {
-            console.log(`Fetching NFTs for ownerId: ${ownerzewski
+            console.log(`Fetching NFTs for ownerId: ${ownerId}`);
             const first = 60;
             let skip = 0;
             let allAssets = [];
@@ -683,8 +694,13 @@
             const noResultsDiv = document.getElementById('noResults');
 
             if (!usernameInput || !loadingDiv || !errorDiv || !noResultsDiv) {
-                console.error('Required DOM elements not found');
-                errorDiv.textContent = 'Internal error: UI elements missing.';
+                console.error('Required DOM elements not found:', {
+                    usernameInput: !!usernameInput,
+                    loadingDiv: !!loadingDiv,
+                    errorDiv: !!errorDiv,
+                    noResultsDiv: !!noResultsDiv
+                });
+                if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
                 return;
             }
 
@@ -765,7 +781,15 @@
             const twitterUrl = document.getElementById('twitterUrl');
 
             if (!profileHeader || !profilePicture || !username || !displayName || !bio || !twitterLink || !twitterUrl) {
-                console.error('Profile UI elements not found');
+                console.error('Profile UI elements not found:', {
+                    profileHeader: !!profileHeader,
+                    profilePicture: !!profilePicture,
+                    username: !!username,
+                    displayName: !!displayName,
+                    bio: !!bio,
+                    twitterLink: !!twitterLink,
+                    twitterUrl: !!twitterUrl
+                });
                 return;
             }
 
@@ -791,7 +815,7 @@
 
         // Populate collection filter
         function populateCollectionFilter(nfts) {
-            console.log('Populating collection filter', nfts);
+            console.log('populateCollectionFilter called', nfts);
             const collectionFilter = document.getElementById('collectionFilter');
             if (!collectionFilter) {
                 console.error('Collection filter not found');
@@ -809,11 +833,14 @@
 
         // Filter and sort NFTs
         function filterNFTs() {
-            console.log('Filtering NFTs');
+            console.log('filterNFTs called');
             const collectionFilter = document.getElementById('collectionFilter');
             const sortBy = document.getElementById('sortBy');
             if (!collectionFilter || !sortBy) {
-                console.error('Filter elements not found');
+                console.error('Filter elements not found:', {
+                    collectionFilter: !!collectionFilter,
+                    sortBy: !!sortBy
+                });
                 return;
             }
             const collectionValue = collectionFilter.value;
@@ -836,14 +863,17 @@
 
         // Display NFTs
         function displayNFTs(assets, selectedCollection) {
-            console.log(`Displaying ${assets.length} NFTs`);
+            console.log(`displayNFTs called with ${assets.length} assets`);
             const container = document.getElementById('nftContainer');
             const countContainer = document.getElementById('nftCountContainer');
             const displayMode = document.getElementById('displayMode')?.value;
             const cardSize = document.getElementById('cardSize')?.value;
 
             if (!container || !countContainer) {
-                console.error('NFT container or count container not found');
+                console.error('NFT container or count container not found:', {
+                    container: !!container,
+                    countContainer: !!countContainer
+                });
                 return;
             }
 
@@ -927,19 +957,35 @@
 
         // Update display
         function updateDisplay() {
-            console.log('Updating display');
+            console.log('updateDisplay called');
             filterNFTs();
         }
 
         // Setup event listeners
         function setupEventListeners() {
-            console.log('Setting up event listeners');
+            console.log('setupEventListeners called');
             const searchButton = document.getElementById('searchButton');
             const usernameInput = document.getElementById('usernameInput');
             const themeSelect = document.getElementById('themeSelect');
+            const collectionFilter = document.getElementById('collectionFilter');
+            const displayMode = document.getElementById('displayMode');
+            const cardSize = document.getElementById('cardSize');
+            const sortBy = document.getElementById('sortBy');
 
-            if (!searchButton || !usernameInput || !themeSelect) {
-                console.error('Search button, input, or theme select not found');
+            console.log('DOM elements found:', {
+                searchButton: !!searchButton,
+                usernameInput: !!usernameInput,
+                themeSelect: !!themeSelect,
+                collectionFilter: !!collectionFilter,
+                displayMode: !!displayMode,
+                cardSize: !!cardSize,
+                sortBy: !!sortBy
+            });
+
+            if (!searchButton || !usernameInput || !themeSelect || !collectionFilter || !displayMode || !cardSize || !sortBy) {
+                console.error('One or more DOM elements not found');
+                const errorDiv = document.getElementById('error');
+                if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
                 return;
             }
 
@@ -948,15 +994,45 @@
                 fetchProfileAndNFTs();
             });
 
-            const savedTheme = localStorage.getItem('theme') || 'dark';
-            themeSelect.value = savedTheme;
+            themeSelect.addEventListener('change', () => {
+                console.log('Theme select changed');
+                toggleTheme();
+            });
+
+            collectionFilter.addEventListener('change', () => {
+                console.log('Collection filter changed');
+                filterNFTs();
+            });
+
+            displayMode.addEventListener('change', () => {
+                console.log('Display mode changed');
+                updateDisplay();
+            });
+
+            cardSize.addEventListener('change', () => {
+                console.log('Card size changed');
+                updateDisplay();
+            });
+
+            sortBy.addEventListener('change', () => {
+                console.log('Sort by changed');
+                filterNFTs();
+            });
+
+            console.log('Event listeners attached');
         }
 
         // Initialize event listeners and theme on page load
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('DOM loaded, setting up event listeners');
+            console.log('DOMContentLoaded event fired');
             const savedTheme = localStorage.getItem('theme') || 'dark';
             document.documentElement.setAttribute('data-theme', savedTheme);
+            const themeSelect = document.getElementById('themeSelect');
+            if (themeSelect) {
+                themeSelect.value = savedTheme;
+            } else {
+                console.error('themeSelect not found during initialization');
+            }
             setupEventListeners();
         });
     </script>
