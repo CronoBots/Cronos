@@ -24,7 +24,7 @@
             --color2: var(--bg-light);
             --text-dark: var(--text-light);
             --collection-bg: #fff;
-            --shadow: 0 2px 4px rgba( tempered,0,0,0.1);
+            --shadow: 0 2px 4px rgba(0,0,0,0.1);
             --color1: #e04e2d;
         }
 
@@ -259,16 +259,16 @@
             box-sizing: border-box;
         }
 
-        .nft-container.small-size {
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        .nft-container.small-size .nft-card {
+            max-width: 110px;
         }
 
-        .nft-container.medium-size {
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        .nft-container.medium-size .nft-card {
+            max-width: 180px;
         }
 
-        .nft-container.large-size {
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        .nft-container.large-size .nft-card {
+            max-width: 280px;
         }
 
         .nft-card {
@@ -283,6 +283,8 @@
             justify-content: center;
             box-sizing: border-box;
             overflow: hidden;
+            width: 100%;
+            max-width: 280px;
         }
 
         .nft-card:hover {
@@ -291,11 +293,12 @@
 
         .nft-card img {
             width: 100%;
-            max-width: 200px;
+            max-width: 100%;
             height: auto;
+            max-height: 200px;
             border-radius: 10px;
             margin-bottom: 10px;
-            object-fit: cover;
+            object-fit: contain;
             aspect-ratio: 1 / 1;
             display: block;
         }
@@ -333,15 +336,18 @@
             border: none;
             border-radius: 0;
             overflow: hidden;
+            width: 100%;
+            height: 100%;
         }
 
         .nft-container.thumbnail-mode .nft-card img {
             width: 100%;
             height: 100%;
+            max-height: none;
             border-radius: 0;
             margin: 0;
             padding: 0;
-            object-fit: cover;
+            object-fit: contain;
             aspect-ratio: 1 / 1;
             display: block;
         }
@@ -517,16 +523,16 @@
                 width: 100%;
             }
 
-            .nft-container.small-size {
-                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            .nft-container.small-size .nft-card {
+                max-width: 80px;
             }
 
-            .nft-container.medium-size {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            .nft-container.medium-size .nft-card {
+                max-width: 120px;
             }
 
-            .nft-container.large-size {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            .nft-container.large-size .nft-card {
+                max-width: 150px;
             }
 
             .nft-container.thumbnail-mode {
@@ -721,6 +727,17 @@
             }
         }
 
+        // Validate image URL
+        async function validateImageUrl(url) {
+            try {
+                const response = await fetch(url, { method: 'HEAD' });
+                return response.ok;
+            } catch (error) {
+                console.warn(`Image URL validation failed: ${url}, error: ${error.message}`);
+                return false;
+            }
+        }
+
         // Fetch with cache
         async function fetchWithCache(key, fetchFn) {
             console.log(`fetchWithCache called for key: ${key}`);
@@ -849,7 +866,7 @@
 
                 if (allNFTs.length > 0) {
                     console.log(`Displaying ${allNFTs.length} NFTs`);
-                    updateDisplay();
+                    await updateDisplay();
                     populateCollectionFilter(allNFTs);
                     document.getElementById('collectionFilter').disabled = false;
                 } else {
@@ -927,7 +944,7 @@
         }
 
         // Filter NFTs
-        function filterNFTs() {
+        async function filterNFTs() {
             console.log('filterNFTs called');
             const collectionFilter = document.getElementById('collectionFilter');
             if (!collectionFilter) {
@@ -940,11 +957,11 @@
                 ? allNFTs.filter(nft => nft.collection?.name === collectionValue)
                 : [...allNFTs];
 
-            displayNFTs(filteredNFTs, collectionValue);
+            await displayNFTs(filteredNFTs, collectionValue);
         }
 
         // Display NFTs
-        function displayNFTs(assets, selectedCollection) {
+        async function displayNFTs(assets, selectedCollection) {
             console.log(`displayNFTs called with ${assets.length} assets`);
             const container = document.getElementById('nftContainer');
             const countContainer = document.getElementById('nftCountContainer');
@@ -974,31 +991,30 @@
             if (displayMode === 'thumbnail') {
                 const gridSize = Math.ceil(Math.sqrt(assets.length));
                 const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
-                const totalWidth = gridSize * cardWidth;
-                container.style.width = `${totalWidth}px`;
-                container.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+                container.style.width = `${gridSize * cardWidth}px`;
+                container.style.gridTemplateColumns = `repeat(${gridSize}, ${cardWidth}px)`;
 
-                assets.forEach(asset => {
+                for (const asset of assets) {
                     console.log(`Loading NFT image: ${asset.main?.url || '/assets/placeholder.svg'}`);
                     const card = document.createElement('div');
                     card.className = 'nft-card';
 
                     const img = document.createElement('img');
-                    img.src = asset.main?.url || '/assets/placeholder.svg';
+                    const imageUrl = asset.main?.url || '/assets/placeholder.svg';
+                    const isValid = await validateImageUrl(imageUrl);
+                    img.src = isValid ? imageUrl : '/assets/placeholder.svg';
                     img.alt = asset.name || 'NFT Image';
-                    img.decoding = 'async';
                     img.onerror = () => {
                         console.warn(`Failed to load image: ${img.src}, using fallback`);
                         img.src = '/assets/placeholder.svg';
                     };
-                    img.sizes = '(max-width: 768px) 80px, 200px';
-                    if (asset.main?.url?.endsWith('.gif')) {
-                        console.log(`GIF detected: ${asset.main.url}`);
+                    if (imageUrl.endsWith('.gif')) {
+                        console.log(`GIF detected: ${imageUrl}, valid: ${isValid}`);
                     }
 
                     card.appendChild(img);
                     container.appendChild(card);
-                });
+                }
 
                 const totalCells = gridSize * gridSize;
                 for (let i = assets.length; i < totalCells; i++) {
@@ -1007,22 +1023,22 @@
                     container.appendChild(emptyCard);
                 }
             } else {
-                assets.forEach(asset => {
+                for (const asset of assets) {
                     console.log(`Loading NFT image: ${asset.main?.url || '/assets/placeholder.svg'}`);
                     const card = document.createElement('div');
                     card.className = 'nft-card';
 
                     const img = document.createElement('img');
-                    img.src = asset.main?.url || '/assets/placeholder.svg';
+                    const imageUrl = asset.main?.url || '/assets/placeholder.svg';
+                    const isValid = await validateImageUrl(imageUrl);
+                    img.src = isValid ? imageUrl : '/assets/placeholder.svg';
                     img.alt = asset.name || 'NFT Image';
-                    img.decoding = 'async';
                     img.onerror = () => {
                         console.warn(`Failed to load image: ${img.src}, using fallback`);
                         img.src = '/assets/placeholder.svg';
                     };
-                    img.sizes = '(max-width: 768px) 80px, 200px';
-                    if (asset.main?.url?.endsWith('.gif')) {
-                        console.log(`GIF detected: ${asset.main.url}`);
+                    if (imageUrl.endsWith('.gif')) {
+                        console.log(`GIF detected: ${imageUrl}, valid: ${isValid}`);
                     }
 
                     const title = document.createElement('h3');
@@ -1033,14 +1049,14 @@
                     card.appendChild(img);
                     card.appendChild(title);
                     container.appendChild(card);
-                });
+                }
             }
         }
 
         // Update display
-        function updateDisplay() {
+        async function updateDisplay() {
             console.log('updateDisplay called');
-            filterNFTs();
+            await filterNFTs();
         }
 
         // Setup event listeners
