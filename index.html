@@ -130,6 +130,7 @@
 
         .main-content {
             padding: 20px;
+            padding-bottom: 150px; /* Espace pour le footer fixe */
         }
 
         h1, h2, h3 {
@@ -250,7 +251,6 @@
             display: grid;
             gap: 20px;
             width: 100%;
-            max-width: 1200px;
             margin: 0 auto;
             opacity: 1;
             animation: fadeIn 0.5s ease-in;
@@ -259,15 +259,15 @@
         }
 
         .nft-container.small-size {
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
         }
 
         .nft-container.medium-size {
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
         }
 
         .nft-container.large-size {
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
         }
 
         .nft-card {
@@ -301,9 +301,6 @@
         .nft-card h3 {
             font-size: 0.9em;
             margin: 5px 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
             width: 100%;
             text-align: left;
         }
@@ -322,7 +319,6 @@
             justify-content: center;
             justify-items: center;
             width: 100%;
-            max-width: 1200px;
         }
 
         .nft-container.thumbnail-mode .nft-card {
@@ -398,11 +394,16 @@
         }
 
         .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
             text-align: center;
-            margin-top: 50px;
             padding: 20px;
+            background-color: var(--collection-bg);
             border-top: 1px solid #444;
             color: var(--text-dark);
+            z-index: 1000;
         }
 
         .footer-logo {
@@ -533,7 +534,6 @@
 
             .nft-container.thumbnail-mode {
                 width: 100%;
-                max-width: 100%;
             }
 
             .nft-container.thumbnail-mode .nft-card img {
@@ -614,19 +614,19 @@
         <div class="no-results" id="noResults" style="display: none;">No results found</div>
         <div id="nftCountContainer"></div>
         <div class="nft-container" id="nftContainer"></div>
-
-        <footer class="footer">
-            <img src="CRONOBOTS.png" alt="Cronobots Logo" class="footer-logo">
-            <p>CRONOBOTS | CRONOS DEVELOPMENT</p>
-            <div class="theme-toggle">
-                <label for="themeSelect">Theme:</label>
-                <select id="themeSelect" onchange="toggleTheme()">
-                    <option value="dark">Dark</option>
-                    <option value="light">Light</option>
-                </select>
-            </div>
-        </footer>
     </div>
+
+    <footer class="footer">
+        <img src="CRONOBOTS.png" alt="Cronobots Logo" class="footer-logo">
+        <p>CRONOBOTS | CRONOS DEVELOPMENT</p>
+        <div class="theme-toggle">
+            <label for="themeSelect">Theme:</label>
+            <select id="themeSelect" onchange="toggleTheme()">
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+            </select>
+        </div>
+    </footer>
 
     <script>
         // Cache for data
@@ -996,8 +996,8 @@
 
             if (displayMode === 'thumbnail') {
                 const gridSize = Math.ceil(Math.sqrt(assets.length));
-                const cardWidth = cardSize === 'small' ? 120 : cardSize === 'large' ? 300 : 200;
-                const totalWidth = Math.min(gridSize * cardWidth, window.innerWidth);
+                const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
+                const totalWidth = gridSize * cardWidth;
                 container.style.width = `${totalWidth}px`;
                 container.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
 
@@ -1028,7 +1028,7 @@
                 for (let i = assets.length; i < totalCells; i++) {
                     const emptyCard = document.createElement('div');
                     emptyCard.className = 'nft-card empty';
-                    container.appendChild(emptyCard);
+                    container.appendChild(card);
                 }
             } else {
                 assets.forEach(asset => {
