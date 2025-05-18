@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -91,6 +91,7 @@
             font-size: 14px;
             width: 100%;
             max-width: 250px;
+            font-family: 'Geomanist-Bold', sans-serif;
         }
 
         .navbar-search button {
@@ -103,6 +104,7 @@
             text-transform: uppercase;
             font-weight: 700;
             transition: var(--transition);
+            font-family: 'Geomanist-Bold', sans-serif;
         }
 
         .navbar-search button:hover {
@@ -170,6 +172,7 @@
             display: block;
             font-size: 0.9em;
             margin-bottom: 5px;
+            font-family: 'Geomanist-Bold', sans-serif;
         }
 
         .controls input, .controls button, .controls select {
@@ -180,6 +183,7 @@
             transition: var(--transition);
             width: 100%;
             box-sizing: border-box;
+            font-family: 'Geomanist-Bold', sans-serif;
         }
 
         .controls button, .controls select {
@@ -391,9 +395,9 @@
             <img src="CRONOBOTS.png" alt="Cronobots Logo">
         </div>
         <div class="navbar-menu" id="navbarMenu">
-            <a href="#home" aria-label="Accueil">Accueil</a>
-            <a href="#search" aria-label="Recherche">Recherche</a>
-            <a href="#about" aria-label="À propos">À propos</a>
+            <a href="#home" aria-label="Home">Home</a>
+            <a href="#search" aria-label="Search">Search</a>
+            <a href="#about" aria-label="About">About</a>
         </div>
         <div class="navbar-search">
             <input type="text" id="usernameInput" placeholder="Enter username" aria-describedby="usernameHelp" />
@@ -465,13 +469,13 @@
     </div>
 
     <script>
-        // Cache pour les données
+        // Cache for data
         const cache = new Map();
         let allNFTs = [];
         let currentUsername = '';
         let currentDisplayName = '';
 
-        // Requêtes GraphQL
+        // GraphQL Queries
         const profileQuery = `
             query GetUser($id: ID!) {
                 public {
@@ -518,14 +522,14 @@
 
         const graphqlEndpoint = "https://crypto.com/nft-api/graphql";
 
-        // Gestion du menu hamburger
+        // Hamburger menu toggle
         function toggleMenu() {
             console.log('Toggling menu');
             const menu = document.getElementById('navbarMenu');
             menu.classList.toggle('active');
         }
 
-        // Ferme le menu lorsqu'on clique sur un lien
+        // Close menu on link click
         document.querySelectorAll('.navbar-menu a').forEach(link => {
             link.addEventListener('click', () => {
                 console.log('Menu link clicked');
@@ -539,14 +543,14 @@
             return input.replace(/[<>"'&]/g, '');
         }
 
-        // Toggle thème
+        // Theme toggle
         function toggleTheme() {
             console.log('Toggling theme');
             const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
             document.documentElement.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
-        }
+ Inkscape        }
 
-        // Fetch avec cache
+        // Fetch with cache
         async function fetchWithCache(key, fetchFn) {
             console.log(`Fetching with cache for key: ${key}`);
             if (cache.has(key)) {
@@ -558,7 +562,7 @@
             return data;
         }
 
-        // Fetch tous les NFTs avec pagination
+        // Fetch all NFTs with pagination
         async function fetchAllNFTs(ownerId) {
             console.log(`Fetching NFTs for ownerId: ${ownerId}`);
             const first = 60;
@@ -606,7 +610,7 @@
             return allAssets;
         }
 
-        // Fetch profile et NFTs
+        // Fetch profile and NFTs
         async function fetchProfileAndNFTs() {
             console.log('fetchProfileAndNFTs called');
             const usernameInput = document.getElementById('usernameInput');
@@ -687,7 +691,7 @@
             }
         }
 
-        // Mise à jour de l'UI du profil
+        // Update profile UI
         function updateProfileUI(profileData) {
             console.log('updateProfileUI called', profileData);
             const profileHeader = document.getElementById('profileHeader');
@@ -732,7 +736,7 @@
             });
         }
 
-        // Filtrer et trier les NFTs
+        // Filter and sort NFTs
         function filterNFTs() {
             console.log('Filtering NFTs');
             const collectionFilter = document.getElementById('collectionFilter').value;
@@ -753,7 +757,7 @@
             displayNFTs(filteredNFTs);
         }
 
-        // Afficher les NFTs
+        // Display NFTs
         function displayNFTs(assets) {
             console.log(`Displaying ${assets.length} NFTs`);
             const container = document.getElementById('nftContainer');
@@ -810,13 +814,13 @@
             });
         }
 
-        // Mettre à jour l'affichage
+        // Update display
         function updateDisplay() {
             console.log('Updating display');
             filterNFTs();
         }
 
-        // Réinitialiser la recherche
+        // Clear search
         function clearSearch() {
             console.log('Clearing search');
             document.getElementById('usernameInput').value = '';
@@ -835,7 +839,7 @@
             cache.clear();
         }
 
-        // Configurer les event listeners
+        // Setup event listeners
         function setupEventListeners() {
             const searchButton = document.getElementById('searchButton');
             const usernameInput = document.getElementById('usernameInput');
@@ -849,16 +853,9 @@
                 console.log('Search button clicked');
                 fetchProfileAndNFTs();
             });
-
-            let debounceTimer;
-            usernameInput.addEventListener('input', () => {
-                console.log('Input detected in usernameInput');
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(fetchProfileAndNFTs, 500);
-            });
         }
 
-        // Initialiser les event listeners au chargement de la page
+        // Initialize event listeners on page load
         document.addEventListener('DOMContentLoaded', () => {
             console.log('DOM loaded, setting up event listeners');
             setupEventListeners();
