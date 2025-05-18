@@ -175,32 +175,25 @@
             font-family: 'Geomanist-Bold', sans-serif;
         }
 
-        .controls input, .controls button, .controls select {
+        .controls select {
             padding: 8px;
             border-radius: 8px;
             border: none;
             font-size: 14px;
             transition: var(--transition);
             width: 100%;
+            max-width: 200px; /* Uniform size for all filters */
             box-sizing: border-box;
-            font-family: 'Geomanist-Bold', sans-serif;
-        }
-
-        .controls button, .controls select {
             background-color: var(--color1);
             color: var(--text-dark);
             cursor: pointer;
             text-transform: uppercase;
             font-weight: 700;
+            font-family: 'Geomanist-Bold', sans-serif;
         }
 
-        .controls button:hover, .controls select:hover {
+        .controls select:hover {
             transform: scale(1.05);
-        }
-
-        .controls button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
         }
 
         .nft-container {
@@ -275,9 +268,17 @@
         }
 
         .timestamp {
+            display: none; /* Hide timestamp */
+        }
+
+        .nft-count {
             text-align: center;
-            margin-top: 10px;
-            font-size: 14px;
+            font-size: 1.1em;
+        }
+
+        .nft-count .count {
+            font-weight: bold;
+            color: var(--color1);
         }
 
         .social-icon {
@@ -348,7 +349,7 @@
             }
 
             .navbar-search input {
-                max-width: none;
+                max-width: 200px; /* Smaller search bar on mobile */
             }
 
             .navbar-toggle {
@@ -369,6 +370,10 @@
 
             .controls {
                 grid-template-columns: 1fr;
+            }
+
+            .controls select {
+                max-width: none; /* Full width on mobile for consistency */
             }
 
             .nft-container.small-size {
@@ -395,8 +400,8 @@
             <img src="CRONOBOTS.png" alt="Cronobots Logo">
         </div>
         <div class="navbar-menu" id="navbarMenu">
-            <a href="#home" aria-label="Home">Home</a>
-            <a href="#search" aria-label="Search">Search</a>
+            <a href="#collections" aria-label="Collections">Collections</a>
+            <a href="#profiles" aria-label="Profiles">Profiles</a>
             <a href="#about" aria-label="About">About</a>
         </div>
         <div class="navbar-search">
@@ -417,14 +422,14 @@
             <p id="bio" style="display: none;"></p>
             <p id="twitterLink" style="display: none;">
                 <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
+                    <img src="https://
+
+upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
                 </a>
             </p>
         </div>
 
         <div class="controls">
-            <button onclick="fetchProfileAndNFTs()" id="refreshButton" disabled aria-label="Refresh data">Refresh</button>
-            <button onclick="clearSearch()" aria-label="Clear search">Clear</button>
             <div>
                 <label for="collectionFilter">Collection</label>
                 <select id="collectionFilter" onchange="filterNFTs()" disabled>
@@ -458,6 +463,7 @@
         <div class="timestamp" id="timestamp"></div>
         <div class="loading" id="loading" style="display: none;">Loading...</div>
         <div class="error" id="error" role="alert"></div>
+        <div Dark Mode
         <div class="no-results" id="noResults" style="display: none;">No results found</div>
         <div id="nftCountContainer"></div>
         <div class="nft-container" id="nftContainer"></div>
@@ -548,7 +554,7 @@
             console.log('Toggling theme');
             const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
             document.documentElement.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
- Inkscape        }
+        }
 
         // Fetch with cache
         async function fetchWithCache(key, fetchFn) {
@@ -623,7 +629,6 @@
             const loadingDiv = document.getElementById('loading');
             const errorDiv = document.getElementById('error');
             const noResultsDiv = document.getElementById('noResults');
-            const timestampDiv = document.getElementById('timestamp');
 
             if (!username) {
                 console.log('No username provided');
@@ -636,7 +641,6 @@
             loadingDiv.style.display = 'block';
             errorDiv.textContent = '';
             noResultsDiv.style.display = 'none';
-            timestampDiv.textContent = `Last updated: ${new Date().toLocaleString()}`;
 
             try {
                 const profileData = await fetchWithCache(`profile_${currentUsername}`, async () => {
@@ -678,7 +682,6 @@
                     updateDisplay();
                     populateCollectionFilter(allNFTs);
                     document.getElementById('collectionFilter').disabled = false;
-                    document.getElementById('refreshButton').disabled = false;
                 } else {
                     console.log('No NFTs found');
                     noResultsDiv.style.display = 'block';
@@ -695,7 +698,9 @@
         function updateProfileUI(profileData) {
             console.log('updateProfileUI called', profileData);
             const profileHeader = document.getElementById('profileHeader');
-            const profilePicture = document.getElementById('profilePicture');
+            const profilePicture = document
+
+.getElementById('profilePicture');
             const username = document.getElementById('username');
             const displayName = document.getElementById('displayName');
             const bio = document.getElementById('bio');
@@ -739,11 +744,12 @@
         // Filter and sort NFTs
         function filterNFTs() {
             console.log('Filtering NFTs');
-            const collectionFilter = document.getElementById('collectionFilter').value;
+            const collectionFilter = document.getElementById('collectionFilter');
+            const collectionValue = collectionFilter.value;
             const sortBy = document.getElementById('sortBy').value;
 
-            let filteredNFTs = collectionFilter
-                ? allNFTs.filter(nft => nft.collection?.name === collectionFilter)
+            let filteredNFTs = collectionValue
+                ? allNFTs.filter(nft => nft.collection?.name === collectionValue)
                 : [...allNFTs];
 
             if (sortBy === 'price') {
@@ -754,11 +760,11 @@
                 });
             }
 
-            displayNFTs(filteredNFTs);
+            displayNFTs(filteredNFTs, collectionValue);
         }
 
         // Display NFTs
-        function displayNFTs(assets) {
+        function displayNFTs(assets, selectedCollection) {
             console.log(`Displaying ${assets.length} NFTs`);
             const container = document.getElementById('nftContainer');
             const countContainer = document.getElementById('nftCountContainer');
@@ -771,7 +777,9 @@
 
             const countElement = document.createElement('p');
             countElement.className = 'nft-count';
-            countElement.innerHTML = `${currentDisplayName} has <span class="count">${assets.length}</span> assets.`;
+            countElement.innerHTML = selectedCollection
+                ? `CronoBots has <span class="count">${assets.length}</span> assets on this collection.`
+                : `${currentDisplayName} has <span class="count">${assets.length}</span> assets.`;
             countContainer.appendChild(countElement);
 
             assets.forEach(asset => {
@@ -818,25 +826,6 @@
         function updateDisplay() {
             console.log('Updating display');
             filterNFTs();
-        }
-
-        // Clear search
-        function clearSearch() {
-            console.log('Clearing search');
-            document.getElementById('usernameInput').value = '';
-            document.getElementById('collectionFilter').innerHTML = '<option value="">All Collections</option>';
-            document.getElementById('collectionFilter').disabled = true;
-            document.getElementById('refreshButton').disabled = true;
-            document.getElementById('profileHeader').style.display = 'none';
-            document.getElementById('nftContainer').innerHTML = '';
-            document.getElementById('nftCountContainer').innerHTML = '';
-            document.getElementById('error').textContent = '';
-            document.getElementById('noResults').style.display = 'none';
-            document.getElementById('timestamp').textContent = '';
-            allNFTs = [];
-            currentUsername = '';
-            currentDisplayName = '';
-            cache.clear();
         }
 
         // Setup event listeners
