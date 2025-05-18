@@ -44,6 +44,9 @@
             margin: 0;
             line-height: 1.6;
             transition: var(--transition);
+            min-height: calc(100vh - 60px);
+            display: flex;
+            flex-direction: column;
         }
 
         .navbar {
@@ -130,7 +133,7 @@
 
         .main-content {
             padding: 20px;
-            padding-bottom: 150px; /* Espace pour le footer fixe */
+            flex: 1;
         }
 
         h1, h2, h3 {
@@ -394,16 +397,20 @@
         }
 
         .footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
             text-align: center;
+            margin-top: 50px;
             padding: 20px;
-            background-color: var(--collection-bg);
             border-top: 1px solid #444;
             color: var(--text-dark);
-            z-index: 1000;
+            background-color: var(--collection-bg);
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         .footer-logo {
@@ -414,10 +421,9 @@
         }
 
         .theme-toggle {
-            display: inline-flex;
+            display: flex;
             align-items: center;
             gap: 10px;
-            margin-top: 10px;
         }
 
         .theme-toggle label {
@@ -544,6 +550,11 @@
             .footer-logo {
                 max-width: 100px;
             }
+
+            .footer-content {
+                flex-direction: column;
+                gap: 10px;
+            }
         }
     </style>
 </head>
@@ -618,13 +629,15 @@
 
     <footer class="footer">
         <img src="CRONOBOTS.png" alt="Cronobots Logo" class="footer-logo">
-        <p>CRONOBOTS | CRONOS DEVELOPMENT</p>
-        <div class="theme-toggle">
-            <label for="themeSelect">Theme:</label>
-            <select id="themeSelect" onchange="toggleTheme()">
-                <option value="dark">Dark</option>
-                <option value="light">Light</option>
-            </select>
+        <div class="footer-content">
+            <p>CRONOBOTS | CRONOS DEVELOPMENT</p>
+            <div class="theme-toggle">
+                <label for="themeSelect">Theme:</label>
+                <select id="themeSelect" onchange="toggleTheme()">
+                    <option value="dark">Dark</option>
+                    <option value="light">Light</option>
+                </select>
+            </div>
         </div>
     </footer>
 
@@ -1028,7 +1041,7 @@
                 for (let i = assets.length; i < totalCells; i++) {
                     const emptyCard = document.createElement('div');
                     emptyCard.className = 'nft-card empty';
-                    container.appendChild(card);
+                    container.appendChild(emptyCard);
                 }
             } else {
                 assets.forEach(asset => {
