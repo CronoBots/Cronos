@@ -208,11 +208,13 @@
         .nft-container {
             display: grid;
             gap: 20px;
+            width: 100%;
             max-width: 1200px;
             margin: 0 auto;
             opacity: 1;
             animation: fadeIn 0.5s ease-in;
             justify-content: center;
+            box-sizing: border-box;
         }
 
         .nft-container.small-size {
@@ -264,6 +266,7 @@
             padding: 0;
             justify-content: center;
             justify-items: center;
+            width: 100%;
             max-width: 1200px;
         }
 
@@ -454,7 +457,7 @@
 
             .nft-container.thumbnail-mode {
                 width: 100%;
-                max-width: 600px;
+                max-width: 100%;
             }
 
             .nft-container.thumbnail-mode .nft-card img {
@@ -718,9 +721,8 @@
             }
 
             const username = sanitizeInput(usernameInput.value.trim());
-            if (!username) {
-                console.log('No username provided');
-                errorDiv.textContent = 'Please enter a valid username.';
+            if (!username || username === currentUsername) {
+                console.log('No new username provided or same as current:', username);
                 return;
             }
 
@@ -891,9 +893,8 @@
 
             if (displayMode === 'thumbnail') {
                 const gridSize = Math.ceil(Math.sqrt(assets.length));
-                const maxWidth = 1200;
                 const cardWidth = cardSize === 'small' ? 120 : cardSize === 'large' ? 300 : 200;
-                const totalWidth = Math.min(gridSize * cardWidth, maxWidth);
+                const totalWidth = Math.min(gridSize * cardWidth, window.innerWidth);
                 container.style.width = `${totalWidth}px`;
                 container.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
 
