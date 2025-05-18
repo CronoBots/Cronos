@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Search and explore NFT profiles with CronoBots">
-    <title>CronoBots | Cronos Development</title>
-    <link rel="icon" href="LOGO.png" type="image/png">
+    <meta name="description" content="Search and explore NFT profiles on Cronos with CronoBots">
+    <title>NFT Profile - User Search | CronoBots</title>
+    <link rel="icon" type="image/png" href="/assets/favicon.png">
     <link rel="preload" href="CRONOBOTS.png" as="image">
     <link rel="preload" href="/assets/placeholder.svg" as="image">
     <style>
@@ -157,7 +157,8 @@
             width: 180px;
             height: 180px;
             border-radius: 15px;
-            object-fit: contain;
+            object-fit: cover;
+            aspect-ratio: 1 / 1;
             margin: 0 auto 10px;
             display: block;
         }
@@ -227,6 +228,10 @@
             padding: 15px;
             text-align: center;
             transition: transform 0.2s;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .nft-card:hover {
@@ -238,18 +243,25 @@
             height: auto;
             border-radius: 15px;
             margin-bottom: 10px;
-            object-fit: contain;
+            object-fit: cover;
+            aspect-ratio: 1 / 1;
             loading: lazy;
         }
 
         .nft-container.thumbnail-mode {
             gap: 0;
+            row-gap: 0;
+            column-gap: 0;
+            margin: 0;
+            padding: 0;
         }
 
         .nft-container.thumbnail-mode .nft-card {
             padding: 0;
+            margin: 0;
             background: none;
             box-shadow: none;
+            border: none;
             border-radius: 0;
             display: flex;
             align-items: center;
@@ -259,12 +271,18 @@
         .nft-container.thumbnail-mode .nft-card img {
             border-radius: 0;
             width: 100%;
-            height: auto;
-            object-fit: contain;
+            height: 100%;
+            object-fit: cover;
+            aspect-ratio: 1 / 1;
+            margin: 0;
+            padding: 0;
+            display: block;
         }
 
         .nft-container.thumbnail-mode .nft-card.empty {
             background: transparent;
+            margin: 0;
+            padding: 0;
         }
 
         .loading, .error, .no-results {
@@ -615,7 +633,7 @@
 
         // Fetch all NFTs with pagination
         async function fetchAllNFTs(ownerId) {
-            console.log(`Fetching NFTs for ownerId: ${ownerId}`);
+            console.log(`Fetching NFTs for ownerId: ${ownerzewski
             const first = 60;
             let skip = 0;
             let allAssets = [];
@@ -853,7 +871,6 @@
                     img.alt = asset.name || 'NFT Image';
                     img.loading = 'lazy';
                     img.decoding = 'async';
-                    // Ajout de srcset si disponible
                     img.srcset = asset.main?.url ? `${asset.main.url} 1x, ${asset.main.url.replace('.jpg', '_2x.jpg')} 2x` : '';
                     img.sizes = '(max-width: 768px) 100px, 200px';
 
@@ -931,7 +948,6 @@
                 fetchProfileAndNFTs();
             });
 
-            // Définir la valeur initiale du sélecteur de thème
             const savedTheme = localStorage.getItem('theme') || 'dark';
             themeSelect.value = savedTheme;
         }
