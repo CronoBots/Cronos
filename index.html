@@ -44,6 +44,9 @@
             margin: 0;
             line-height: 1.6;
             transition: var(--transition);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .navbar {
@@ -130,7 +133,7 @@
 
         .main-content {
             padding: 20px;
-            padding-bottom: 150px; /* Espace pour le footer fixe */
+            flex: 1;
         }
 
         h1, h2, h3 {
@@ -299,10 +302,18 @@
         }
 
         .nft-card h3 {
-            font-size: 0.9em;
+            font-size: 0.85em;
             margin: 5px 0;
             width: 100%;
-            text-align: left;
+            text-align: center;
+            font-weight: normal;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .nft-card h3 .highlight {
+            font-weight: bold;
         }
 
         img[src$=".gif"] {
@@ -394,10 +405,6 @@
         }
 
         .footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
             text-align: center;
             padding: 20px;
             background-color: var(--collection-bg);
@@ -1028,7 +1035,7 @@
                 for (let i = assets.length; i < totalCells; i++) {
                     const emptyCard = document.createElement('div');
                     emptyCard.className = 'nft-card empty';
-                    container.appendChild(card);
+                    container.appendChild(emptyCard);
                 }
             } else {
                 assets.forEach(asset => {
@@ -1051,7 +1058,9 @@
                     }
 
                     const title = document.createElement('h3');
-                    title.textContent = asset.name || 'Unnamed NFT';
+                    const name = asset.name || 'Unnamed NFT';
+                    const highlightedName = name.replace(/(#|\d+)/g, '<span class="highlight">$1</span>');
+                    title.innerHTML = highlightedName;
 
                     card.appendChild(img);
                     card.appendChild(title);
