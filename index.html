@@ -280,11 +280,11 @@
 
         .nft-card img {
             width: 100%;
-            max-width: 100%;
+            max-width: 200px;
             height: auto;
             border-radius: 15px;
             margin-bottom: 10px;
-            object-fit: cover;
+            object-fit: contain;
             aspect-ratio: 1 / 1;
         }
 
@@ -318,10 +318,11 @@
         }
 
         .nft-container.thumbnail-mode .nft-card img {
+            max-width: 100%;
             border-radius: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
             aspect-ratio: 1 / 1;
             margin: 0;
             padding: 0;
@@ -974,7 +975,7 @@
                     card.className = 'nft-card';
 
                     const img = document.createElement('img');
-                    img.dataset.src = asset.main?.url ? asset.main.url.replace(/\.gif$/, '_static.jpg').replace(/(\.[a-z]+)$/, '_low$1') : '/assets/placeholder.svg';
+                    img.dataset.src = asset.main?.url || '/assets/placeholder.svg';
                     img.alt = asset.name || 'NFT Image';
                     img.classList.add('lazy');
                     img.decoding = 'async';
@@ -982,8 +983,10 @@
                         console.warn(`Failed to load image: ${img.src}, using fallback`);
                         img.src = '/assets/placeholder.svg';
                     };
-                    img.srcset = asset.main?.url ? `${asset.main.url.replace(/\.gif$/, '_static.jpg').replace(/(\.[a-z]+)$/, '_low$1')} 1x, ${asset.main.url.replace(/\.gif$/, '_static.jpg').replace(/(\.[a-z]+)$/, '_low_2x$1')} 2x` : '';
                     img.sizes = '(max-width: 768px) 80px, 200px';
+                    if (asset.main?.url?.endsWith('.gif')) {
+                        console.log(`GIF detected: ${asset.main.url}`);
+                    }
 
                     card.appendChild(img);
                     container.appendChild(card);
@@ -1002,7 +1005,7 @@
                     card.className = 'nft-card';
 
                     const img = document.createElement('img');
-                    img.dataset.src = asset.main?.url ? asset.main.url.replace(/\.gif$/, '_static.jpg').replace(/(\.[a-z]+)$/, '_low$1') : '/assets/placeholder.svg';
+                    img.dataset.src = asset.main?.url || '/assets/placeholder.svg';
                     img.alt = asset.name || 'NFT Image';
                     img.classList.add('lazy');
                     img.decoding = 'async';
@@ -1010,8 +1013,10 @@
                         console.warn(`Failed to load image: ${img.src}, using fallback`);
                         img.src = '/assets/placeholder.svg';
                     };
-                    img.srcset = asset.main?.url ? `${asset.main.url.replace(/\.gif$/, '_static.jpg').replace(/(\.[a-z]+)$/, '_low$1')} 1x, ${asset.main.url.replace(/\.gif$/, '_static.jpg').replace(/(\.[a-z]+)$/, '_low_2x$1')} 2x` : '';
                     img.sizes = '(max-width: 768px) 80px, 200px';
+                    if (asset.main?.url?.endsWith('.gif')) {
+                        console.log(`GIF detected: ${asset.main.url}`);
+                    }
 
                     const title = document.createElement('h3');
                     title.textContent = asset.name || 'Unnamed NFT';
