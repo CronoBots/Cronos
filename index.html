@@ -283,7 +283,7 @@
             justify-content: center;
             box-sizing: border-box;
             overflow: hidden;
-            cursor: pointer;
+            cursor: default; /* Changé de pointer à default car non cliquable */
         }
 
         .nft-card:hover {
@@ -380,7 +380,7 @@
             padding: 0;
         }
 
-        .nft-container.thumbnail-mode .nf t-card.empty {
+        .nft-container.thumbnail-mode .nft-card.empty {
             background: transparent;
             margin: 0;
             padding: 0;
@@ -609,7 +609,7 @@
             <div class="profile-header" id="profileHeader" style="display: none;">
                 <div class="profile-header-content">
                     <div class="profile-picture">
-                        <img id="profilePicture" src="" alt="Profile Picture" />
+ japanes                        <img id="profilePicture" src="" alt="Profile Picture" />
                     </div>
                     <div class="profile-info">
                         <h2 id="username" class="username"></h2>
@@ -1102,13 +1102,8 @@
                         }
                     }
 
-                    const link = document.createElement('a');
-                    link.href = `https://crypto.com/nft/asset/${asset.id}`;
-                    link.target = '_blank';
-                    link.appendChild(card);
-
                     card.appendChild(mediaElement);
-                    container.appendChild(link);
+                    container.appendChild(card);
                 });
 
                 const totalCells = gridSize * gridSize;
@@ -1118,6 +1113,10 @@
                     container.appendChild(emptyCard);
                 }
             } else {
+                container.style.gridTemplateColumns = '';
+                container.style.width = '';
+                console.log(`Applied class: ${container.className}`);
+
                 assets.forEach(asset => {
                     const imageUrl = asset.cover?.url;
                     console.log(`Loading NFT: ${asset.name || 'Unnamed NFT'}, Cover URL: ${imageUrl || 'Missing'}`);
@@ -1169,14 +1168,9 @@
                     const highlightedName = name.replace(/(#|\d+)/g, '<span class="highlight">$1</span>');
                     title.innerHTML = highlightedName;
 
-                    const link = document.createElement('a');
-                    link.href = `https://crypto.com/nft/asset/${asset.id}`;
-                    link.target = '_blank';
-                    link.appendChild(card);
-
                     card.appendChild(mediaElement);
                     card.appendChild(title);
-                    container.appendChild(link);
+                    container.appendChild(card);
                 });
             }
         }
