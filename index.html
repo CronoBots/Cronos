@@ -12,7 +12,7 @@
             --text-dark: #fff;
             --text-light: #333;
             --collection-bg: #1a1a1a;
-            --shadow: 0 2px 4px rgba(255 Reservation,255,255,0.1);
+            --shadow: 0 2px 4px rgba(255,255,255,0.1);
             --bg-light: #f4f4f4;
             --transition: all 0.3s ease;
         }
@@ -42,11 +42,11 @@
             transition: var(--transition);
         }
 
-        /* Nouvelle barre de navigation */
         .navbar {
             background-color: var(--collection-bg);
-            padding: 15px 20px;
+            padding: 10px 20px;
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
             box-shadow: var(--shadow);
@@ -76,6 +76,39 @@
             color: var(--color1);
         }
 
+        .navbar-search {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-grow: 1;
+            max-width: 400px;
+        }
+
+        .navbar-search input {
+            padding: 8px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            width: 100%;
+            max-width: 250px;
+        }
+
+        .navbar-search button {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            background-color: var(--color1);
+            color: var(--text-dark);
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: 700;
+            transition: var(--transition);
+        }
+
+        .navbar-search button:hover {
+            transform: scale(1.05);
+        }
+
         .navbar-toggle {
             display: none;
             background: none;
@@ -85,7 +118,6 @@
             cursor: pointer;
         }
 
-        /* Contenu principal */
         .main-content {
             padding: 20px;
         }
@@ -148,10 +180,6 @@
             transition: var(--transition);
             width: 100%;
             box-sizing: border-box;
-        }
-
-        .controls input {
-            max-width: 250px;
         }
 
         .controls button, .controls select {
@@ -266,15 +294,20 @@
             color: var(--text-dark);
         }
 
+        .footer-logo {
+            max-width: 150px;
+            height: auto;
+            object-fit: contain;
+            margin-bottom: 10px;
+        }
+
         .theme-toggle {
             background: none;
             border: 1px solid var(--color1);
             padding: 8px;
             cursor: pointer;
-            margin-left: auto;
         }
 
-        /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -285,29 +318,40 @@
             50% { opacity: 0.5; }
         }
 
-        /* Réactivité pour mobile */
         @media screen and (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
             .navbar-menu {
                 display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
                 width: 100%;
-                height: 100%;
-                background-color: var(--collection-bg);
                 flex-direction: column;
-                justify-content: center;
                 align-items: center;
-                gap: 30px;
-                z-index: 999;
+                gap: 15px;
+                padding: 20px 0;
             }
 
             .navbar-menu.active {
                 display: flex;
             }
 
+            .navbar-search {
+                width: 100%;
+                max-width: none;
+                margin-top: 10px;
+            }
+
+            .navbar-search input {
+                max-width: none;
+            }
+
             .navbar-toggle {
                 display: block;
+                position: absolute;
+                right: 20px;
+                top: 15px;
             }
 
             h1 {
@@ -323,11 +367,6 @@
                 grid-template-columns: 1fr;
             }
 
-            .controls input, .controls button, .controls select {
-                font-size: 12px;
-                padding: 6px;
-            }
-
             .nft-container.small-size {
                 grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             }
@@ -340,14 +379,13 @@
                 grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             }
 
-            .theme-toggle {
-                margin-left: 10px;
+            .footer-logo {
+                max-width: 100px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Nouvelle barre de navigation -->
     <nav class="navbar">
         <div class="navbar-logo">
             <img src="CRONOBOTS.png" alt="Cronobots Logo">
@@ -357,11 +395,14 @@
             <a href="#search" aria-label="Recherche">Recherche</a>
             <a href="#about" aria-label="À propos">À propos</a>
         </div>
+        <div class="navbar-search">
+            <input type="text" id="usernameInput" placeholder="Enter username" aria-describedby="usernameHelp" />
+            <button onclick="fetchProfileAndNFTs()" aria-label="Search profile">Search</button>
+        </div>
         <button class="navbar-toggle" aria-label="Toggle menu" onclick="toggleMenu()">☰</button>
         <button class="theme-toggle" aria-label="Toggle theme" onclick="toggleTheme()">🌙</button>
     </nav>
 
-    <!-- Contenu principal -->
     <div class="main-content">
         <h1>CronoBots | Cronos Development</h1>
 
@@ -378,11 +419,6 @@
         </div>
 
         <div class="controls">
-            <div>
-                <label for="usernameInput">Username</label>
-                <input type="text" id="usernameInput" placeholder="Enter username" aria-describedby="usernameHelp" />
-            </div>
-            <button onclick="fetchProfileAndNFTs()" aria-label="Search profile">Search</button>
             <button onclick="fetchProfileAndNFTs()" id="refreshButton" disabled aria-label="Refresh data">Refresh</button>
             <button onclick="clearSearch()" aria-label="Clear search">Clear</button>
             <div>
@@ -435,9 +471,51 @@
         let currentUsername = '';
         let currentDisplayName = '';
 
-        // GraphQL queries (inchangées)
-        const profileQuery = `...`; // Identique à l'original
-        const nftQuery = `...`; // Identique à l'original
+        // Requêtes GraphQL corrigées
+        const profileQuery = `
+            query GetUser($id: String!) {
+                public {
+                    user(id: $id) {
+                        username
+                        displayName
+                        bio
+                        avatar {
+                            url
+                        }
+                        twitterUsername
+                    }
+                }
+            }
+        `;
+
+        const nftQuery = `
+            query GetProfileAssets($ownerId: String!, $first: Int!, $skip: Int!, $sort: [AssetSortInput!]) {
+                public {
+                    profileAssets(ownerId: $ownerId, first: $first, skip: $skip, sort: $sort) {
+                        id
+                        name
+                        image {
+                            url
+                        }
+                        collection {
+                            name
+                        }
+                        isExternalNft
+                        externalNftMetadata {
+                            network
+                        }
+                        defaultListingV2 {
+                            salePriceDecimalUSD
+                        }
+                        latestPurchasedEdition {
+                            priceUSD
+                        }
+                        createdAt
+                    }
+                }
+            }
+        `;
+
         const graphqlEndpoint = "https://crypto.com/nft-api/graphql";
 
         // Gestion du menu hamburger
@@ -488,20 +566,24 @@
                     sort: [{ order: "DESC", field: "createdAt" }]
                 };
 
-                const response = await fetch(graphqlEndpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query: nftQuery, variables: nftVariables })
-                });
+                try {
+                    const response = await fetch(graphqlEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query: nftQuery, variables: nftVariables })
+                    });
 
-                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-                const result = await response.json();
-                if (result.errors) throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
+                    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                    const result = await response.json();
+                    if (result.errors) throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
 
-                const assets = result.data?.public?.profileAssets || [];
-                allAssets = [...allAssets, ...assets];
-                skip += first;
-                hasMore = assets.length === first;
+                    const assets = result.data?.public?.profileAssets || [];
+                    allAssets = [...allAssets, ...assets];
+                    skip += first;
+                    hasMore = assets.length === first;
+                } catch (error) {
+                    throw new Error(`Failed to fetch NFTs: ${error.message}`);
+                }
             }
 
             return allAssets;
