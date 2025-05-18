@@ -25,6 +25,7 @@
             --text-dark: var(--text-light);
             --collection-bg: #fff;
             --shadow: 0 2px 4px rgba(0,0,0,0.1);
+            --color1: #e04e2d;
         }
 
         @font-face {
@@ -157,14 +158,44 @@
             margin-bottom: 20px;
         }
 
-        .profile-header img {
+        .profile-header-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .profile-picture {
+            flex: 0 0 auto;
+        }
+
+        .profile-picture img {
             width: 180px;
             height: 180px;
             border-radius: 15px;
             object-fit: cover;
             aspect-ratio: 1 / 1;
-            margin: 0 auto 10px;
             display: block;
+        }
+
+        .profile-info {
+            flex: 1;
+            text-align: left;
+            max-width: 500px;
+        }
+
+        .username {
+            color: var(--color1);
+            margin: 0;
+        }
+
+        #displayName {
+            margin: 5px 0;
+        }
+
+        #bio {
+            margin: 5px 0;
         }
 
         .controls {
@@ -255,7 +286,6 @@
             margin-bottom: 10px;
             object-fit: cover;
             aspect-ratio: 1 / 1;
-            loading: lazy;
         }
 
         .nft-container.thumbnail-mode {
@@ -291,7 +321,6 @@
             margin: 0;
             padding: 0;
             display: block;
-            loading: eager;
         }
 
         .nft-container.thumbnail-mode .nft-card.empty {
@@ -430,9 +459,19 @@
                 font-size: 1.5rem;
             }
 
-            .profile-header img {
+            .profile-header-content {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .profile-picture img {
                 width: 100px;
                 height: 100px;
+            }
+
+            .profile-info {
+                text-align: center;
+                max-width: 100%;
             }
 
             .controls {
@@ -490,15 +529,21 @@
 
     <div class="main-content">
         <div class="profile-header" id="profileHeader" style="display: none;">
-            <img id="profilePicture" src="" alt="Profile Picture" onerror="this.src='/assets/placeholder.svg'" />
-            <h2 id="username"></h2>
-            <p id="displayName"></p>
-            <p id="bio" style="display: none;"></p>
-            <p id="twitterLink" style="display: none;">
-                <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
-                </a>
-            </p>
+            <div class="profile-header-content">
+                <div class="profile-picture">
+                    <img id="profilePicture" src="" alt="Profile Picture" onerror="this.src='/assets/placeholder.svg'" />
+                </div>
+                <div class="profile-info">
+                    <h2 id="username" class="username"></h2>
+                    <p id="displayName"></p>
+                    <p id="bio" style="display: none;"></p>
+                    <p id="twitterLink" style="display: none;">
+                        <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
+                        </a>
+                    </p>
+                </div>
+            </div>
         </div>
 
         <div class="controls">
@@ -639,6 +684,26 @@
             } else {
                 console.error('Theme select not found');
             }
+        }
+
+        // Lazy loading with IntersectionObserver
+        function setupLazyLoading() {
+            const images = document.querySelectorAll('img.lazy');
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.src = img.dataset.src;
+                        img.classList.remove('lazy');
+                        observer.unobserve(img);
+                    }
+                });
+            }, {
+                rootMargin: '0px 0px 10% 0px',
+                threshold: 0.1
+            });
+
+            images.forEach(img => observer.observe(img));
         }
 
         // Fetch with cache
@@ -904,15 +969,15 @@
                     card.className = 'nft-card';
 
                     const img = document.createElement('img');
-                    img.src = asset.main?.url || '/assets/placeholder.svg';
+                    img.dataset.src = asset.main?.url ? asset.main.url.replace(/\.gif$/, '.jpg') : '/assets/placeholder.svg';
                     img.alt = asset.name || 'NFT Image';
-                    img.loading = 'eager';
+                    img.classList.add('lazy');
                     img.decoding = 'async';
                     img.onerror = () => {
                         console.warn(`Failed to load image: ${img.src}, using fallback`);
                         img.src = '/assets/placeholder.svg';
                     };
-                    img.srcset = asset.main?.url ? `${asset.main.url} 1x, ${asset.main.url.replace('.jpg', '_2x.jpg')} 2x` : '';
+                    img.srcset = asset.main?.url ? `${asset.main.url.replace(/\.gif$/, '.jpg')} 1x, ${asset.main.url.replace(/\.gif$/, '_2x.jpg')} 2x` : '';
                     img.sizes = '(max-width: 768px) 80px, 200px';
 
                     card.appendChild(img);
@@ -932,15 +997,15 @@
                     card.className = 'nft-card';
 
                     const img = document.createElement('img');
-                    img.src = asset.main?.url || '/assets/placeholder.svg';
+                    img.dataset.src = asset.main?.url ? asset.main.url.replace(/\.gif$/, '.jpg') : '/assets/placeholder.svg';
                     img.alt = asset.name || 'NFT Image';
-                    img.loading = 'lazy';
+                    img.classList.add('lazy');
                     img.decoding = 'async';
                     img.onerror = () => {
                         console.warn(`Failed to load image: ${img.src}, using fallback`);
                         img.src = '/assets/placeholder.svg';
                     };
-                    img.srcset = asset.main?.url ? `${asset.main.url} 1x, ${asset.main.url.replace('.jpg', '_2x.jpg')} 2x` : '';
+                    img.srcset = asset.main?.url ? `${asset.main.url.replace(/\.gif$/, '.jpg')} 1x, ${asset.main.url.replace(/\.gif$/, '_2x.jpg')} 2x` : '';
                     img.sizes = '(max-width: 768px) 80px, 200px';
 
                     const title = document.createElement('h3');
@@ -969,6 +1034,8 @@
                     container.appendChild(card);
                 });
             }
+
+            setupLazyLoading();
         }
 
         // Update display
