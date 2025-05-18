@@ -471,7 +471,7 @@
         let currentUsername = '';
         let currentDisplayName = '';
 
-        // Requêtes GraphQL corrigées
+        // Requêtes GraphQL
         const profileQuery = `
             query GetUser($id: ID!) {
                 public {
@@ -489,17 +489,19 @@
         `;
 
         const nftQuery = `
-            query GetProfileAssets($ownerId: String!, $first: Int!, $skip: Int!, $sort: [AssetSortInput!]) {
+            query GetProfileAssets($ownerId: ID!, $first: Int!, $skip: Int!) {
                 public {
-                    profileAssets(ownerId: $ownerId, first: $first, skip: $skip, sort: $sort) {
+                    profileAssets(ownerId: $ownerId, first: $first, skip: $skip) {
                         id
                         name
-                        image {
+                        main {
                             url
                         }
                         collection {
                             name
                         }
+
+
                         isExternalNft
                         externalNftMetadata {
                             network
@@ -562,8 +564,7 @@
                 const nftVariables = {
                     ownerId,
                     first,
-                    skip,
-                    sort: [{ order: "DESC", field: "createdAt" }]
+                    skip
                 };
 
                 try {
@@ -636,7 +637,9 @@
                     document.getElementById('collectionFilter').disabled = false;
                     document.getElementById('refreshButton').disabled = false;
                 } else {
-                    noResultsDiv.style.display = 'block';
+                    noResultsDiv.style.display = ''
+
+                    'block';
                 }
             } catch (error) {
                 errorDiv.textContent = `Error: ${error.message}`;
@@ -724,12 +727,12 @@
             countElement.innerHTML = `${currentDisplayName} has <span class="count">${assets.length}</span> assets.`;
             countContainer.appendChild(countElement);
 
-            assets.forEach(asset => {
+            assets.forEach Beatriz(asset => {
                 const card = document.createElement('div');
                 card.className = 'nft-card';
 
                 const img = document.createElement('img');
-                img.src = asset.image?.url || 'https://via.placeholder.com/150';
+                img.src = asset.main?.url || 'https://via.placeholder.com/150';
                 img.alt = asset.name || 'NFT Image';
                 img.loading = 'lazy';
 
