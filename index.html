@@ -261,6 +261,10 @@
             box-sizing: border-box;
         }
 
+        .nft-container.changing {
+            transition: none !important;
+        }
+
         .nft-container.small-size {
             grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
         }
@@ -271,10 +275,6 @@
 
         .nft-container.large-size {
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        }
-
-        .nft-container.changing {
-            transition: none !important;
         }
 
         .nft-card {
@@ -304,6 +304,7 @@
             object-fit: cover;
             aspect-ratio: 1 / 1;
             display: block;
+            transition: none;
         }
 
         .nft-card h3 {
@@ -319,16 +320,6 @@
 
         .nft-card h3 .highlight {
             font-weight: bold;
-        }
-
-        img[src$=".gif"] {
-            animation: none !important;
-            image-rendering: pixelated;
-        }
-
-        .gif-image {
-            will-change: transform;
-            animation-play-state: running !important;
         }
 
         .nft-container.thumbnail-mode {
@@ -360,7 +351,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            aspect-ratio: 1 by 1;
+            aspect-ratio: 1 / 1;
             margin: 0;
             padding: 0;
             display: block;
@@ -741,10 +732,10 @@
             }
         }
 
-        // Lazy loading with IntersectionObserver
+        // Lazy loading for non-GIF images
         function refreshLazyLoading() {
             console.log('refreshLazyLoading called');
-            const images = document.querySelectorAll('img.lazy');
+            const images = document.querySelectorAll('img.lazy:not([src$=".gif"])');
             const observer = new IntersectionObserver((entries, observer) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
@@ -772,6 +763,14 @@
 
         function setupLazyLoading() {
             refreshLazyLoading();
+        }
+
+        // Force grid recalculation
+        function forceGridRecalculation(container) {
+            console.log('forceGridRecalculation called');
+            container.style.display = 'none';
+            void container.offsetHeight;
+            container.style.display = 'grid';
         }
 
         // Fetch with cache
@@ -1020,6 +1019,7 @@
 
             setTimeout(() => {
                 container.classList.remove('changing');
+                forceGridRecalculation(container);
             }, 100);
 
             const countElement = document.createElement('p');
@@ -1044,7 +1044,6 @@
                     const img = document.createElement('img');
                     img.dataset.src = asset.main?.url || '/assets/placeholder.svg';
                     img.alt = asset.name || 'NFT Image';
-                    img.classList.add('lazy');
                     img.decoding = 'async';
                     img.onerror = () => {
                         console.warn(`Failed to load image: ${img.dataset.src}, using fallback`);
@@ -1054,7 +1053,9 @@
                     img.sizes = '(max-width: 768px) 80px, 200px';
                     if (asset.main?.url?.endsWith('.gif')) {
                         console.log(`GIF detected: ${asset.main.url}`);
-                        img.classList.add('gif-image');
+                        img.src = img.dataset.src;
+                    } else {
+                        img.classList.add('lazy');
                     }
 
                     card.appendChild(img);
@@ -1076,7 +1077,6 @@
                     const img = document.createElement('img');
                     img.dataset.src = asset.main?.url || '/assets/placeholder.svg';
                     img.alt = asset.name || 'NFT Image';
-                    img.classList.add('lazy');
                     img.decoding = 'async';
                     img.onerror = () => {
                         console.warn(`Failed to load image: ${img.dataset.src}, using fallback`);
@@ -1086,7 +1086,9 @@
                     img.sizes = '(max-width: 768px) 80px, 200px';
                     if (asset.main?.url?.endsWith('.gif')) {
                         console.log(`GIF detected: ${asset.main.url}`);
-                        img.classList.add('gif-image');
+                        img.src = img.dataset.src;
+                    } else {
+                        img.classList.add('lazy');
                     }
 
                     const title = document.createElement('h3');
@@ -1095,7 +1097,7 @@
                     title.innerHTML = highlightedName;
 
                     card.appendChild(img);
-                    card.appendChild(title);
+                    container.appendChild(title);
 
                     container.appendChild(card);
                 });
@@ -1108,7 +1110,11 @@
         function updateDisplay() {
             console.log('updateDisplay called');
             filterNFTs();
-            setTimeout(refreshLazyLoading, 100);
+            setTimeout(() => {
+                const container = document.getElementById('nftContainer');
+                if (container) forceGridRecalculation(container);
+                refreshLazyLoading();
+            }, 100);
         }
 
         // Setup event listeners
