@@ -200,6 +200,26 @@
             text-align: left;
             max-width: 500px;
             position: relative;
+            min-height: 200px; /* Assure que .profile-info a la même hauteur que l'image */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Alignement des éléments en haut et en bas */
+        }
+
+        .username-container {
+            /* Contient username et displayName, alignés en haut */
+        }
+
+        .lower-section {
+            margin-top: auto; /* Pousse BIO: et SOCIAL: vers le bas */
+        }
+
+        .bio-container, .social-container {
+            max-width: 200px;
+        }
+
+        .social-container {
+            margin-top: 5px; /* Écart de 5px entre BIO: et SOCIAL: */
         }
 
         .username {
@@ -218,21 +238,6 @@
             margin: 5px 0;
         }
 
-        .bio-container, .social-container {
-            position: absolute;
-            bottom: 0;
-            left: 220px; /* À droite de l'image de profil */
-            max-width: 200px;
-        }
-
-        .bio-container {
-            bottom: 30px; /* Ajustement pour laisser de la place à .social-container */
-        }
-
-        .social-container {
-            bottom: 0;
-        }
-
         #bioLabel, #socialLabel {
             display: inline-block;
             font-weight: normal;
@@ -241,8 +246,8 @@
 
         #bio {
             margin: 0;
-            font-weight: normal;
-            font-family: 'Geomanist-Bold', sans-serif;
+            font-weight: normal !important; /* Forcer l'absence de gras */
+            font-family: 'Geomanist-Bold', sans-serif !important; /* Forcer la police */
         }
 
         #socialLabel {
@@ -671,6 +676,8 @@
             .profile-info {
                 text-align: center;
                 max-width: 100%;
+                min-height: auto; /* Pas besoin de hauteur fixe en mobile */
+                justify-content: flex-start; /* Éléments s'empilent naturellement */
             }
 
             #username {
@@ -683,15 +690,12 @@
             }
 
             .bio-container, .social-container {
-                position: static;
-                left: auto;
-                bottom: auto;
                 max-width: 100%;
                 text-align: left;
             }
 
-            #twitterLink {
-                margin-left: 8px;
+            .social-container {
+                margin-top: 5px; /* Même écart en mobile */
             }
 
             .controls {
@@ -780,19 +784,23 @@
                         <img id="profilePicture" src="" alt="Profile Picture" />
                     </div>
                     <div class="profile-info">
-                        <h2 id="username" class="username"></h2>
-                        <p id="displayName"></p>
-                        <div class="bio-container" style="display: none;" id="bioContainer">
-                            <p id="bioLabel">BIO:</p>
-                            <p id="bio"></p>
+                        <div class="username-container">
+                            <h2 id="username" class="username"></h2>
+                            <p id="displayName"></p>
                         </div>
-                        <div class="social-container" style="display: none;" id="socialContainer">
-                            <p id="socialLabel">SOCIAL:</p>
-                            <p id="twitterLink" style="display: inline-block;">
-                                <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
-                                </a>
-                            </p>
+                        <div class="lower-section">
+                            <div class="bio-container" style="display: none;" id="bioContainer">
+                                <p id="bioLabel">BIO:</p>
+                                <p id="bio"></p>
+                            </div>
+                            <div class="social-container" style="display: none;" id="socialContainer">
+                                <p id="socialLabel">SOCIAL:</p>
+                                <p id="twitterLink" style="display: inline-block;">
+                                    <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
+                                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
+                                    </a>
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1038,6 +1046,8 @@
             profilePicture.style.display = profileData.avatar?.url ? 'block' : 'none';
 
             bio.textContent = profileData.bio || ''; // Texte brut, sans majuscules ni gras
+            bio.style.fontWeight = 'normal'; // Forcer l'absence de gras
+            bio.style.fontFamily = "'Geomanist-Bold', sans-serif"; // Forcer la police
             bioContainer.style.display = profileData.bio ? 'block' : 'none';
 
             if (profileData.twitterUsername) {
