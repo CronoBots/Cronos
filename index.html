@@ -197,63 +197,64 @@
 
         .profile-info {
             flex: 1;
-            text-align: left;
-            max-width: 600px;
-            position: relative;
-            min-height: 200px;
             display: flex;
             flex-direction: column;
+            justify-content: flex-start;
+            max-width: 600px;
+            min-height: 200px;
         }
 
         .username-container {
             display: flex;
             align-items: center;
-            gap: 5px;
-        }
-
-        .bio-container {
-            position: absolute;
-            bottom: 0;
-            max-width: 100%;
-            white-space: pre-wrap;
+            gap: 8px;
+            margin-bottom: 5px;
         }
 
         .social-container {
-            display: inline-block;
-            vertical-align: top;
-            position: relative;
-            top: -2px;
-            max-width: 100%;
-            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            vertical-align: middle;
         }
 
         .username {
             color: var(--color1);
             margin: 0;
-            display: inline-block;
-            vertical-align: middle;
-            line-height: 1;
-        }
-
-        #username {
             font-size: 24px;
+            line-height: 1.2;
         }
 
-        #displayName {
-            margin: 5px 0;
+        .display-name {
+            margin: 0;
+            font-size: 18px;
+            color: var(--text-dark);
+            line-height: 1.2;
+        }
+
+        .bio-container {
+            margin-top: auto;
+            max-width: 100%;
+            white-space: pre-wrap;
         }
 
         #bio {
             margin: 0;
-            margin-bottom: 0; /* S'assurer qu'il n'y a pas d'espace en dessous */
-            font-weight: normal !important;
-            font-family: 'Geomanist-Bold', sans-serif !important;
+            font-weight: normal;
+            font-family: 'Geomanist-Bold', sans-serif;
             line-height: 1.2;
+            color: var(--text-dark);
         }
 
-        #twitterLink {
-            display: inline-block;
+        .social-icon {
+            width: 24px;
+            height: 24px;
+            transition: var(--transition);
+            border-radius: 3px;
             vertical-align: middle;
+        }
+
+        .social-icon:hover {
+            transform: scale(1.1);
         }
 
         .controls {
@@ -501,18 +502,6 @@
             color: var(--color1);
         }
 
-        .social-icon {
-            width: 24px;
-            height: 24px;
-            transition: var(--transition);
-            border-radius: 3px;
-            vertical-align: middle;
-        }
-
-        .social-icon:hover {
-            transform: scale(1.1);
-        }
-
         .footer {
             text-align: center;
             padding: 20px;
@@ -670,33 +659,36 @@
             }
 
             .profile-info {
-                text-align: center;
+                text-align: left;
                 max-width: 100%;
                 min-height: auto;
                 justify-content: flex-start;
             }
 
             .username-container {
-                flex-direction: column;
-                align-items: flex-start;
+                flex-direction: row;
+                align-items: center;
                 gap: 5px;
+                margin-bottom: 5px;
             }
 
             .social-container {
-                display: block;
-                top: 0;
-                margin-top: 5px;
-                white-space: normal;
+                display: inline-flex;
+                margin-top: 0;
+            }
+
+            .username {
+                font-size: 20px;
+            }
+
+            .display-name {
+                font-size: 16px;
             }
 
             .bio-container {
-                position: static;
+                margin-top: auto;
                 max-width: 100%;
                 white-space: pre-wrap;
-            }
-
-            #username {
-                font-size: 20px;
             }
 
             .social-icon {
@@ -800,7 +792,7 @@
                                 </p>
                             </div>
                         </div>
-                        <p id="displayName"></p>
+                        <p id="displayName" class="display-name"></p>
                         <div class="bio-container" style="display: none;" id="bioContainer">
                             <p id="bio"></p>
                         </div>
@@ -1009,9 +1001,7 @@
         }
 
         function normalizeText(text) {
-            // Normaliser le texte et supprimer les retours à la ligne vides multiples
             let normalized = text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
-            // Remplacer les retours à la ligne multiples par un seul retour à la ligne
             normalized = normalized.replace(/\n\s*\n/g, '\n').trim();
             return normalized;
         }
@@ -1046,7 +1036,9 @@
             }
 
             username.textContent = profileData.username || 'Unknown';
-            displayName.textContent = profileData.displayName || profileData.username;
+            currentUsername = profileData.username.toLowerCase();
+            displayName.textContent = profileData.displayName || '';
+            displayName.style.display = profileData.displayName ? 'block' : 'none';
             currentDisplayName = profileData.displayName || profileData.username;
 
             console.log(`Profile avatar URL: ${profileData.avatar?.url || 'Missing'}`);
@@ -1061,7 +1053,7 @@
 
             if (profileData.twitterUsername) {
                 twitterUrl.href = `https://x.com/${sanitizeInput(profileData.twitterUsername)}`;
-                socialContainer.style.display = 'inline-block';
+                socialContainer.style.display = 'inline-flex';
                 twitterLink.style.display = 'inline-block';
             } else {
                 socialContainer.style.display = 'none';
