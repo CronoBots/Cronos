@@ -495,18 +495,20 @@
                 align-items: center;
                 gap: 5px;
                 margin: 0;
-                width: auto;
+                flex: 1; /* Permet au champ de recherche de prendre tout l'espace disponible */
+                max-width: none; /* Supprime la contrainte de largeur maximale */
             }
 
             .navbar-search input {
-                max-width: 200px;
+                width: 100%; /* Le champ de recherche prend toute la largeur disponible */
+                max-width: none; /* Supprime la limite de largeur */
                 height: auto;
-                padding: 5px 5px;
+                padding: 5px;
                 font-size: 12px;
             }
 
             .navbar-search button {
-                padding: 5px 5px;
+                padding: 5px 10px;
                 font-size: 12px;
             }
 
@@ -514,7 +516,7 @@
                 display: block;
                 position: static;
                 margin-left: 10px;
-                font-size: 1.2rem;
+                font-size: 1.5rem; /* Augmente légèrement la taille du bouton hamburger */
             }
 
             .navbar-menu {
@@ -559,9 +561,14 @@
             }
 
             .controls {
+                display: none; /* Masquer les filtres par défaut */
                 align-items: center;
                 width: 100%;
                 margin-right: 0;
+            }
+
+            .controls.visible {
+                display: flex; /* Afficher les filtres une fois le profil chargé */
             }
 
             .controls div {
@@ -841,6 +848,56 @@
             return allAssets;
         }
 
+        // Update profile UI
+        function updateProfileUI(profileData) {
+            console.log('updateProfileUI called', profileData);
+            const profileHeader = document.getElementById('profileHeader');
+            const profilePicture = document.getElementById('profilePicture');
+            const username = document.getElementById('username');
+            const displayName = document.getElementById('displayName');
+            const bio = document.getElementById('bio');
+            const twitterLink = document.getElementById('twitterLink');
+            const twitterUrl = document.getElementById('twitterUrl');
+            const usernameInput = document.getElementById('usernameInput');
+
+            if (!profileHeader || !profilePicture || !username || !displayName || !bio || !twitterLink || !twitterUrl || !usernameInput) {
+                console.error('Profile UI elements not found:', {
+                    profileHeader: !!profileHeader,
+                    profilePicture: !!profilePicture,
+                    username: !!username,
+                    displayName: !!displayName,
+                    bio: !!bio,
+                    twitterLink: !!twitterLink,
+                    twitterUrl: !!twitterUrl,
+                    usernameInput: !!usernameInput
+                });
+                return;
+            }
+
+            username.textContent = profileData.username || 'Unknown';
+            displayName.textContent = profileData.displayName || profileData.username;
+            currentDisplayName = profileData.displayName || profileData.username;
+
+            console.log(`Profile avatar URL: ${profileData.avatar?.url || 'Missing'}`);
+            profilePicture.src = profileData.avatar?.url || '';
+            profilePicture.style.display = profileData.avatar?.url ? 'block' : 'none';
+
+            bio.textContent = profileData.bio || '';
+            bio.style.display = profileData.bio ? 'block' : 'none';
+
+            if (profileData.twitterUsername) {
+                twitterUrl.href = `https://x.com/${sanitizeInput(profileData.twitterUsername)}`;
+                twitterLink.style.display = 'block';
+            } else {
+                twitterLink.style.display = 'none';
+            }
+
+            profileHeader.style.display = 'block';
+
+            // Vider le champ de recherche
+            usernameInput.value = '';
+        }
+
         // Fetch profile and NFTs
         async function fetchProfileAndNFTs() {
             console.log('fetchProfileAndNFTs called');
@@ -848,13 +905,15 @@
             const loadingDiv = document.getElementById('loading');
             const errorDiv = document.getElementById('error');
             const noResultsDiv = document.getElementById('noResults');
+            const controls = document.getElementById('controls');
 
-            if (!usernameInput || !loadingDiv || !errorDiv || !noResultsDiv) {
+            if (!usernameInput || !loadingDiv || !errorDiv || !noResultsDiv || !controls) {
                 console.error('Required DOM elements not found:', {
                     usernameInput: !!usernameInput,
                     loadingDiv: !!loadingDiv,
                     errorDiv: !!errorDiv,
-                    noResultsDiv: !!noResultsDiv
+                    noResultsDiv: !!noResultsDiv,
+                    controls: !!controls
                 });
                 if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
                 return;
@@ -912,6 +971,7 @@
                     updateDisplay();
                     populateCollectionFilter(allNFTs);
                     document.getElementById('collectionFilter').disabled = false;
+                    controls.classList.add('visible'); // Afficher les filtres
                 } else {
                     console.log('No NFTs found');
                     noResultsDiv.style.display = 'block';
@@ -924,51 +984,6 @@
             }
         }
 
-        // Update profile UI
-        function updateProfileUI(profileData) {
-            console.log('updateProfileUI called', profileData);
-            const profileHeader = document.getElementById('profileHeader');
-            const profilePicture = document.getElementById('profilePicture');
-            const username = document.getElementById('username');
-            const displayName = document.getElementById('displayName');
-            const bio = document.getElementById('bio');
-            const twitterLink = document.getElementById('twitterLink');
-            const twitterUrl = document.getElementById('twitterUrl');
-
-            if (!profileHeader || !profilePicture || !username || !displayName || !bio || !twitterLink || !twitterUrl) {
-                console.error('Profile UI elements not found:', {
-                    profileHeader: !!profileHeader,
-                    profilePicture: !!profilePicture,
-                    username: !!username,
-                    displayName: !!displayName,
-                    bio: !!bio,
-                    twitterLink: !!twitterLink,
-                    twitterUrl: !!twitterUrl
-                });
-                return;
-            }
-
-            username.textContent = profileData.username || 'Unknown';
-            displayName.textContent = profileData.displayName || profileData.username;
-            currentDisplayName = profileData.displayName || profileData.username;
-
-            console.log(`Profile avatar URL: ${profileData.avatar?.url || 'Missing'}`);
-            profilePicture.src = profileData.avatar?.url || '';
-            profilePicture.style.display = profileData.avatar?.url ? 'block' : 'none';
-
-            bio.textContent = profileData.bio || '';
-            bio.style.display = profileData.bio ? 'block' : 'none';
-
-            if (profileData.twitterUsername) {
-                twitterUrl.href = `https://x.com/${sanitizeInput(profileData.twitterUsername)}`;
-                twitterLink.style.display = 'block';
-            } else {
-                twitterLink.style.display = 'none';
-            }
-
-            profileHeader.style.display = 'block';
-        }
-
         // Populate collection filter with sorting by NFT count
         function populateCollectionFilter(nfts) {
             console.log('populateCollectionFilter called', nfts);
@@ -978,7 +993,6 @@
                 return;
             }
 
-            // Compter les NFTs par collection
             const collectionCounts = {};
             nfts.forEach(nft => {
                 const collectionName = nft.collection?.name;
@@ -987,12 +1001,10 @@
                 }
             });
 
-            // Trier les collections par nombre de NFTs (décroissant)
             const sortedCollections = Object.keys(collectionCounts).sort((a, b) => {
                 return collectionCounts[b] - collectionCounts[a];
             });
 
-            // Remplir le select
             collectionFilter.innerHTML = '<option value="">All Collections</option>';
             sortedCollections.forEach(collection => {
                 const option = document.createElement('option');
