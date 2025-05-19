@@ -216,7 +216,7 @@
             display: none;
             flex-direction: column;
             gap: 10px;
-            align-items: flex-end;
+            align-items: flex-start;
             min-width: 200px;
             margin-right: 30px;
             margin-top: 30px;
@@ -226,16 +226,21 @@
             display: flex;
         }
 
-        .controls div {
-            width: 200px;
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            max-width: 300px;
         }
 
         .controls label {
-            display: block;
             font-size: 0.9em;
-            margin-bottom: 5px;
+            margin-bottom: 0;
             text-transform: uppercase;
-            text-align: center;
+            text-align: left;
+            white-space: nowrap;
+            width: auto;
         }
 
         .controls select {
@@ -318,7 +323,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            text-transform: none; /* Preserve original case for NFT names */
+            text-transform: none;
         }
 
         .nft-card h3 .highlight {
@@ -617,13 +622,19 @@
                 margin-right: 0;
             }
 
-            .controls div {
-                width: 100%;
-                max-width: 200px;
+            .control-group {
+                max-width: 100%;
+                flex-direction: row;
+                gap: 5px;
+            }
+
+            .controls label {
+                font-size: 0.8em;
             }
 
             .controls select {
-                width: 100%;
+                font-size: 12px;
+                padding: 6px;
             }
 
             .nft-container.small-size {
@@ -693,21 +704,21 @@
                 </div>
             </div>
             <div class="controls" id="controls">
-                <div>
-                    <label for="collectionFilter">COLLECTION</label>
+                <div class="control-group">
+                    <label for="collectionFilter">COLLECTION:</label>
                     <select id="collectionFilter" onchange="filterNFTs()" disabled>
                         <option value="">All Collections</option>
                     </select>
                 </div>
-                <div>
-                    <label for="displayMode">DISPLAY MODE</label>
+                <div class="control-group">
+                    <label for="displayMode">DISPLAY MODE:</label>
                     <select id="displayMode" onchange="updateDisplay()">
                         <option value="full">Normal</option>
                         <option value="thumbnail">Thumbnail</option>
                     </select>
                 </div>
-                <div>
-                    <label for="cardSize">CARD SIZE</label>
+                <div class="control-group">
+                    <label for="cardSize">CARD SIZE:</label>
                     <select id="cardSize" onchange="updateDisplay()">
                         <option value="small">Small</option>
                         <option value="medium" selected>Medium</option>
@@ -1149,7 +1160,7 @@
                         mediaElement.alt = asset.name || 'NFT Image';
                         mediaElement.decoding = 'async';
                         mediaElement.onerror = () => {
-                            console.error(`Failed to load image for NFT: ${asset.name || 'Unnamed NFT'}, URL: ${imageUrl || 'Missing'}`);
+                            console.error(`Failed to load image for NFT: ${asset.name || 'Unnamed NFT'}, URL:urile ${imageUrl || 'Missing'}`);
                             mediaElement.remove();
                             const placeholder = document.createElement('div');
                             placeholder.className = 'media-placeholder';
