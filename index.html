@@ -211,12 +211,16 @@
         }
 
         .controls {
-            display: flex;
+            display: none; /* Masquer les filtres par défaut sur tous les supports */
             flex-direction: column;
             gap: 10px;
             align-items: flex-end;
             min-width: 200px;
             margin-right: 30px;
+        }
+
+        .controls.visible {
+            display: flex; /* Afficher les filtres après chargement */
         }
 
         .controls div {
@@ -340,6 +344,7 @@
             padding: 0;
             justify-content: start;
             justify-items: start;
+            width: 100%; /* S'assurer que le conteneur ne dépasse pas l'écran */
         }
 
         .nft-container.thumbnail-mode .nft-card {
@@ -457,14 +462,21 @@
             margin-right: 10px;
         }
 
-        .theme-toggle select {
-            padding: 8px;
+        .theme-toggle button {
+            padding: 8px 16px;
             border-radius: 8px;
             border: none;
             background-color: var(--color1);
             color: var(--text-dark);
             cursor: pointer;
             font-family: 'Geomanist-Bold', sans-serif;
+            text-transform: uppercase;
+            font-weight: 700;
+            transition: var(--transition);
+        }
+
+        .theme-toggle button:hover {
+            transform: scale(1.05);
         }
 
         @keyframes fadeIn {
@@ -482,9 +494,9 @@
                 flex-direction: row;
                 align-items: center;
                 justify-content: space-between;
-                padding: 5px;
+                padding: 10px;
                 flex-wrap: nowrap;
-                height: 50px; /* Hauteur fixe pour la barre de navigation */
+                height: 60px;
             }
 
             .navbar-logo img {
@@ -495,37 +507,37 @@
                 display: flex;
                 align-items: center;
                 gap: 5px;
-                margin: 0 10px 0 15px; /* Écarte légèrement la barre de recherche du logo */
-                flex: 1; /* Prend tout l'espace disponible */
+                margin: 0 10px 0 15px;
+                flex: 1;
                 max-width: none;
-                height: 100%; /* Remplit verticalement la barre de navigation */
+                height: 100%;
             }
 
             .navbar-search input {
                 width: 100%;
                 max-width: none;
-                height: 40px; /* Hauteur augmentée pour remplir verticalement */
+                height: 40px;
                 padding: 5px;
-                font-size: 15px;
+                font-size: 12px;
                 box-sizing: border-box;
             }
 
             .navbar-search button {
                 padding: 0 10px;
-                font-size: 15px;
-                height: 40px; /* Hauteur augmentée pour remplir verticalement */
+                font-size: 12px;
+                height: 40px;
                 box-sizing: border-box;
             }
 
             .navbar-toggle {
                 display: flex;
-                align-items: center; /* Centre verticalement */
+                align-items: center;
                 justify-content: center;
                 position: static;
                 margin-left: 10px;
                 margin-right: 10px;
-                font-size: 1.8rem; /* Taille encore plus grande pour le bouton hamburger */
-                height: 100%; /* S'assure que le bouton est aligné verticalement */
+                font-size: 1.8rem;
+                height: 100%;
             }
 
             .navbar-menu {
@@ -570,14 +582,9 @@
             }
 
             .controls {
-                display: none;
                 align-items: center;
                 width: 100%;
                 margin-right: 0;
-            }
-
-            .controls.visible {
-                display: flex;
             }
 
             .controls div {
@@ -603,6 +610,8 @@
 
             .nft-container.thumbnail-mode {
                 width: 100%;
+                max-width: 100vw; /* Empêche le dépassement de l'écran */
+                box-sizing: border-box;
             }
 
             .nft-container.thumbnail-mode .nft-card img,
@@ -690,11 +699,8 @@
         <img src="CRONOBOTS.png" alt="Cronobots Logo" class="footer-logo">
         <p>CRONOBOTS | CRONOS DEVELOPMENT</p>
         <div class="theme-toggle">
-            <label for="themeSelect">Theme:</label>
-            <select id="themeSelect" onchange="toggleTheme()">
-                <option value="dark">Dark</option>
-                <option value="light">Light</option>
-            </select>
+            <label for="themeButton">Theme:</label>
+            <button id="themeButton" onclick="toggleTheme()">Toggle Theme</button>
         </div>
     </footer>
 
@@ -783,15 +789,11 @@
         // Theme toggle
         function toggleTheme() {
             console.log('toggleTheme called');
-            const select = document.getElementById('themeSelect');
-            if (select) {
-                const newTheme = select.value;
-                document.documentElement.setAttribute('data-theme', newTheme);
-                localStorage.setItem('theme', newTheme);
-                console.log('Theme set to:', newTheme);
-            } else {
-                console.error('Theme select not found');
-            }
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            console.log('Theme set to:', newTheme);
         }
 
         // Fetch with cache
@@ -1084,10 +1086,12 @@
             countContainer.appendChild(countElement);
 
             if (displayMode === 'thumbnail') {
-                const gridSize = Math.ceil(Math.sqrt(assets.length));
                 const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
+                const maxGridSize = Math.floor(window.innerWidth / cardWidth); // Limiter la grille à la largeur de l'écran
+                const gridSize = Math.min(Math.ceil(Math.sqrt(assets.length)), maxGridSize);
                 const totalWidth = gridSize * cardWidth;
                 container.style.width = `${totalWidth}px`;
+                container.style.maxWidth = '100vw'; // S'assurer que la largeur ne dépasse pas l'écran
                 container.style.gridTemplateColumns = `repeat(${gridSize}, ${cardWidth}px)`;
                 console.log(`Thumbnail mode: gridSize=${gridSize}, cardWidth=${cardWidth}px, totalWidth=${totalWidth}px`);
 
@@ -1150,6 +1154,7 @@
             } else {
                 container.style.gridTemplateColumns = '';
                 container.style.width = '';
+                container.style.maxWidth = '100vw';
                 console.log(`Applied class: ${container.className}`);
 
                 assets.forEach(asset => {
@@ -1221,7 +1226,7 @@
             console.log('setupEventListeners called');
             const searchButton = document.getElementById('searchButton');
             const usernameInput = document.getElementById('usernameInput');
-            const themeSelect = document.getElementById('themeSelect');
+            const themeButton = document.getElementById('themeButton');
             const collectionFilter = document.getElementById('collectionFilter');
             const displayMode = document.getElementById('displayMode');
             const cardSize = document.getElementById('cardSize');
@@ -1229,13 +1234,13 @@
             console.log('DOM elements found:', {
                 searchButton: !!searchButton,
                 usernameInput: !!usernameInput,
-                themeSelect: !!themeSelect,
+                themeButton: !!themeButton,
                 collectionFilter: !!collectionFilter,
                 displayMode: !!displayMode,
                 cardSize: !!cardSize
             });
 
-            if (!searchButton || !usernameInput || !themeSelect || !collectionFilter || !displayMode || !cardSize) {
+            if (!searchButton || !usernameInput || !themeButton || !collectionFilter || !displayMode || !cardSize) {
                 console.error('One or more DOM elements not found');
                 const errorDiv = document.getElementById('error');
                 if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
@@ -1247,8 +1252,8 @@
                 fetchProfileAndNFTs();
             });
 
-            themeSelect.addEventListener('change', () => {
-                console.log('Theme select changed');
+            themeButton.addEventListener('click', () => {
+                console.log('Theme button clicked');
                 toggleTheme();
             });
 
@@ -1275,12 +1280,6 @@
             console.log('DOMContentLoaded event fired');
             const savedTheme = localStorage.getItem('theme') || 'dark';
             document.documentElement.setAttribute('data-theme', savedTheme);
-            const themeSelect = document.getElementById('themeSelect');
-            if (themeSelect) {
-                themeSelect.value = savedTheme;
-            } else {
-                console.error('themeSelect not found during initialization');
-            }
             setupEventListeners();
         });
     </script>
