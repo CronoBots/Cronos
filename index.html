@@ -198,12 +198,12 @@
         .profile-info {
             flex: 1;
             text-align: left;
-            max-width: 500px;
+            max-width: 600px; /* Augmenté pour éviter les retours à la ligne */
             position: relative;
-            min-height: 200px; /* Assure que .profile-info a la même hauteur que l'image */
+            min-height: 200px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between; /* Alignement des éléments en haut et en bas */
+            justify-content: space-between;
         }
 
         .username-container {
@@ -211,15 +211,16 @@
         }
 
         .lower-section {
-            margin-top: auto; /* Pousse BIO: et SOCIAL: vers le bas */
+            margin-top: auto; /* Pousse BIO et SOCIAL: vers le bas */
         }
 
         .bio-container, .social-container {
-            max-width: 200px;
+            max-width: 100%; /* Permet au contenu de s'étendre sur toute la largeur disponible */
+            white-space: nowrap; /* Empêche les retours à la ligne */
         }
 
         .social-container {
-            margin-top: 5px; /* Écart de 5px entre BIO: et SOCIAL: */
+            margin-top: 5px; /* Écart de 5px entre bio et SOCIAL: */
         }
 
         .username {
@@ -238,20 +239,17 @@
             margin: 5px 0;
         }
 
-        #bioLabel, #socialLabel {
+        #socialLabel {
             display: inline-block;
             font-weight: normal;
             margin: 0;
+            vertical-align: middle;
         }
 
         #bio {
             margin: 0;
             font-weight: normal !important; /* Forcer l'absence de gras */
             font-family: 'Geomanist-Bold', sans-serif !important; /* Forcer la police */
-        }
-
-        #socialLabel {
-            vertical-align: middle;
         }
 
         #twitterLink {
@@ -676,8 +674,8 @@
             .profile-info {
                 text-align: center;
                 max-width: 100%;
-                min-height: auto; /* Pas besoin de hauteur fixe en mobile */
-                justify-content: flex-start; /* Éléments s'empilent naturellement */
+                min-height: auto;
+                justify-content: flex-start;
             }
 
             #username {
@@ -692,10 +690,11 @@
             .bio-container, .social-container {
                 max-width: 100%;
                 text-align: left;
+                white-space: normal; /* Permet les retours à la ligne en mobile si nécessaire */
             }
 
             .social-container {
-                margin-top: 5px; /* Même écart en mobile */
+                margin-top: 5px;
             }
 
             .controls {
@@ -790,7 +789,6 @@
                         </div>
                         <div class="lower-section">
                             <div class="bio-container" style="display: none;" id="bioContainer">
-                                <p id="bioLabel">BIO:</p>
                                 <p id="bio"></p>
                             </div>
                             <div class="social-container" style="display: none;" id="socialContainer">
@@ -1045,9 +1043,9 @@
             profilePicture.src = profileData.avatar?.url || '';
             profilePicture.style.display = profileData.avatar?.url ? 'block' : 'none';
 
-            bio.textContent = profileData.bio || ''; // Texte brut, sans majuscules ni gras
-            bio.style.fontWeight = 'normal'; // Forcer l'absence de gras
-            bio.style.fontFamily = "'Geomanist-Bold', sans-serif"; // Forcer la police
+            bio.textContent = profileData.bio || '';
+            bio.style.fontWeight = 'normal';
+            bio.style.fontFamily = "'Geomanist-Bold', sans-serif";
             bioContainer.style.display = profileData.bio ? 'block' : 'none';
 
             if (profileData.twitterUsername) {
