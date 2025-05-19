@@ -198,23 +198,15 @@
         .profile-info {
             flex: 1;
             max-width: 600px;
-            height: 200px; /* Hauteur fixe pour correspondre à l'image */
-            position: relative; /* Pour positionnement absolu des enfants */
+            height: 200px;
+            position: relative;
         }
 
         .username-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
             position: absolute;
-            top: 0; /* Toujours en haut */
+            top: 0;
             left: 0;
-        }
-
-        .social-container {
-            display: inline-flex;
-            align-items: center;
-            vertical-align: middle;
+            display: block;
         }
 
         .username {
@@ -222,6 +214,30 @@
             margin: 0;
             font-size: 24px;
             line-height: 1.2;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .social-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform: translateX(100%);
+            margin-left: 8px;
+            display: inline-block;
+        }
+
+        .social-icon {
+            width: 24px;
+            height: 24px;
+            transition: var(--transition);
+            border-radius: 3px;
+            vertical-align: top;
+        }
+
+        .social-icon:hover {
+            transform: scale(1.1);
         }
 
         .display-name {
@@ -230,13 +246,13 @@
             color: var(--text-dark);
             line-height: 1.2;
             position: absolute;
-            top: 30px; /* Fixé juste en dessous de l'username */
+            top: 30px;
             left: 0;
         }
 
         .bio-container {
             position: absolute;
-            bottom: 0; /* Toujours en bas */
+            bottom: 0;
             left: 0;
             max-width: 100%;
             white-space: pre-wrap;
@@ -248,18 +264,6 @@
             font-family: 'Geomanist-Bold', sans-serif;
             line-height: 1.2;
             color: var(--text-dark);
-        }
-
-        .social-icon {
-            width: 24px;
-            height: 24px;
-            transition: var(--transition);
-            border-radius: 3px;
-            vertical-align: middle;
-        }
-
-        .social-icon:hover {
-            transform: scale(1.1);
         }
 
         .controls {
@@ -664,7 +668,7 @@
             }
 
             .profile-info {
-                height: 120px; /* Hauteur fixe pour mobile */
+                height: 120px;
                 max-width: 100%;
             }
 
@@ -675,11 +679,20 @@
 
             .username {
                 font-size: 20px;
+                top: 0;
+                left: 0;
+            }
+
+            .social-container {
+                top: 0;
+                left: 0;
+                transform: translateX(100%);
+                margin-left: 5px; /* Réduit pour mobile */
             }
 
             .display-name {
                 font-size: 16px;
-                top: 25px; /* Ajusté pour mobile */
+                top: 25px;
                 left: 0;
             }
 
@@ -819,7 +832,6 @@
                         <option value="large">Large</option>
                     </select>
                 </div>
-                <div class="clear"></div>
                 <div class="control-group">
                     <label for="sortBy">SORT BY:</label>
                     <select id="sortBy" disabled>
@@ -1052,7 +1064,1463 @@
 
             if (profileData.twitterUsername) {
                 twitterUrl.href = `https://x.com/${sanitizeInput(profileData.twitterUsername)}`;
-                socialContainer.style.display = 'inline-flex';
+                socialContainer.style.display = 'inline-block';
+                twitterLink.style.display = 'inline-block';
+            } else {
+                socialContainer.style.display = 'none';
+                twitterLink.style.display = 'none';
+            }
+
+            profileHeader.style.display = 'block';
+            usernameInput.value = '';
+        }
+
+        async function fetchProfileAndNFTs() {
+            console.log('fetchProfileAndNFTs called');
+            const usernameInput = document.getElementById('usernameInput');
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const noResultsDiv = document.getElementById('noResults');
+            const controls = document.getElementById('controls');
+
+            if (!usernameInput || !loadingDiv || !errorDiv || !noResultsDiv || !controls) {
+                console.error('Required DOM elements not found:', {
+                    usernameInput: !!usernameInput,
+                    loadingDiv: !!loadingDiv,
+                    errorDiv: !!errorDiv,
+                    noResultsDiv: !!noResultsDiv,
+                    controls: !!controls
+                });
+                if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
+                return;
+            }
+
+            const username = sanitizeInput(usernameInput.value.trim());
+            if (!username || username === currentUsername) {
+                console.log('No new username provided or same as current:', username);
+                return;
+            }
+
+            console.log(`Searching for username: ${username}`);
+            currentUsername = username.toLowerCase();
+            loadingDiv.style.display = 'block';
+            errorDiv.textContent = '';
+            noResultsDiv.style.display = 'none';
+
+            try {
+                const profileData = await fetchWithCache(`profile_${currentUsername}`, async () => {
+                    console.log(`Fetching profile for ${currentUsername}`);
+                    const response = await fetch(graphqlEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query: profileQuery, variables: { id: currentUsername } })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    console.log('Profile query response:', result);
+
+                    if (result.errors) {
+                        throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
+                    }
+
+                    return result.data?.public?.user;
+                });
+
+                if (!profileData) {
+                    console.log('No profile data found');
+                    noResultsDiv.style.display = 'block';
+                    loadingDiv.style.display = 'none';
+                    return;
+                }
+
+                console.log('Updating profile UI');
+                updateProfileUI(profileData);
+
+                allNFTs = await fetchWithCache(`nfts_${currentUsername}`, () => fetchAllNFTs(currentUsername));
+
+                if (allNFTs.length > 0) {
+                    console.log(`Displaying ${allNFTs.length} NFTs`);
+                    updateDisplay();
+                    populateCollectionFilter(allNFTs);
+                    document.getElementById('collectionFilter').disabled = false;
+                    controls.classList.add('visible');
+                } else {
+                    console.log('No NFTs found');
+                    noResultsDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error(`Error in fetchProfileAndNFTs: ${error.message}`);
+                errorDiv.textContent = `Error: ${error.message}`;
+            } finally {
+                loadingDiv.style.display = 'none';
+            }
+        }
+
+        function populateCollectionFilter(nfts) {
+            console.log('populateCollectionFilter called', nfts);
+            const collectionFilter = document.getElementById('collectionFilter');
+            if (!collectionFilter) {
+                console.error('Collection filter not found');
+                return;
+            }
+
+            const collectionCounts = {};
+            nfts.forEach(nft => {
+                const collectionName = nft.collection?.name;
+                if (collectionName) {
+                    collectionCounts[collectionName] = (collectionCounts[collectionName] || 0) + 1;
+                }
+            });
+
+            const sortedCollections = Object.keys(collectionCounts).sort((a, b) => {
+                return collectionCounts[b] - collectionCounts[a];
+            });
+
+            collectionFilter.innerHTML = '<option value="">All Collections</option>';
+            sortedCollections.forEach(collection => {
+                const option = document.createElement('option');
+                option.value = collection;
+                option.textContent = `${collection} (${collectionCounts[collection]})`;
+                collectionFilter.appendChild(option);
+            });
+        }
+
+        function filterNFTs() {
+            console.log('filterNFTs called');
+            const collectionFilter = document.getElementById('collectionFilter');
+            const displayMode = document.getElementById('displayMode');
+            const cardSize = document.getElementById('cardSize');
+
+            if (!collectionFilter || !displayMode || !cardSize) {
+                console.error('Filter elements not found:', {
+                    collectionFilter: !!collectionFilter,
+                    displayMode: !!displayMode,
+                    cardSize: !!cardSize
+                });
+                return;
+            }
+
+            if (!allNFTs || !allNFTs.length) {
+                console.warn('No NFTs available to filter');
+                displayNFTs([], '');
+                return;
+            }
+
+            const collectionValue = collectionFilter.value;
+            const filteredNFTs = collectionValue
+                ? allNFTs.filter(nft => nft.collection?.name === collectionValue)
+                : [...allNFTs];
+
+            console.log(`Filtered ${filteredNFTs.length} NFTs for collection: ${collectionValue || 'All'}`);
+            displayNFTs(filteredNFTs, collectionValue);
+        }
+
+        function displayNFTs(assets, selectedCollection) {
+            console.log(`displayNFTs called with ${assets.length} assets, collection: ${selectedCollection || 'All'}`);
+            const container = document.getElementById('nftContainer');
+            const countContainer = document.getElementById('nftCountContainer');
+            const displayMode = document.getElementById('displayMode')?.value;
+            const cardSize = document.getElementById('cardSize')?.value;
+
+            console.log(`Applying display mode: ${displayMode}, card size: ${cardSize}`);
+
+            if (!container || !countContainer) {
+                console.error('NFT container or count container not found:', {
+                    container: !!container,
+                    countContainer: !!countContainer
+                });
+                return;
+            }
+
+            countContainer.innerHTML = '';
+            container.className = `nft-container ${displayMode}-mode ${cardSize}-size`;
+            container.innerHTML = '';
+
+            const countElement = document.createElement('p');
+            countElement.className = 'nft-count';
+            countElement.innerHTML = selectedCollection
+                ? `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets on this collection.`
+                : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets.`;
+            countContainer.appendChild(countElement);
+
+            if (displayMode === 'thumbnail') {
+                const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
+                const maxGridSize = Math.floor(window.innerWidth / cardWidth);
+                const gridSize = Math.min(Math.ceil(Math.sqrt(assets.length)), maxGridSize);
+                const totalWidth = gridSize * cardWidth;
+                container.style.width = `${totalWidth}px`;
+                container.style.maxWidth = '100vw';
+                container.style.gridTemplateColumns = `repeat(${gridSize}, ${cardWidth}px)`;
+                console.log(`Thumbnail mode: gridSize=${gridSize}, cardWidth=${cardWidth}px, totalWidth=${totalWidth}px`);
+
+                assets.forEach(asset => {
+                    const imageUrl = asset.cover?.url;
+                    console.log(`Loading NFT: ${asset.name || 'Unnamed NFT'}, Cover URL: ${imageUrl || 'Missing'}`);
+                    if (!imageUrl) {
+                        console.error(`Missing cover URL for NFT: ${asset.name || 'Unnamed NFT'}`);
+                    }
+
+                    const card = document.createElement('div');
+                    card.className = 'nft-card';
+
+                    let mediaElement;
+                    if (imageUrl?.endsWith('.mp4')) {
+                        console.log(`MP4 detected: ${imageUrl}`);
+                        mediaElement = document.createElement('video');
+                        mediaElement.src = imageUrl;
+                        mediaElement.controls = true;
+                        mediaElement.muted = true;
+                        mediaElement.loop = true;
+                        mediaElement.onerror = () => {
+                            console.error(`Failed to load video for NFT: ${asset.name || 'Unnamed NFT'}, URL: ${imageUrl}`);
+                            mediaElement.remove();
+                            const placeholder = document.createElement('div');
+                            placeholder.className = 'media-placeholder';
+                            placeholder.textContent = 'Média indisponible';
+                            card.appendChild(placeholder);
+                        };
+                    } else {
+                        console.log(`Image/GIF detected: ${imageUrl || 'Missing'}`);
+                        mediaElement = document.createElement('img');
+                        mediaElement.src = imageUrl || '';
+                        mediaElement.alt = asset.name || 'NFT Image';
+                        mediaElement.decoding = 'async';
+                        mediaElement.onerror = () => {
+                            console.error(`Failed to load image for NFT: ${asset.name || 'Unnamed NFT'}, URL: ${imageUrl || 'Missing'}`);
+                            mediaElement.remove();
+                            const placeholder = document.createElement('div');
+                            placeholder.className = 'media-placeholder';
+                            placeholder.textContent = 'Média indisponible';
+                            card.appendChild(placeholder);
+                        };
+                        mediaElement.sizes = '(max-width: 768px) 80px, 200px';
+                        if (imageUrl?.endsWith('.gif')) {
+                            console.log(`GIF detected: ${imageUrl}`);
+                        }
+                    }
+
+                    const tooltip = document.createElement('span');
+                    tooltip.className = 'tooltip';
+                    tooltip.textContent = asset.name || 'Unnamed NFT';
+                    card.appendChild(tooltip);
+
+                    card.appendChild(mediaElement);
+                    container.appendChild(card);
+                });
+
+                const totalCells = gridSize * gridSize;
+                for (let i = assets.length; i < totalCells; i++) {
+                    const emptyCard = document.createElement('div');
+                    emptyCard.className = 'nft-card empty';
+                    container.appendChild(emptyCard);
+                }
+            } else {
+                container.style.gridTemplateColumns = '';
+                container.style.width = '';
+                container.style.maxWidth = '100vw';
+                console.log(`Applied class: ${container.className}`);
+
+                assets.forEach(asset => {
+                    const imageUrl = asset.cover?.url;
+                    console.log(`Loading NFT: ${asset.name || 'Unnamed NFT'}, Cover URL: ${imageUrl || 'Missing'}`);
+                    if (!imageUrl) {
+                        console.error(`Missing cover URL for NFT: ${asset.name || 'Unnamed NFT'}`);
+                    }
+
+                    const card = document.createElement('div');
+                    card.className = 'nft-card';
+
+                    let mediaElement;
+                    if (imageUrl?.endsWith('.mp4')) {
+                        console.log(`MP4 detected: ${imageUrl}`);
+                        mediaElement = document.createElement('video');
+                        mediaElement.src = imageUrl;
+                        mediaElement.controls = true;
+                        mediaElement.muted = true;
+                        mediaElement.loop = true;
+                        mediaElement.onerror = () => {
+                            console.error(`Failed to load video for NFT: ${asset.name || 'Unnamed NFT'}, URL: ${imageUrl}`);
+                            mediaElement.remove();
+                            const placeholder = document.createElement('div');
+                            placeholder.className = 'media-placeholder';
+                            placeholder.textContent = 'Média indisponible';
+                            card.appendChild(placeholder);
+                        };
+                    } else {
+                        console.log(`Image/GIF detected: ${imageUrl || 'Missing'}`);
+                        mediaElement = document.createElement('img');
+                        mediaElement.src = imageUrl || '';
+                        mediaElement.alt = asset.name || 'NFT Image';
+                        mediaElement.decoding = 'async';
+                        mediaElement.onerror = () => {
+                            console.error(`Failed to load image for NFT: ${asset.name || 'Unnamed NFT'}, URL: ${imageUrl || 'Missing'}`);
+                            mediaElement.remove();
+                            const placeholder = document.createElement('div');
+                            placeholder.className = 'media-placeholder';
+                            placeholder.textContent = 'Média indisponible';
+                            card.appendChild(placeholder);
+                        };
+                        mediaElement.sizes = '(max-width: 768px) 80px, 200px';
+                        if (imageUrl?.endsWith('.gif')) {
+                            console.log(`GIF detected: ${imageUrl}`);
+                        }
+                    }
+
+                    const title = document.createElement('h3');
+                    const name = asset.name || 'Unnamed NFT';
+                    const highlightedName = name.replace(/(#|\d+)/g, '<span class="highlight">$1</span>');
+                    title.innerHTML = highlightedName;
+
+                    card.appendChild(mediaElement);
+                    card.appendChild(title);
+                    container.appendChild(card);
+                });
+            }
+        }
+
+        function updateDisplay() {
+            console.log('updateDisplay called');
+            filterNFTs();
+        }
+
+        function setupEventListeners() {
+            console.log('setupEventListeners called');
+            const searchButton = document.getElementById('searchButton');
+            const usernameInput = document.getElementById('usernameInput');
+            const themeButton = document.getElementById('themeButton');
+            const collectionFilter = document.getElementById('collectionFilter');
+            const displayMode = document.getElementById('displayMode');
+            const cardSize = document.getElementById('cardSize');
+
+            console.log('DOM elements found:', {
+                searchButton: !!searchButton,
+                usernameInput: !!usernameInput,
+                themeButton: !!themeButton,
+                collectionFilter: !!collectionFilter,
+                displayMode: !!displayMode,
+                cardSize: !!cardSize
+            });
+
+            if (!searchButton || !usernameInput || !themeButton || !collectionFilter || !displayMode || !cardSize) {
+                console.error('One or more DOM elements not found');
+                const errorDiv = document.getElementById('error');
+                if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
+                return;
+            }
+
+            searchButton.addEventListener('click', () => {
+                console.log('Search button clicked');
+                fetchProfileAndNFTs();
+            });
+
+            themeButton.addEventListener('click', () => {
+                console.log('Theme button clicked');
+                toggleTheme();
+            });
+
+            collectionFilter.addEventListener('change', () => {
+                console.log('Collection filter changed');
+                filterNFTs();
+            });
+
+            displayMode.addEventListener('change', () => {
+                console.log('Display mode changed');
+                updateDisplay();
+            });
+
+            cardSize.addEventListener('change', () => {
+                console.log('Card size changed');
+                updateDisplay();
+            });
+
+            console.log('Event listeners attached');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOMContentLoaded event fired');
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            const themeButton = document.getElementById('themeButton');
+            if (themeButton) {
+                themeButton.textContent = savedTheme.charAt(0).toUpperCase() + savedTheme.slice(1);
+            } else {
+                console.error('themeButton not found during initialization');
+            }
+            setupEventListeners();
+        });
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Search and explore NFT profiles on Cronos with CronoBots">
+    <title>CronoBots</title>
+    <link rel="icon" type="image/png" href="/assets/favicon.png">
+    <link rel="preload" href="CRONOBOTS.png" as="image">
+    <style>
+        :root {
+            --color1: #FF5733;
+            --color2: #2C2C2C;
+            --text-dark: #fff;
+            --text-light: #333;
+            --collection-bg: #1a1a1a;
+            --shadow: 0 2px 4px rgba(255,255,255,0.1);
+            --bg-light: #f4f4f4;
+            --transition: all 0.3s ease;
+        }
+
+        [data-theme="light"] {
+            --color2: var(--bg-light);
+            --text-dark: var(--text-light);
+            --collection-bg: #fff;
+            --shadow: 0 2px 4px rgba(0,0,0,0.1);
+            --color1: #e04e2d;
+        }
+
+        @font-face {
+            font-family: 'Geomanist-Bold';
+            src: url('Geomanist-Bold.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        body {
+            font-family: 'Geomanist-Bold', sans-serif;
+            background-color: var(--color2);
+            color: var(--text-dark);
+            padding: 0;
+            margin: 0;
+            line-height: 1.6;
+            transition: var(--transition);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background-color: var(--collection-bg);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            flex-wrap: nowrap;
+        }
+
+        .navbar-logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-logo img {
+            height: 40px;
+        }
+
+        .navbar-menu {
+            display: flex;
+            gap: 20px;
+            margin-left: auto;
+        }
+
+        .navbar-menu a {
+            color: var(--text-dark);
+            font-size: 1rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            transition: var(--transition);
+        }
+
+        .navbar-menu a:hover {
+            color: var(--color1);
+        }
+
+        .navbar-search {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: 20px;
+        }
+
+        .navbar-search input {
+            padding: 8px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            width: 100%;
+            max-width: 250px;
+            font-family: 'Geomanist-Bold', sans-serif;
+        }
+
+        .navbar-search button {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            background-color: var(--color1);
+            color: var(--text-dark);
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: 700;
+            transition: var(--transition);
+            font-family: 'Geomanist-Bold', sans-serif;
+        }
+
+        .navbar-search button:hover {
+            transform: scale(1.05);
+        }
+
+        .navbar-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-dark);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .main-content {
+            padding: 20px;
+            flex: 1;
+        }
+
+        h1, h2, h3 {
+            color: var(--text-dark);
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        h1 {
+            font-size: 2rem;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        a {
+            color: var(--color1);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .profile-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .profile-header {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .profile-header-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            justify-content: flex-start;
+            margin-left: 30px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+
+        .profile-picture {
+            flex: 0 0 auto;
+            position: relative;
+        }
+
+        .profile-picture img {
+            width: 200px;
+            height: 200px;
+            border-radius: 15px;
+            object-fit: cover;
+            aspect-ratio: 1 / 1;
+            display: block;
+        }
+
+        .profile-info {
+            flex: 1;
+            max-width: 600px;
+            height: 200px;
+            position: relative;
+        }
+
+        .username-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: block;
+        }
+
+        .username {
+            color: var(--color1);
+            margin: 0;
+            font-size: 24px;
+            line-height: 1.2;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .social-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform: translateX(100%);
+            margin-left: 8px;
+            display: inline-block;
+        }
+
+        .social-icon {
+            width: 24px;
+            height: 24px;
+            transition: var(--transition);
+            border-radius: 3px;
+            vertical-align: top;
+        }
+
+        .social-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .display-name {
+            margin: 0;
+            font-size: 18px;
+            color: var(--text-dark);
+            line-height: 1.2;
+            position: absolute;
+            top: 30px;
+            left: 0;
+        }
+
+        .bio-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            max-width: 100%;
+            white-space: pre-wrap;
+        }
+
+        #bio {
+            margin: 0;
+            font-weight: normal;
+            font-family: 'Geomanist-Bold', sans-serif;
+            line-height: 1.2;
+            color: var(--text-dark);
+        }
+
+        .controls {
+            display: none;
+            flex-direction: column;
+            gap: 0;
+            align-items: flex-end;
+            width: 280px;
+            margin-right: 30px;
+            margin-top: 30px;
+            height: 200px;
+            justify-content: space-between;
+        }
+
+        .controls.visible {
+            display: flex;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            width: 100%;
+        }
+
+        .controls label {
+            font-size: 14px;
+            margin-bottom: 0;
+            text-transform: uppercase;
+            text-align: left;
+            white-space: nowrap;
+            margin-right: 10px;
+            line-height: 36px;
+        }
+
+        .controls select {
+            padding: 8px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            transition: var(--transition);
+            width: 200px;
+            min-width: 200px;
+            max-width: 200px;
+            height: 36px;
+            box-sizing: border-box;
+            background-color: var(--color1);
+            color: var(--text-dark);
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: 700;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .controls select:hover {
+            transform: none;
+        }
+
+        .nft-container {
+            display: grid;
+            gap: 20px;
+            width: 100%;
+            margin: 0 auto;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+
+        .nft-container.small-size {
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        }
+
+        .nft-container.medium-size {
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        }
+
+        .nft-container.large-size {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        }
+
+        .nft-card {
+            background-color: var(--collection-bg);
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            padding: 15px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            overflow: hidden;
+            cursor: default;
+            position: relative;
+        }
+
+        .nft-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .nft-card img, .nft-card video {
+            width: 100%;
+            max-width: 200px;
+            height: auto;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            object-fit: cover;
+            aspect-ratio: 1 / 1;
+            display: block;
+        }
+
+        .nft-card h3 {
+            font-size: 0.85em;
+            margin: 5px 0;
+            width: 100%;
+            text-align: center;
+            font-weight: normal;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-transform: none;
+        }
+
+        .nft-card h3 .highlight {
+            font-weight: bold;
+        }
+
+        .nft-card .media-placeholder {
+            width: 100%;
+            max-width: 200px;
+            height: 200px;
+            border-radius: 10px;
+            background-color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            text-align: center;
+            color: var(--text-dark);
+        }
+
+        .nft-container.thumbnail-mode {
+            gap: 0;
+            row-gap: 0;
+            column-gap: 0;
+            grid-gap: 0;
+            margin: 0 auto;
+            padding: 0;
+            justify-content: start;
+            justify-items: start;
+            width: 100%;
+        }
+
+        .nft-container.thumbnail-mode .nft-card {
+            padding: 0;
+            margin: 0;
+            background: none;
+            box-shadow: none;
+            border: none;
+            border-radius: 0;
+            overflow: hidden;
+        }
+
+        .nft-container.thumbnail-mode .nft-card img,
+        .nft-container.thumbnail-mode .nft-card video {
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+            margin: 0;
+            padding: 0;
+            object-fit: cover;
+            aspect-ratio: 1 / 1;
+            display: block;
+        }
+
+        .nft-container.thumbnail-mode .nft-card .media-placeholder {
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nft-container.thumbnail-mode .nft-card.empty {
+            background: transparent;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nft-card .tooltip {
+            visibility: hidden;
+            background-color: var(--collection-bg);
+            color: var(--text-dark);
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 10px;
+            position: absolute;
+            z-index: 10;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            font-size: 0.9em;
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+
+        .nft-container.thumbnail-mode .nft-card:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .loading, .error, .no-results {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .loading {
+            color: var(--color1);
+            animation: pulse 1.5s infinite;
+        }
+
+        .error {
+            color: #ff4444;
+        }
+
+        .no-results {
+            font-size: 1.2em;
+        }
+
+        .timestamp {
+            display: none;
+        }
+
+        .nft-count {
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        .nft-count .count {
+            font-weight: bold;
+            color: var(--color1);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background-color: var(--collection-bg);
+            border-top: 1px solid #444;
+            color: var(--text-dark);
+            z-index: 1000;
+            margin-top: auto;
+            width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .footer p {
+            font-weight: normal;
+            margin: 0;
+        }
+
+        .footer-logo {
+            max-width: 150px;
+            height: auto;
+            object-fit: contain;
+            margin-bottom: 10px;
+        }
+
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+
+        .theme-toggle label {
+            color: var(--text-dark);
+            font-size: 1rem;
+            margin-right: 10px;
+        }
+
+        .theme-toggle button {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            background-color: var(--color1);
+            color: var(--text-dark);
+            cursor: pointer;
+            font-family: 'Geomanist-Bold', sans-serif;
+            text-transform: uppercase;
+            font-weight: 700;
+            transition: var(--transition);
+        }
+
+        .theme-toggle button:hover {
+            transform: scale(1.05);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @media screen and (max-width: 768px) {
+            .navbar {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px;
+                flex-wrap: nowrap;
+                height: 60px;
+            }
+
+            .navbar-logo img {
+                height: 40px;
+            }
+
+            .navbar-search {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                margin: 0 10px 0 15px;
+                flex: 1;
+                max-width: none;
+                height: 100%;
+            }
+
+            .navbar-search input {
+                width: 100%;
+                max-width: none;
+                height: 40px;
+                padding: 5px;
+                font-size: 12px;
+                box-sizing: border-box;
+            }
+
+            .navbar-search button {
+                padding: 0 10px;
+                font-size: 12px;
+                height: 40px;
+                box-sizing: border-box;
+            }
+
+            .navbar-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: static;
+                margin-left: 10px;
+                margin-right: 10px;
+                font-size: 1.8rem;
+                height: 100%;
+            }
+
+            .navbar-menu {
+                display: none;
+                width: 100%;
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+                padding: 10px 0;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                background-color: var(--collection-bg);
+            }
+
+            .navbar-menu.active {
+                display: flex;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .profile-section {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .profile-header-content {
+                flex-direction: column;
+                align-items: flex-start;
+                margin-left: 30px;
+            }
+
+            .profile-picture img {
+                width: 120px;
+                height: 120px;
+            }
+
+            .profile-info {
+                height: 120px;
+                max-width: 100%;
+            }
+
+            .username-container {
+                top: 0;
+                left: 0;
+            }
+
+            .username {
+                font-size: 20px;
+                top: 0;
+                left: 0;
+            }
+
+            .social-container {
+                top: 0;
+                left: 0;
+                transform: translateX(100%);
+                margin-left: 5px; /* Réduit pour mobile */
+            }
+
+            .display-name {
+                font-size: 16px;
+                top: 25px;
+                left: 0;
+            }
+
+            .bio-container {
+                bottom: 0;
+                left: 0;
+                max-width: 100%;
+            }
+
+            .social-icon {
+                width: 20px;
+                height: 20px;
+            }
+
+            .controls {
+                align-items: center;
+                width: 100%;
+                margin-right: 0;
+                height: 120px;
+                justify-content: space-between;
+            }
+
+            .control-group {
+                justify-content: center;
+                width: 100%;
+            }
+
+            .controls label {
+                font-size: 12px;
+                margin-right: 8px;
+                line-height: 32px;
+            }
+
+            .controls select {
+                font-size: 12px;
+                padding: 6px;
+                width: 180px;
+                min-width: 180px;
+                max-width: 180px;
+                height: 32px;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                overflow: hidden;
+            }
+
+            .nft-container.small-size {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            }
+
+            .nft-container.medium-size {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+
+            .nft-container.large-size {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+
+            .nft-container.thumbnail-mode {
+                width: 100%;
+                max-width: 100vw;
+                box-sizing: border-box;
+            }
+
+            .nft-container.thumbnail-mode .nft-card img,
+            .nft-container.thumbnail-mode .nft-card video {
+                width: 100%;
+                height: 100%;
+            }
+
+            .footer-logo {
+                max-width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-logo">
+            <img src="CRONOBOTS.png" alt="Cronobots Logo">
+        </div>
+        <div class="navbar-search">
+            <input type="text" id="usernameInput" placeholder="CDC Username" aria-describedby="usernameHelp" />
+            <button id="searchButton" aria-label="Search profile">Search</button>
+        </div>
+        <div class="navbar-menu" id="navbarMenu">
+            <a href="#collections" aria-label="Collections">Collections</a>
+            <a href="#profiles" aria-label="Profiles">Profiles</a>
+            <a href="#about" aria-label="About">About</a>
+        </div>
+        <button class="navbar-toggle" aria-label="Toggle menu" onclick="toggleMenu()">☰</button>
+    </nav>
+
+    <div class="main-content">
+        <div class="profile-section">
+            <div class="profile-header" id="profileHeader" style="display: none;">
+                <div class="profile-header-content">
+                    <div class="profile-picture">
+                        <img id="profilePicture" src="" alt="Profile Picture" />
+                    </div>
+                    <div class="profile-info">
+                        <div class="username-container">
+                            <h2 id="username" class="username"></h2>
+                            <div class="social-container" style="display: none;" id="socialContainer">
+                                <p id="twitterLink" style="display: inline-block;">
+                                    <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
+                                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
+                                    </a>
+                                </p>
+                            </div>
+                        </div>
+                        <p id="displayName" class="display-name"></p>
+                        <div class="bio-container" style="display: none;" id="bioContainer">
+                            <p id="bio"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="controls" id="controls">
+                <div class="control-group">
+                    <label for="collectionFilter">COLLECTION:</label>
+                    <select id="collectionFilter" onchange="filterNFTs()" disabled>
+                        <option value="">All Collections</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="displayMode">DISPLAY MODE:</label>
+                    <select id="displayMode" onchange="updateDisplay()">
+                        <option value="full">Normal</option>
+                        <option value="thumbnail">Thumbnail</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="cardSize">CARD SIZE:</label>
+                    <select id="cardSize" onchange="updateDisplay()">
+                        <option value="small">Small</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="large">Large</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="sortBy">SORT BY:</label>
+                    <select id="sortBy" disabled>
+                        <option value="">SOON</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="timestamp" id="timestamp"></div>
+        <div class="loading" id="loading" style="display: none;">Loading...</div>
+        <div class="error" id="error" role="alert"></div>
+        <div class="no-results" id="noResults" style="display: none;">No results found</div>
+        <div id="nftCountContainer"></div>
+        <div class="nft-container" id="nftContainer"></div>
+    </div>
+
+    <footer class="footer">
+        <img src="CRONOBOTS.png" alt="Cronobots Logo" class="footer-logo">
+        <p>CRONOBOTS | CRONOS DEVELOPMENT</p>
+        <div class="theme-toggle">
+            <label for="themeButton">Theme:</label>
+            <button id="themeButton">Dark</button>
+        </div>
+    </footer>
+
+    <script>
+        const cache = new Map();
+        let allNFTs = [];
+        let currentUsername = '';
+        let currentDisplayName = '';
+
+        const profileQuery = `
+            query GetUser($id: ID!) {
+                public {
+                    user(id: $id) {
+                        username
+                        displayName
+                        bio
+                        avatar {
+                            url
+                        }
+                        twitterUsername
+                    }
+                }
+            }
+        `;
+
+        const nftQuery = `
+            query GetProfileAssets($ownerId: ID!, $first: Int!, $skip: Int!) {
+                public {
+                    profileAssets(ownerId: $ownerId, first: $first, skip: $skip) {
+                        id
+                        name
+                        cover {
+                            url
+                        }
+                        collection {
+                            name
+                        }
+                        isExternalNft
+                        externalNftMetadata {
+                            network
+                        }
+                        defaultListingV2 {
+                            salePriceDecimalUSD
+                        }
+                        latestPurchasedEdition {
+                            priceUSD
+                        }
+                        createdAt
+                    }
+                }
+            }
+        `;
+
+        const graphqlEndpoint = "https://crypto.com/nft-api/graphql";
+
+        function toggleMenu() {
+            console.log('toggleMenu called');
+            const menu = document.getElementById('navbarMenu');
+            if (menu) {
+                menu.classList.toggle('active');
+                console.log('Menu toggled:', menu.classList.contains('active') ? 'visible' : 'hidden');
+            } else {
+                console.error('Navbar menu not found');
+            }
+        }
+
+        document.querySelectorAll('.navbar-menu a').forEach(link => {
+            link.addEventListener('click', () => {
+                console.log('Menu link clicked');
+                const menu = document.getElementById('navbarMenu');
+                if (menu) {
+                    menu.classList.remove('active');
+                }
+            });
+        });
+
+        function sanitizeInput(input) {
+            return input.replace(/[<>"'&]/g, '');
+        }
+
+        function toggleTheme() {
+            console.log('toggleTheme called');
+            const themeButton = document.getElementById('themeButton');
+            if (!themeButton) {
+                console.error('Theme button not found');
+                return;
+            }
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            themeButton.textContent = newTheme.charAt(0).toUpperCase() + newTheme.slice(1);
+            console.log('Theme set to:', newTheme);
+        }
+
+        async function fetchWithCache(key, fetchFn) {
+            console.log(`fetchWithCache called for key: ${key}`);
+            if (cache.has(key)) {
+                console.log(`Cache hit for ${key}`);
+                return cache.get(key);
+            }
+            try {
+                const data = await fetchFn();
+                cache.set(key, data);
+                return data;
+            } catch (error) {
+                console.error(`Fetch error for ${key}:`, error.message);
+                throw error;
+            }
+        }
+
+        async function fetchAllNFTs(ownerId) {
+            console.log(`Fetching NFTs for ownerId: ${ownerId}`);
+            const first = 60;
+            let skip = 0;
+            let allAssets = [];
+            let hasMore = true;
+
+            while (hasMore) {
+                const nftVariables = { ownerId, first, skip };
+                try {
+                    console.log(`Sending NFT query with variables: ${JSON.stringify(nftVariables)}`);
+                    const response = await fetch(graphqlEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query: nftQuery, variables: nftVariables })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    console.log('NFT query response:', result);
+
+                    if (result.errors) {
+                        throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
+                    }
+
+                    const assets = result.data?.public?.profileAssets || [];
+                    assets.forEach(asset => {
+                        console.log(`NFT: ${asset.name || 'Unnamed'}, Cover URL: ${asset.cover?.url || 'Missing'}`);
+                    });
+                    allAssets = [...allAssets, ...assets];
+                    skip += first;
+                    hasMore = assets.length === first;
+                    console.log(`Fetched ${assets.length} assets, total: ${allAssets.length}`);
+                } catch (error) {
+                    console.error(`Failed to fetch NFTs: ${error.message}`);
+                    throw error;
+                }
+            }
+
+            return allAssets;
+        }
+
+        function normalizeText(text) {
+            let normalized = text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+            normalized = normalized.replace(/\n\s*\n/g, '\n').trim();
+            return normalized;
+        }
+
+        function updateProfileUI(profileData) {
+            console.log('updateProfileUI called', profileData);
+            const profileHeader = document.getElementById('profileHeader');
+            const profilePicture = document.getElementById('profilePicture');
+            const username = document.getElementById('username');
+            const displayName = document.getElementById('displayName');
+            const bioContainer = document.getElementById('bioContainer');
+            const bio = document.getElementById('bio');
+            const socialContainer = document.getElementById('socialContainer');
+            const twitterLink = document.getElementById('twitterLink');
+            const twitterUrl = document.getElementById('twitterUrl');
+            const usernameInput = document.getElementById('usernameInput');
+
+            if (!profileHeader || !profilePicture || !username || !displayName || !bioContainer || !bio || !socialContainer || !twitterLink || !twitterUrl || !usernameInput) {
+                console.error('Profile UI elements not found:', {
+                    profileHeader: !!profileHeader,
+                    profilePicture: !!profilePicture,
+                    username: !!username,
+                    displayName: !!displayName,
+                    bioContainer: !!bioContainer,
+                    bio: !!bio,
+                    socialContainer: !!socialContainer,
+                    twitterLink: !!twitterLink,
+                    twitterUrl: !!twitterUrl,
+                    usernameInput: !!usernameInput
+                });
+                return;
+            }
+
+            username.textContent = profileData.username || 'Unknown';
+            currentUsername = profileData.username.toLowerCase();
+            displayName.textContent = profileData.displayName || '';
+            displayName.style.display = profileData.displayName ? 'block' : 'none';
+            currentDisplayName = profileData.displayName || profileData.username;
+
+            console.log(`Profile avatar URL: ${profileData.avatar?.url || 'Missing'}`);
+            profilePicture.src = profileData.avatar?.url || '';
+            profilePicture.style.display = profileData.avatar?.url ? 'block' : 'none';
+
+            const rawBio = profileData.bio || '';
+            bio.textContent = normalizeText(rawBio);
+            bio.style.fontWeight = 'normal';
+            bio.style.fontFamily = "'Geomanist-Bold', sans-serif";
+            bioContainer.style.display = rawBio ? 'block' : 'none';
+
+            if (profileData.twitterUsername) {
+                twitterUrl.href = `https://x.com/${sanitizeInput(profileData.twitterUsername)}`;
+                socialContainer.style.display = 'inline-block';
                 twitterLink.style.display = 'inline-block';
             } else {
                 socialContainer.style.display = 'none';
