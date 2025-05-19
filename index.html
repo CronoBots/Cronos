@@ -206,20 +206,21 @@
         }
 
         .username-container {
-            /* Contient username et displayName, alignés en haut */
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .bio-container {
             position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
+            bottom: 0; /* Aligné au bas de l'image de profil */
             max-width: 100%;
             white-space: pre-wrap;
         }
 
         .social-container {
-            position: absolute;
-            bottom: -5px; /* Descendre un peu plus bas */
+            display: inline-block;
+            vertical-align: middle;
             max-width: 100%;
             white-space: nowrap;
         }
@@ -240,19 +241,11 @@
             margin: 5px 0;
         }
 
-        #socialLabel {
-            display: inline-block;
-            font-weight: normal;
-            margin: 0;
-            vertical-align: middle;
-        }
-
         #bio {
             margin: 0;
             font-weight: normal !important;
             font-family: 'Geomanist-Bold', sans-serif !important;
-            font-size: 15px;
-            line-height: 1.2; /* Réduire l'espace entre les lignes */
+            line-height: 1.2;
         }
 
         #twitterLink {
@@ -681,17 +674,21 @@
                 justify-content: flex-start;
             }
 
-            .bio-container {
-                position: static;
-                transform: none;
-                max-width: 100%;
-                white-space: pre-wrap;
+            .username-container {
+                flex-direction: column;
+                align-items: flex-start;
             }
 
             .social-container {
+                display: block;
+                margin-top: 5px;
+                white-space: normal;
+            }
+
+            .bio-container {
                 position: static;
                 max-width: 100%;
-                white-space: normal;
+                white-space: pre-wrap;
             }
 
             #username {
@@ -791,18 +788,17 @@
                     <div class="profile-info">
                         <div class="username-container">
                             <h2 id="username" class="username"></h2>
-                            <p id="displayName"></p>
+                            <div class="social-container" style="display: none;" id="socialContainer">
+                                <p id="twitterLink" style="display: inline-block;">
+                                    <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
+                                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
+                                    </a>
+                                </p>
+                            </div>
                         </div>
+                        <p id="displayName"></p>
                         <div class="bio-container" style="display: none;" id="bioContainer">
                             <p id="bio"></p>
-                        </div>
-                        <div class="social-container" style="display: none;" id="socialContainer">
-                            <p id="socialLabel">SOCIAL:</p>
-                            <p id="twitterLink" style="display: inline-block;">
-                                <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
-                                </a>
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -1021,12 +1017,11 @@
             const bioContainer = document.getElementById('bioContainer');
             const bio = document.getElementById('bio');
             const socialContainer = document.getElementById('socialContainer');
-            const socialLabel = document.getElementById('socialLabel');
             const twitterLink = document.getElementById('twitterLink');
             const twitterUrl = document.getElementById('twitterUrl');
             const usernameInput = document.getElementById('usernameInput');
 
-            if (!profileHeader || !profilePicture || !username || !displayName || !bioContainer || !bio || !socialContainer || !socialLabel || !twitterLink || !twitterUrl || !usernameInput) {
+            if (!profileHeader || !profilePicture || !username || !displayName || !bioContainer || !bio || !socialContainer || !twitterLink || !twitterUrl || !usernameInput) {
                 console.error('Profile UI elements not found:', {
                     profileHeader: !!profileHeader,
                     profilePicture: !!profilePicture,
@@ -1035,7 +1030,6 @@
                     bioContainer: !!bioContainer,
                     bio: !!bio,
                     socialContainer: !!socialContainer,
-                    socialLabel: !!socialLabel,
                     twitterLink: !!twitterLink,
                     twitterUrl: !!twitterUrl,
                     usernameInput: !!usernameInput
@@ -1059,12 +1053,10 @@
 
             if (profileData.twitterUsername) {
                 twitterUrl.href = `https://x.com/${sanitizeInput(profileData.twitterUsername)}`;
-                socialContainer.style.display = 'block';
-                socialLabel.style.display = 'inline-block';
+                socialContainer.style.display = 'inline-block';
                 twitterLink.style.display = 'inline-block';
             } else {
                 socialContainer.style.display = 'none';
-                socialLabel.style.display = 'none';
                 twitterLink.style.display = 'none';
             }
 
