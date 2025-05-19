@@ -178,10 +178,12 @@
             margin-left: 30px;
             margin-top: 30px;
             flex-wrap: wrap;
+            position: relative; /* Pour positionner la bio en bas à droite */
         }
 
         .profile-picture {
             flex: 0 0 auto;
+            position: relative;
         }
 
         .profile-picture img {
@@ -197,11 +199,14 @@
             flex: 1;
             text-align: left;
             max-width: 500px;
+            position: relative;
         }
 
         .username {
             color: var(--color1);
             margin: 0;
+            display: inline-block; /* Pour aligner avec le logo social */
+            vertical-align: middle;
         }
 
         #displayName {
@@ -210,6 +215,17 @@
 
         #bio {
             margin: 5px 0;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            max-width: 200px; /* Limite la largeur pour rester à côté de l'image */
+            font-weight: normal; /* Pas de gras */
+        }
+
+        #twitterLink {
+            display: inline-block; /* Alignement inline avec username */
+            vertical-align: middle;
+            margin-left: 5px; /* Petit espace entre username et logo */
         }
 
         .controls {
@@ -217,7 +233,7 @@
             flex-direction: column;
             gap: 0;
             align-items: flex-end;
-            width: 280px; /* Ajusté pour la nouvelle largeur des filtres (200px + espace pour label) */
+            width: 280px;
             margin-right: 30px;
             margin-top: 30px;
             height: 200px;
@@ -230,19 +246,19 @@
 
         .control-group {
             display: flex;
-            align-items: center; /* Centrage vertical du label et du select */
+            align-items: center;
             justify-content: flex-end;
             width: 100%;
         }
 
         .controls label {
-            font-size: 14px; /* Même taille que le select pour un alignement visuel cohérent */
+            font-size: 14px;
             margin-bottom: 0;
             text-transform: uppercase;
             text-align: left;
             white-space: nowrap;
             margin-right: 10px;
-            line-height: 36px; /* Correspond à la hauteur du select pour un centrage parfait */
+            line-height: 36px;
         }
 
         .controls select {
@@ -251,7 +267,7 @@
             border: none;
             font-size: 14px;
             transition: var(--transition);
-            width: 200px; /* Largeur augmentée pour uniformité */
+            width: 200px;
             height: 36px;
             box-sizing: border-box;
             background-color: var(--color1);
@@ -259,7 +275,7 @@
             cursor: pointer;
             text-transform: uppercase;
             font-weight: 700;
-            text-overflow: ellipsis; /* Gère les textes longs */
+            text-overflow: ellipsis;
             white-space: nowrap;
             overflow: hidden;
         }
@@ -459,7 +475,7 @@
             width: 16px;
             height: 16px;
             transition: var(--transition);
-            border-radius: 15px; /* Même radius que la photo de profil */
+            border-radius: 3px; /* Réduction forte du radius */
         }
 
         .social-icon:hover {
@@ -622,6 +638,16 @@
                 max-width: 100%;
             }
 
+            #bio {
+                position: static; /* Pas de positionnement absolu en mobile */
+                max-width: 100%;
+                text-align: left;
+            }
+
+            #twitterLink {
+                margin-left: 5px;
+            }
+
             .controls {
                 align-items: center;
                 width: 100%;
@@ -638,13 +664,13 @@
             .controls label {
                 font-size: 12px;
                 margin-right: 8px;
-                line-height: 32px; /* Correspond à la hauteur du select en mobile */
+                line-height: 32px;
             }
 
             .controls select {
                 font-size: 12px;
                 padding: 6px;
-                width: 180px; /* Largeur augmentée pour mobile */
+                width: 180px;
                 height: 32px;
                 text-overflow: ellipsis;
                 white-space: nowrap;
@@ -707,13 +733,13 @@
                     </div>
                     <div class="profile-info">
                         <h2 id="username" class="username"></h2>
-                        <p id="displayName"></p>
-                        <p id="bio" style="display: none;"></p>
                         <p id="twitterLink" style="display: none;">
                             <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
                                 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
                             </a>
                         </p>
+                        <p id="displayName"></p>
+                        <p id="bio" style="display: none;"></p>
                     </div>
                 </div>
             </div>
@@ -943,7 +969,7 @@
                 return;
             }
 
-            username.textContent = (profileData.username || 'Unknown').toUpperCase();
+            username.textContent = profileData.username || 'Unknown'; // Suppression de toUpperCase()
             displayName.textContent = profileData.displayName || profileData.username;
             currentDisplayName = profileData.displayName || profileData.username;
 
@@ -956,7 +982,7 @@
 
             if (profileData.twitterUsername) {
                 twitterUrl.href = `https://x.com/${sanitizeInput(profileData.twitterUsername)}`;
-                twitterLink.style.display = 'block';
+                twitterLink.style.display = 'inline-block';
             } else {
                 twitterLink.style.display = 'none';
             }
