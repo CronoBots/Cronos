@@ -200,7 +200,6 @@
             text-align: left;
             max-width: 500px;
             position: relative;
-            margin-top: 0px; /* Espace pour #bio au-dessus */
         }
 
         .username {
@@ -220,18 +219,22 @@
         }
 
         #bio {
-            position: absolute;
-            left: 220px; /* À droite de l'image de profil */
-            bottom: 0; /* Aligné avec le bas de l'image */
-            max-width: 200px;
+            margin: 5px 0;
             font-weight: normal;
             font-family: 'Geomanist-Bold', sans-serif;
+        }
+
+        #socialLabel {
+            display: inline-block;
+            vertical-align: middle;
+            margin: 5px 0;
+            font-weight: normal;
         }
 
         #twitterLink {
             display: inline-block;
             vertical-align: middle;
-            margin-left: 10px; /* Écart plus important entre username et logo social */
+            margin-left: 10px;
         }
 
         .controls {
@@ -274,8 +277,8 @@
             font-size: 14px;
             transition: var(--transition);
             width: 200px;
-            min-width: 200px; /* Forcer une taille uniforme */
-            max-width: 200px; /* Forcer une taille uniforme */
+            min-width: 200px;
+            max-width: 200px;
             height: 36px;
             box-sizing: border-box;
             background-color: var(--color1);
@@ -650,7 +653,6 @@
             .profile-info {
                 text-align: center;
                 max-width: 100%;
-                margin-top: 20px; /* Espace réduit en mobile */
             }
 
             #username {
@@ -663,16 +665,12 @@
             }
 
             #bio {
-                position: static;
-                top: auto;
-                left: auto;
-                bottom: auto;
                 max-width: 100%;
                 text-align: left;
             }
 
             #twitterLink {
-                margin-left: 8px; /* Écart légèrement réduit en mobile */
+                margin-left: 8px;
             }
 
             .controls {
@@ -762,13 +760,14 @@
                     </div>
                     <div class="profile-info">
                         <h2 id="username" class="username"></h2>
+                        <p id="displayName"></p>
+                        <p id="bio" style="display: none;"></p>
+                        <p id="socialLabel" style="display: none;">Social:</p>
                         <p id="twitterLink" style="display: none;">
                             <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
                                 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
                             </a>
                         </p>
-                        <p id="displayName"></p>
-                        <p id="bio" style="display: none;"></p>
                     </div>
                 </div>
             </div>
@@ -813,7 +812,7 @@
 
     <footer class="footer">
         <img src="CRONOBOTS.png" alt="Cronobots Logo" class="footer-logo">
-        <p>CRONOBOTS | CRONOS DEVELOPMENT</p>
+        <p>© 2022-2025</p>
         <div class="theme-toggle">
             <label for="themeButton">Theme:</label>
             <button id="themeButton">Dark</button>
@@ -980,17 +979,19 @@
             const username = document.getElementById('username');
             const displayName = document.getElementById('displayName');
             const bio = document.getElementById('bio');
+            const socialLabel = document.getElementById('socialLabel');
             const twitterLink = document.getElementById('twitterLink');
             const twitterUrl = document.getElementById('twitterUrl');
             const usernameInput = document.getElementById('usernameInput');
 
-            if (!profileHeader || !profilePicture || !username || !displayName || !bio || !twitterLink || !twitterUrl || !usernameInput) {
+            if (!profileHeader || !profilePicture || !username || !displayName || !bio || !socialLabel || !twitterLink || !twitterUrl || !usernameInput) {
                 console.error('Profile UI elements not found:', {
                     profileHeader: !!profileHeader,
                     profilePicture: !!profilePicture,
                     username: !!username,
                     displayName: !!displayName,
                     bio: !!bio,
+                    socialLabel: !!socialLabel,
                     twitterLink: !!twitterLink,
                     twitterUrl: !!twitterUrl,
                     usernameInput: !!usernameInput
@@ -1006,13 +1007,15 @@
             profilePicture.src = profileData.avatar?.url || '';
             profilePicture.style.display = profileData.avatar?.url ? 'block' : 'none';
 
-            bio.textContent = profileData.bio || '';
+            bio.textContent = profileData.bio || ''; // Texte brut, sans majuscules ni gras
             bio.style.display = profileData.bio ? 'block' : 'none';
 
             if (profileData.twitterUsername) {
                 twitterUrl.href = `https://x.com/${sanitizeInput(profileData.twitterUsername)}`;
+                socialLabel.style.display = 'inline-block';
                 twitterLink.style.display = 'inline-block';
             } else {
+                socialLabel.style.display = 'none';
                 twitterLink.style.display = 'none';
             }
 
