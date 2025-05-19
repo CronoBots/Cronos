@@ -198,29 +198,30 @@
         .profile-info {
             flex: 1;
             text-align: left;
-            max-width: 600px; /* Augmenté pour éviter les retours à la ligne */
+            max-width: 600px;
             position: relative;
             min-height: 200px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
         }
 
         .username-container {
             /* Contient username et displayName, alignés en haut */
         }
 
-        .lower-section {
-            margin-top: auto; /* Pousse BIO et SOCIAL: vers le bas */
-        }
-
-        .bio-container, .social-container {
-            max-width: 100%; /* Permet au contenu de s'étendre sur toute la largeur disponible */
-            white-space: nowrap; /* Empêche les retours à la ligne */
+        .bio-container {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%); /* Centre verticalement */
+            max-width: 100%;
+            white-space: pre-wrap; /* Respecte les retours à la ligne */
         }
 
         .social-container {
-            margin-top: 5px; /* Écart de 5px entre bio et SOCIAL: */
+            position: absolute;
+            bottom: 0; /* Aligné au bas de l'image de profil */
+            max-width: 100%;
+            white-space: nowrap;
         }
 
         .username {
@@ -248,8 +249,8 @@
 
         #bio {
             margin: 0;
-            font-weight: normal !important; /* Forcer l'absence de gras */
-            font-family: 'Geomanist-Bold', sans-serif !important; /* Forcer la police */
+            font-weight: normal !important;
+            font-family: 'Geomanist-Bold', sans-serif !important;
         }
 
         #twitterLink {
@@ -678,6 +679,19 @@
                 justify-content: flex-start;
             }
 
+            .bio-container {
+                position: static;
+                transform: none;
+                max-width: 100%;
+                white-space: pre-wrap;
+            }
+
+            .social-container {
+                position: static;
+                max-width: 100%;
+                white-space: normal;
+            }
+
             #username {
                 font-size: 20px;
             }
@@ -685,16 +699,6 @@
             .social-icon {
                 width: 20px;
                 height: 20px;
-            }
-
-            .bio-container, .social-container {
-                max-width: 100%;
-                text-align: left;
-                white-space: normal; /* Permet les retours à la ligne en mobile si nécessaire */
-            }
-
-            .social-container {
-                margin-top: 5px;
             }
 
             .controls {
@@ -787,18 +791,16 @@
                             <h2 id="username" class="username"></h2>
                             <p id="displayName"></p>
                         </div>
-                        <div class="lower-section">
-                            <div class="bio-container" style="display: none;" id="bioContainer">
-                                <p id="bio"></p>
-                            </div>
-                            <div class="social-container" style="display: none;" id="socialContainer">
-                                <p id="socialLabel">SOCIAL:</p>
-                                <p id="twitterLink" style="display: inline-block;">
-                                    <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
-                                    </a>
-                                </p>
-                            </div>
+                        <div class="bio-container" style="display: none;" id="bioContainer">
+                            <p id="bio"></p>
+                        </div>
+                        <div class="social-container" style="display: none;" id="socialContainer">
+                            <p id="socialLabel">SOCIAL:</p>
+                            <p id="twitterLink" style="display: inline-block;">
+                                <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
+                                </a>
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -1004,6 +1006,11 @@
             return allAssets;
         }
 
+        function normalizeText(text) {
+            // Normaliser les caractères spéciaux pour éviter les problèmes de rendu de police
+            return text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+        }
+
         function updateProfileUI(profileData) {
             console.log('updateProfileUI called', profileData);
             const profileHeader = document.getElementById('profileHeader');
@@ -1043,10 +1050,12 @@
             profilePicture.src = profileData.avatar?.url || '';
             profilePicture.style.display = profileData.avatar?.url ? 'block' : 'none';
 
-            bio.textContent = profileData.bio || '';
+            // Normaliser et afficher la bio avec les retours à la ligne
+            const rawBio = profileData.bio || '';
+            bio.textContent = normalizeText(rawBio);
             bio.style.fontWeight = 'normal';
             bio.style.fontFamily = "'Geomanist-Bold', sans-serif";
-            bioContainer.style.display = profileData.bio ? 'block' : 'none';
+            bioContainer.style.display = rawBio ? 'block' : 'none';
 
             if (profileData.twitterUsername) {
                 twitterUrl.href = `https://x.com/${sanitizeInput(profileData.twitterUsername)}`;
