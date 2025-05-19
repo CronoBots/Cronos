@@ -208,22 +208,21 @@
         .username-container {
             display: flex;
             align-items: center;
-            gap: 8px; /* Réduit pour rapprocher le logo social de l'username */
+            gap: 5px;
         }
 
         .bio-container {
             position: absolute;
             bottom: 0;
-            margin-bottom: 0;
             max-width: 100%;
             white-space: pre-wrap;
         }
 
         .social-container {
             display: inline-block;
-            vertical-align: top; /* Ajusté pour remonter légèrement le logo social */
+            vertical-align: top;
             position: relative;
-            top: -2px; /* Ajustement fin pour aligner avec l'username */
+            top: -2px;
             max-width: 100%;
             white-space: nowrap;
         }
@@ -246,7 +245,7 @@
 
         #bio {
             margin: 0;
-            margin-bottom: 0
+            margin-bottom: 0; /* S'assurer qu'il n'y a pas d'espace en dessous */
             font-weight: normal !important;
             font-family: 'Geomanist-Bold', sans-serif !important;
             line-height: 1.2;
@@ -685,7 +684,7 @@
 
             .social-container {
                 display: block;
-                top: 0; /* Réinitialiser pour mobile */
+                top: 0;
                 margin-top: 5px;
                 white-space: normal;
             }
@@ -1010,7 +1009,11 @@
         }
 
         function normalizeText(text) {
-            return text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+            // Normaliser le texte et supprimer les retours à la ligne vides multiples
+            let normalized = text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+            // Remplacer les retours à la ligne multiples par un seul retour à la ligne
+            normalized = normalized.replace(/\n\s*\n/g, '\n').trim();
+            return normalized;
         }
 
         function updateProfileUI(profileData) {
