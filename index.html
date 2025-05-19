@@ -174,9 +174,9 @@
             display: flex;
             align-items: flex-start;
             gap: 20px;
-            justify-content: flex-start; /* Alignement à gauche */
-            margin-left: 30px; /* Même marge que les filtres à droite */
-            margin-top: 30px; /* Même marge que les filtres à droite */
+            justify-content: flex-start;
+            margin-left: 30px;
+            margin-top: 30px;
             flex-wrap: wrap;
         }
 
@@ -185,8 +185,8 @@
         }
 
         .profile-picture img {
-            width: 250px; /* Photo de profil agrandie */
-            height: 250px;
+            width: 200px;
+            height: 200px;
             border-radius: 15px;
             object-fit: cover;
             aspect-ratio: 1 / 1;
@@ -291,6 +291,7 @@
             box-sizing: border-box;
             overflow: hidden;
             cursor: default;
+            position: relative; /* Pour la bulle flottante */
         }
 
         .nft-card:hover {
@@ -389,6 +390,32 @@
             background: transparent;
             margin: 0;
             padding: 0;
+        }
+
+        /* Style pour la bulle flottante */
+        .nft-card .tooltip {
+            visibility: hidden;
+            background-color: var(--collection-bg);
+            color: var(--text-dark);
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 100%; /* Position au-dessus de l'image */
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            font-size: 0.9em;
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .nft-container.thumbnail-mode .nft-card:hover .tooltip,
+        .nft-container.collage-mode .nft-card:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
         }
 
         .loading, .error, .no-results {
@@ -575,12 +602,12 @@
 
             .profile-header-content {
                 flex-direction: column;
-                align-items: flex-start; /* Alignement à gauche */
-                margin-left: 30px; /* Même marge que les filtres */
+                align-items: flex-start;
+                margin-left: 30px;
             }
 
             .profile-picture img {
-                width: 120px; /* Photo de profil agrandie */
+                width: 120px;
                 height: 120px;
             }
 
@@ -809,7 +836,7 @@
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
-            themeButton.textContent = newTheme.charAt(0).toUpperCase() + newTheme.slice(1); // Met à jour le texte du bouton
+            themeButton.textContent = newTheme.charAt(0).toUpperCase() + newTheme.slice(1);
             console.log('Theme set to:', newTheme);
         }
 
@@ -902,8 +929,8 @@
                 return;
             }
 
-            username.textContent = profileData.username || 'Unknown';
-            displayName.textContent = profileData.displayName || profileData.username;
+            username.textContent = profileData.username || 'Unknown'; // Respecte la casse originale
+            displayName.textContent = profileData.displayName || profileData.username; // Respecte la casse originale
             currentDisplayName = profileData.displayName || profileData.username;
 
             console.log(`Profile avatar URL: ${profileData.avatar?.url || 'Missing'}`);
@@ -1098,8 +1125,8 @@
             const countElement = document.createElement('p');
             countElement.className = 'nft-count';
             countElement.innerHTML = selectedCollection
-                ? `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets on this collection.`
-                : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets.`;
+                ? `<span style="color: var(--color1);">${currentUsername}</span> has <span class="count">${assets.length}</span> assets on this collection.`
+                : `<span style="color: var(--color1);">${currentUsername}</span> has <span class="count">${assets.length}</span> assets.`;
             countContainer.appendChild(countElement);
 
             if (displayMode === 'thumbnail' || displayMode === 'collage') {
@@ -1157,6 +1184,12 @@
                             console.log(`GIF detected: ${imageUrl}`);
                         }
                     }
+
+                    // Ajouter la bulle flottante pour le nom de l'NFT
+                    const tooltip = document.createElement('span');
+                    tooltip.className = 'tooltip';
+                    tooltip.textContent = asset.name || 'Unnamed NFT';
+                    card.appendChild(tooltip);
 
                     card.appendChild(mediaElement);
                     container.appendChild(card);
