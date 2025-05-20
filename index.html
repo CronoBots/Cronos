@@ -257,13 +257,13 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            height: 28px; /* Augmenté pour la nouvelle taille de l'username */
+            height: 36px; /* Augmenté pour la nouvelle taille de l'username */
         }
 
         .username {
             color: var(--color1);
             margin: 0;
-            font-size: 28px; /* Taille augmentée */
+            font-size: 36px; /* Taille fortement augmentée */
             line-height: 1.2;
         }
 
@@ -296,21 +296,21 @@
             transition: var(--transition);
             border-radius: 3px;
             vertical-align: bottom;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Effet d'ombre ajouté */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
         .social-icon:hover {
             transform: scale(1.1);
-            box-shadow: 0 3px 6px rgba(0,0,0,0.3); /* Ombre accentuée au survol */
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
         }
 
         .display-name {
             margin: 0;
-            font-size: 22px; /* Taille augmentée */
+            font-size: 28px; /* Taille fortement augmentée */
             color: var(--text-dark);
             line-height: 1.2;
             position: absolute;
-            top: 34px; /* Ajusté pour éviter chevauchement */
+            top: 42px; /* Ajusté pour éviter chevauchement */
             left: 0;
         }
 
@@ -726,12 +726,12 @@
             .username-container {
                 top: 0;
                 left: 0;
-                height: 24px; /* Ajusté pour mobile */
+                height: 30px; /* Ajusté pour mobile */
                 gap: 5px;
             }
 
             .username {
-                font-size: 24px; /* Taille augmentée pour mobile */
+                font-size: 30px; /* Taille augmentée pour mobile */
             }
 
             .verified-badge {
@@ -749,16 +749,16 @@
             .social-icon {
                 width: 20px;
                 height: 20px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Ombre ajoutée pour mobile */
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             }
 
             .social-icon:hover {
-                box-shadow: 0 3px 6px rgba(0,0,0,0.3); /* Ombre accentuée au survol */
+                box-shadow: 0 3px 6px rgba(0,0,0,0.3);
             }
 
             .display-name {
-                font-size: 20px; /* Taille augmentée pour mobile */
-                top: 29px; /* Ajusté pour mobile */
+                font-size: 24px; /* Taille augmentée pour mobile */
+                top: 36px; /* Ajusté pour mobile */
                 left: 0;
             }
 
@@ -835,10 +835,10 @@
         </div>
         <div class="navbar-menu" id="navbarMenu">
             <a href="#collections" aria-label="Collections">Collections</a>
-            <a href="#profiles" aria-label="Profiles">Profiles</a>
-            <a href="#about" aria-label="About">About</a>
+            <a href="#" id="profileLink" aria-label="Profile">Profile</a> <!-- Modifié de Profiles à Profile -->
+            <a href="https://cronobots.github.io/Cronos/" aria-label="Home">Home</a> <!-- Modifié de About à Home -->
         </div>
-        <button class="navbar-toggle" aria-label="Toggle menu" onclick="toggleMenu()">☰</button>
+        <button class="setupEventListenersnavbar-toggle" aria-label="Toggle menu" onclick="toggleMenu()">☰</button>
     </nav>
 
     <div class="main-content">
@@ -927,6 +927,7 @@
         let allNFTs = [];
         let currentUsername = '';
         let currentDisplayName = '';
+        let lastSearchedUsername = ''; // Nouvelle variable pour stocker le dernier profil recherché
         let debounceTimeout = null;
 
         const profileQuery = `
@@ -987,16 +988,6 @@
                 console.error('Navbar menu not found');
             }
         }
-
-        document.querySelectorAll('.navbar-menu a').forEach(link => {
-            link.addEventListener('click', () => {
-                console.log('Menu link clicked');
-                const menu = document.getElementById('navbarMenu');
-                if (menu) {
-                    menu.classList.remove('active');
-                }
-            });
-        });
 
         function sanitizeInput(input) {
             return input.replace(/[<>"'&]/g, '');
@@ -1320,6 +1311,7 @@
 
             console.log(`Searching for username: ${username}`);
             currentUsername = username.toLowerCase();
+            lastSearchedUsername = currentUsername; // Mettre à jour le dernier profil recherché
             loadingDiv.style.display = 'block';
             errorDiv.textContent = '';
             noResultsDiv.style.display = 'none';
@@ -1359,6 +1351,11 @@
 
                 console.log('Updating profile UI');
                 updateProfileUI(profileData);
+
+                // Mettre à jour l'URL avec le nom du profil
+                const newUrl = `${window.location.pathname}#${currentUsername}`;
+                history.pushState({ username: currentUsername }, '', newUrl);
+                console.log(`URL updated to: ${newUrl}`);
 
                 allNFTs = await fetchWithCache(`nfts_${currentUsername}`, () => fetchAllNFTs(currentUsername));
 
@@ -1614,16 +1611,18 @@
             const collectionFilter = document.getElementById('collectionFilter');
             const displayMode = document.getElementById('displayMode');
             const cardSize = document.getElementById('cardSize');
+            const profileLink = document.getElementById('profileLink');
 
             console.log('DOM elements found:', {
                 usernameInput: !!usernameInput,
                 themeButton: !!themeButton,
                 collectionFilter: !!collectionFilter,
                 displayMode: !!displayMode,
-                cardSize: !!cardSize
+                cardSize: !!cardSize,
+                profileLink: !!profileLink
             });
 
-            if (!usernameInput || !themeButton || !collectionFilter || !displayMode || !cardSize) {
+            if (!usernameInput || !themeButton || !collectionFilter || !displayMode || !cardSize || !profileLink) {
                 console.error('One or more DOM elements not found');
                 const errorDiv = document.getElementById('error');
                 if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
@@ -1668,9 +1667,27 @@
                 updateDisplay();
             });
 
+            // Gestionnaire pour le lien "Profile"
+            profileLink.addEventListener('click', (event) => {
+                console.log('Profile link clicked');
+                if (lastSearchedUsername) {
+                    event.preventDefault();
+                    const profileUrl = `#${lastSearchedUsername}`;
+                    console.log(`Redirecting to profile: ${profileUrl}`);
+                    window.location.hash = lastSearchedUsername;
+                    usernameInput.value = lastSearchedUsername;
+                    fetchProfileAndNFTs();
+                } else {
+                    console.log('No profile searched yet');
+                    event.preventDefault();
+                    // Optionnel : Afficher un message ou désactiver le lien
+                }
+            });
+
             console.log('Event listeners attached');
         }
 
+        // Vérifier le hash dans l'URL au chargement de la page
         document.addEventListener('DOMContentLoaded', () => {
             console.log('DOMContentLoaded event fired');
             const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -1681,6 +1698,19 @@
             } else {
                 console.error('themeButton not found during initialization');
             }
+
+            // Vérifier si un hash existe dans l'URL (par exemple, #snipe13)
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#')) {
+                const username = sanitizeInput(hash.substring(1));
+                console.log(`Found username in URL hash: ${username}`);
+                const usernameInput = document.getElementById('usernameInput');
+                if (usernameInput) {
+                    usernameInput.value = username;
+                    fetchProfileAndNFTs();
+                }
+            }
+
             setupEventListeners();
         });
     </script>
