@@ -960,6 +960,7 @@
                     <label for="sortBy">SORT BY:</label>
                     <select id="sortBy" onchange="filterNFTs()">
                         <option value="default">Default</option>
+                        <option value="rank">Rank</option>
                         <option value="newest">Newest</option>
                         <option value="oldest">Oldest</option>
                     </select>
@@ -1034,6 +1035,7 @@
                             priceUSD
                         }
                         createdAt
+                        defaultRarityRank
                     }
                 }
             }
@@ -1230,7 +1232,7 @@
 
                     const assets = result.data?.public?.profileAssets || [];
                     assets.forEach(asset => {
-                        console.log(`NFT: ${asset.name || 'Unnamed'}, Cover URL: ${asset.cover?.url || 'Missing'}`);
+                        console.log(`NFT: ${asset.name || 'Unnamed'}, Cover URL: ${asset.cover?.url || 'Missing'}, Rank: ${asset.defaultRarityRank || 'N/A'}`);
                     });
                     allAssets = [...allAssets, ...assets];
                     skip += first;
@@ -1556,7 +1558,9 @@
                 : [...allNFTs];
 
             const sortValue = sortBy.value;
-            if (sortValue === 'newest') {
+            if (sortValue === 'rank') {
+                filteredNFTs.sort((a, b) => (a.defaultRarityRank || Infinity) - (b.defaultRarityRank || Infinity));
+            } else if (sortValue === 'newest') {
                 filteredNFTs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             } else if (sortValue === 'oldest') {
                 filteredNFTs.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
@@ -1575,7 +1579,7 @@
         function displayNFTs(assets, selectedCollection) {
             console.log(`displayNFTs called with ${assets.length} assets, collection: ${selectedCollection || 'All'}`);
             assets.forEach((asset, index) => {
-                console.log(`NFT ${index + 1}: ${asset.name || 'Unnamed'}, Created: ${asset.createdAt}`);
+                console.log(`NFT ${index + 1}: ${asset.name || 'Unnamed'}, Rank: ${asset.defaultRarityRank || 'N/A'}, Created: ${asset.createdAt}`);
             });
             const container = document.getElementById('nftContainer');
             const countContainer = document.getElementById('nftCountContainer');
