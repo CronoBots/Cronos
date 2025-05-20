@@ -108,38 +108,37 @@
         .navbar-search input {
             padding: 8px;
             border-radius: 8px;
-            border: 1px solid #444; /* Bordure pour visibilité */
+            border: 1px solid #444;
             font-size: 14px;
             width: 100%;
             max-width: 250px;
             font-family: 'Geomanist-Bold', sans-serif;
             box-sizing: border-box;
-            background-color: #fff; /* Fond blanc pour contraste */
-            color: #000; /* Texte noir */
+            background-color: #fff;
+            color: #000;
         }
 
-        /* Améliorer la visibilité en thème clair */
         [data-theme="light"] .navbar-search input {
-            border: 1px solid #333; /* Bordure sombre */
-            background-color: #fff; /* Fond blanc */
-            color: #000; /* Texte noir */
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* Ombre légère */
+            border: 1px solid #333;
+            background-color: #fff;
+            color: #000;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
         [data-theme="light"] .navbar-search input::placeholder {
-            color: #555; /* Placeholder plus visible */
+            color: #555;
         }
 
         .suggestions {
             position: absolute;
-            top: calc(100% + 5px); /* Espace sous l'input */
+            top: calc(100% + 5px);
             left: 0;
             width: 100%;
             max-width: 250px;
             background-color: #fff;
             border-radius: 8px;
             box-shadow: var(--shadow);
-            z-index: 1001; /* Au-dessus de la navbar */
+            z-index: 1001;
             max-height: 200px;
             overflow-y: auto;
             color: #000;
@@ -258,13 +257,13 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            height: 24px;
+            height: 28px; /* Augmenté pour la nouvelle taille de l'username */
         }
 
         .username {
             color: var(--color1);
             margin: 0;
-            font-size: 24px;
+            font-size: 28px; /* Taille augmentée */
             line-height: 1.2;
         }
 
@@ -297,19 +296,21 @@
             transition: var(--transition);
             border-radius: 3px;
             vertical-align: bottom;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Effet d'ombre ajouté */
         }
 
         .social-icon:hover {
             transform: scale(1.1);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3); /* Ombre accentuée au survol */
         }
 
         .display-name {
             margin: 0;
-            font-size: 18px;
+            font-size: 22px; /* Taille augmentée */
             color: var(--text-dark);
             line-height: 1.2;
             position: absolute;
-            top: 30px;
+            top: 34px; /* Ajusté pour éviter chevauchement */
             left: 0;
         }
 
@@ -725,12 +726,12 @@
             .username-container {
                 top: 0;
                 left: 0;
-                height: 20px;
+                height: 24px; /* Ajusté pour mobile */
                 gap: 5px;
             }
 
             .username {
-                font-size: 20px;
+                font-size: 24px; /* Taille augmentée pour mobile */
             }
 
             .verified-badge {
@@ -748,11 +749,16 @@
             .social-icon {
                 width: 20px;
                 height: 20px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Ombre ajoutée pour mobile */
+            }
+
+            .social-icon:hover {
+                box-shadow: 0 3px 6px rgba(0,0,0,0.3); /* Ombre accentuée au survol */
             }
 
             .display-name {
-                font-size: 16px;
-                top: 25px;
+                font-size: 20px; /* Taille augmentée pour mobile */
+                top: 29px; /* Ajusté pour mobile */
                 left: 0;
             }
 
@@ -1035,7 +1041,6 @@
                 return;
             }
 
-            // Effacer les suggestions si la requête est trop courte
             if (!query || query.length < 3) {
                 console.log('Query too short, clearing suggestions');
                 suggestions.innerHTML = '';
@@ -1043,7 +1048,6 @@
                 return;
             }
 
-            // Afficher un indicateur de chargement
             suggestions.innerHTML = '<div class="suggestion-item">Searching...</div>';
             suggestions.style.display = 'block';
             console.log('Suggestions container set to visible');
@@ -1081,7 +1085,6 @@
                     const item = document.createElement('div');
                     item.className = 'suggestion-item';
                     
-                    // Ajouter la photo de profil si disponible
                     if (profileData.avatar?.url) {
                         console.log(`Avatar URL: ${profileData.avatar.url}`);
                         const img = document.createElement('img');
@@ -1096,7 +1099,6 @@
                         console.log('No avatar available for this profile');
                     }
 
-                    // Ajouter le nom d'utilisateur
                     const text = document.createElement('span');
                     text.textContent = profileData.username;
                     item.appendChild(text);
@@ -1117,7 +1119,7 @@
                 }
             } catch (error) {
                 console.error(`Error in searchProfiles: ${error.message}`);
-                suggestions.innerHTML = '<div class="suggestion-item">No profile found</div>'; // Changement ici
+                suggestions.innerHTML = '<div class="suggestion-item">No profile found</div>';
                 suggestions.style.display = 'block';
                 console.log('No profile found message displayed due to error');
             }
