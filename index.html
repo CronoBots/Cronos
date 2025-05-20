@@ -207,7 +207,7 @@
             top: 0;
             left: 0;
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             gap: 8px;
             height: 24px;
         }
@@ -219,13 +219,24 @@
             line-height: 1.2;
         }
 
+        .verified-badge {
+            color: #1DA1F2;
+            font-size: 18px;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+
         .social-container {
             position: absolute;
-            bottom: 0; /* Aligné en bas de l'image de profil */
+            bottom: 10px;
             left: 0;
             display: flex;
-            gap: 10px; /* Espacement entre les icônes */
+            gap: 12px;
             align-items: center;
+            z-index: 10;
+            padding: 5px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
         }
 
         #twitterLink, #facebookLink, #instagramLink {
@@ -233,12 +244,12 @@
             display: inline-block;
         }
 
-        . workmanship-icon {
+        .social-icon {
             width: 24px;
             height: 24px;
             transition: var(--transition);
             border-radius: 3px;
-            vertical-align: middle; /* Alignement vertical avec le conteneur */
+            vertical-align: middle;
         }
 
         .social-icon:hover {
@@ -672,10 +683,16 @@
                 font-size: 20px;
             }
 
+            .verified-badge {
+                font-size: 14px;
+                margin-left: 4px;
+            }
+
             .social-container {
-                bottom: 0; /* Aligné en bas pour mobile */
+                bottom: 5px;
                 left: 0;
                 gap: 8px;
+                padding: 3px;
             }
 
             .display-name {
@@ -777,21 +794,22 @@
                     <div class="profile-info">
                         <div class="username-container">
                             <h2 id="username" class="username"></h2>
+                            <span id="verifiedBadge" class="verified-badge" style="display: none;">✔</span>
                         </div>
                         <div class="social-container" style="display: none;" id="socialContainer">
                             <p id="twitterLink" style="display: none;">
                                 <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" />
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" onerror="this.src='/assets/fallback-icon.png'" />
                                 </a>
                             </p>
                             <p id="facebookLink" style="display: none;">
                                 <a href="#" target="_blank" id="facebookUrl" title="Visit Facebook Profile">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Facebook_f_logo_%282019%29.svg/512px-Facebook_f_logo_%282019%29.svg.png" alt="Facebook Profile" class="social-icon" />
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Facebook_f_logo_%282019%29.svg/512px-Facebook_f_logo_%282019%29.svg.png" alt="Facebook Profile" class="social-icon" onerror="this.src='/assets/fallback-icon.png'" />
                                 </a>
                             </p>
                             <p id="instagramLink" style="display: none;">
                                 <a href="#" target="_blank" id="instagramUrl" title="Visit Instagram Profile">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/512px-Instagram_icon.png" alt="Instagram Profile" class="social-icon" />
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/512px-Instagram_icon.png" alt="Instagram Profile" class="social-icon" onerror="this.src='/assets/fallback-icon.png'" />
                                 </a>
                             </p>
                         </div>
@@ -854,11 +872,12 @@
         let currentDisplayName = '';
 
         const profileQuery = `
-            query GetUser($id: ID!) {
-                public {
+            query User($id: ID!, $cacheId: ID) {
+                public(cacheId: $cacheId) {
                     user(id: $id) {
                         username
                         displayName
+                        verified
                         avatar {
                             url
                         }
@@ -1002,16 +1021,18 @@
         }
 
         function normalizeText(text) {
+            if (!text) return '';
             let normalized = text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
             normalized = normalized.replace(/\n\s*\n/g, '\n').trim();
             return normalized;
         }
 
         function updateProfileUI(profileData) {
-            console.log('updateProfileUI called', profileData);
+            console.log('updateProfileUI called with profileData:', profileData);
             const profileHeader = document.getElementById('profileHeader');
             const profilePicture = document.getElementById('profilePicture');
             const username = document.getElementById('username');
+            const verifiedBadge = document.getElementById('verifiedBadge');
             const displayName = document.getElementById('displayName');
             const socialContainer = document.getElementById('socialContainer');
             const twitterLink = document.getElementById('twitterLink');
@@ -1022,12 +1043,13 @@
             const instagramUrl = document.getElementById('instagramUrl');
             const usernameInput = document.getElementById('usernameInput');
 
-            if (!profileHeader || !profilePicture || !username || !displayName || !socialContainer ||
+            if (!profileHeader || !profilePicture || !username || !verifiedBadge || !displayName || !socialContainer ||
                 !twitterLink || !twitterUrl || !facebookLink || !facebookUrl || !instagramLink || !instagramUrl || !usernameInput) {
                 console.error('Profile UI elements not found:', {
                     profileHeader: !!profileHeader,
                     profilePicture: !!profilePicture,
                     username: !!username,
+                    verifiedBadge: !!verifiedBadge,
                     displayName: !!displayName,
                     socialContainer: !!socialContainer,
                     twitterLink: !!twitterLink,
@@ -1041,43 +1063,62 @@
                 return;
             }
 
+            // Afficher les informations de base
             username.textContent = profileData.username || 'Unknown';
-            currentUsername = profileData.username.toLowerCase();
+            currentUsername = profileData.username?.toLowerCase() || '';
             displayName.textContent = profileData.displayName || '';
             displayName.style.display = profileData.displayName ? 'block' : 'none';
-            currentDisplayName = profileData.displayName || profileData.username;
+            currentDisplayName = profileData.displayName || profileData.username || 'Unknown';
 
+            // Gestion du badge de vérification
+            console.log(`Verified status: ${profileData.verified}`);
+            verifiedBadge.style.display = profileData.verified === true ? 'inline' : 'none';
+
+            // Afficher l'avatar
             console.log(`Profile avatar URL: ${profileData.avatar?.url || 'Missing'}`);
             profilePicture.src = profileData.avatar?.url || '';
             profilePicture.style.display = profileData.avatar?.url ? 'block' : 'none';
 
             // Gestion des liens sociaux
+            console.log('Social usernames:', {
+                twitter: profileData.twitterUsername,
+                facebook: profileData.facebookUsername,
+                instagram: profileData.instagramUsername
+            });
+
             let hasSocialLinks = false;
 
             if (profileData.twitterUsername) {
+                console.log(`Setting Twitter link: https://x.com/${profileData.twitterUsername}`);
                 twitterUrl.href = `https://x.com/${sanitizeInput(profileData.twitterUsername)}`;
                 twitterLink.style.display = 'inline-block';
                 hasSocialLinks = true;
             } else {
+                console.log('No Twitter username found');
                 twitterLink.style.display = 'none';
             }
 
             if (profileData.facebookUsername) {
+                console.log(`Setting Facebook link: https://facebook.com/${profileData.facebookUsername}`);
                 facebookUrl.href = `https://facebook.com/${sanitizeInput(profileData.facebookUsername)}`;
                 facebookLink.style.display = 'inline-block';
                 hasSocialLinks = true;
             } else {
+                console.log('No Facebook username found');
                 facebookLink.style.display = 'none';
             }
 
             if (profileData.instagramUsername) {
+                console.log(`Setting Instagram link: https://instagram.com/${profileData.instagramUsername}`);
                 instagramUrl.href = `https://instagram.com/${sanitizeInput(profileData.instagramUsername)}`;
                 instagramLink.style.display = 'inline-block';
                 hasSocialLinks = true;
             } else {
+                console.log('No Instagram username found');
                 instagramLink.style.display = 'none';
             }
 
+            console.log(`Social links present: ${hasSocialLinks}`);
             socialContainer.style.display = hasSocialLinks ? 'flex' : 'none';
 
             profileHeader.style.display = 'block';
@@ -1122,7 +1163,10 @@
                     const response = await fetch(graphqlEndpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ query: profileQuery, variables: { id: currentUsername } })
+                        body: JSON.stringify({ 
+                            query: profileQuery, 
+                            variables: { id: currentUsername, cacheId: `getUserQuery-Profile-${currentUsername}` }
+                        })
                     });
 
                     if (!response.ok) {
@@ -1299,8 +1343,13 @@
                         mediaElement.alt = asset.name || 'NFT Image';
                         mediaElement.decoding = 'async';
                         mediaElement.onerror = () => {
-                            console.error(`Failed to load image Angling this is a common issue with the Instagram logo not loading correctly. I've replaced it with a different source for the Instagram icon to ensure it displays properly. The new source is a reliable CDN-hosted version of the Instagram logo.
-
+                            console.error(`Failed to load image for NFT: ${asset.name || 'Unnamed NFT'}, URL: ${imageUrl || 'Missing'}`);
+                            mediaElement.remove();
+                            const placeholder = document.createElement('div');
+                            placeholder.className = 'media-placeholder';
+                            placeholder.textContent = 'Média indisponible';
+                            card.appendChild(placeholder);
+                        };
                         mediaElement.sizes = '(max-width: 768px) 80px, 200px';
                         if (imageUrl?.endsWith('.gif')) {
                             console.log(`GIF detected: ${imageUrl}`);
@@ -1419,6 +1468,13 @@
             searchButton.addEventListener('click', () => {
                 console.log('Search button clicked');
                 fetchProfileAndNFTs();
+            });
+
+            usernameInput.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter') {
+                    console.log('Enter key pressed in username input');
+                    fetchProfileAndNFTs();
+                }
             });
 
             themeButton.addEventListener('click', () => {
