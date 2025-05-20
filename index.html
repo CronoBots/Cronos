@@ -169,12 +169,13 @@
         }
 
         .navbar-toggle {
-            display: none;
+            display: none !important; /* Forcé à none par défaut pour éviter apparition sur desktop */
             background: none;
             border: none;
             color: var(--text-dark);
             font-size: 1.5rem;
             cursor: pointer;
+            order: 3; /* Placé à la fin pour mobile */
         }
 
         .main-content {
@@ -257,13 +258,13 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            height: 36px; /* Augmenté pour la nouvelle taille de l'username */
+            height: 36px;
         }
 
         .username {
             color: var(--color1);
             margin: 0;
-            font-size: 36px; /* Taille fortement augmentée */
+            font-size: 36px;
             line-height: 1.2;
         }
 
@@ -306,11 +307,11 @@
 
         .display-name {
             margin: 0;
-            font-size: 28px; /* Taille fortement augmentée */
+            font-size: 28px;
             color: var(--text-dark);
             line-height: 1.2;
             position: absolute;
-            top: 42px; /* Ajusté pour éviter chevauchement */
+            top: 42px;
             left: 0;
         }
 
@@ -670,10 +671,9 @@
             }
 
             .navbar-toggle {
-                display: flex;
+                display: flex !important; /* Visible uniquement sur mobile */
                 align-items: center;
                 justify-content: center;
-                position: static;
                 margin-left: 10px;
                 margin-right: 10px;
                 font-size: 1.8rem;
@@ -726,12 +726,12 @@
             .username-container {
                 top: 0;
                 left: 0;
-                height: 30px; /* Ajusté pour mobile */
+                height: 30px;
                 gap: 5px;
             }
 
             .username {
-                font-size: 30px; /* Taille augmentée pour mobile */
+                font-size: 30px;
             }
 
             .verified-badge {
@@ -757,8 +757,8 @@
             }
 
             .display-name {
-                font-size: 24px; /* Taille augmentée pour mobile */
-                top: 36px; /* Ajusté pour mobile */
+                font-size: 24px;
+                top: 36px;
                 left: 0;
             }
 
@@ -835,10 +835,10 @@
         </div>
         <div class="navbar-menu" id="navbarMenu">
             <a href="#collections" aria-label="Collections">Collections</a>
-            <a href="#" id="profileLink" aria-label="Profile">Profile</a> <!-- Modifié de Profiles à Profile -->
-            <a href="https://cronobots.github.io/Cronos/" aria-label="Home">Home</a> <!-- Modifié de About à Home -->
+            <a href="#" id="profileLink" aria-label="Profile">Profile</a>
+            <a href="https://cronobots.github.io/Cronos/" aria-label="Home">Home</a>
         </div>
-        <button class="setupEventListenersnavbar-toggle" aria-label="Toggle menu" onclick="toggleMenu()">☰</button>
+        <button class="navbar-toggle" aria-label="Toggle menu" onclick="toggleMenu()">☰</button>
     </nav>
 
     <div class="main-content">
@@ -927,7 +927,7 @@
         let allNFTs = [];
         let currentUsername = '';
         let currentDisplayName = '';
-        let lastSearchedUsername = ''; // Nouvelle variable pour stocker le dernier profil recherché
+        let lastSearchedUsername = '';
         let debounceTimeout = null;
 
         const profileQuery = `
@@ -1311,7 +1311,7 @@
 
             console.log(`Searching for username: ${username}`);
             currentUsername = username.toLowerCase();
-            lastSearchedUsername = currentUsername; // Mettre à jour le dernier profil recherché
+            lastSearchedUsername = currentUsername;
             loadingDiv.style.display = 'block';
             errorDiv.textContent = '';
             noResultsDiv.style.display = 'none';
@@ -1352,7 +1352,6 @@
                 console.log('Updating profile UI');
                 updateProfileUI(profileData);
 
-                // Mettre à jour l'URL avec le nom du profil
                 const newUrl = `${window.location.pathname}#${currentUsername}`;
                 history.pushState({ username: currentUsername }, '', newUrl);
                 console.log(`URL updated to: ${newUrl}`);
@@ -1667,7 +1666,6 @@
                 updateDisplay();
             });
 
-            // Gestionnaire pour le lien "Profile"
             profileLink.addEventListener('click', (event) => {
                 console.log('Profile link clicked');
                 if (lastSearchedUsername) {
@@ -1680,14 +1678,12 @@
                 } else {
                     console.log('No profile searched yet');
                     event.preventDefault();
-                    // Optionnel : Afficher un message ou désactiver le lien
                 }
             });
 
             console.log('Event listeners attached');
         }
 
-        // Vérifier le hash dans l'URL au chargement de la page
         document.addEventListener('DOMContentLoaded', () => {
             console.log('DOMContentLoaded event fired');
             const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -1699,7 +1695,6 @@
                 console.error('themeButton not found during initialization');
             }
 
-            // Vérifier si un hash existe dans l'URL (par exemple, #snipe13)
             const hash = window.location.hash;
             if (hash && hash.startsWith('#')) {
                 const username = sanitizeInput(hash.substring(1));
