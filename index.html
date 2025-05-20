@@ -885,7 +885,7 @@
             <span class="navbar-logo-text">CRONOBOTS</span>
         </div>
         <div class="navbar-search">
-            <input type="text" id="usernameInput" placeholder="Crypto.com/NFT profile" aria-describedby="usernameHelp" autocomplete=" AscendantSign="true" autocomplete="off" />
+            <input type="text" id="usernameInput" placeholder="Crypto.com/NFT profile" aria-describedby="usernameHelp" autocomplete="off" />
             <div class="suggestions" id="suggestions"></div>
         </div>
         <div class="navbar-menu" id="navbarMenu">
@@ -960,8 +960,9 @@
                     <label for="sortBy">SORT BY:</label>
                     <select id="sortBy" onchange="filterNFTs()">
                         <option value="default">Default</option>
-                        <option value="price_desc">Price (High to Low)</option>
-                        <option value="price_asc">Price (Low to High)</option>
+                        <option value="most_liked">Most Liked</option>
+                        <option value="most_viewed">Most Viewed</option>
+                        <option value="rank">Rank</option>
                         <option value="newest">Newest</option>
                         <option value="oldest">Oldest</option>
                     </select>
@@ -996,7 +997,7 @@
         let debounceTimeout = null;
 
         const profileQuery = `
-            query User($id: ID!, $cacheId: ID) {
+            query User         query User($id: ID!, $cacheId: ID) {
                 public(cacheId: $cacheId) {
                     user(id: $id) {
                         username
@@ -1036,10 +1037,9 @@
                             priceUSD
                         }
                         createdAt
-                        # Ajouter ces champs si l'API les fournit :
-                        # likesCount
-                        # viewsCount
-                        # rank
+                        likesCount
+                        viewsCount
+                        rank
                     }
                 }
             }
@@ -1281,7 +1281,7 @@
                 console.error('Profile UI elements not found:', {
                     profileHeader: !!profileHeader,
                     profilePicture: !!profilePicture,
-                    username: !!username,
+                    username by: !!username,
                     verifiedBadge: !!verifiedBadge,
                     displayName: !!displayName,
                     socialContainer: !!socialContainer,
@@ -1422,7 +1422,6 @@
             currentUsername = username.toLowerCase();
             lastSearchedUsername = currentUsername;
 
-            // Réinitialiser l'interface pour masquer les résultats précédents
             profileHeader.style.display = 'none';
             nftContainer.innerHTML = '';
             nftCountContainer.innerHTML = '';
@@ -1432,7 +1431,6 @@
             collectionTitle.classList.remove('visible');
             errorDiv.textContent = '';
 
-            // Réinitialiser les filtres
             collectionFilter.innerHTML = '<option value="">All Collections</option>';
             collectionFilter.value = '';
             collectionFilter.disabled = true;
@@ -1440,7 +1438,6 @@
             cardSize.value = 'medium';
             sortBy.value = 'default';
 
-            // Afficher l'indicateur de chargement
             loadingDiv.style.display = 'block';
 
             try {
@@ -1564,39 +1561,20 @@
                 ? allNFTs.filter(nft => nft.collection?.name === collectionValue)
                 : [...allNFTs];
 
-            // Appliquer le tri
             const sortValue = sortBy.value;
-            if (sortValue === 'price_desc') {
-                filteredNFTs.sort((a, b) => {
-                    const priceA = a.defaultListingV2?.salePriceDecimalUSD || a.latestPurchasedEdition?.priceUSD || 0;
-                    const priceB = b.defaultListingV2?.salePriceDecimalUSD || b.latestPurchasedEdition?.priceUSD || 0;
-                    return priceB - priceA;
-                });
-            } else if (sortValue === 'price_asc') {
-                filteredNFTs.sort((a, b) => {
-                    const priceA = a.defaultListingV2?.salePriceDecimalUSD || a.latestPurchasedEdition?.priceUSD || 0;
-                    const priceB = b.defaultListingV2?.salePriceDecimalUSD || b.latestPurchasedEdition?.priceUSD || 0;
-                    return priceA - priceB;
-                });
-            } else if (sortValue === 'newest') {
-                filteredNFTs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            } else if (sortValue === 'oldest') {
-                filteredNFTs.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-            } else {
-                // Tri par défaut (par ID)
-                filteredNFTs.sort((a, b) => a.id.localeCompare(b.id));
-            }
-
-            // Si l'API fournit likesCount, viewsCount, rank, décommentez et utilisez ceci :
-            /*
             if (sortValue === 'most_liked') {
                 filteredNFTs.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
             } else if (sortValue === 'most_viewed') {
                 filteredNFTs.sort((a, b) => (b.viewsCount || 0) - (a.viewsCount || 0));
             } else if (sortValue === 'rank') {
                 filteredNFTs.sort((a, b) => (a.rank || Infinity) - (b.rank || Infinity));
+            } else if (sortValue === 'newest') {
+                filteredNFTs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            } else if (sortValue === 'oldest') {
+                filteredNFTs.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            } else {
+                filteredNFTs.sort((a, b) => a.id.localeCompare(b.id));
             }
-            */
 
             console.log(`Filtered and sorted ${filteredNFTs.length} NFTs for collection: ${collectionValue || 'All'}, sort: ${sortValue}`);
             
@@ -1609,7 +1587,7 @@
         function displayNFTs(assets, selectedCollection) {
             console.log(`displayNFTs called with ${assets.length} assets, collection: ${selectedCollection || 'All'}`);
             assets.forEach((asset, index) => {
-                console.log(`NFT ${index + 1}: ${asset.name || 'Unnamed'}, Price: ${asset.defaultListingV2?.salePriceDecimalUSD || asset.latestPurchasedEdition?.priceUSD || 'N/A'}, Created: ${asset.createdAt}`);
+                console.log(`NFT ${index + 1}: ${asset.name || 'Unnamed'}, Likes: ${asset.likesCount || 'N/A'}, Views: ${asset.viewsCount || 'N/A'}, Rank: ${asset.rank || 'N/A'}, Created: ${asset.createdAt}`);
             });
             const container = document.getElementById('nftContainer');
             const countContainer = document.getElementById('nftCountContainer');
