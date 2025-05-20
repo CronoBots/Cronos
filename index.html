@@ -911,7 +911,7 @@
                         <div class="social-container" style="display: none;" id="socialContainer">
                             <p id="croLink" style="display: none;">
                                 <a href="#" target="_blank" id="croUrl" title="Visit CRO Profile">
-                                    <img src="CRO.png" alt="CRO Profile" class="social-icon" onerror="this.src='/assets/fallback-icon.png'" />
+                                    <img src="CRO.png" alt="CRO Profile" class="social-icon" onerror="console.error('Failed to load CRO.png'); this.src='/assets/fallback-icon.png'" />
                                 </a>
                             </p>
                             <p id="twitterLink" style="display: none;">
@@ -1290,6 +1290,11 @@
                 return;
             }
 
+            if (!profileData || !profileData.username) {
+                console.error('Invalid profile data:', profileData);
+                return;
+            }
+
             username.textContent = profileData.username || 'Unknown';
             currentUsername = profileData.username?.toLowerCase() || '';
             displayName.textContent = profileData.displayName || '';
@@ -1312,18 +1317,20 @@
             let hasSocialLinks = false;
 
             if (currentUsername) {
-                console.log(`Setting CRO link: https://crypto.com/nft/profile/${currentUsername}`);
-                croUrl.href = `https://crypto.com/nft/profile/${sanitizeInput(currentUsername)}`;
+                const croProfileUrl = `https://crypto.com/nft/profile/${sanitizeInput(currentUsername)}`;
+                console.log(`Setting CRO link: ${croProfileUrl}`);
+                croUrl.href = croProfileUrl;
                 croLink.style.display = 'inline-block';
                 hasSocialLinks = true;
             } else {
-                console.log('No username available for CRO link');
+                console.warn('No username available for CRO link');
                 croLink.style.display = 'none';
             }
 
             if (profileData.twitterUsername) {
-                console.log(`Setting Twitter link: https://x.com/${profileData.twitterUsername}`);
-                twitterUrl.href = `https://x.com/${sanitizeInput(profileData.twitterUsername)}`;
+                const twitterProfileUrl = `https://x.com/${sanitizeInput(profileData.twitterUsername)}`;
+                console.log(`Setting Twitter link: ${twitterProfileUrl}`);
+                twitterUrl.href = twitterProfileUrl;
                 twitterLink.style.display = 'inline-block';
                 hasSocialLinks = true;
             } else {
@@ -1332,8 +1339,9 @@
             }
 
             if (profileData.facebookUsername) {
-                console.log(`Setting Facebook link: https://facebook.com/${profileData.facebookUsername}`);
-                facebookUrl.href = `https://facebook.com/${sanitizeInput(profileData.facebookUsername)}`;
+                const facebookProfileUrl = `https://facebook.com/${sanitizeInput(profileData.facebookUsername)}`;
+                console.log(`Setting Facebook link: ${facebookProfileUrl}`);
+                facebookUrl.href = facebookProfileUrl;
                 facebookLink.style.display = 'inline-block';
                 hasSocialLinks = true;
             } else {
@@ -1342,8 +1350,9 @@
             }
 
             if (profileData.instagramUsername) {
-                console.log(`Setting Instagram link: https://instagram.com/${profileData.instagramUsername}`);
-                instagramUrl.href = `https://instagram.com/${sanitizeInput(profileData.instagramUsername)}`;
+                const instagramProfileUrl = `https://instagram.com/${sanitizeInput(profileData.instagramUsername)}`;
+                console.log(`Setting Instagram link: ${instagramProfileUrl}`);
+                instagramUrl.href = instagramProfileUrl;
                 instagramLink.style.display = 'inline-block';
                 hasSocialLinks = true;
             } else {
@@ -1774,7 +1783,7 @@
                 console.log(`Found username in URL hash: ${username}`);
                 const usernameInput = document.getElementById('usernameInput');
                 if (usernameInput) {
-                    usernameInput Jubilee = username;
+                    usernameInput.value = username;
                     fetchProfileAndNFTs();
                 }
             }
