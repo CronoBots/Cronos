@@ -1312,15 +1312,30 @@
             const noResultsDiv = document.getElementById('noResults');
             const controls = document.getElementById('controls');
             const collectionTitle = document.getElementById('collectionTitle');
+            const profileHeader = document.getElementById('profileHeader');
+            const nftContainer = document.getElementById('nftContainer');
+            const nftCountContainer = document.getElementById('nftCountContainer');
+            const collectionFilter = document.getElementById('collectionFilter');
+            const displayMode = document.getElementById('displayMode');
+            const cardSize = document.getElementById('cardSize');
+            const sortBy = document.getElementById('sortBy');
 
-            if (!usernameInput || !loadingDiv || !errorDiv || !noResultsDiv || !controls || !collectionTitle) {
+            if (!usernameInput || !loadingDiv || !errorDiv || !noResultsDiv || !controls || !collectionTitle ||
+                !profileHeader || !nftContainer || !nftCountContainer || !collectionFilter || !displayMode || !cardSize || !sortBy) {
                 console.error('Required DOM elements not found:', {
                     usernameInput: !!usernameInput,
                     loadingDiv: !!loadingDiv,
                     errorDiv: !!errorDiv,
                     noResultsDiv: !!noResultsDiv,
                     controls: !!controls,
-                    collectionTitle: !!collectionTitle
+                    collectionTitle: !!collectionTitle,
+                    profileHeader: !!profileHeader,
+                    nftContainer: !!nftContainer,
+                    nftCountContainer: !!nftCountContainer,
+                    collectionFilter: !!collectionFilter,
+                    displayMode: !!displayMode,
+                    cardSize: !!cardSize,
+                    sortBy: !!sortBy
                 });
                 if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
                 return;
@@ -1335,11 +1350,27 @@
             console.log(`Searching for username: ${username}`);
             currentUsername = username.toLowerCase();
             lastSearchedUsername = currentUsername;
-            loadingDiv.style.display = 'block';
-            errorDiv.textContent = '';
+
+            // Réinitialiser l'interface pour masquer les résultats précédents
+            profileHeader.style.display = 'none';
+            nftContainer.innerHTML = '';
+            nftCountContainer.innerHTML = '';
             noResultsDiv.style.display = 'none';
+            controls.classList.remove('visible');
             collectionTitle.textContent = '';
             collectionTitle.classList.remove('visible');
+            errorDiv.textContent = '';
+
+            // Réinitialiser les filtres
+            collectionFilter.innerHTML = '<option value="">All Collections</option>';
+            collectionFilter.value = '';
+            collectionFilter.disabled = true;
+            displayMode.value = 'full';
+            cardSize.value = 'medium';
+            sortBy.value = '';
+
+            // Afficher l'indicateur de chargement
+            loadingDiv.style.display = 'block';
 
             try {
                 const profileData = await fetchWithCache(`profile_${currentUsername}`, async () => {
