@@ -885,7 +885,7 @@
             <span class="navbar-logo-text">CRONOBOTS</span>
         </div>
         <div class="navbar-search">
-            <input type="text" id="usernameInput" placeholder="Crypto.com/NFT profile" aria-describedby="usernameHelp" autocomplete="off" />
+            <input type="text" id="usernameInput" placeholder="Crypto.com/NFT profile" aria-describedby="usernameHelp" autocomplete=" AscendantSign="true" autocomplete="off" />
             <div class="suggestions" id="suggestions"></div>
         </div>
         <div class="navbar-menu" id="navbarMenu">
@@ -958,8 +958,12 @@
                 </div>
                 <div class="control-group">
                     <label for="sortBy">SORT BY:</label>
-                    <select id="sortBy" disabled>
-                        <option value="">SOON</option>
+                    <select id="sortBy" onchange="filterNFTs()">
+                        <option value="default">Default</option>
+                        <option value="price_desc">Price (High to Low)</option>
+                        <option value="price_asc">Price (Low to High)</option>
+                        <option value="newest">Newest</option>
+                        <option value="oldest">Oldest</option>
                     </select>
                 </div>
             </div>
@@ -1032,6 +1036,10 @@
                             priceUSD
                         }
                         createdAt
+                        # Ajouter ces champs si l'API les fournit :
+                        # likesCount
+                        # viewsCount
+                        # rank
                     }
                 }
             }
@@ -1430,7 +1438,7 @@
             collectionFilter.disabled = true;
             displayMode.value = 'full';
             cardSize.value = 'medium';
-            sortBy.value = '';
+            sortBy.value = 'default';
 
             // Afficher l'indicateur de chargement
             loadingDiv.style.display = 'block';
@@ -1529,13 +1537,15 @@
             const collectionFilter = document.getElementById('collectionFilter');
             const displayMode = document.getElementById('displayMode');
             const cardSize = document.getElementById('cardSize');
+            const sortBy = document.getElementById('sortBy');
             const collectionTitle = document.getElementById('collectionTitle');
 
-            if (!collectionFilter || !displayMode || !cardSize || !collectionTitle) {
+            if (!collectionFilter || !displayMode || !cardSize || !sortBy || !collectionTitle) {
                 console.error('Filter elements not found:', {
                     collectionFilter: !!collectionFilter,
                     displayMode: !!displayMode,
                     cardSize: !!cardSize,
+                    sortBy: !!sortBy,
                     collectionTitle: !!collectionTitle
                 });
                 return;
@@ -1550,11 +1560,45 @@
             }
 
             const collectionValue = collectionFilter.value;
-            const filteredNFTs = collectionValue
+            let filteredNFTs = collectionValue
                 ? allNFTs.filter(nft => nft.collection?.name === collectionValue)
                 : [...allNFTs];
 
-            console.log(`Filtered ${filteredNFTs.length} NFTs for collection: ${collectionValue || 'All'}`);
+            // Appliquer le tri
+            const sortValue = sortBy.value;
+            if (sortValue === 'price_desc') {
+                filteredNFTs.sort((a, b) => {
+                    const priceA = a.defaultListingV2?.salePriceDecimalUSD || a.latestPurchasedEdition?.priceUSD || 0;
+                    const priceB = b.defaultListingV2?.salePriceDecimalUSD || b.latestPurchasedEdition?.priceUSD || 0;
+                    return priceB - priceA;
+                });
+            } else if (sortValue === 'price_asc') {
+                filteredNFTs.sort((a, b) => {
+                    const priceA = a.defaultListingV2?.salePriceDecimalUSD || a.latestPurchasedEdition?.priceUSD || 0;
+                    const priceB = b.defaultListingV2?.salePriceDecimalUSD || b.latestPurchasedEdition?.priceUSD || 0;
+                    return priceA - priceB;
+                });
+            } else if (sortValue === 'newest') {
+                filteredNFTs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            } else if (sortValue === 'oldest') {
+                filteredNFTs.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            } else {
+                // Tri par défaut (par ID)
+                filteredNFTs.sort((a, b) => a.id.localeCompare(b.id));
+            }
+
+            // Si l'API fournit likesCount, viewsCount, rank, décommentez et utilisez ceci :
+            /*
+            if (sortValue === 'most_liked') {
+                filteredNFTs.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
+            } else if (sortValue === 'most_viewed') {
+                filteredNFTs.sort((a, b) => (b.viewsCount || 0) - (a.viewsCount || 0));
+            } else if (sortValue === 'rank') {
+                filteredNFTs.sort((a, b) => (a.rank || Infinity) - (b.rank || Infinity));
+            }
+            */
+
+            console.log(`Filtered and sorted ${filteredNFTs.length} NFTs for collection: ${collectionValue || 'All'}, sort: ${sortValue}`);
             
             collectionTitle.textContent = collectionValue || 'All Collections';
             collectionTitle.classList.add('visible');
@@ -1564,6 +1608,9 @@
 
         function displayNFTs(assets, selectedCollection) {
             console.log(`displayNFTs called with ${assets.length} assets, collection: ${selectedCollection || 'All'}`);
+            assets.forEach((asset, index) => {
+                console.log(`NFT ${index + 1}: ${asset.name || 'Unnamed'}, Price: ${asset.defaultListingV2?.salePriceDecimalUSD || asset.latestPurchasedEdition?.priceUSD || 'N/A'}, Created: ${asset.createdAt}`);
+            });
             const container = document.getElementById('nftContainer');
             const countContainer = document.getElementById('nftCountContainer');
             const displayMode = document.getElementById('displayMode')?.value;
@@ -1709,16 +1756,18 @@
             const collectionFilter = document.getElementById('collectionFilter');
             const displayMode = document.getElementById('displayMode');
             const cardSize = document.getElementById('cardSize');
+            const sortBy = document.getElementById('sortBy');
 
             console.log('DOM elements found:', {
                 usernameInput: !!usernameInput,
                 themeButton: !!themeButton,
                 collectionFilter: !!collectionFilter,
                 displayMode: !!displayMode,
-                cardSize: !!cardSize
+                cardSize: !!cardSize,
+                sortBy: !!sortBy
             });
 
-            if (!usernameInput || !themeButton || !collectionFilter || !displayMode || !cardSize) {
+            if (!usernameInput || !themeButton || !collectionFilter || !displayMode || !cardSize || !sortBy) {
                 console.error('One or more DOM elements not found');
                 const errorDiv = document.getElementById('error');
                 if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
@@ -1761,6 +1810,11 @@
             cardSize.addEventListener('change', () => {
                 console.log('Card size changed');
                 updateDisplay();
+            });
+
+            sortBy.addEventListener('change', () => {
+                console.log('Sort by changed');
+                filterNFTs();
             });
 
             console.log('Event listeners attached');
