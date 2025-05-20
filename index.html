@@ -409,68 +409,6 @@
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
         }
 
-        .nft-card {
-            background-color: var(--collection-bg);
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            padding: 15px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            box-sizing: border-box;
-            overflow: hidden;
-            cursor: default;
-            position: relative;
-        }
-
-        .nft-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .nft-card img, .nft-card video {
-            width: 100%;
-            max-width: 200px;
-            height: auto;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            object-fit: cover;
-            aspect-ratio: 1 / 1;
-            display: block;
-        }
-
-        .nft-card h3 {
-            font-size: 0.85em;
-            margin: 5px 0;
-            width: 100%;
-            text-align: center;
-            font-weight: normal;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            text-transform: none;
-        }
-
-        .nft-card h3 .highlight {
-            font-weight: bold;
-        }
-
-        .nft-card .media-placeholder {
-            width: 100%;
-            max-width: 200px;
-            height: 200px;
-            border-radius: 10px;
-            background-color: #333;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 10px;
-            font-size: 0.9em;
-            text-align: center;
-            color: var(--text-dark);
-        }
-
         .nft-container.thumbnail-mode {
             gap: 0;
             row-gap: 0;
@@ -1312,15 +1250,26 @@
             const noResultsDiv = document.getElementById('noResults');
             const controls = document.getElementById('controls');
             const collectionTitle = document.getElementById('collectionTitle');
+            const nftContainer = document.getElementById('nftContainer');
+            const nftCountContainer = document.getElementById('nftCountContainer');
+            const collectionFilter = document.getElementById('collectionFilter');
+            const displayMode = document.getElementById('displayMode');
+            const cardSize = document.getElementById('cardSize');
 
-            if (!usernameInput || !loadingDiv || !errorDiv || !noResultsDiv || !controls || !collectionTitle) {
+            if (!usernameInput || !loadingDiv || !errorDiv || !noResultsDiv || !controls || !collectionTitle ||
+                !nftContainer || !nftCountContainer || !collectionFilter || !displayMode || !cardSize) {
                 console.error('Required DOM elements not found:', {
                     usernameInput: !!usernameInput,
                     loadingDiv: !!loadingDiv,
                     errorDiv: !!errorDiv,
                     noResultsDiv: !!noResultsDiv,
                     controls: !!controls,
-                    collectionTitle: !!collectionTitle
+                    collectionTitle: !!collectionTitle,
+                    nftContainer: !!nftContainer,
+                    nftCountContainer: !!nftCountContainer,
+                    collectionFilter: !!collectionFilter,
+                    displayMode: !!displayMode,
+                    cardSize: !!cardSize
                 });
                 if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
                 return;
@@ -1335,11 +1284,19 @@
             console.log(`Searching for username: ${username}`);
             currentUsername = username.toLowerCase();
             lastSearchedUsername = currentUsername;
+            allNFTs = []; // Réinitialiser les NFTs
             loadingDiv.style.display = 'block';
             errorDiv.textContent = '';
             noResultsDiv.style.display = 'none';
             collectionTitle.textContent = '';
             collectionTitle.classList.remove('visible');
+            nftContainer.innerHTML = '';
+            nftCountContainer.innerHTML = '';
+            controls.classList.remove('visible');
+            collectionFilter.disabled = true;
+            collectionFilter.innerHTML = '<option value="">All Collections</option>';
+            displayMode.value = 'full';
+            cardSize.value = 'medium';
 
             try {
                 const profileData = await fetchWithCache(`profile_${currentUsername}`, async () => {
@@ -1387,7 +1344,7 @@
                     console.log(`Displaying ${allNFTs.length} NFTs`);
                     updateDisplay();
                     populateCollectionFilter(allNFTs);
-                    document.getElementById('collectionFilter').disabled = false;
+                    collectionFilter.disabled = false;
                     controls.classList.add('visible');
                 } else {
                     console.log('No NFTs found');
