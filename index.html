@@ -169,13 +169,13 @@
         }
 
         .navbar-toggle {
-            display: none !important; /* Forcé à none par défaut pour éviter apparition sur desktop */
+            display: none !important;
             background: none;
             border: none;
             color: var(--text-dark);
             font-size: 1.5rem;
             cursor: pointer;
-            order: 3; /* Placé à la fin pour mobile */
+            order: 3;
         }
 
         .main-content {
@@ -211,6 +211,7 @@
             gap: 20px;
             margin-bottom: 20px;
             flex-wrap: wrap;
+            position: relative;
         }
 
         .profile-header {
@@ -371,6 +372,20 @@
 
         .controls select:hover {
             transform: none;
+        }
+
+        .collection-title {
+            width: 100%;
+            text-align: center;
+            font-size: 24px;
+            color: var(--text-dark);
+            margin: 20px 0;
+            display: none;
+            text-transform: uppercase;
+        }
+
+        .collection-title.visible {
+            display: block;
         }
 
         .nft-container {
@@ -671,7 +686,7 @@
             }
 
             .navbar-toggle {
-                display: flex !important; /* Visible uniquement sur mobile */
+                display: flex !important;
                 align-items: center;
                 justify-content: center;
                 margin-left: 10px;
@@ -793,6 +808,11 @@
                 overflow: hidden;
             }
 
+            .collection-title {
+                font-size: 20px;
+                margin: 10px 0;
+            }
+
             .nft-container.small-size {
                 grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
             }
@@ -903,6 +923,7 @@
                     </select>
                 </div>
             </div>
+            <h2 id="collectionTitle" class="collection-title"></h2>
         </div>
 
         <div class="timestamp" id="timestamp"></div>
@@ -1290,14 +1311,16 @@
             const errorDiv = document.getElementById('error');
             const noResultsDiv = document.getElementById('noResults');
             const controls = document.getElementById('controls');
+            const collectionTitle = document.getElementById('collectionTitle');
 
-            if (!usernameInput || !loadingDiv || !errorDiv || !noResultsDiv || !controls) {
+            if (!usernameInput || !loadingDiv || !errorDiv || !noResultsDiv || !controls || !collectionTitle) {
                 console.error('Required DOM elements not found:', {
                     usernameInput: !!usernameInput,
                     loadingDiv: !!loadingDiv,
                     errorDiv: !!errorDiv,
                     noResultsDiv: !!noResultsDiv,
-                    controls: !!controls
+                    controls: !!controls,
+                    collectionTitle: !!collectionTitle
                 });
                 if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
                 return;
@@ -1315,6 +1338,8 @@
             loadingDiv.style.display = 'block';
             errorDiv.textContent = '';
             noResultsDiv.style.display = 'none';
+            collectionTitle.textContent = '';
+            collectionTitle.classList.remove('visible');
 
             try {
                 const profileData = await fetchWithCache(`profile_${currentUsername}`, async () => {
@@ -1410,12 +1435,14 @@
             const collectionFilter = document.getElementById('collectionFilter');
             const displayMode = document.getElementById('displayMode');
             const cardSize = document.getElementById('cardSize');
+            const collectionTitle = document.getElementById('collectionTitle');
 
-            if (!collectionFilter || !displayMode || !cardSize) {
+            if (!collectionFilter || !displayMode || !cardSize || !collectionTitle) {
                 console.error('Filter elements not found:', {
                     collectionFilter: !!collectionFilter,
                     displayMode: !!displayMode,
-                    cardSize: !!cardSize
+                    cardSize: !!cardSize,
+                    collectionTitle: !!collectionTitle
                 });
                 return;
             }
@@ -1423,6 +1450,8 @@
             if (!allNFTs || !allNFTs.length) {
                 console.warn('No NFTs available to filter');
                 displayNFTs([], '');
+                collectionTitle.textContent = '';
+                collectionTitle.classList.remove('visible');
                 return;
             }
 
@@ -1432,6 +1461,10 @@
                 : [...allNFTs];
 
             console.log(`Filtered ${filteredNFTs.length} NFTs for collection: ${collectionValue || 'All'}`);
+            
+            collectionTitle.textContent = collectionValue || 'All Collections';
+            collectionTitle.classList.add('visible');
+
             displayNFTs(filteredNFTs, collectionValue);
         }
 
@@ -1610,18 +1643,16 @@
             const collectionFilter = document.getElementById('collectionFilter');
             const displayMode = document.getElementById('displayMode');
             const cardSize = document.getElementById('cardSize');
-            const profileLink = document.getElementById('profileLink');
 
             console.log('DOM elements found:', {
                 usernameInput: !!usernameInput,
                 themeButton: !!themeButton,
                 collectionFilter: !!collectionFilter,
                 displayMode: !!displayMode,
-                cardSize: !!cardSize,
-                profileLink: !!profileLink
+                cardSize: !!cardSize
             });
 
-            if (!usernameInput || !themeButton || !collectionFilter || !displayMode || !cardSize || !profileLink) {
+            if (!usernameInput || !themeButton || !collectionFilter || !displayMode || !cardSize) {
                 console.error('One or more DOM elements not found');
                 const errorDiv = document.getElementById('error');
                 if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
@@ -1664,21 +1695,6 @@
             cardSize.addEventListener('change', () => {
                 console.log('Card size changed');
                 updateDisplay();
-            });
-
-            profileLink.addEventListener('click', (event) => {
-                console.log('Profile link clicked');
-                if (lastSearchedUsername) {
-                    event.preventDefault();
-                    const profileUrl = `#${lastSearchedUsername}`;
-                    console.log(`Redirecting to profile: ${profileUrl}`);
-                    window.location.hash = lastSearchedUsername;
-                    usernameInput.value = lastSearchedUsername;
-                    fetchProfileAndNFTs();
-                } else {
-                    console.log('No profile searched yet');
-                    event.preventDefault();
-                }
             });
 
             console.log('Event listeners attached');
