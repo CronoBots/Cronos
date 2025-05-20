@@ -297,7 +297,6 @@
             height: 100%;
             transition: var(--transition);
             border-radius: 3px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             object-fit: contain;
             display: block;
         }
@@ -306,10 +305,12 @@
             display: inline-block;
             width: 40px;
             height: 40px;
+            background-color: #333;
             padding: 0;
             border-radius: 3px;
             overflow: hidden;
             transition: var(--transition);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
         #croLink {
@@ -1424,7 +1425,7 @@
             currentUsername = username.toLowerCase();
             lastSearchedUsername = currentUsername;
 
-            // Réinitialiser l'interface pour masquer les résultats précédents
+            // Reset the UI
             profileHeader.style.display = 'none';
             nftContainer.innerHTML = '';
             nftCountContainer.innerHTML = '';
@@ -1434,7 +1435,7 @@
             collectionTitle.classList.remove('visible');
             errorDiv.textContent = '';
 
-            // Réinitialiser les filtres
+            // Reset filters
             collectionFilter.innerHTML = '<option value="">All Collections</option>';
             collectionFilter.value = '';
             collectionFilter.disabled = true;
@@ -1442,12 +1443,12 @@
             cardSize.value = 'medium';
             sortBy.value = '';
 
-            // Afficher l'indicateur de chargement
+            // Show loading indicator
             loadingDiv.style.display = 'block';
 
             try {
                 const profileData = await fetchWithCache(`profile_${currentUsername}`, async () => {
-                    console.log(`Fetching profile for ${currentUsername}`);
+                    console.log(`Fetching profile for ${currentUsername} from ${graphqlEndpoint}`);
                     const response = await fetch(graphqlEndpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1457,8 +1458,9 @@
                         })
                     });
 
+                    console.log(`Profile API response status: ${response.status}`);
                     if (!response.ok) {
-                        throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+                        throw new Error(`HTTP Error: ${response.status} - ${response.statusText}. The API endpoint ${graphqlEndpoint} might be deprecated.`);
                     }
 
                     const result = await response.json();
@@ -1468,7 +1470,11 @@
                         throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
                     }
 
-                    return result.data?.public?.user;
+                    if (!result.data?.public?.user) {
+                        throw new Error('No user data returned from API. The endpoint schema may have changed.');
+                    }
+
+                    return result.data.public.user;
                 });
 
                 if (!profileData) {
@@ -1478,14 +1484,21 @@
                     return;
                 }
 
-                console.log('Updating profile UI');
+                console.log('Updating profile UI with data:', profileData);
                 updateProfileUI(profileData);
 
                 const newUrl = `${window.location.pathname}#${currentUsername}`;
                 history.pushState({ username: currentUsername }, '', newUrl);
                 console.log(`URL updated to: ${newUrl}`);
 
-                allNFTs = await fetchWithCache(`nfts_${currentUsername}`, () => fetchAllNFTs(currentUsername));
+                allNFTs = await fetchWithCache(`nfts_${currentUsername}`, async () => {
+                    console.log(`Fetching NFTs for ${currentUsername}`);
+                    const nftData = await fetchAllNFTs(currentUsername);
+                    if (!nftData) {
+                        throw new Error('No NFT data returned from API.');
+                    }
+                    return nftData;
+                });
 
                 if (allNFTs.length > 0) {
                     console.log(`Displaying ${allNFTs.length} NFTs`);
@@ -1499,7 +1512,7 @@
                 }
             } catch (error) {
                 console.error(`Error in fetchProfileAndNFTs: ${error.message}`);
-                errorDiv.textContent = `Error: ${error.message}`;
+                errorDiv.textContent = `Error: ${error.message}. The API might be down or deprecated. Please check the endpoint ${graphqlEndpoint}.`;
             } finally {
                 loadingDiv.style.display = 'none';
             }
@@ -1789,7 +1802,7 @@
 
             const hash = window.location.hash;
             if (hash && hash.startsWith('#')) {
-                const username = sanitizeInput(hash and .substring(1));
+                const username = sanitizeInput(hash.substring(1));
                 console.log(`Found username in URL hash: ${username}`);
                 const usernameInput = document.getElementById('usernameInput');
                 if (usernameInput) {
