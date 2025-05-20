@@ -960,9 +960,6 @@
                     <label for="sortBy">SORT BY:</label>
                     <select id="sortBy" onchange="filterNFTs()">
                         <option value="default">Default</option>
-                        <option value="most_liked">Most Liked</option>
-                        <option value="most_viewed">Most Viewed</option>
-                        <option value="rank">Rank</option>
                         <option value="newest">Newest</option>
                         <option value="oldest">Oldest</option>
                     </select>
@@ -997,7 +994,7 @@
         let debounceTimeout = null;
 
         const profileQuery = `
-            query User         query User($id: ID!, $cacheId: ID) {
+            query User($id: ID!, $cacheId: ID) {
                 public(cacheId: $cacheId) {
                     user(id: $id) {
                         username
@@ -1037,9 +1034,6 @@
                             priceUSD
                         }
                         createdAt
-                        likesCount
-                        viewsCount
-                        rank
                     }
                 }
             }
@@ -1281,7 +1275,7 @@
                 console.error('Profile UI elements not found:', {
                     profileHeader: !!profileHeader,
                     profilePicture: !!profilePicture,
-                    username by: !!username,
+                    username: !!username,
                     verifiedBadge: !!verifiedBadge,
                     displayName: !!displayName,
                     socialContainer: !!socialContainer,
@@ -1562,13 +1556,7 @@
                 : [...allNFTs];
 
             const sortValue = sortBy.value;
-            if (sortValue === 'most_liked') {
-                filteredNFTs.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
-            } else if (sortValue === 'most_viewed') {
-                filteredNFTs.sort((a, b) => (b.viewsCount || 0) - (a.viewsCount || 0));
-            } else if (sortValue === 'rank') {
-                filteredNFTs.sort((a, b) => (a.rank || Infinity) - (b.rank || Infinity));
-            } else if (sortValue === 'newest') {
+            if (sortValue === 'newest') {
                 filteredNFTs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             } else if (sortValue === 'oldest') {
                 filteredNFTs.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
@@ -1587,7 +1575,7 @@
         function displayNFTs(assets, selectedCollection) {
             console.log(`displayNFTs called with ${assets.length} assets, collection: ${selectedCollection || 'All'}`);
             assets.forEach((asset, index) => {
-                console.log(`NFT ${index + 1}: ${asset.name || 'Unnamed'}, Likes: ${asset.likesCount || 'N/A'}, Views: ${asset.viewsCount || 'N/A'}, Rank: ${asset.rank || 'N/A'}, Created: ${asset.createdAt}`);
+                console.log(`NFT ${index + 1}: ${asset.name || 'Unnamed'}, Created: ${asset.createdAt}`);
             });
             const container = document.getElementById('nftContainer');
             const countContainer = document.getElementById('nftCountContainer');
