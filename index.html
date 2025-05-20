@@ -482,8 +482,7 @@
 
         .nft-container.thumbnail-mode .nft-card {
             width: 100%;
-            height: 0;
-            padding-bottom: 100%; /* Maintain 1:1 aspect ratio */
+            aspect-ratio: 1 / 1; /* Enforce 1:1 aspect ratio directly */
             position: relative;
             overflow: hidden;
             padding: 0;
@@ -505,6 +504,7 @@
             border-radius: 0;
             margin: 0;
             padding: 0;
+            display: block; /* Ensure media is visible */
         }
 
         .nft-container.thumbnail-mode .nft-card .media-placeholder {
@@ -519,6 +519,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            background-color: #333;
+            color: var(--text-dark);
+            font-size: 0.9em;
+            text-align: center;
         }
 
         .nft-container.thumbnail-mode .nft-card.empty {
@@ -528,7 +532,7 @@
         }
 
         .nft-card .tooltip {
-            visibility | hidden;
+            visibility: hidden;
             background-color: var(--collection-bg);
             color: var(--text-dark);
             text-align: center;
@@ -1537,62 +1541,53 @@
 
             if (displayMode === 'thumbnail') {
                 const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
-                // Calculate max columns based on viewport width, ensuring at least 1 column
-                const maxGridSize = Math.max(1, Math.floor(window.innerWidth / cardWidth));
-                // Calculate ideal grid size based on number of assets
-                const idealGridSize = Math.ceil(Math.sqrt(assets.length));
-                // Use the smaller of ideal grid size or max grid size, but ensure at least 1
-                const gridSize = Math.max(1, Math.min(idealGridSize, maxGridSize));
-                // Let the container use CSS grid's auto-fill for responsiveness
                 container.style.width = '100%';
                 container.style.maxWidth = '100vw';
                 container.style.gridTemplateColumns = `repeat(auto-fill, ${cardWidth}px)`;
-                console.log(`Thumbnail mode: gridSize=${gridSize}, cardWidth=${cardWidth}px`);
+                console.log(`Thumbnail mode: cardWidth=${cardWidth}px`);
 
-                assets.forEach(asset => {
+                assets.forEach((asset, index) => {
                     const imageUrl = asset.cover?.url;
-                    console.log(`Loading NFT: ${asset.name || 'Unnamed NFT'}, Cover URL: ${imageUrl || 'Missing'}`);
-                    if (!imageUrl) {
-                        console.error(`Missing cover URL for NFT: ${asset.name || 'Unnamed NFT'}`);
-                    }
+                    console.log(`Loading NFT ${index + 1}: ${asset.name || 'Unnamed NFT'}, Cover URL: ${imageUrl || 'Missing'}`);
 
                     const card = document.createElement('div');
                     card.className = 'nft-card';
 
                     let mediaElement;
-                    if (imageUrl?.endsWith('.mp4')) {
-                        console.log(`MP4 detected: ${imageUrl}`);
-                        mediaElement = document.createElement('video');
-                        mediaElement.src = imageUrl;
-                        mediaElement.controls = true;
-                        mediaElement.muted = true;
-                        mediaElement.loop = true;
+                    if (imageUrl) {
+                        if (imageUrl.endsWith('.mp4')) {
+                            console.log(`MP4 detected: ${imageUrl}`);
+                            mediaElement = document.createElement('video');
+                            mediaElement.src = imageUrl;
+                            mediaElement.controls = true;
+                            mediaElement.muted = true;
+                            mediaElement.loop = true;
+                            mediaElement.setAttribute('playsinline', ''); // Improve mobile compatibility
+                        } else {
+                            console.log(`Image/GIF detected: ${imageUrl}`);
+                            mediaElement = document.createElement('img');
+                            mediaElement.src = imageUrl;
+                            mediaElement.alt = asset.name || 'NFT Image';
+                            mediaElement.decoding = 'async';
+                            mediaElement.sizes = '(max-width: 768px) 80px, 200px';
+                            if (imageUrl.endsWith('.gif')) {
+                                console.log(`GIF detected: ${imageUrl}`);
+                            }
+                        }
+
                         mediaElement.onerror = () => {
-                            console.error(`Failed to load video for NFT: ${asset.name || 'Unnamed NFT'}, URL: ${imageUrl}`);
-                            mediaElement.remove();
+                            console.error(`Failed to load media for NFT: ${asset.name || 'Unnamed NFT'}, URL: ${imageUrl}`);
+                            card.innerHTML = ''; // Clear card content
                             const placeholder = document.createElement('div');
                             placeholder.className = 'media-placeholder';
                             placeholder.textContent = 'Média indisponible';
                             card.appendChild(placeholder);
                         };
                     } else {
-                        console.log(`Image/GIF detected: ${imageUrl || 'Missing'}`);
-                        mediaElement = document.createElement('img');
-                        mediaElement.src = imageUrl || '';
-                        mediaElement.alt = asset.name || 'NFT Image';
-                        mediaElement.decoding = 'async';
-                        mediaElement.onerror = () => {
-                            console.error(`Failed to load image for NFT: ${asset.name || 'Unnamed NFT'}, URL: ${imageUrl || 'Missing'}`);
-                            mediaElement.remove();
-                            const placeholder = document.createElement('div');
-                            placeholder.className = 'media-placeholder';
-                            placeholder.textContent = 'Média indisponible';
-                            card.appendChild(placeholder);
-                        };
-                        mediaElement.sizes = '(max-width: 768px) 80px, 200px';
-                        if (imageUrl?.endsWith('.gif')) {
-                            console.log(`GIF detected: ${imageUrl}`);
-                        }
+                        console.warn(`No cover URL for NFT: ${asset.name || 'Unnamed NFT'}`);
+                        mediaElement = document.createElement('div');
+                        mediaElement.className = 'media-placeholder';
+                        mediaElement.textContent = 'Média indisponible';
                     }
 
                     const tooltip = document.createElement('span');
@@ -1609,50 +1604,48 @@
                 container.style.maxWidth = '100vw';
                 console.log(`Applied class: ${container.className}`);
 
-                assets.forEach(asset => {
+                assets.forEach((asset, index) => {
                     const imageUrl = asset.cover?.url;
-                    console.log(`Loading NFT: ${asset.name || 'Unnamed NFT'}, Cover URL: ${imageUrl || 'Missing'}`);
-                    if (!imageUrl) {
-                        console.error(`Missing cover URL for NFT: ${asset.name || 'Unnamed NFT'}`);
-                    }
+                    console.log(`Loading NFT ${index + 1}: ${asset.name || 'Unnamed NFT'}, Cover URL: ${imageUrl || 'Missing'}`);
 
                     const card = document.createElement('div');
                     card.className = 'nft-card';
 
                     let mediaElement;
-                    if (imageUrl?.endsWith('.mp4')) {
-                        console.log(`MP4 detected: ${imageUrl}`);
-                        mediaElement = document.createElement('video');
-                        mediaElement.src = imageUrl;
-                        mediaElement.controls = true;
-                        mediaElement.muted = true;
-                        mediaElement.loop = true;
+                    if (imageUrl) {
+                        if (imageUrl.endsWith('.mp4')) {
+                            console.log(`MP4 detected: ${imageUrl}`);
+                            mediaElement = document.createElement('video');
+                            mediaElement.src = imageUrl;
+                            mediaElement.controls = true;
+                            mediaElement.muted = true;
+                            mediaElement.loop = true;
+                            mediaElement.setAttribute('playsinline', ''); // Improve mobile compatibility
+                        } else {
+                            console.log(`Image/GIF detected: ${imageUrl}`);
+                            mediaElement = document.createElement('img');
+                            mediaElement.src = imageUrl;
+                            mediaElement.alt = asset.name || 'NFT Image';
+                            mediaElement.decoding = 'async';
+                            mediaElement.sizes = '(max-width: 768px) 80px, 200px';
+                            if (imageUrl.endsWith('.gif')) {
+                                console.log(`GIF detected: ${imageUrl}`);
+                            }
+                        }
+
                         mediaElement.onerror = () => {
-                            console.error(`Failed to load video for NFT: ${asset.name || 'Unnamed NFT'}, URL: ${imageUrl}`);
-                            mediaElement.remove();
+                            console.error(`Failed to load media for NFT: ${asset.name || 'Unnamed NFT'}, URL: ${imageUrl}`);
+                            card.innerHTML = ''; // Clear card content
                             const placeholder = document.createElement('div');
                             placeholder.className = 'media-placeholder';
                             placeholder.textContent = 'Média indisponible';
                             card.appendChild(placeholder);
                         };
                     } else {
-                        console.log(`Image/GIF detected: ${imageUrl || 'Missing'}`);
-                        mediaElement = document.createElement('img');
-                        mediaElement.src = imageUrl || '';
-                        mediaElement.alt = asset.name || 'NFT Image';
-                        mediaElement.decoding = 'async';
-                        mediaElement.onerror = () => {
-                            console.error(`Failed to load image for NFT: ${asset.name || 'Unnamed NFT'}, URL: ${imageUrl || 'Missing'}`);
-                            mediaElement.remove();
-                            const placeholder = document.createElement('div');
-                            placeholder.className = 'media-placeholder';
-                            placeholder.textContent = 'Média indisponible';
-                            card.appendChild(placeholder);
-                        };
-                        mediaElement.sizes = '(max-width: 768px) 80px, 200px';
-                        if (imageUrl?.endsWith('.gif')) {
-                            console.log(`GIF detected: ${imageUrl}`);
-                        }
+                        console.warn(`No cover URL for NFT: ${asset.name || 'Unnamed NFT'}`);
+                        mediaElement = document.createElement('div');
+                        mediaElement.className = 'media-placeholder';
+                        mediaElement.textContent = 'Média indisponible';
                     }
 
                     const title = document.createElement('h3');
