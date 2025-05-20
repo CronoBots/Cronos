@@ -252,27 +252,6 @@
             left: 0;
         }
 
-        .bio-container {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            top: 100px;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            max-width: 100%;
-            white-space: pre-wrap;
-        }
-
-        #bio {
-            margin: 0;
-            font-weight: normal;
-            font-family: 'Geomanist-Bold', sans-serif;
-            line-height: 1.2;
-            color: var(--text-dark);
-        }
-
         .controls {
             display: none;
             flex-direction: column;
@@ -701,19 +680,6 @@
                 left: 0;
             }
 
-            .bio-container {
-                top: 45px;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                max-width: 100%;
-            }
-
-            .social-icon {
-                width: 20px;
-                height: 20px;
-            }
-
             .controls {
                 align-items: center;
                 width: 100%;
@@ -811,9 +777,6 @@
                             </p>
                         </div>
                         <p id="displayName" class="display-name"></p>
-                        <div class="bio-container" style="display: none;" id="bioContainer">
-                            <p id="bio"></p>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -877,7 +840,6 @@
                     user(id: $id) {
                         username
                         displayName
-                        bio
                         avatar {
                             url
                         }
@@ -1030,21 +992,17 @@
             const profilePicture = document.getElementById('profilePicture');
             const username = document.getElementById('username');
             const displayName = document.getElementById('displayName');
-            const bioContainer = document.getElementById('bioContainer');
-            const bio = document.getElementById('bio');
             const socialContainer = document.getElementById('socialContainer');
             const twitterLink = document.getElementById('twitterLink');
             const twitterUrl = document.getElementById('twitterUrl');
             const usernameInput = document.getElementById('usernameInput');
 
-            if (!profileHeader || !profilePicture || !username || !displayName || !bioContainer || !bio || !socialContainer || !twitterLink || !twitterUrl || !usernameInput) {
+            if (!profileHeader || !profilePicture || !username || !displayName || !socialContainer || !twitterLink || !twitterUrl || !usernameInput) {
                 console.error('Profile UI elements not found:', {
                     profileHeader: !!profileHeader,
                     profilePicture: !!profilePicture,
                     username: !!username,
                     displayName: !!displayName,
-                    bioContainer: !!bioContainer,
-                    bio: !!bio,
                     socialContainer: !!socialContainer,
                     twitterLink: !!twitterLink,
                     twitterUrl: !!twitterUrl,
@@ -1062,12 +1020,6 @@
             console.log(`Profile avatar URL: ${profileData.avatar?.url || 'Missing'}`);
             profilePicture.src = profileData.avatar?.url || '';
             profilePicture.style.display = profileData.avatar?.url ? 'block' : 'none';
-
-            const rawBio = profileData.bio || '';
-            bio.textContent = normalizeText(rawBio);
-            bio.style.fontWeight = 'normal';
-            bio.style.fontFamily = "'Geomanist-Bold', sans-serif";
-            bioContainer.style.display = rawBio ? 'block' : 'none';
 
             if (profileData.twitterUsername) {
                 twitterUrl.href = `https://x.com/${sanitizeInput(profileData.twitterUsername)}`;
