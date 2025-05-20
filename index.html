@@ -108,28 +108,42 @@
         .navbar-search input {
             padding: 8px;
             border-radius: 8px;
-            border: none;
+            border: 1px solid #444; /* Bordure pour visibilité */
             font-size: 14px;
             width: 100%;
             max-width: 250px;
             font-family: 'Geomanist-Bold', sans-serif;
             box-sizing: border-box;
+            background-color: #fff; /* Fond blanc pour contraste */
+            color: #000; /* Texte noir */
+        }
+
+        /* Améliorer la visibilité en thème clair */
+        [data-theme="light"] .navbar-search input {
+            border: 1px solid #333; /* Bordure sombre */
+            background-color: #fff; /* Fond blanc */
+            color: #000; /* Texte noir */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* Ombre légère */
+        }
+
+        [data-theme="light"] .navbar-search input::placeholder {
+            color: #555; /* Placeholder plus visible */
         }
 
         .suggestions {
             position: absolute;
-            top: calc(100% + 5px); /* Petit espace sous l'input */
+            top: calc(100% + 5px); /* Espace sous l'input */
             left: 0;
             width: 100%;
             max-width: 250px;
             background-color: #fff;
             border-radius: 8px;
             box-shadow: var(--shadow);
-            z-index: 1001; /* Plus haut que la navbar */
+            z-index: 1001; /* Au-dessus de la navbar */
             max-height: 200px;
             overflow-y: auto;
             color: #000;
-            display: none; /* Contrôlé par JS */
+            display: none;
         }
 
         .suggestion-item {
@@ -1103,9 +1117,9 @@
                 }
             } catch (error) {
                 console.error(`Error in searchProfiles: ${error.message}`);
-                suggestions.innerHTML = '<div class="suggestion-item">Error searching</div>';
+                suggestions.innerHTML = '<div class="suggestion-item">No profile found</div>'; // Changement ici
                 suggestions.style.display = 'block';
-                console.log('Error message displayed');
+                console.log('No profile found message displayed due to error');
             }
         }
 
@@ -1520,7 +1534,7 @@
                 for (let i = assets.length; i < totalCells; i++) {
                     const emptyCard = document.createElement('div');
                     emptyCard.className = 'nft-card empty';
-                    container.appendChild(card);
+                    container.appendChild(emptyCard);
                 }
             } else {
                 container.style.gridTemplateColumns = '';
