@@ -101,6 +101,8 @@
             gap: 10px;
             margin-left: 20px;
             position: relative;
+            width: 100%;
+            max-width: 250px;
         }
 
         .navbar-search input {
@@ -111,23 +113,7 @@
             width: 100%;
             max-width: 250px;
             font-family: 'Geomanist-Bold', sans-serif;
-        }
-
-        .navbar-search button {
-            padding: 8px 16px;
-            border-radius: 8px;
-            border: none;
-            background-color: var(--color1);
-            color: var(--text-dark);
-            cursor: pointer;
-            text-transform: uppercase;
-            font-weight: 700;
-            transition: var(--transition);
-            font-family: 'Geomanist-Bold', sans-serif;
-        }
-
-        .navbar-search button:hover {
-            transform: scale(1.05);
+            box-sizing: border-box;
         }
 
         .suggestions {
@@ -136,26 +122,37 @@
             left: 0;
             width: 100%;
             max-width: 250px;
-            background-color: var(--collection-bg);
+            background-color: #fff;
             border-radius: 8px;
             box-shadow: var(--shadow);
             z-index: 1000;
             display: none;
             max-height: 200px;
             overflow-y: auto;
+            color: #000;
         }
 
         .suggestion-item {
             padding: 8px 12px;
-            color: var(--text-dark);
+            color: #000;
             font-size: 14px;
             cursor: pointer;
             transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .suggestion-item:hover {
             background-color: var(--color1);
-            color: var(--text-dark);
+            color: #fff;
+        }
+
+        .suggestion-item img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            object-fit: cover;
         }
 
         .navbar-toggle {
@@ -634,13 +631,9 @@
             }
 
             .navbar-search {
-                display: flex;
-                align-items: center;
-                gap: 5px;
-                margin: 0 10px 0 15px;
+                margin: 0 10px;
                 flex: 1;
                 max-width: none;
-                height: 100%;
             }
 
             .navbar-search input {
@@ -649,19 +642,16 @@
                 height: 40px;
                 padding: 5px;
                 font-size: 12px;
-                box-sizing: border-box;
-            }
-
-            .navbar-search button {
-                padding: 0 10px;
-                font-size: 12px;
-                height: 40px;
-                box-sizing: border-box;
             }
 
             .suggestions {
                 width: 100%;
                 max-width: none;
+            }
+
+            .suggestion-item img {
+                width: 20px;
+                height: 20px;
             }
 
             .navbar-toggle {
@@ -820,9 +810,8 @@
             <span class="navbar-logo-text">CRONOBOTS</span>
         </div>
         <div class="navbar-search">
-            <input type="text" id="usernameInput" placeholder="CDC Username" aria-describedby="usernameHelp" autocomplete="off" />
+            <input type="text" id="usernameInput" placeholder="Crypto.com/NFT profile" aria-describedby="usernameHelp" autocomplete="off" />
             <div class="suggestions" id="suggestions"></div>
-            <button id="searchButton" aria-label="Search profile">Search</button>
         </div>
         <div class="navbar-menu" id="navbarMenu">
             <a href="#collections" aria-label="Collections">Collections</a>
@@ -1072,7 +1061,22 @@
                     console.log(`Profile found: ${profileData.username}`);
                     const item = document.createElement('div');
                     item.className = 'suggestion-item';
-                    item.textContent = profileData.username;
+                    
+                    if (profileData.avatar?.url) {
+                        const img = document.createElement('img');
+                        img.src = profileData.avatar.url;
+                        img.alt = `${profileData.username} avatar`;
+                        img.onerror = () => {
+                            console.error(`Failed to load avatar for ${profileData.username}`);
+                            img.style.display = 'none';
+                        };
+                        item.appendChild(img);
+                    }
+
+                    const text = document.createElement('span');
+                    text.textContent = profileData.username;
+                    item.appendChild(text);
+
                     item.dataset.username = profileData.username;
                     item.addEventListener('click', () => {
                         console.log(`Suggestion clicked: ${profileData.username}`);
@@ -1082,7 +1086,7 @@
                     suggestions.style.display = 'block';
                 } else {
                     console.log('No profile found');
-                    suggestions.innerHTML = '<div class="suggestion-item">No profiles found</div>';
+                    suggestions.innerHTML = '<div class="suggestion-item">No profile found</div>';
                     suggestions.style.display = 'block';
                 }
             } catch (error) {
@@ -1197,23 +1201,237 @@
                 return;
             }
 
-            // Afficher les informations de base
             username.textContent = profileData.username || 'Unknown';
             currentUsername = profileData.username?.toLowerCase() || '';
             displayName.textContent = profileData.displayName || '';
             displayName.style.display = profileData.displayName ? 'block' : 'none';
             currentDisplayName = profileData.displayName || profileData.username || 'Unknown';
 
-            // Gestion du badge de vérification
             console.log(`Verified status: ${profileData.verified}`);
             verifiedBadge.style.display = profileData.verified === true ? 'inline-block' : 'none';
 
-            // Afficher l'avatar
             console.log(`Profile avatar URL: ${profileData.avatar?.url || 'Missing'}`);
             profilePicture.src = profileData.avatar?.url || '';
             profilePicture.style.display = profileData.avatar?.url ? 'block' : 'none';
 
-            // Gestion des liens sociaux
+            console.log('Social usernames:', {
+                twitter: profileData.twitterUsername,
+                facebook: profileData.facebookUsername,
+                instagram: profileData.instagramUsername
+            });
+
+            let hasSocialLinks = false;
+
+            if (profileData.twitterUsername) {
+                console.log(`Setting Twitter link: https://x.com/${profileData.twitterUsername}`);
+                twitterUrl.href = `https://x.com/${sanitizeInput(profileData.twitterUsername)}`;
+                twitterLink.style.display = 'inline-block';
+                hasSocialLinks = true;
+            } else {
+                console.log('No Twitter username found');
+                twitterLink.style.display = 'none';
+            }
+
+            if (profileData.facebookUsername) {
+                console.log(`Setting Facebook link: https://facebook.com/${profileData.facebookUsername}`);
+                facebookUrl.href = `https://facebook.com/${sanitizeInput(profileData.facebookUsername)}`;
+                facebookLink.style.display = 'inline-block';
+                hasSocialLinks = true;
+            } else {
+                console.log('No Facebook username found');
+                facebookLink.style.display = 'none';
+            }
+
+            if (profileData.instagramUsername) {
+                console.log(`Setting Instagram link: https://instagram.com/${profileData.instagramUsername}`);
+                instagramUrl.href = `https://instagram.com/${sanitizeInput(profileData.instagramUsername)}`;
+                instagramLink.style.display = 'inline-block';
+                hasSocialLinks = true;
+            } else {
+                console.log('No Instagram username found');
+                instagramLink.style.display = 'none';
+            }
+
+            console.log(`Social links present: ${hasSocialLinks}`);
+            socialContainer.style.display = hasSocialLinks ? 'flex' : 'none';
+
+            profileHeader.style.display = 'block';
+            usernameInput.value = '';
+        }
+
+        async function fetchProfileAndNFTs() {
+            console.log('fetchProfileAndNFTs called');
+            const usernameInput = document.getElementById('usernameInput');
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const noResultsDiv = document.getElementById('noResults');
+            const controls = document.getElementById('controls');
+
+            if (!usernameInput || !loadingDiv || !errorDiv || !noResultsDiv || !controls) {
+                console.error('Required DOM elements not found:', {
+                    usernameInput: !!usernameInput,
+                    loadingDiv: !!loadingDiv,
+                    errorDiv: !!errorDiv,
+                    noResultsDiv: !!noResultsDiv,
+                    controls: !!controls
+                });
+                if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
+                return;
+            }
+
+            const username = sanitizeInput(usernameInput.value.trim());
+            if (!username || username === currentUsername) {
+                console.log('No new username provided or same as current:', username);
+                return;
+            }
+
+            console.log(`Searching for username: ${username}`);
+            currentUsername = username.toLowerCase();
+            loadingDiv.style.display = 'block';
+            errorDiv.textContent = '';
+            noResultsDiv.style.display = 'none';
+
+            try {
+                const profileData = await fetchWithCache(`profile_${currentUsername}`, async () => {
+                    console.log(`Fetching profile for ${currentUsername}`);
+                    const response = await fetch(graphqlEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            query: profileQuery,
+                            variables: { id: currentUsername, cacheId: `getUserQuery-Profile-${currentUsername}` }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP Error: ${response.innerHTML = '<div class="suggestion-item">No profile found</div>';
+                    suggestions.style.display = 'block';
+                }
+            } catch (error) {
+                console.error(`Error in searchProfiles: ${error.message}`);
+                suggestions.innerHTML = '<div class="suggestion-item">Error searching</div>';
+                suggestions.style.display = 'block';
+            }
+        }
+
+        function clearSuggestions() {
+            const suggestions = document.getElementById('suggestions');
+            if (suggestions) {
+                suggestions.innerHTML = '';
+                suggestions.style.display = 'none';
+            }
+        }
+
+        function selectSuggestion(username) {
+            const usernameInput = document.getElementById('usernameInput');
+            if (usernameInput) {
+                usernameInput.value = username;
+                clearSuggestions();
+                fetchProfileAndNFTs();
+            }
+        }
+
+        async function fetchAllNFTs(ownerId) {
+            console.log(`Fetching NFTs for ownerId: ${ownerId}`);
+            const first = 60;
+            let skip = 0;
+            let allAssets = [];
+            let hasMore = true;
+
+            while (hasMore) {
+                const nftVariables = { ownerId, first, skip };
+                try {
+                    console.log(`Sending NFT query with variables: ${JSON.stringify(nftVariables)}`);
+                    const response = await fetch(graphqlEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query: nftQuery, variables: nftVariables })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    console.log('NFT query response:', result);
+
+                    if (result.errors) {
+                        throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
+                    }
+
+                    const assets = result.data?.public?.profileAssets || [];
+                    assets.forEach(asset => {
+                        console.log(`NFT: ${asset.name || 'Unnamed'}, Cover URL: ${asset.cover?.url || 'Missing'}`);
+                    });
+                    allAssets = [...allAssets, ...assets];
+                    skip += first;
+                    hasMore = assets.length === first;
+                    console.log(`Fetched ${assets.length} assets, total: ${allAssets.length}`);
+                } catch (error) {
+                    console.error(`Failed to fetch NFTs: ${error.message}`);
+                    throw error;
+                }
+            }
+
+            return allAssets;
+        }
+
+        function normalizeText(text) {
+            if (!text) return '';
+            let normalized = text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+            normalized = normalized.replace(/\n\s*\n/g, '\n').trim();
+            return normalized;
+        }
+
+        function updateProfileUI(profileData) {
+            console.log('updateProfileUI called with profileData:', profileData);
+            const profileHeader = document.getElementById('profileHeader');
+            const profilePicture = document.getElementById('profilePicture');
+            const username = document.getElementById('username');
+            const verifiedBadge = document.getElementById('verifiedBadge');
+            const displayName = document.getElementById('displayName');
+            const socialContainer = document.getElementById('socialContainer');
+            const twitterLink = document.getElementById('twitterLink');
+            const twitterUrl = document.getElementById('twitterUrl');
+            const facebookLink = document.getElementById('facebookLink');
+            const facebookUrl = document.getElementById('facebookUrl');
+            const instagramLink = document.getElementById('instagramLink');
+            const instagramUrl = document.getElementById('instagramUrl');
+            const usernameInput = document.getElementById('usernameInput');
+
+            if (!profileHeader || !profilePicture || !username || !verifiedBadge || !displayName || !socialContainer ||
+                !twitterLink || !twitterUrl || !facebookLink || !facebookUrl || !instagramLink || !instagramUrl || !usernameInput) {
+                console.error('Profile UI elements not found:', {
+                    profileHeader: !!profileHeader,
+                    profilePicture: !!profilePicture,
+                    username: !!username,
+                    verifiedBadge: !!verifiedBadge,
+                    displayName: !!displayName,
+                    socialContainer: !!socialContainer,
+                    twitterLink: !!twitterLink,
+                    twitterUrl: !!twitterUrl,
+                    facebookLink: !!facebookLink,
+                    facebookUrl: !!facebookUrl,
+                    instagramLink: !!instagramLink,
+                    instagramUrl: !!instagramUrl,
+                    usernameInput: !!usernameInput
+                });
+                return;
+            }
+
+            username.textContent = profileData.username || 'Unknown';
+            currentUsername = profileData.username?.toLowerCase() || '';
+            displayName.textContent = profileData.displayName || '';
+            displayName.style.display = profileData.displayName ? 'block' : 'none';
+            currentDisplayName = profileData.displayName || profileData.username || 'Unknown';
+
+            console.log(`Verified status: ${profileData.verified}`);
+            verifiedBadge.style.display = profileData.verified === true ? 'inline-block' : 'none';
+
+            console.log(`Profile avatar URL: ${profileData.avatar?.url || 'Missing'}`);
+            profilePicture.src = profileData.avatar?.url || '';
+            profilePicture.style.display = profileData.avatar?.url ? 'block' : 'none';
+
             console.log('Social usernames:', {
                 twitter: profileData.twitterUsername,
                 facebook: profileData.facebookUsername,
@@ -1576,7 +1794,6 @@
 
         function setupEventListeners() {
             console.log('setupEventListeners called');
-            const searchButton = document.getElementById('searchButton');
             const usernameInput = document.getElementById('usernameInput');
             const themeButton = document.getElementById('themeButton');
             const collectionFilter = document.getElementById('collectionFilter');
@@ -1584,7 +1801,6 @@
             const cardSize = document.getElementById('cardSize');
 
             console.log('DOM elements found:', {
-                searchButton: !!searchButton,
                 usernameInput: !!usernameInput,
                 themeButton: !!themeButton,
                 collectionFilter: !!collectionFilter,
@@ -1592,17 +1808,12 @@
                 cardSize: !!cardSize
             });
 
-            if (!searchButton || !usernameInput || !themeButton || !collectionFilter || !displayMode || !cardSize) {
+            if (!usernameInput || !themeButton || !collectionFilter || !displayMode || !cardSize) {
                 console.error('One or more DOM elements not found');
                 const errorDiv = document.getElementById('error');
                 if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
                 return;
             }
-
-            searchButton.addEventListener('click', () => {
-                console.log('Search button clicked');
-                fetchProfileAndNFTs();
-            });
 
             usernameInput.addEventListener('input', () => {
                 clearTimeout(debounceTimeout);
