@@ -472,45 +472,53 @@
         }
 
         .nft-container.thumbnail-mode {
+            display: grid;
             gap: 0;
-            row-gap: 0;
-            column-gap: 0;
-            grid-gap: 0;
-            margin: 0 auto;
-            padding: 0;
-            justify-content: start;
-            justify-items: start;
+            justify-content: center;
             width: 100%;
+            max-width: 100vw;
+            box-sizing: border-box;
         }
 
         .nft-container.thumbnail-mode .nft-card {
+            width: 100%;
+            height: 0;
+            padding-bottom: 100%; /* Maintain 1:1 aspect ratio */
+            position: relative;
+            overflow: hidden;
             padding: 0;
             margin: 0;
             background: none;
             box-shadow: none;
             border: none;
             border-radius: 0;
-            overflow: hidden;
         }
 
         .nft-container.thumbnail-mode .nft-card img,
         .nft-container.thumbnail-mode .nft-card video {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
+            object-fit: cover;
             border-radius: 0;
             margin: 0;
             padding: 0;
-            object-fit: cover;
-            aspect-ratio: 1 / 1;
-            display: block;
         }
 
         .nft-container.thumbnail-mode .nft-card .media-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             border-radius: 0;
             margin: 0;
             padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .nft-container.thumbnail-mode .nft-card.empty {
@@ -520,7 +528,7 @@
         }
 
         .nft-card .tooltip {
-            visibility: hidden;
+            visibility | hidden;
             background-color: var(--collection-bg);
             color: var(--text-dark);
             text-align: center;
@@ -1529,13 +1537,17 @@
 
             if (displayMode === 'thumbnail') {
                 const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
-                const maxGridSize = Math.floor(window.innerWidth / cardWidth);
-                const gridSize = Math.min(Math.ceil(Math.sqrt(assets.length)), maxGridSize);
-                const totalWidth = gridSize * cardWidth;
-                container.style.width = `${totalWidth}px`;
+                // Calculate max columns based on viewport width, ensuring at least 1 column
+                const maxGridSize = Math.max(1, Math.floor(window.innerWidth / cardWidth));
+                // Calculate ideal grid size based on number of assets
+                const idealGridSize = Math.ceil(Math.sqrt(assets.length));
+                // Use the smaller of ideal grid size or max grid size, but ensure at least 1
+                const gridSize = Math.max(1, Math.min(idealGridSize, maxGridSize));
+                // Let the container use CSS grid's auto-fill for responsiveness
+                container.style.width = '100%';
                 container.style.maxWidth = '100vw';
-                container.style.gridTemplateColumns = `repeat(${gridSize}, ${cardWidth}px)`;
-                console.log(`Thumbnail mode: gridSize=${gridSize}, cardWidth=${cardWidth}px, totalWidth=${totalWidth}px`);
+                container.style.gridTemplateColumns = `repeat(auto-fill, ${cardWidth}px)`;
+                console.log(`Thumbnail mode: gridSize=${gridSize}, cardWidth=${cardWidth}px`);
 
                 assets.forEach(asset => {
                     const imageUrl = asset.cover?.url;
@@ -1591,13 +1603,6 @@
                     card.appendChild(mediaElement);
                     container.appendChild(card);
                 });
-
-                const totalCells = gridSize * gridSize;
-                for (let i = assets.length; i < totalCells; i++) {
-                    const emptyCard = document.createElement('div');
-                    emptyCard.className = 'nft-card empty';
-                    container.appendChild(emptyCard);
-                }
             } else {
                 container.style.gridTemplateColumns = '';
                 container.style.width = '';
