@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <meta name="description" content="Browse smarter. Collect better – Powered by CronoBots">
     <title>CronoBots</title>
     <link rel="icon" type="image/png" href="/assets/favicon.png">
@@ -116,7 +116,7 @@
             padding: 8px;
             border-radius: 8px;
             border: 1px solid #444;
-            font-size: 14px;
+            font-size: 16px;
             width: 100%;
             max-width: 250px;
             font-family: 'Geomanist-Bold', sans-serif;
@@ -799,7 +799,7 @@
                 width: 100%;
                 height: 36px;
                 padding: 6px 8px;
-                font-size: 13px;
+                font-size: 16px;
                 border-radius: 6px;
                 box-shadow: none;
             }
@@ -1049,7 +1049,7 @@
 
             .navbar-search input {
                 height: 32px;
-                font-size: 12px;
+                font-size: 16px;
             }
 
             .navbar-toggle {
@@ -1279,6 +1279,17 @@
 
         const graphqlEndpoint = "https://crypto.com/nft-api/graphql";
         const homeUrl = "https://cronobots.github.io/Cronos";
+
+        function resetViewportZoom() {
+            const viewport = document.querySelector('meta[name="viewport"]');
+            if (viewport) {
+                viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0');
+            }
+            window.scrollTo(0, 0);
+            if (window.visualViewport) {
+                window.visualViewport.scale = 1.0;
+            }
+        }
 
         function toggleMenu() {
             const menu = document.getElementById('navbarMenu');
@@ -1665,6 +1676,7 @@
                     clearInterval(progressInterval);
                     progressModal.style.display = 'none';
                     noResultsDiv.style.display = 'block';
+                    resetViewportZoom();
                     return;
                 }
 
@@ -1689,6 +1701,7 @@
                 progressText.textContent = `${allNFTs.length} assets loaded successfully!`;
                 setTimeout(() => {
                     progressModal.style.display = 'none';
+                    resetViewportZoom();
                 }, 500);
 
                 if (allNFTs.length > 0) {
@@ -1707,6 +1720,7 @@
                     }
                 } else {
                     noResultsDiv.style.display = 'block';
+                    resetViewportZoom();
                 }
             } catch (error) {
                 if (!isProfileLoadingCancelled) {
@@ -1714,6 +1728,7 @@
                     clearInterval(progressInterval);
                     progressModal.style.display = 'none';
                     errorDiv.textContent = `Error: ${error.message}`;
+                    resetViewportZoom();
                 }
             }
         }
@@ -1934,7 +1949,7 @@
             isDownloadCancelled = false;
             modalTitle.textContent = 'Creating ZIP File';
             progressModal.style.display = 'flex';
-            progressText.textContent = `Preparing to download ${filteredNFTs.length} NFTs...`;
+            progressText.textContent = `Preparing to download ${filteredNFTs.length} NFTs`;
             progressBar.style.width = '0%';
             cancelButton.style.display = 'block';
 
@@ -1969,7 +1984,7 @@
                         nameCounts[baseFileName] = 1;
                     }
 
-                    progressText.textContent = `Downloading ${fileName} (${i + 1}/${filteredNFTs.length})...`;
+                    progressText.textContent = `Downloading: ${fileName} (${i + 1}/${filteredNFTs.length})`;
                     progressBar.style.width = `${((i + 1) / filteredNFTs.length) * 100}%`;
 
                     try {
@@ -1991,7 +2006,7 @@
 
                 if (isDownloadCancelled) return;
 
-                progressText.textContent = 'Generating ZIP file...';
+                progressText.textContent = 'Generating ZIP file';
                 const zipBlob = await zip.generateAsync({ type: 'blob' });
                 saveAs(zipBlob, `${currentUsername}_nfts.zip`);
             } catch (error) {
@@ -2043,6 +2058,17 @@
                     clearSuggestions();
                     fetchProfileAndNFTs();
                 }
+            });
+
+            usernameInput.addEventListener('focus', () => {
+                const viewport = document.querySelector('meta[name="viewport"]');
+                if (viewport) {
+                    viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
+                }
+            });
+
+            usernameInput.addEventListener('blur', () => {
+                resetViewportZoom();
             });
 
             themeButton.addEventListener('click', toggleTheme);
