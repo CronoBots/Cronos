@@ -570,14 +570,9 @@
             opacity: 1;
         }
 
-        .loading, .error, .no-results {
+        .error, .no-results {
             text-align: center;
             margin-top: 20px;
-        }
-
-        .loading {
-            color: var(--color1);
-            animation: pulse 1.5s infinite;
         }
 
         .error {
@@ -660,7 +655,6 @@
             transform: scale(1.05);
         }
 
-        /* New styles for the progress modal */
         .modal {
             display: none;
             position: fixed;
@@ -854,7 +848,7 @@
                 align-items: center;
                 width: 100%;
                 margin-right: 0;
-                height: 120px;
+                height: 120120px;
                 justify-content: space-between;
             }
 
@@ -1028,7 +1022,6 @@
         </div>
 
         <div class="timestamp" id="timestamp"></div>
-        <div class="loading" id="loading" style="display: none;">Loading...</div>
         <div class="error" id="error" role="alert"></div>
         <div class="no-results" id="noResults" style="display: none;">No results found</div>
         <div id="nftCountContainer"></div>
@@ -1038,7 +1031,7 @@
         <!-- Progress Modal -->
         <div class="modal" id="progressModal">
             <div class="modal-content">
-                <h3>Creating ZIP File</h3>
+                <h3 id="modalTitle">Creating ZIP File</h3>
                 <div class="progress-bar">
                     <div class="progress" id="progressBar"></div>
                 </div>
@@ -1453,7 +1446,6 @@
         async function fetchProfileAndNFTs() {
             console.log('fetchProfileAndNFTs called');
             const usernameInput = document.getElementById('usernameInput');
-            const loadingDiv = document.getElementById('loading');
             const errorDiv = document.getElementById('error');
             const noResultsDiv = document.getElementById('noResults');
             const controls = document.getElementById('controls');
@@ -1466,12 +1458,17 @@
             const cardSize = document.getElementById('cardSize');
             const sortBy = document.getElementById('sortBy');
             const downloadZipButton = document.getElementById('downloadZipButton');
+            const progressModal = document.getElementById('progressModal');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const modalTitle = document.getElementById('modalTitle');
 
-            if (!usernameInput || !loadingDiv || !errorDiv || !noResultsDiv || !controls || !collectionTitle ||
-                !profileHeader || !nftContainer || !nftCountContainer || !collectionFilter || !displayMode || !cardSize || !sortBy || !downloadZipButton) {
+            if (!usernameInput || !errorDiv || !noResultsDiv || !controls || !collectionTitle ||
+                !profileHeader || !nftContainer || !nftCountContainer || !collectionFilter || 
+                !displayMode || !cardSize || !sortBy || !downloadZipButton || !progressModal || 
+                !progressBar || !progressText || !modalTitle) {
                 console.error('Required DOM elements not found:', {
                     usernameInput: !!usernameInput,
-                    loadingDiv: !!loadingDiv,
                     errorDiv: !!errorDiv,
                     noResultsDiv: !!noResultsDiv,
                     controls: !!controls,
@@ -1483,7 +1480,11 @@
                     displayMode: !!displayMode,
                     cardSize: !!cardSize,
                     sortBy: !!sortBy,
-                    downloadZipButton: !!downloadZipButton
+                    downloadZipButton: !!downloadZipButton,
+                    progressModal: !!progressModal,
+                    progressBar: !!progressBar,
+                    progressText: !!progressText,
+                    modalTitle: !!modalTitle
                 });
                 if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
                 return;
@@ -1516,7 +1517,18 @@
             cardSize.value = 'medium';
             sortBy.value = 'default';
 
-            loadingDiv.style.display = 'block';
+            // Afficher la modale avec un titre et un texte appropriés
+            modalTitle.textContent = 'Loading Profile';
+            progressText.textContent = `Loading profile for ${username}...`;
+            progressBar.style.width = '0%';
+            progressModal.style.display = 'flex';
+
+            // Simuler une progression pour donner un feedback visuel
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 10;
+                progressBar.style.width = `${Math.min(progress, 80)}%`; // Limite à 80% pour indiquer que le chargement est en cours
+            }, 500);
 
             try {
                 const profileData = await fetchWithCache(`profile_${currentUsername}`, async () => {
@@ -1546,8 +1558,9 @@
 
                 if (!profileData) {
                     console.log('No profile data found');
+                    clearInterval(progressInterval);
+                    progressModal.style.display = 'none';
                     noResultsDiv.style.display = 'block';
-                    loadingDiv.style.display = 'none';
                     return;
                 }
 
@@ -1559,6 +1572,13 @@
                 console.log(`URL updated to: ${newUrl}`);
 
                 allNFTs = await fetchWithCache(`nfts_${currentUsername}`, () => fetchAllNFTs(currentUsername));
+
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                progressText.textContent = 'Profile loaded successfully!';
+                setTimeout(() => {
+                    progressModal.style.display = 'none';
+                }, 500);
 
                 if (allNFTs.length > 0) {
                     console.log(`Displaying ${allNFTs.length} NFTs`);
@@ -1572,9 +1592,9 @@
                 }
             } catch (error) {
                 console.error(`Error in fetchProfileAndNFTs: ${error.message}`);
+                clearInterval(progressInterval);
+                progressModal.style.display = 'none';
                 errorDiv.textContent = `Error: ${error.message}`;
-            } finally {
-                loadingDiv.style.display = 'none';
             }
         }
 
@@ -1804,13 +1824,13 @@
             console.log('downloadNFTsAsZip called');
             const zip = new JSZip();
             const nftContainer = document.getElementById('nftContainer');
-            const loadingDiv = document.getElementById('loading');
             const errorDiv = document.getElementById('error');
             const progressModal = document.getElementById('progressModal');
             const progressBar = document.getElementById('progressBar');
             const progressText = document.getElementById('progressText');
+            const modalTitle = document.getElementById('modalTitle');
 
-            if (!nftContainer || !loadingDiv || !errorDiv || !progressModal || !progressBar || !progressText) {
+            if (!nftContainer || !errorDiv || !progressModal || !progressBar || !progressText || !modalTitle) {
                 console.error('Required DOM elements not found');
                 return;
             }
@@ -1827,6 +1847,7 @@
                 return;
             }
 
+            modalTitle.textContent = 'Creating ZIP File';
             progressModal.style.display = 'flex';
             progressText.textContent = `Preparing to download ${filteredNFTs.length} NFTs...`;
             progressBar.style.width = '0%';
@@ -1885,7 +1906,6 @@
                 errorDiv.textContent = 'Error creating ZIP file. Some files may not have been included.';
             } finally {
                 progressModal.style.display = 'none';
-                loadingDiv.style.display = 'none';
             }
         }
 
