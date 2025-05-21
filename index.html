@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Search and explore NFT profiles on Cronos with CronoBots">
+    <meta name="description" content="Browse smarter. Collect better – Powered by CronoBots">
     <title>CronoBots</title>
     <link rel="icon" type="image/png" href="/assets/favicon.png">
     <link rel="preload" href="CRONOBOTS.png" as="image">
@@ -1556,6 +1556,9 @@
             currentUsername = username.toLowerCase();
             lastSearchedUsername = currentUsername;
 
+            // Nettoyer les suggestions avant de commencer le chargement
+            clearSuggestions();
+
             profileHeader.style.display = 'none';
             nftContainer.innerHTML = '';
             nftCountContainer.innerHTML = '';
@@ -1627,14 +1630,14 @@
                 console.log(`URL updated to: ${newUrl}`);
 
                 // Mettre à jour la progression avec le nombre de NFTs chargés
-                progressText.textContent = `Loading NFTs for ${username} (0 NFTs loaded)...`;
+                progressText.textContent = `0 assets`;
                 allNFTs = await fetchWithCache(`nfts_${currentUsername}`, () => fetchAllNFTs(currentUsername, (nftCount) => {
-                    progressText.textContent = `Loading NFTs for ${username} (${nftCount} NFTs loaded)...`;
+                    progressText.textContent = `${nftCount} assets`;
                 }));
 
                 clearInterval(progressInterval);
                 progressBar.style.width = '100%';
-                progressText.textContent = `Profile loaded successfully! (${allNFTs.length} NFTs)`;
+                progressText.textContent = `${allNFTs.length} assets loaded successfully!`;
                 setTimeout(() => {
                     progressModal.style.display = 'none';
                 }, 500);
