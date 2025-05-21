@@ -1107,6 +1107,7 @@
         let lastSearchedUsername = '';
         let debounceTimeout = null;
         let isDownloadCancelled = false;
+        let isProfileLoadingCancelled = false;
 
         const profileQuery = `
             query User($id: ID!, $cacheId: ID) {
@@ -1156,6 +1157,7 @@
         `;
 
         const graphqlEndpoint = "https://crypto.com/nft-api/graphql";
+        const homeUrl = "https://cronobots.github.io/Cronos";
 
         function toggleMenu() {
             console.log('toggleMenu called');
@@ -1173,9 +1175,8 @@
         }
 
         function sanitizeFileNameForZip(name) {
-            // Supprimer uniquement les caractères non valides pour les noms de fichiers
             return name
-                .replace(/[<>:"/\\|?*]/g, '') // Supprime les caractères interdits
+                .replace(/[<>:"/\\|?*]/g, '')
                 .trim() || 'unnamed_nft';
         }
 
@@ -1330,7 +1331,7 @@
             let allAssets = [];
             let hasMore = true;
 
-            while (hasMore) {
+            while (hasMore && !isProfileLoadingCancelled) {
                 const nftVariables = { ownerId, first, skip };
                 try {
                     console.log(`Sending NFT query with variables: ${JSON.stringify(nftVariables)}`);
@@ -1360,7 +1361,6 @@
                     hasMore = assets.length === first;
                     console.log(`Fetched ${assets.length} assets, total: ${allAssets.length}`);
 
-                    // Appeler le callback de progression
                     if (progressCallback) {
                         progressCallback(allAssets.length);
                     }
@@ -1368,6 +1368,11 @@
                     console.error(`Failed to fetch NFTs: ${error.message}`);
                     throw error;
                 }
+            }
+
+            if (isProfileLoadingCancelled) {
+                console.log('NFT fetching cancelled');
+                return [];
             }
 
             return allAssets;
@@ -1556,7 +1561,6 @@
             currentUsername = username.toLowerCase();
             lastSearchedUsername = currentUsername;
 
-            // Nettoyer les suggestions avant de commencer le chargement
             clearSuggestions();
 
             profileHeader.style.display = 'none';
@@ -1580,10 +1584,26 @@
             progressText.textContent = `Loading profile for ${username}...`;
             progressBar.style.width = '0%';
             progressModal.style.display = 'flex';
-            cancelButton.style.display = 'none'; // Masquer le bouton Cancel pendant le chargement du profil
+            cancelButton.style.display = 'block'; // Afficher le bouton Cancel
+
+            isProfileLoadingCancelled = false;
+            cancelButton.onclick = () => {
+                console.log('Profile loading cancelled by user');
+                isProfileLoadingCancelled = true;
+                progressText.textContent = 'Profile loading cancelled.';
+                progressBar.style.width = '0%';
+                setTimeout(() => {
+                    progressModal.style.display = 'none';
+                    window.location.href = homeUrl;
+                }, 1000);
+            };
 
             let progress = 0;
             const progressInterval = setInterval(() => {
+                if (isProfileLoadingCancelled) {
+                    clearInterval(progressInterval);
+                    return;
+                }
                 progress += 10;
                 progressBar.style.width = `${Math.min(progress, 80)}%`;
             }, 500);
@@ -1614,6 +1634,12 @@
                     return result.data?.public?.user;
                 });
 
+                if (isProfileLoadingCancelled) {
+                    console.log('Profile loading stopped due to cancellation');
+                    clearInterval(progressInterval);
+                    return;
+                }
+
                 if (!profileData) {
                     console.log('No profile data found');
                     clearInterval(progressInterval);
@@ -1629,11 +1655,17 @@
                 history.pushState({ username: currentUsername }, '', newUrl);
                 console.log(`URL updated to: ${newUrl}`);
 
-                // Mettre à jour la progression avec le nombre de NFTs chargés
                 progressText.textContent = `0 assets`;
                 allNFTs = await fetchWithCache(`nfts_${currentUsername}`, () => fetchAllNFTs(currentUsername, (nftCount) => {
+                    if (isProfileLoadingCancelled) return;
                     progressText.textContent = `${nftCount} assets`;
                 }));
+
+                if (isProfileLoadingCancelled) {
+                    console.log('NFT loading stopped due to cancellation');
+                    clearInterval(progressInterval);
+                    return;
+                }
 
                 clearInterval(progressInterval);
                 progressBar.style.width = '100%';
@@ -1644,19 +1676,32 @@
 
                 if (allNFTs.length > 0) {
                     console.log(`Displaying ${allNFTs.length} NFTs`);
-                    updateDisplay();
                     populateCollectionFilter(allNFTs);
-                    document.getElementById('collectionFilter').disabled = false;
+                    collectionFilter.disabled = false;
                     controls.classList.add('visible');
+
+                    // Vérifier si une collection est spécifiée dans l'URL
+                    const hash = window.location.hash;
+                    const hashParts = hash.split('/#');
+                    if (hashParts.length > 1 && hashParts[1]) {
+                        const collection = decodeURIComponent(hashParts[1]);
+                        console.log(`Applying collection filter from URL: ${collection}`);
+                        collectionFilter.value = collection;
+                        filterNFTs();
+                    } else {
+                        updateDisplay();
+                    }
                 } else {
                     console.log('No NFTs found');
                     noResultsDiv.style.display = 'block';
                 }
             } catch (error) {
-                console.error(`Error in fetchProfileAndNFTs: ${error.message}`);
-                clearInterval(progressInterval);
-                progressModal.style.display = 'none';
-                errorDiv.textContent = `Error: ${error.message}`;
+                if (!isProfileLoadingCancelled) {
+                    console.error(`Error in fetchProfileAndNFTs: ${error.message}`);
+                    clearInterval(progressInterval);
+                    progressModal.style.display = 'none';
+                    errorDiv.textContent = `Error: ${error.message}`;
+                }
             }
         }
 
@@ -1736,6 +1781,13 @@
             
             collectionTitle.textContent = collectionValue || 'All Collections';
             collectionTitle.classList.add('visible');
+
+            // Mettre à jour l'URL avec la collection sélectionnée
+            const newUrl = collectionValue
+                ? `${window.location.pathname}#${currentUsername}/#${encodeURIComponent(collectionValue)}`
+                : `${window.location.pathname}#${currentUsername}`;
+            history.pushState({ username: currentUsername, collection: collectionValue }, '', newUrl);
+            console.log(`URL updated to: ${newUrl}`);
 
             displayNFTs(filteredNFTs, collectionValue);
         }
@@ -1945,10 +1997,9 @@
                     const isVideo = url.endsWith('.mp4');
                     const extension = isVideo ? '.mp4' : url.endsWith('.gif') ? '.gif' : '.png';
                     let baseFileName = asset.name || `unnamed_nft_${i + 1}`;
-                    baseFileName = sanitizeFileNameForZip(baseFileName); // Nettoyer uniquement les caractères interdits
+                    baseFileName = sanitizeFileNameForZip(baseFileName);
                     let fileName = baseFileName + extension;
 
-                    // Gérer les conflits de noms
                     if (nameCounts[baseFileName]) {
                         nameCounts[baseFileName]++;
                         fileName = `${baseFileName}_${nameCounts[baseFileName]}${extension}`;
@@ -2090,10 +2141,11 @@
 
             const hash = window.location.hash;
             if (hash && hash.startsWith('#')) {
-                const username = sanitizeInput(hash.substring(1));
+                const hashParts = hash.split('/#');
+                const username = sanitizeInput(hashParts[0].substring(1));
                 console.log(`Found username in URL hash: ${username}`);
                 const usernameInput = document.getElementById('usernameInput');
-                if (usernameInput) {
+                if (usernameInput && username) {
                     usernameInput.value = username;
                     fetchProfileAndNFTs();
                 }
