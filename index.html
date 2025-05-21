@@ -360,7 +360,7 @@
             transition: var(--transition);
             width: 200px;
             min-width: 200px;
-            max-width: HEMATITE;
+            max-width: 200px;
             height: 36px;
             box-sizing: border-box;
             background-color: var(--color1);
@@ -660,6 +660,52 @@
             transform: scale(1.05);
         }
 
+        /* New styles for the progress modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--collection-bg);
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            color: var(--text-dark);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: var(--color1);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -875,6 +921,15 @@
                 max-height: none;
             }
 
+            .modal-content {
+                width: 80%;
+                padding: 15px;
+            }
+
+            .progress-text {
+                font-size: 0.9rem;
+            }
+
             .footer-logo {
                 max-width: 100px;
             }
@@ -979,6 +1034,17 @@
         <div id="nftCountContainer"></div>
         <div class="nft-container" id="nftContainer"></div>
         <button id="downloadZipButton" style="display: none; margin-top: 20px; margin: 20px auto; padding: 10px 20px; background-color: var(--color1); color: var(--text-dark); border: none; border-radius: 8px; cursor: pointer; font-family: 'Geomanist-Bold', sans-serif; text-transform: uppercase; font-weight: 700;" onclick="downloadNFTsAsZip()">Download .ZIP</button>
+
+        <!-- Progress Modal -->
+        <div class="modal" id="progressModal">
+            <div class="modal-content">
+                <h3>Creating ZIP File</h3>
+                <div class="progress-bar">
+                    <div class="progress" id="progressBar"></div>
+                </div>
+                <p class="progress-text" id="progressText">Preparing...</p>
+            </div>
+        </div>
     </div>
 
     <footer class="footer">
@@ -1062,6 +1128,15 @@
             return input.replace(/[<>"'&]/g, '');
         }
 
+        function sanitizeFileName(name) {
+            return name
+                .replace(/[<>:"/\\|?*]+/g, '')
+                .replace(/\s+/g, '_')
+                .replace(/[^a-zA-Z0-9._-]/g, '')
+                .trim()
+                || 'unnamed_nft';
+        }
+
         function toggleTheme() {
             console.log('toggleTheme called');
             const themeButton = document.getElementById('themeButton');
@@ -1113,14 +1188,14 @@
             console.log('Suggestions container set to visible');
 
             try {
-                const profileData = await fetchWithCache(` over_${query.toLowerCase()}`, async () => {
+                const profileData = await fetchWithCache(`profile_${query.toLowerCase()}`, async () => {
                     console.log(`Fetching profile for ${query}`);
                     const response = await fetch(graphqlEndpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             query: profileQuery,
-                            variables: { id: query.toLowerCase(), cacheId: `getUserQuery-Profile-${query.to}${query.toLowerCase()}` }
+                            variables: { id: query.toLowerCase(), cacheId: `getUserQuery-Profile-${query.toLowerCase()}` }
                         })
                     });
 
@@ -1616,7 +1691,6 @@
                 : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets.`;
             countContainer.appendChild(countElement);
 
-            // Afficher ou masquer le bouton de téléchargement
             downloadZipButton.style.display = assets.length > 0 ? 'block' : 'none';
 
             if (displayMode === 'thumbnail') {
@@ -1732,31 +1806,57 @@
             const nftContainer = document.getElementById('nftContainer');
             const loadingDiv = document.getElementById('loading');
             const errorDiv = document.getElementById('error');
+            const progressModal = document.getElementById('progressModal');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
 
-            if (!nftContainer || !loadingDiv || !errorDiv) {
+            if (!nftContainer || !loadingDiv || !errorDiv || !progressModal || !progressBar || !progressText) {
                 console.error('Required DOM elements not found');
                 return;
             }
 
-            const mediaElements = nftContainer.querySelectorAll('img, video');
-            if (mediaElements.length === 0) {
+            const collectionFilter = document.getElementById('collectionFilter');
+            const collectionValue = collectionFilter ? collectionFilter.value : '';
+            let filteredNFTs = collectionValue
+                ? allNFTs.filter(nft => nft.collection?.name === collectionValue)
+                : [...allNFTs];
+
+            if (filteredNFTs.length === 0) {
                 console.log('No NFTs to download');
                 errorDiv.textContent = 'No NFTs available to download.';
                 return;
             }
 
-            loadingDiv.style.display = 'block';
-            errorDiv.textContent = '';
+            progressModal.style.display = 'flex';
+            progressText.textContent = `Preparing to download ${filteredNFTs.length} NFTs...`;
+            progressBar.style.width = '0%';
 
             try {
-                for (let i = 0; i < mediaElements.length; i++) {
-                    const media = mediaElements[i];
-                    const url = media.src;
-                    const isVideo = media.tagName.toLowerCase() === 'video';
-                    const extension = isVideo ? '.mp4' : url.endsWith('.gif') ? '.gif' : '.png';
-                    const fileName = `nft_${i + 1}${extension}`;
+                const nameCounts = {};
+                for (let i = 0; i < filteredNFTs.length; i++) {
+                    const asset = filteredNFTs[i];
+                    const url = asset.cover?.url;
+                    if (!url) {
+                        console.warn(`No cover URL for NFT: ${asset.name || 'Unnamed NFT'}`);
+                        continue;
+                    }
 
-                    console.log(`Fetching media: ${url}`);
+                    const isVideo = url.endsWith('.mp4');
+                    const extension = isVideo ? '.mp4' : url.endsWith('.gif') ? '.gif' : '.png';
+                    let baseFileName = sanitizeFileName(asset.name || `unnamed_nft_${i + 1}`);
+                    let fileName = baseFileName + extension;
+
+                    if (nameCounts[baseFileName]) {
+                        nameCounts[baseFileName]++;
+                        fileName = `${baseFileName}_${nameCounts[baseFileName]}${extension}`;
+                    } else {
+                        nameCounts[baseFileName] = 1;
+                    }
+
+                    console.log(`Fetching media: ${url}, Filename: ${fileName}`);
+                    progressText.textContent = `Downloading ${fileName} (${i + 1}/${filteredNFTs.length})...`;
+                    progressBar.style.width = `${((i + 1) / filteredNFTs.length) * 100}%`;
+
                     try {
                         const response = await fetch(url, {
                             mode: 'cors',
@@ -1772,11 +1872,11 @@
                         console.log(`Added ${fileName} to ZIP`);
                     } catch (err) {
                         console.error(`Error fetching ${url}: ${err.message}`);
-                        // Continuer avec les autres fichiers même en cas d'erreur
                     }
                 }
 
                 console.log('Generating ZIP file');
+                progressText.textContent = 'Generating ZIP file...';
                 const zipBlob = await zip.generateAsync({ type: 'blob' });
                 saveAs(zipBlob, `${currentUsername}_nfts.zip`);
                 console.log('ZIP file downloaded');
@@ -1784,6 +1884,7 @@
                 console.error('Error creating ZIP:', error.message);
                 errorDiv.textContent = 'Error creating ZIP file. Some files may not have been included.';
             } finally {
+                progressModal.style.display = 'none';
                 loadingDiv.style.display = 'none';
             }
         }
