@@ -666,7 +666,7 @@
 
         #downloadZipButton {
             display: none;
-            margin: 20px auto;
+            margin: 20px auto 20px auto;
             padding: 10px 20px;
             background-color: var(--color1);
             color: var(--text-dark);
@@ -726,6 +726,7 @@
         .progress-text {
             font-size: 1rem;
             margin-top: 10px;
+            white-space: pre-line;
         }
 
         .modal-buttons {
@@ -1016,6 +1017,7 @@
 
             .progress-text {
                 font-size: 0.85rem;
+                white-space: pre-line;
             }
 
             .modal-buttons button {
@@ -1043,6 +1045,7 @@
             #downloadZipButton {
                 padding: 8px 16px;
                 font-size: 12px;
+                margin: 15px auto 15px auto;
             }
         }
 
@@ -1224,7 +1227,7 @@
         <div class="no-results" id="noResults" style="display: none;">No results found</div>
         <div id="nftCountContainer"></div>
         <div class="nft-container" id="nftContainer"></div>
-        <button id="downloadZipButton" onclick="downloadNFTsAsZip()">Download .ZIP</button>
+        <button id="downloadZipButton" onclick="downloadNFTsAsZip()">DOWNLOAD ASSETS</button>
 
         <div class="modal" id="progressModal">
             <div class="modal-content">
@@ -1971,7 +1974,7 @@
             isDownloadCancelled = false;
             modalTitle.textContent = 'Creating ZIP File';
             progressModal.style.display = 'flex';
-            progressText.textContent = `Preparing to download ${filteredNFTs.length} NFTs...`;
+            progressText.textContent = `Preparing to download ${filteredNFTs.length} NFTs`;
             progressBar.style.width = '0%';
             cancelButton.style.display = 'block';
 
@@ -2006,7 +2009,7 @@
                         nameCounts[baseFileName] = 1;
                     }
 
-                    progressText.textContent = `Downloading ${fileName} (${i + 1}/${filteredNFTs.length})...`;
+                    progressText.textContent = `Downloading:\n${fileName} (${i + 1}/${filteredNFTs.length})`;
                     progressBar.style.width = `${((i + 1) / filteredNFTs.length) * 100}%`;
 
                     try {
@@ -2028,7 +2031,7 @@
 
                 if (isDownloadCancelled) return;
 
-                progressText.textContent = 'Generating ZIP file...';
+                progressText.textContent = 'Generating ZIP file.';
                 const zipBlob = await zip.generateAsync({ type: 'blob' });
                 saveAs(zipBlob, `${currentUsername}_nfts.zip`);
             } catch (error) {
