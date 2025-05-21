@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Browse smarter. Collect better – Powered by CronoBots">
     <title>CronoBots</title>
     <link rel="icon" type="image/png" href="/assets/favicon.png">
@@ -863,93 +863,99 @@
 
             .profile-section {
                 flex-direction: column;
-                align-items: center;
+                align-items: flex-start;
                 gap: 15px;
                 padding: 0 10px;
             }
 
             .profile-header-content {
-                flex-direction: column;
-                align-items: center;
-                margin-left: 0;
-                margin-top: 20px;
+                flex-direction: row;
+                align-items: flex-start;
+                margin: 20px 10px;
+                gap: 10px;
                 width: 100%;
             }
 
             .profile-picture img {
-                width: 100px;
-                height: 100px;
-                border-radius: 12px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                width: 80px;
+                height: 80px;
+                border-radius: 8px;
             }
 
             .profile-info {
+                flex: 1;
                 height: auto;
-                max-width: 100%;
-                text-align: center;
-                padding: 10px;
+                max-width: none;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
             }
 
             .username-container {
-                justify-content: center;
+                justify-content: flex-start;
                 height: auto;
                 gap: 4px;
             }
 
             .username {
-                font-size: 24px;
+                font-size: 20px;
             }
 
             .verified-badge {
-                width: 14px;
-                height: 14px;
-                margin-left: 4px;
+                width: 12px;
+                height: 12px;
             }
 
             .social-container {
-                justify-content: center;
-                gap: 10px;
-                margin-top: 10px;
+                justify-content: flex-start;
+                gap: 8px;
+                margin-top: 8px;
+                position: static;
             }
 
             .social-icon {
-                width: 18px;
-                height: 18px;
-                border-radius: 2px;
+                width: 16px;
+                height: 16px;
             }
 
             .display-name {
-                font-size: 20px;
-                top: 30px;
-                left: 0;
-                width: 100%;
-                text-align: center;
+                font-size: 16px;
+                top: auto;
+                position: static;
+                width: auto;
+                text-align: left;
+                margin: 4px 0;
             }
 
             .controls {
-                align-items: center;
+                align-items: flex-start;
                 width: 100%;
                 margin: 15px 0;
                 height: auto;
-                gap: 10px;
+                gap: 8px;
                 padding: 0 10px;
             }
 
             .control-group {
-                flex-direction: column;
-                align-items: stretch;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
                 width: 100%;
+                gap: 10px;
             }
 
             .controls label {
-                font-size: 11px;
-                margin-bottom: 4px;
-                text-align: center;
+                font-size: 12px;
+                margin-bottom: 0;
+                text-align: left;
+                flex: 0 0 100px;
             }
 
             .controls select {
-                width: 100%;
-                max-width: none;
+                flex: 1;
+                width: auto;
+                max-width: 200px;
                 min-width: 0;
                 height: 32px;
                 font-size: 12px;
@@ -1063,17 +1069,31 @@
             }
 
             .profile-picture img {
-                width: 80px;
-                height: 80px;
+                width: 60px;
+                height: 60px;
             }
 
             .username {
-                font-size: 20px;
+                font-size: 18px;
             }
 
             .display-name {
-                font-size: 18px;
-                top: 26px;
+                font-size: 14px;
+            }
+
+            .social-icon {
+                width: 14px;
+                height: 14px;
+            }
+
+            .controls label {
+                font-size: 11px;
+                flex: 0 0 80px;
+            }
+
+            .controls select {
+                max-width: 150px;
+                font-size: 11px;
             }
 
             .nft-container.small-size {
@@ -1281,14 +1301,7 @@
         const homeUrl = "https://cronobots.github.io/Cronos";
 
         function resetViewportZoom() {
-            const viewport = document.querySelector('meta[name="viewport"]');
-            if (viewport) {
-                viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0');
-            }
             window.scrollTo(0, 0);
-            if (window.visualViewport) {
-                window.visualViewport.scale = 1.0;
-            }
         }
 
         function toggleMenu() {
@@ -1949,7 +1962,7 @@
             isDownloadCancelled = false;
             modalTitle.textContent = 'Creating ZIP File';
             progressModal.style.display = 'flex';
-            progressText.textContent = `Preparing to download ${filteredNFTs.length} NFTs`;
+            progressText.textContent = `Preparing to download ${filteredNFTs.length} NFTs...`;
             progressBar.style.width = '0%';
             cancelButton.style.display = 'block';
 
@@ -1984,7 +1997,7 @@
                         nameCounts[baseFileName] = 1;
                     }
 
-                    progressText.textContent = `Downloading: ${fileName} (${i + 1}/${filteredNFTs.length})`;
+                    progressText.textContent = `Downloading ${fileName} (${i + 1}/${filteredNFTs.length})...`;
                     progressBar.style.width = `${((i + 1) / filteredNFTs.length) * 100}%`;
 
                     try {
@@ -2006,7 +2019,7 @@
 
                 if (isDownloadCancelled) return;
 
-                progressText.textContent = 'Generating ZIP file';
+                progressText.textContent = 'Generating ZIP file...';
                 const zipBlob = await zip.generateAsync({ type: 'blob' });
                 saveAs(zipBlob, `${currentUsername}_nfts.zip`);
             } catch (error) {
@@ -2060,13 +2073,6 @@
                 }
             });
 
-            usernameInput.addEventListener('focus', () => {
-                const viewport = document.querySelector('meta[name="viewport"]');
-                if (viewport) {
-                    viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
-                }
-            });
-
             usernameInput.addEventListener('blur', () => {
                 resetViewportZoom();
             });
@@ -2116,4 +2122,3 @@
         });
     </script>
 </body>
-</html>
