@@ -1172,13 +1172,11 @@
             return input.replace(/[<>"'&]/g, '');
         }
 
-        function sanitizeFileName(name) {
+        function sanitizeFileNameForZip(name) {
+            // Supprimer uniquement les caractères non valides pour les noms de fichiers
             return name
-                .replace(/[<>:"/\\|?*]+/g, '')
-                .replace(/\s+/g, '_')
-                .replace(/[^a-zA-Z0-9._-]/g, '')
-                .trim()
-                || 'unnamed_nft';
+                .replace(/[<>:"/\\|?*]/g, '') // Supprime les caractères interdits
+                .trim() || 'unnamed_nft';
         }
 
         function toggleTheme() {
@@ -1325,7 +1323,7 @@
             }
         }
 
-        async function fetchAllNFTs(ownerId) {
+        async function fetchAllNFTs(ownerId, progressCallback) {
             console.log(`Fetching NFTs for ownerId: ${ownerId}`);
             const first = 60;
             let skip = 0;
@@ -1361,6 +1359,11 @@
                     skip += first;
                     hasMore = assets.length === first;
                     console.log(`Fetched ${assets.length} assets, total: ${allAssets.length}`);
+
+                    // Appeler le callback de progression
+                    if (progressCallback) {
+                        progressCallback(allAssets.length);
+                    }
                 } catch (error) {
                     console.error(`Failed to fetch NFTs: ${error.message}`);
                     throw error;
@@ -1513,11 +1516,12 @@
             const progressBar = document.getElementById('progressBar');
             const progressText = document.getElementById('progressText');
             const modalTitle = document.getElementById('modalTitle');
+            const cancelButton = document.getElementById('cancelDownloadButton');
 
             if (!usernameInput || !errorDiv || !noResultsDiv || !controls || !collectionTitle ||
                 !profileHeader || !nftContainer || !nftCountContainer || !collectionFilter || 
                 !displayMode || !cardSize || !sortBy || !downloadZipButton || !progressModal || 
-                !progressBar || !progressText || !modalTitle) {
+                !progressBar || !progressText || !modalTitle || !cancelButton) {
                 console.error('Required DOM elements not found:', {
                     usernameInput: !!usernameInput,
                     errorDiv: !!errorDiv,
@@ -1535,7 +1539,8 @@
                     progressModal: !!progressModal,
                     progressBar: !!progressBar,
                     progressText: !!progressText,
-                    modalTitle: !!modalTitle
+                    modalTitle: !!modalTitle,
+                    cancelButton: !!cancelButton
                 });
                 if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
                 return;
@@ -1572,6 +1577,7 @@
             progressText.textContent = `Loading profile for ${username}...`;
             progressBar.style.width = '0%';
             progressModal.style.display = 'flex';
+            cancelButton.style.display = 'none'; // Masquer le bouton Cancel pendant le chargement du profil
 
             let progress = 0;
             const progressInterval = setInterval(() => {
@@ -1620,11 +1626,15 @@
                 history.pushState({ username: currentUsername }, '', newUrl);
                 console.log(`URL updated to: ${newUrl}`);
 
-                allNFTs = await fetchWithCache(`nfts_${currentUsername}`, () => fetchAllNFTs(currentUsername));
+                // Mettre à jour la progression avec le nombre de NFTs chargés
+                progressText.textContent = `Loading NFTs for ${username} (0 NFTs loaded)...`;
+                allNFTs = await fetchWithCache(`nfts_${currentUsername}`, () => fetchAllNFTs(currentUsername, (nftCount) => {
+                    progressText.textContent = `Loading NFTs for ${username} (${nftCount} NFTs loaded)...`;
+                }));
 
                 clearInterval(progressInterval);
                 progressBar.style.width = '100%';
-                progressText.textContent = 'Profile loaded successfully!';
+                progressText.textContent = `Profile loaded successfully! (${allNFTs.length} NFTs)`;
                 setTimeout(() => {
                     progressModal.style.display = 'none';
                 }, 500);
@@ -1907,8 +1917,11 @@
             cancelButton.onclick = () => {
                 console.log('Download cancelled by user');
                 isDownloadCancelled = true;
-                progressModal.style.display = 'none';
-                errorDiv.textContent = 'Download cancelled.';
+                progressText.textContent = 'Download cancelled.';
+                progressBar.style.width = '0%';
+                setTimeout(() => {
+                    progressModal.style.display = 'none';
+                }, 1000);
             };
 
             try {
@@ -1928,9 +1941,11 @@
 
                     const isVideo = url.endsWith('.mp4');
                     const extension = isVideo ? '.mp4' : url.endsWith('.gif') ? '.gif' : '.png';
-                    let baseFileName = sanitizeFileName(asset.name || `unnamed_nft_${i + 1}`);
+                    let baseFileName = asset.name || `unnamed_nft_${i + 1}`;
+                    baseFileName = sanitizeFileNameForZip(baseFileName); // Nettoyer uniquement les caractères interdits
                     let fileName = baseFileName + extension;
 
+                    // Gérer les conflits de noms
                     if (nameCounts[baseFileName]) {
                         nameCounts[baseFileName]++;
                         fileName = `${baseFileName}_${nameCounts[baseFileName]}${extension}`;
@@ -1976,7 +1991,9 @@
                     errorDiv.textContent = 'Error creating ZIP file. Some files may not have been included.';
                 }
             } finally {
-                progressModal.style.display = 'none';
+                if (!isDownloadCancelled) {
+                    progressModal.style.display = 'none';
+                }
                 cancelButton.style.display = 'none';
             }
         }
