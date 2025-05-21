@@ -7,6 +7,9 @@
     <title>CronoBots</title>
     <link rel="icon" type="image/png" href="/assets/favicon.png">
     <link rel="preload" href="CRONOBOTS.png" as="image">
+    <!-- Ajout des bibliothèques JSZip et FileSaver.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
         :root {
             --color1: #FF5733;
@@ -357,7 +360,7 @@
             transition: var(--transition);
             width: 200px;
             min-width: 200px;
-            max-width: 200px;
+            max-width: HEMATITE;
             height: 36px;
             box-sizing: border-box;
             background-color: var(--color1);
@@ -975,6 +978,7 @@
         <div class="no-results" id="noResults" style="display: none;">No results found</div>
         <div id="nftCountContainer"></div>
         <div class="nft-container" id="nftContainer"></div>
+        <button id="downloadZipButton" style="display: none; margin: 20px auto; padding: 10px 20px; background-color: var(--color1); color: var(--text-dark); border: none; border-radius: 8px; cursor: pointer; font-family: 'Geomanist-Bold', sans-serif; text-transform: uppercase; font-weight: 700;" onclick="downloadNFTsAsZip()">Download All NFTs as ZIP</button>
     </div>
 
     <footer class="footer">
@@ -1109,14 +1113,14 @@
             console.log('Suggestions container set to visible');
 
             try {
-                const profileData = await fetchWithCache(`profile_${query.toLowerCase()}`, async () => {
+                const profileData = await fetchWithCache(` over_${query.toLowerCase()}`, async () => {
                     console.log(`Fetching profile for ${query}`);
                     const response = await fetch(graphqlEndpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             query: profileQuery,
-                            variables: { id: query.toLowerCase(), cacheId: `getUserQuery-Profile-${query.toLowerCase()}` }
+                            variables: { id: query.toLowerCase(), cacheId: `getUserQuery-Profile-${query.to}${query.toLowerCase()}` }
                         })
                     });
 
@@ -1386,9 +1390,10 @@
             const displayMode = document.getElementById('displayMode');
             const cardSize = document.getElementById('cardSize');
             const sortBy = document.getElementById('sortBy');
+            const downloadZipButton = document.getElementById('downloadZipButton');
 
             if (!usernameInput || !loadingDiv || !errorDiv || !noResultsDiv || !controls || !collectionTitle ||
-                !profileHeader || !nftContainer || !nftCountContainer || !collectionFilter || !displayMode || !cardSize || !sortBy) {
+                !profileHeader || !nftContainer || !nftCountContainer || !collectionFilter || !displayMode || !cardSize || !sortBy || !downloadZipButton) {
                 console.error('Required DOM elements not found:', {
                     usernameInput: !!usernameInput,
                     loadingDiv: !!loadingDiv,
@@ -1402,7 +1407,8 @@
                     collectionFilter: !!collectionFilter,
                     displayMode: !!displayMode,
                     cardSize: !!cardSize,
-                    sortBy: !!sortBy
+                    sortBy: !!sortBy,
+                    downloadZipButton: !!downloadZipButton
                 });
                 if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
                 return;
@@ -1426,6 +1432,7 @@
             collectionTitle.textContent = '';
             collectionTitle.classList.remove('visible');
             errorDiv.textContent = '';
+            downloadZipButton.style.display = 'none';
 
             collectionFilter.innerHTML = '<option value="">All Collections</option>';
             collectionFilter.value = '';
@@ -1583,15 +1590,17 @@
             });
             const container = document.getElementById('nftContainer');
             const countContainer = document.getElementById('nftCountContainer');
+            const downloadZipButton = document.getElementById('downloadZipButton');
             const displayMode = document.getElementById('displayMode')?.value;
             const cardSize = document.getElementById('cardSize')?.value;
 
             console.log(`Applying display mode: ${displayMode}, card size: ${cardSize}`);
 
-            if (!container || !countContainer) {
-                console.error('NFT container or count container not found:', {
+            if (!container || !countContainer || !downloadZipButton) {
+                console.error('NFT container, count container, or download button not found:', {
                     container: !!container,
-                    countContainer: !!countContainer
+                    countContainer: !!countContainer,
+                    downloadZipButton: !!downloadZipButton
                 });
                 return;
             }
@@ -1606,6 +1615,9 @@
                 ? `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets on this collection.`
                 : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets.`;
             countContainer.appendChild(countElement);
+
+            // Afficher ou masquer le bouton de téléchargement
+            downloadZipButton.style.display = assets.length > 0 ? 'block' : 'none';
 
             if (displayMode === 'thumbnail') {
                 const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
@@ -1711,6 +1723,68 @@
                     card.appendChild(title);
                     container.appendChild(card);
                 });
+            }
+        }
+
+        async function downloadNFTsAsZip() {
+            console.log('downloadNFTsAsZip called');
+            const zip = new JSZip();
+            const nftContainer = document.getElementById('nftContainer');
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+
+            if (!nftContainer || !loadingDiv || !errorDiv) {
+                console.error('Required DOM elements not found');
+                return;
+            }
+
+            const mediaElements = nftContainer.querySelectorAll('img, video');
+            if (mediaElements.length === 0) {
+                console.log('No NFTs to download');
+                errorDiv.textContent = 'No NFTs available to download.';
+                return;
+            }
+
+            loadingDiv.style.display = 'block';
+            errorDiv.textContent = '';
+
+            try {
+                for (let i = 0; i < mediaElements.length; i++) {
+                    const media = mediaElements[i];
+                    const url = media.src;
+                    const isVideo = media.tagName.toLowerCase() === 'video';
+                    const extension = isVideo ? '.mp4' : url.endsWith('.gif') ? '.gif' : '.png';
+                    const fileName = `nft_${i + 1}${extension}`;
+
+                    console.log(`Fetching media: ${url}`);
+                    try {
+                        const response = await fetch(url, {
+                            mode: 'cors',
+                            credentials: 'omit'
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+                        }
+
+                        const blob = await response.blob();
+                        zip.file(fileName, blob);
+                        console.log(`Added ${fileName} to ZIP`);
+                    } catch (err) {
+                        console.error(`Error fetching ${url}: ${err.message}`);
+                        // Continuer avec les autres fichiers même en cas d'erreur
+                    }
+                }
+
+                console.log('Generating ZIP file');
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                saveAs(zipBlob, `${currentUsername}_nfts.zip`);
+                console.log('ZIP file downloaded');
+            } catch (error) {
+                console.error('Error creating ZIP:', error.message);
+                errorDiv.textContent = 'Error creating ZIP file. Some files may not have been included.';
+            } finally {
+                loadingDiv.style.display = 'none';
             }
         }
 
