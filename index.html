@@ -655,6 +655,25 @@
             transform: scale(1.05);
         }
 
+        #downloadZipButton {
+            display: none;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: var(--color1);
+            color: var(--text-dark);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Geomanist-Bold', sans-serif;
+            text-transform: uppercase;
+            font-weight: 700;
+            transition: var(--transition);
+        }
+
+        #downloadZipButton:hover {
+            transform: scale(1.05);
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -698,6 +717,34 @@
         .progress-text {
             font-size: 1rem;
             margin-top: 10px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .modal-buttons button {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            background-color: var(--color1);
+            color: var(--text-dark);
+            cursor: pointer;
+            font-family: 'Geomanist-Bold', sans-serif;
+            text-transform: uppercase;
+            font-weight: 700;
+            transition: var(--transition);
+        }
+
+        .modal-buttons button:hover {
+            transform: scale(1.05);
+        }
+
+        .modal-buttons .cancel-button {
+            background-color: #ff4444;
         }
 
         @keyframes fadeIn {
@@ -848,7 +895,7 @@
                 align-items: center;
                 width: 100%;
                 margin-right: 0;
-                height: 120120px;
+                height: 120px;
                 justify-content: space-between;
             }
 
@@ -1026,7 +1073,7 @@
         <div class="no-results" id="noResults" style="display: none;">No results found</div>
         <div id="nftCountContainer"></div>
         <div class="nft-container" id="nftContainer"></div>
-        <button id="downloadZipButton" style="display: none; margin-top: 20px; margin: 20px auto; padding: 10px 20px; background-color: var(--color1); color: var(--text-dark); border: none; border-radius: 8px; cursor: pointer; font-family: 'Geomanist-Bold', sans-serif; text-transform: uppercase; font-weight: 700;" onclick="downloadNFTsAsZip()">Download .ZIP</button>
+        <button id="downloadZipButton" onclick="downloadNFTsAsZip()">Download .ZIP</button>
 
         <!-- Progress Modal -->
         <div class="modal" id="progressModal">
@@ -1036,6 +1083,9 @@
                     <div class="progress" id="progressBar"></div>
                 </div>
                 <p class="progress-text" id="progressText">Preparing...</p>
+                <div class="modal-buttons">
+                    <button id="cancelDownloadButton" class="cancel-button">Cancel</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1056,6 +1106,7 @@
         let currentDisplayName = '';
         let lastSearchedUsername = '';
         let debounceTimeout = null;
+        let isDownloadCancelled = false;
 
         const profileQuery = `
             query User($id: ID!, $cacheId: ID) {
@@ -1517,17 +1568,15 @@
             cardSize.value = 'medium';
             sortBy.value = 'default';
 
-            // Afficher la modale avec un titre et un texte appropriés
             modalTitle.textContent = 'Loading Profile';
             progressText.textContent = `Loading profile for ${username}...`;
             progressBar.style.width = '0%';
             progressModal.style.display = 'flex';
 
-            // Simuler une progression pour donner un feedback visuel
             let progress = 0;
             const progressInterval = setInterval(() => {
                 progress += 10;
-                progressBar.style.width = `${Math.min(progress, 80)}%`; // Limite à 80% pour indiquer que le chargement est en cours
+                progressBar.style.width = `${Math.min(progress, 80)}%`;
             }, 500);
 
             try {
@@ -1829,8 +1878,9 @@
             const progressBar = document.getElementById('progressBar');
             const progressText = document.getElementById('progressText');
             const modalTitle = document.getElementById('modalTitle');
+            const cancelButton = document.getElementById('cancelDownloadButton');
 
-            if (!nftContainer || !errorDiv || !progressModal || !progressBar || !progressText || !modalTitle) {
+            if (!nftContainer || !errorDiv || !progressModal || !progressBar || !progressText || !modalTitle || !cancelButton) {
                 console.error('Required DOM elements not found');
                 return;
             }
@@ -1847,14 +1897,28 @@
                 return;
             }
 
+            isDownloadCancelled = false;
             modalTitle.textContent = 'Creating ZIP File';
             progressModal.style.display = 'flex';
             progressText.textContent = `Preparing to download ${filteredNFTs.length} NFTs...`;
             progressBar.style.width = '0%';
+            cancelButton.style.display = 'block';
+
+            cancelButton.onclick = () => {
+                console.log('Download cancelled by user');
+                isDownloadCancelled = true;
+                progressModal.style.display = 'none';
+                errorDiv.textContent = 'Download cancelled.';
+            };
 
             try {
                 const nameCounts = {};
                 for (let i = 0; i < filteredNFTs.length; i++) {
+                    if (isDownloadCancelled) {
+                        console.log('Download stopped due to cancellation');
+                        return;
+                    }
+
                     const asset = filteredNFTs[i];
                     const url = asset.cover?.url;
                     if (!url) {
@@ -1896,16 +1960,24 @@
                     }
                 }
 
+                if (isDownloadCancelled) {
+                    console.log('Download stopped before ZIP generation due to cancellation');
+                    return;
+                }
+
                 console.log('Generating ZIP file');
                 progressText.textContent = 'Generating ZIP file...';
                 const zipBlob = await zip.generateAsync({ type: 'blob' });
                 saveAs(zipBlob, `${currentUsername}_nfts.zip`);
                 console.log('ZIP file downloaded');
             } catch (error) {
-                console.error('Error creating ZIP:', error.message);
-                errorDiv.textContent = 'Error creating ZIP file. Some files may not have been included.';
+                if (!isDownloadCancelled) {
+                    console.error('Error creating ZIP:', error.message);
+                    errorDiv.textContent = 'Error creating ZIP file. Some files may not have been included.';
+                }
             } finally {
                 progressModal.style.display = 'none';
+                cancelButton.style.display = 'none';
             }
         }
 
