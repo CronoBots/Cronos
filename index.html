@@ -1549,6 +1549,62 @@
             console.log('Theme set to:', newTheme);
         }
 
+        function saveUserFilters() {
+            if (!loggedInUser) return; // Ne sauvegarde que si un utilisateur est connecté
+
+            const filters = {
+                collectionFilter: document.getElementById('collectionFilter')?.value || '',
+                displayMode: document.getElementById('displayMode')?.value || 'full',
+                cardSize: document.getElementById('cardSize')?.value || 'medium',
+                sortBy: document.getElementById('sortBy')?.value || 'default'
+            };
+
+            localStorage.setItem(`filters_${loggedInUser.username}`, JSON.stringify(filters));
+            console.log('Filters saved for user:', loggedInUser.username, filters);
+        }
+
+        function loadUserFilters() {
+            if (!loggedInUser) return;
+
+            const savedFilters = localStorage.getItem(`filters_${loggedInUser.username}`);
+            if (!savedFilters) return;
+
+            try {
+                const filters = JSON.parse(savedFilters);
+                const collectionFilter = document.getElementById('collectionFilter');
+                const displayMode = document.getElementById('displayMode');
+                const cardSize = document.getElementById('cardSize');
+                const sortBy = document.getElementById('sortBy');
+
+                if (displayMode && filters.displayMode) {
+                    displayMode.value = filters.displayMode;
+                }
+                if (cardSize && filters.cardSize) {
+                    cardSize.value = filters.cardSize;
+                }
+                if (sortBy && filters.sortBy) {
+                    sortBy.value = filters.sortBy;
+                }
+                // La collection sera appliquée après le chargement des NFTs pour vérifier si elle existe
+                if (collectionFilter && filters.collectionFilter) {
+                    // Attendre que les options du filtre de collection soient chargées
+                    setTimeout(() => {
+                        const optionExists = Array.from(collectionFilter.options).some(
+                            option => option.value === filters.collectionFilter
+                        );
+                        if (optionExists) {
+                            collectionFilter.value = filters.collectionFilter;
+                        } else {
+                            collectionFilter.value = '';
+                        }
+                        filterNFTs();
+                    }, 0);
+                }
+            } catch (error) {
+                console.error('Error loading saved filters:', error);
+            }
+        }
+
         function updateLoginLink() {
             const userProfile = document.getElementById('userProfile');
             const userProfilePicture = document.getElementById('userProfilePicture');
@@ -1840,8 +1896,12 @@
 
         function logout(event) {
             event.preventDefault();
+            const username = loggedInUser?.username;
             loggedInUser = null;
             localStorage.removeItem('loggedInUser');
+            if (username) {
+                localStorage.removeItem(`filters_${username}`); // Supprimer les filtres de l'utilisateur
+            }
             updateLoginLink();
             const profileHeader = document.getElementById('profileHeader');
             const nftContainer = document.getElementById('nftContainer');
@@ -2271,23 +2331,28 @@
                     collectionFilter.disabled = false;
                     controls.classList.add('visible');
 
-                    const hash = window.location.hash;
-                    const hashParts = hash.split('/#');
-                    if (hashParts.length > 1 && hashParts[1]) {
-                        const collection = decodeURIComponent(hashParts[1]);
-                        const optionExists = Array.from(collectionFilter.options).some(
-                            option => option.value === collection
-                        );
-                        if (optionExists) {
-                            collectionFilter.value = collection;
-                            filterNFTs();
-                        } else {
-                            console.warn(`Collection ${collection} not found in filter options`);
-                            collectionFilter.value = '';
-                            filterNFTs();
-                        }
+                    // Charger les filtres sauvegardés pour l'utilisateur connecté
+                    if (loggedInUser && loggedInUser.username === currentUsername) {
+                        loadUserFilters();
                     } else {
-                        updateDisplay();
+                        const hash = window.location.hash;
+                        const hashParts = hash.split('/#');
+                        if (hashParts.length > 1 && hashParts[1]) {
+                            const collection = decodeURIComponent(hashParts[1]);
+                            const optionExists = Array.from(collectionFilter.options).some(
+                                option => option.value === collection
+                            );
+                            if (optionExists) {
+                                collectionFilter.value = collection;
+                                filterNFTs();
+                            } else {
+                                console.warn(`Collection ${collection} not found in filter options`);
+                                collectionFilter.value = '';
+                                filterNFTs();
+                            }
+                        } else {
+                            updateDisplay();
+                        }
                     }
                 } else {
                     noResultsDiv.style.display = 'block';
@@ -2369,7 +2434,6 @@
             collectionTitle.textContent = collectionValue || 'All Collections';
             collectionTitle.classList.add('visible');
 
-            // Mise à jour de l'URL avec le hash de la collection
             const encodedCollection = collectionValue ? encodeURIComponent(collectionValue) : '';
             const newUrl = encodedCollection
                 ? `${window.location.pathname}#${currentUsername}/#${encodedCollection}`
@@ -2377,6 +2441,7 @@
             history.pushState({ username: currentUsername, collection: collectionValue }, '', newUrl);
 
             displayNFTs(filteredNFTs, collectionValue);
+            saveUserFilters(); // Sauvegarder les filtres après le changement
         }
 
         function displayNFTs(assets, selectedCollection) {
@@ -2402,7 +2467,6 @@
                 : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets.`;
             countContainer.appendChild(countElement);
 
-            // Update download button text and visibility
             downloadZipButton.textContent = `Download ${assets.length} assets`;
             downloadZipButton.style.display = assets.length > 0 ? 'block' : 'none';
 
@@ -2618,6 +2682,60 @@
             }
 
             filterNFTs();
+            saveUserFilters(); // Sauvegarder les filtres après le changement
+        }
+
+        function saveUserFilters() {
+            if (!loggedInUser) return; // Ne sauvegarde que si un utilisateur est connecté
+
+            const filters = {
+                collectionFilter: document.getElementById('collectionFilter')?.value || '',
+                displayMode: document.getElementById('displayMode')?.value || 'full',
+                cardSize: document.getElementById('cardSize')?.value || 'medium',
+                sortBy: document.getElementById('sortBy')?.value || 'default'
+            };
+
+            localStorage.setItem(`filters_${loggedInUser.username}`, JSON.stringify(filters));
+            console.log('Filters saved for user:', loggedInUser.username, filters);
+        }
+
+        function loadUserFilters() {
+            if (!loggedInUser) return;
+
+            const savedFilters = localStorage.getItem(`filters_${loggedInUser.username}`);
+            if (!savedFilters) return;
+
+            try {
+                const filters = JSON.parse(savedFilters);
+                const collectionFilter = document.getElementById('collectionFilter');
+                const displayMode = document.getElementById('displayMode');
+                const cardSize = document.getElementById('cardSize');
+                const sortBy = document.getElementById('sortBy');
+
+                if (displayMode && filters.displayMode) {
+                    displayMode.value = filters.displayMode;
+                }
+                if (cardSize && filters.cardSize) {
+                    cardSize.value = filters.cardSize;
+                }
+                if (sortBy && filters.sortBy) {
+                    sortBy.value = filters.sortBy;
+                }
+                if (collectionFilter && filters.collectionFilter) {
+                    const optionExists = Array.from(collectionFilter.options).some(
+                        option => option.value === filters.collectionFilter
+                    );
+                    if (optionExists) {
+                        collectionFilter.value = filters.collectionFilter;
+                    } else {
+                        console.warn(`Saved collection ${filters.collectionFilter} not found in filter options`);
+                        collectionFilter.value = '';
+                    }
+                }
+                filterNFTs();
+            } catch (error) {
+                console.error('Error loading saved filters:', error);
+            }
         }
 
         function setupEventListeners() {
@@ -2677,7 +2795,6 @@
             loginUsernameInput.addEventListener('keypress', (event) => {
                 if (event.key === 'Enter') {
                     clearLoginSuggestions();
-                    // Don't trigger handleLogin directly; wait for confirm button
                 }
             });
 
@@ -2749,21 +2866,19 @@
                 if (usernameInput) {
                     usernameInput.value = username;
                     fetchProfileAndNFTs().then(() => {
-                        if (collection) {
-                            const collectionFilter = document.getElementById('collectionFilter');
-                            if (collectionFilter) {
-                                const decodedCollection = decodeURIComponent(collection);
-                                const optionExists = Array.from(collectionFilter.options).some(
-                                    option => option.value === decodedCollection
-                                );
-                                if (optionExists) {
-                                    collectionFilter.value = decodedCollection;
-                                    filterNFTs();
-                                } else {
-                                    console.warn(`Collection ${decodedCollection} not found in filter options`);
-                                    collectionFilter.value = '';
-                                    filterNFTs();
-                                }
+                        const collectionFilter = document.getElementById('collectionFilter');
+                        if (collectionFilter && collection) {
+                            const decodedCollection = decodeURIComponent(collection);
+                            const optionExists = Array.from(collectionFilter.options).some(
+                                option => option.value === decodedCollection
+                            );
+                            if (optionExists) {
+                                collectionFilter.value = decodedCollection;
+                                filterNFTs();
+                            } else {
+                                console.warn(`Collection ${decodedCollection} not found in filter options`);
+                                collectionFilter.value = '';
+                                filterNFTs();
                             }
                         }
                     });
@@ -2840,7 +2955,6 @@
             }
         });
 
-        // Initialiser l'application
         initialize();
     </script>
 </body>
