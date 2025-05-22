@@ -88,6 +88,7 @@
             display: flex;
             gap: 20px;
             margin-left: auto;
+            margin-right: 20px;
             z-index: 1000;
             align-items: center;
         }
@@ -106,15 +107,17 @@
 
         .navbar-divider {
             color: var(--text-dark);
-            font-size: 1rem;
+            font-size: 0.8rem;
             line-height: 1;
-            margin: 0 10px;
+            margin: 0 8px;
         }
 
         .user-profile {
             display: flex;
             align-items: center;
             gap: 8px;
+            cursor: pointer;
+            position: relative;
         }
 
         .user-profile-picture {
@@ -130,6 +133,33 @@
             font-size: 1rem;
             text-transform: uppercase;
             font-weight: 700;
+        }
+
+        .user-submenu {
+            position: absolute;
+            top: calc(100% + 5px);
+            right: 0;
+            background-color: var(--collection-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            min-width: 150px;
+            overflow: hidden;
+        }
+
+        .submenu-item {
+            padding: 10px 15px;
+            color: var(--text-dark);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .submenu-item:hover {
+            background-color: var(--color1);
+            color: #fff;
         }
 
         .navbar-search {
@@ -912,6 +942,7 @@
                 padding: 10px 0;
                 box-shadow: var(--shadow);
                 z-index: 1000;
+                margin-right: 0;
             }
 
             .navbar-menu.active {
@@ -922,6 +953,7 @@
 
             .navbar-divider {
                 margin: 5px 0;
+                font-size: 0.7rem;
             }
 
             .user-profile {
@@ -938,6 +970,18 @@
 
             .user-profile-username {
                 font-size: 0.9rem;
+            }
+
+            .user-submenu {
+                position: static;
+                width: 100%;
+                border-radius: 6px;
+                margin-top: 5px;
+            }
+
+            .submenu-item {
+                padding: 8px 12px;
+                font-size: 0.85rem;
             }
 
             h1 {
@@ -1252,8 +1296,11 @@
             <div class="user-profile" id="userProfile" style="display: none;">
                 <img id="userProfilePicture" src="" alt="User Profile" class="user-profile-picture" />
                 <span id="userProfileUsername" class="user-profile-username"></span>
+                <div class="user-submenu" id="userSubmenu" style="display: none;">
+                    <div class="submenu-item" id="myProfileOption">My Profile</div>
+                    <div class="submenu-item" id="logoutOption">Logout</div>
+                </div>
             </div>
-            <a href="#" id="loginLink" aria-label="Login">Login</a>
         </div>
         <button class="navbar-toggle" aria-label="Toggle menu" aria-expanded="false" onclick="toggleMenu()">☰</button>
     </nav>
@@ -1477,26 +1524,29 @@
         }
 
         function updateLoginLink() {
-            const loginLink = document.getElementById('loginLink');
             const userProfile = document.getElementById('userProfile');
             const userProfilePicture = document.getElementById('userProfilePicture');
             const userProfileUsername = document.getElementById('userProfileUsername');
             const navbarDivider = document.getElementById('navbarDivider');
 
-            if (!loginLink || !userProfile || !userProfilePicture || !userProfileUsername || !navbarDivider) return;
+            if (!userProfile || !userProfilePicture || !userProfileUsername || !navbarDivider) return;
 
             if (loggedInUser) {
-                loginLink.textContent = 'Logout';
-                loginLink.onclick = logout;
                 userProfilePicture.src = loggedInUser.avatar || '/assets/fallback-icon.png';
                 userProfileUsername.textContent = loggedInUser.username;
                 userProfile.style.display = 'flex';
                 navbarDivider.style.display = 'inline';
             } else {
-                loginLink.textContent = 'Login';
-                loginLink.onclick = showLoginModal;
                 userProfile.style.display = 'none';
                 navbarDivider.style.display = 'none';
+            }
+        }
+
+        function toggleUserSubmenu() {
+            const userSubmenu = document.getElementById('userSubmenu');
+            if (userSubmenu) {
+                const isVisible = userSubmenu.style.display === 'block';
+                userSubmenu.style.display = isVisible ? 'none' : 'block';
             }
         }
 
@@ -2356,7 +2406,7 @@
                     baseFileName = sanitizeFileNameForZip(baseFileName);
                     let fileName = baseFileName + extension;
 
-                    if (nameCounts[baseFileName]) {
+                                        if (nameCounts[baseFileName]) {
                         nameCounts[baseFileName]++;
                         fileName = `${baseFileName}_${nameCounts[baseFileName]}${extension}`;
                     } else {
@@ -2416,9 +2466,13 @@
             const navbarMenu = document.getElementById('navbarMenu');
             const confirmLoginButton = document.getElementById('confirmLoginButton');
             const cancelLoginButton = document.getElementById('cancelLoginButton');
+            const userProfile = document.getElementById('userProfile');
+            const myProfileOption = document.getElementById('myProfileOption');
+            const logoutOption = document.getElementById('logoutOption');
 
             if (!usernameInput || !loginUsernameInput || !themeButton || !collectionFilter || 
-                !displayMode || !cardSize || !sortBy || !navbarMenu || !confirmLoginButton || !cancelLoginButton) {
+                !displayMode || !cardSize || !sortBy || !navbarMenu || !confirmLoginButton || 
+                !cancelLoginButton || !userProfile || !myProfileOption || !logoutOption) {
                 console.error('One or more DOM elements not found');
                 const errorDiv = document.getElementById('error');
                 if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
@@ -2477,6 +2531,35 @@
             displayMode.addEventListener('change', updateDisplay);
             cardSize.addEventListener('change', updateDisplay);
             sortBy.addEventListener('change', filterNFTs);
+
+            // Clic sur le profil utilisateur pour afficher/masquer le sous-menu
+            userProfile.addEventListener('click', (event) => {
+                event.preventDefault();
+                toggleUserSubmenu();
+            });
+
+            // Gestion des options du sous-menu
+            myProfileOption.addEventListener('click', () => {
+                const usernameInput = document.getElementById('usernameInput');
+                if (usernameInput && loggedInUser) {
+                    usernameInput.value = loggedInUser.username;
+                    fetchProfileAndNFTs();
+                    toggleUserSubmenu();
+                }
+            });
+
+            logoutOption.addEventListener('click', (event) => {
+                logout(event);
+                toggleUserSubmenu();
+            });
+
+            // Fermer le sous-menu si on clique en dehors
+            document.addEventListener('click', (event) => {
+                const userSubmenu = document.getElementById('userSubmenu');
+                if (userSubmenu && !userProfile.contains(event.target) && !userSubmenu.contains(event.target)) {
+                    userSubmenu.style.display = 'none';
+                }
+            });
 
             navbarMenu.querySelectorAll('a').forEach(link => {
                 link.addEventListener('click', () => {
