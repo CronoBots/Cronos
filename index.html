@@ -713,7 +713,7 @@
 
         #downloadZipButton {
             display: none;
-            margin: 20px auto; /* Uniformiser avec le padding du footer */
+            margin: 20px auto 20px auto;
             padding: 10px 20px;
             background-color: var(--color1);
             color: var(--text-dark);
@@ -1167,7 +1167,7 @@
             #downloadZipButton {
                 padding: 8px 16px;
                 font-size: 12px;
-                margin: 15px auto; /* Uniformiser avec le padding du footer */
+                margin: 15px auto 15px auto;
             }
 
             .selected-profile {
@@ -2050,7 +2050,7 @@
             const username = document.getElementById('username');
             const verifiedBadge = document.getElementById('verifiedBadge');
             const displayName = document.getElementById('displayName');
-            const socialContainer = document.getElementBymodel('socialContainer');
+            const socialContainer = document.getElementById('socialContainer');
             const croLink = document.getElementById('croLink');
             const croUrl = document.getElementById('croUrl');
             const twitterLink = document.getElementById('twitterLink');
@@ -2322,492 +2322,473 @@
             });
         }
 
-<!-- ... (le début du script HTML/CSS reste inchangé jusqu'à la balise <script> dans le body) -->
+        function filterNFTs() {
+            const collectionFilter = document.getElementById('collectionFilter');
+            const displayMode = document.getElementById('displayMode');
+            const cardSize = document.getElementById('cardSize');
+            const sortBy = document.getElementById('sortBy');
+            const collectionTitle = document.getElementById('collectionTitle');
 
-<script>
-    // ... (le code JavaScript jusqu'à la fonction filterNFTs reste inchangé)
-
-    function filterNFTs() {
-        const collectionFilter = document.getElementById('collectionFilter');
-        const displayMode = document.getElementById('displayMode');
-        const cardSize = document.getElementById('cardSize');
-        const sortBy = document.getElementById('sortBy');
-        const collectionTitle = document.getElementById('collectionTitle');
-
-        if (!collectionFilter || !displayMode || !cardSize || !sortBy || !collectionTitle) {
-            console.error('Filter elements not found');
-            return;
-        }
-
-        if (!allNFTs || !allNFTs.length) {
-            displayNFTs([], '');
-            collectionTitle.textContent = '';
-            collectionTitle.classList.remove('visible');
-            return;
-        }
-
-        const collectionValue = collectionFilter.value;
-        let filteredNFTs = collectionValue
-            ? allNFTs.filter(nft => nft.collection?.name === collectionValue)
-            : [...allNFTs];
-
-        const sortValue = sortBy.value;
-        if (sortValue === 'rank') {
-            filteredNFTs.sort((a, b) => (a.defaultRarityRank || Infinity) - (b.defaultRarityRank || Infinity));
-        } else if (sortValue === 'newest') {
-            filteredNFTs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        } else if (sortValue === 'oldest') {
-            filteredNFTs.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-        } else {
-            filteredNFTs.sort((a, b) => a.id.localeCompare(b.id));
-        }
-
-        collectionTitle.textContent = collectionValue || 'All Collections';
-        collectionTitle.classList.add('visible');
-
-        const newUrl = collectionValue
-            ? `${window.location.pathname}#${currentUsername}/#${encodeURIComponent(collectionValue)}`
-            : `${window.location.pathname}#${currentUsername}`;
-        history.pushState({ username: currentUsername, collection: collectionValue }, '', newUrl);
-
-        displayNFTs(filteredNFTs, collectionValue);
-    }
-
-    function displayNFTs(assets, selectedCollection) {
-        const container = document.getElementById('nftContainer');
-        const countContainer = document.getElementById('nftCountContainer');
-        const downloadZipButton = document.getElementById('downloadZipButton');
-        const displayMode = document.getElementById('displayMode')?.value;
-        const cardSize = document.getElementById('cardSize')?.value;
-
-        if (!container || !countContainer || !downloadZipButton) {
-            console.error('NFT container, count container, or download button not found');
-            return;
-        }
-
-        countContainer.innerHTML = '';
-        container.className = `nft-container ${displayMode}-mode ${cardSize}-size`;
-        container.innerHTML = '';
-
-        const countElement = document.createElement('p');
-        countElement.className = 'nft-count';
-        countElement.innerHTML = selectedCollection
-            ? `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets on this collection.`
-            : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets.`;
-        countContainer.appendChild(countElement);
-
-        // Mettre à jour le texte du bouton avec le nombre d'assets
-        downloadZipButton.textContent = `DOWNLOAD ${assets.length} ASSETS`;
-        downloadZipButton.style.display = assets.length > 0 ? 'block' : 'none';
-
-        if (displayMode === 'thumbnail') {
-            const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
-            container.style.width = '100%';
-            container.style.maxWidth = '100vw';
-            container.style.gridTemplateColumns = `repeat(auto-fill, ${cardWidth}px)`;
-
-            assets.forEach((asset, index) => {
-                const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
-                const card = document.createElement('div');
-                card.className = 'nft-card';
-
-                let mediaElement;
-                if (imageUrl.endsWith('.mp4')) {
-                    mediaElement = document.createElement('video');
-                    mediaElement.src = imageUrl;
-                    mediaElement.controls = true;
-                    mediaElement.muted = true;
-                    mediaElement.loop = true;
-                    mediaElement.setAttribute('playsinline', '');
-                } else {
-                    mediaElement = document.createElement('img');
-                    mediaElement.src = imageUrl;
-                    mediaElement.alt = asset.name || 'NFT Image';
-                    mediaElement.loading = 'lazy';
-                    mediaElement.decoding = 'async';
-                    mediaElement.sizes = '(max-width: 768px) 80px, 200px';
-                }
-
-                mediaElement.onerror = () => {
-                    card.innerHTML = '';
-                    const placeholder = document.createElement('div');
-                    placeholder.className = 'media-placeholder';
-                    placeholder.textContent = 'Média indisponible';
-                    card.appendChild(placeholder);
-                };
-
-                const tooltip = document.createElement('span');
-                tooltip.className = 'tooltip';
-                tooltip.textContent = asset.name || 'Unnamed NFT';
-                card.appendChild(tooltip);
-
-                card.appendChild(mediaElement);
-                container.appendChild(card);
-            });
-        } else {
-            assets.forEach((asset, index) => {
-                const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
-                const card = document.createElement('div');
-                card.className = 'nft-card';
-
-                let mediaElement;
-                if (imageUrl.endsWith('.mp4')) {
-                    mediaElement = document.createElement('video');
-                    mediaElement.src = imageUrl;
-                    mediaElement.controls = true;
-                    mediaElement.muted = true;
-                    mediaElement.loop = true;
-                    mediaElement.setAttribute('playsinline', '');
-                } else {
-                    mediaElement = document.createElement('img');
-                    mediaElement.src = imageUrl;
-                    mediaElement.alt = asset.name || 'NFT Image';
-                    mediaElement.loading = 'lazy';
-                    mediaElement.decoding = 'async';
-                    mediaElement.sizes = '(max-width: 768px) 80px, 200px';
-                }
-
-                mediaElement.onerror = () => {
-                    card.innerHTML = '';
-                    const placeholder = document.createElement('div');
-                    placeholder.className = 'media-placeholder';
-                    placeholder.textContent = 'Média indisponible';
-                    card.appendChild(placeholder);
-                };
-
-                card.appendChild(mediaElement);
-
-                const title = document.createElement('h3');
-                title.innerHTML = asset.name ? normalizeText(asset.name) : 'Unnamed NFT';
-                card.appendChild(title);
-
-                container.appendChild(card);
-            });
-        }
-    }
-
-    async function downloadNFTsAsZip() {
-        const zip = new JSZip();
-        const nftContainer = document.getElementById('nftContainer');
-        const errorDiv = document.getElementById('error');
-        const progressModal = document.getElementById('progressModal');
-        const progressBar = document.getElementById('progressBar');
-        const progressText = document.getElementById('progressText');
-        const modalTitle = document.getElementById('modalTitle');
-        const cancelButton = document.getElementById('cancelDownloadButton');
-
-        if (!nftContainer || !errorDiv || !progressModal || !progressBar || !progressText || !modalTitle || !cancelButton) {
-            console.error('Required DOM elements for download not found');
-            if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
-            return;
-        }
-
-        const filteredNFTs = Array.from(nftContainer.querySelectorAll('.nft-card')).map((card, index) => {
-            const img = card.querySelector('img');
-            const video = card.querySelector('video');
-            const titleElement = card.querySelector('h3');
-            const title = titleElement ? normalizeText(titleElement.textContent) : `NFT_${index + 1}`;
-            return {
-                url: img ? img.src : video ? video.src : null,
-                name: title,
-            };
-        }).filter(nft => nft.url && nft.url !== 'https://via.placeholder.com/150');
-
-        if (filteredNFTs.length === 0) {
-            errorDiv.textContent = 'No valid assets to download.';
-            return;
-        }
-
-        modalTitle.textContent = 'Creating ZIP File';
-        progressText.textContent = `Preparing ${filteredNFTs.length} assets...`;
-        progressBar.style.width = '0%';
-        progressModal.style.display = 'flex';
-        cancelButton.style.display = 'block';
-
-        isDownloadCancelled = false;
-        cancelButton.onclick = () => {
-            isDownloadCancelled = true;
-            progressText.textContent = 'Download cancelled.';
-            progressBar.style.width = '0%';
-            setTimeout(() => {
-                progressModal.style.display = 'none';
-            }, 1000);
-        };
-
-        // Dictionnaire pour gérer les noms de fichiers dupliqués
-        const fileNameCounts = {};
-
-        let processed = 0;
-        for (const [index, nft] of filteredNFTs.entries()) {
-            if (isDownloadCancelled) {
-                console.log('Download cancelled by user');
+            if (!collectionFilter || !displayMode || !cardSize || !sortBy || !collectionTitle) {
+                console.error('Filter elements not found');
                 return;
             }
 
-            try {
-                const response = await fetch(nft.url);
-                if (!response.ok) {
-                    console.error(`Failed to fetch asset ${nft.name}: ${response.statusText}`);
-                    continue;
-                }
-                const blob = await response.blob();
-                const extension = nft.url.endsWith('.mp4') ? 'mp4' : 'png';
-                let fileName = sanitizeFileNameForZip(nft.name);
-
-                // Gérer les noms de fichiers dupliqués
-                if (fileNameCounts[fileName]) {
-                    fileNameCounts[fileName]++;
-                    fileName = `${fileName}_${fileNameCounts[fileName]}`;
-                } else {
-                    fileNameCounts[fileName] = 1;
-                }
-
-                const finalFileName = `${fileName}.${extension}`;
-                zip.file(finalFileName, blob);
-                processed++;
-                const progressPercent = (processed / filteredNFTs.length) * 100;
-                progressBar.style.width = `${progressPercent}%`;
-                progressText.textContent = `Processing ${processed} of ${filteredNFTs.length} assets...`;
-            } catch (error) {
-                console.error(`Error downloading ${nft.name}: ${error.message}`);
-            }
-        }
-
-        if (isDownloadCancelled) {
-            console.log('Download process aborted');
-            return;
-        }
-
-        if (processed === 0) {
-            progressModal.style.display = 'none';
-            errorDiv.textContent = 'No assets could be downloaded.';
-            return;
-        }
-
-        progressText.textContent = 'Generating ZIP file...';
-        try {
-            const content = await zip.generateAsync({ type: 'blob' });
-            saveAs(content, `${sanitizeInput(currentUsername)}_NFT.zip`);
-            progressText.textContent = 'Download complete!';
-            progressBar.style.width = '100%';
-            setTimeout(() => {
-                progressModal.style.display = 'none';
-            }, 1000);
-        } catch (error) {
-            console.error(`Error generating ZIP: ${error.message}`);
-            progressModal.style.display = 'none';
-            errorDiv.textContent = 'Failed to generate ZIP file.';
-        }
-    }
-
-    function updateDisplay() {
-        const displayMode = document.getElementById('displayMode')?.value;
-        const cardSize = document.getElementById('cardSize')?.value;
-        const nftContainer = document.getElementById('nftContainer');
-
-        if (!nftContainer) {
-            console.error('NFT container not found');
-            return;
-        }
-
-        nftContainer.className = `nft-container ${displayMode}-mode ${cardSize}-size`;
-
-        if (displayMode === 'thumbnail') {
-            const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
-            nftContainer.style.width = '100%';
-            nftContainer.style.maxWidth = '100vw';
-            nftContainer.style.gridTemplateColumns = `repeat(auto-fill, ${cardWidth}px)`;
-        } else {
-            nftContainer.style.gridTemplateColumns = '';
-            nftContainer.style.width = '';
-            nftContainer.style.maxWidth = '100vw';
-        }
-
-        filterNFTs();
-    }
-
-    function setupEventListeners() {
-        const usernameInput = document.getElementById('usernameInput');
-        const loginUsernameInput = document.getElementById('loginUsernameInput');
-        const themeButton = document.getElementById('themeButton');
-        const collectionFilter = document.getElementById('collectionFilter');
-        const displayMode = document.getElementById('displayMode');
-        const cardSize = document.getElementById('cardSize');
-        const sortBy = document.getElementById('sortBy');
-        const navbarMenu = document.getElementById('navbarMenu');
-        const confirmLoginButton = document.getElementById('confirmLoginButton');
-        const cancelLoginButton = document.getElementById('cancelLoginButton');
-        const myProfileLink = document.getElementById('myProfileLink');
-        const logoutLink = document.getElementById('logoutLink');
-        const loginLink = document.getElementById('loginLink');
-
-        if (!usernameInput || !loginUsernameInput || !themeButton || !collectionFilter || 
-            !displayMode || !cardSize || !sortBy || !navbarMenu || !confirmLoginButton || 
-            !cancelLoginButton || !myProfileLink || !logoutLink || !loginLink) {
-            console.error('One or more DOM elements not found');
-            const errorDiv = document.getElementById('error');
-            if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
-            return;
-        }
-
-        const isMobile = window.innerWidth <= 768;
-        const debounceDelay = isMobile ? 500 : 300;
-
-        usernameInput.addEventListener('input', () => {
-            clearTimeout(debounceTimeout);
-            debounceTimeout = setTimeout(() => {
-                const query = sanitizeInput(usernameInput.value.trim());
-                searchProfiles(query);
-            }, debounceDelay);
-        });
-
-        usernameInput.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') {
-                clearSuggestions();
-                fetchProfileAndNFTs();
-            }
-        });
-
-        usernameInput.addEventListener('blur', () => {
-            resetViewportZoom();
-        });
-
-        loginUsernameInput.addEventListener('input', () => {
-            clearTimeout(debounceTimeout);
-            debounceTimeout = setTimeout(() => {
-                const query = sanitizeInput(loginUsernameInput.value.trim());
-                searchLoginProfiles(query);
-            }, debounceDelay);
-        });
-
-        loginUsernameInput.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') {
-                clearLoginSuggestions();
-                // Don't trigger handleLogin directly; wait for confirm button
-            }
-        });
-
-        confirmLoginButton.addEventListener('click', handleLogin);
-        cancelLoginButton.addEventListener('click', resetLoginModal);
-
-        themeButton.addEventListener('click', toggleTheme);
-
-        collectionFilter.addEventListener('change', filterNFTs);
-        displayMode.addEventListener('change', updateDisplay);
-        cardSize.addEventListener('change', updateDisplay);
-        sortBy.addEventListener('change', filterNFTs);
-
-        myProfileLink.addEventListener('click', (event) => {
-            event.preventDefault();
-            if (loggedInUser) {
-                usernameInput.value = loggedInUser.username;
-                fetchProfileAndNFTs();
-                navbarMenu.classList.remove('active');
-                const toggle = document.querySelector('.navbar-toggle');
-                if (toggle) toggle.setAttribute('aria-expanded', 'false');
-            }
-        });
-
-        logoutLink.addEventListener('click', logout);
-
-        loginLink.addEventListener('click', showLoginModal);
-
-        navbarMenu.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                navbarMenu.classList.remove('active');
-                const toggle = document.querySelector('.navbar-toggle');
-                if (toggle) toggle.setAttribute('aria-expanded', 'false');
-            });
-        });
-
-        document.addEventListener('touchstart', (event) => {
-            if (event.touches.length > 1) {
-                event.preventDefault();
-            }
-        }, { passive: false });
-    }
-
-    function initialize() {
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        const themeButton = document.getElementById('themeButton');
-        if (themeButton) {
-            themeButton.textContent = savedTheme.charAt(0).toUpperCase() + savedTheme.slice(1);
-        }
-
-        const savedUser = localStorage.getItem('loggedInUser');
-        if (savedUser) {
-            try {
-                loggedInUser = JSON.parse(savedUser);
-                updateLoginLink();
-            } catch (error) {
-                console.error('Error parsing saved user:', error);
-                localStorage.removeItem('loggedInUser');
-            }
-        }
-
-        setupEventListeners();
-
-        const hash = window.location.hash.replace('#', '');
-        if (hash) {
-            const usernameInput = document.getElementById('usernameInput');
-            if (usernameInput) {
-                const [username, collection] = hash.split('/#');
-                usernameInput.value = username;
-                fetchProfileAndNFTs();
-            }
-        }
-    }
-
-    window.addEventListener('popstate', (event) => {
-        const usernameInput = document.getElementById('usernameInput');
-        if (!usernameInput) return;
-
-        const hash = window.location.hash.replace('#', '');
-        if (hash) {
-            const [username, collection] = hash.split('/#');
-            if (username !== lastSearchedUsername) {
-                usernameInput.value = username;
-                fetchProfileAndNFTs();
-            } else {
-                const collectionFilter = document.getElementById('collectionFilter');
-                if (collectionFilter) {
-                    collectionFilter.value = collection ? decodeURIComponent(collection) : '';
-                    filterNFTs();
-                }
-            }
-        } else {
-            usernameInput.value = '';
-            const profileHeader = document.getElementById('profileHeader');
-            const nftContainer = document.getElementById('nftContainer');
-            const nftCountContainer = document.getElementById('nftCountContainer');
-            const noResultsDiv = document.getElementById('noResults');
-            const controls = document.getElementById('controls');
-            const collectionTitle = document.getElementById('collectionTitle');
-            const collectionFilter = document.getElementById('collectionFilter');
-            const downloadZipButton = document.getElementById('downloadZipButton');
-
-            if (profileHeader) profileHeader.style.display = 'none';
-            if (nftContainer) nftContainer.innerHTML = '';
-            if (nftCountContainer) nftCountContainer.innerHTML = '';
-            if (noResultsDiv) noResultsDiv.style.display = 'none';
-            if (controls) controls.classList.remove('visible');
-            if (collectionTitle) {
+            if (!allNFTs || !allNFTs.length) {
+                displayNFTs([], '');
                 collectionTitle.textContent = '';
                 collectionTitle.classList.remove('visible');
+                return;
             }
-            if (collectionFilter) {
-                collectionFilter.innerHTML = '<option value="">All Collections</option>';
-                collectionFilter.disabled = true;
-            }
-            if (downloadZipButton) downloadZipButton.style.display = 'none';
 
-            allNFTs = [];
-            currentUsername = '';
+            const collectionValue = collectionFilter.value;
+            let filteredNFTs = collectionValue
+                ? allNFTs.filter(nft => nft.collection?.name === collectionValue)
+                : [...allNFTs];
+
+            const sortValue = sortBy.value;
+            if (sortValue === 'rank') {
+                filteredNFTs.sort((a, b) => (a.defaultRarityRank || Infinity) - (b.defaultRarityRank || Infinity));
+            } else if (sortValue === 'newest') {
+                filteredNFTs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            } else if (sortValue === 'oldest') {
+                filteredNFTs.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            } else {
+                filteredNFTs.sort((a, b) => a.id.localeCompare(b.id));
+            }
+
+            collectionTitle.textContent = collectionValue || 'All Collections';
+            collectionTitle.classList.add('visible');
+
+            const newUrl = collectionValue
+                ? `${window.location.pathname}#${currentUsername}/#${encodeURIComponent(collectionValue)}`
+                : `${window.location.pathname}#${currentUsername}`;
+            history.pushState({ username: currentUsername, collection: collectionValue }, '', newUrl);
+
+            displayNFTs(filteredNFTs, collectionValue);
         }
-    });
 
-    initialize();
-</script>
+        function displayNFTs(assets, selectedCollection) {
+            const container = document.getElementById('nftContainer');
+            const countContainer = document.getElementById('nftCountContainer');
+            const downloadZipButton = document.getElementById('downloadZipButton');
+            const displayMode = document.getElementById('displayMode')?.value;
+            const cardSize = document.getElementById('cardSize')?.value;
+
+            if (!container || !countContainer || !downloadZipButton) {
+                console.error('NFT container, count container, or download button not found');
+                return;
+            }
+
+            countContainer.innerHTML = '';
+            container.className = `nft-container ${displayMode}-mode ${cardSize}-size`;
+            container.innerHTML = '';
+
+            const countElement = document.createElement('p');
+            countElement.className = 'nft-count';
+            countElement.innerHTML = selectedCollection
+                ? `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets on this collection.`
+                : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets.`;
+            countContainer.appendChild(countElement);
+
+            downloadZipButton.style.display = assets.length > 0 ? 'block' : 'none';
+
+            if (displayMode === 'thumbnail') {
+                const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
+                container.style.width = '100%';
+                container.style.maxWidth = '100vw';
+                container.style.gridTemplateColumns = `repeat(auto-fill, ${cardWidth}px)`;
+
+                assets.forEach((asset, index) => {
+                    const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
+                    const card = document.createElement('div');
+                    card.className = 'nft-card';
+
+                    let mediaElement;
+                    if (imageUrl.endsWith('.mp4')) {
+                        mediaElement = document.createElement('video');
+                        mediaElement.src = imageUrl;
+                        mediaElement.controls = true;
+                        mediaElement.muted = true;
+                        mediaElement.loop = true;
+                        mediaElement.setAttribute('playsinline', '');
+                    } else {
+                        mediaElement = document.createElement('img');
+                        mediaElement.src = imageUrl;
+                        mediaElement.alt = asset.name || 'NFT Image';
+                        mediaElement.loading = 'lazy';
+                        mediaElement.decoding = 'async';
+                        mediaElement.sizes = '(max-width: 768px) 80px, 200px';
+                    }
+
+                    mediaElement.onerror = () => {
+                        card.innerHTML = '';
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'media-placeholder';
+                        placeholder.textContent = 'Média indisponible';
+                        card.appendChild(placeholder);
+                    };
+
+                    const tooltip = document.createElement('span');
+                    tooltip.className = 'tooltip';
+                    tooltip.textContent = asset.name || 'Unnamed NFT';
+                    card.appendChild(tooltip);
+
+                    card.appendChild(mediaElement);
+                    container.appendChild(card);
+                });
+            } else {
+                assets.forEach((asset, index) => {
+                    const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
+                    const card = document.createElement('div');
+                    card.className = 'nft-card';
+
+                    let mediaElement;
+                    if (imageUrl.endsWith('.mp4')) {
+                        mediaElement = document.createElement('video');
+                        mediaElement.src = imageUrl;
+                        mediaElement.controls = true;
+                        mediaElement.muted = true;
+                        mediaElement.loop = true;
+                        mediaElement.setAttribute('playsinline', '');
+                    } else {
+                        mediaElement = document.createElement('img');
+                        mediaElement.src = imageUrl;
+                        mediaElement.alt = asset.name || 'NFT Image';
+                        mediaElement.loading = 'lazy';
+                        mediaElement.decoding = 'async';
+                        mediaElement.sizes = '(max-width: 768px) 80px, 200px';
+                    }
+
+                    mediaElement.onerror = () => {
+                        card.innerHTML = '';
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'media-placeholder';
+                        placeholder.textContent = 'Média indisponible';
+                        card.appendChild(placeholder);
+                    };
+
+                    card.appendChild(mediaElement);
+
+                    const title = document.createElement('h3');
+                    title.innerHTML = asset.name ? normalizeText(asset.name) : 'Unnamed NFT';
+                    card.appendChild(title);
+
+                    container.appendChild(card);
+                });
+            }
+        }
+
+        async function downloadNFTsAsZip() {
+            const zip = new JSZip();
+            const nftContainer = document.getElementById('nftContainer');
+            const errorDiv = document.getElementById('error');
+            const progressModal = document.getElementById('progressModal');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const modalTitle = document.getElementById('modalTitle');
+            const cancelButton = document.getElementById('cancelDownloadButton');
+
+            if (!nftContainer || !errorDiv || !progressModal || !progressBar || !progressText || !modalTitle || !cancelButton) {
+                console.error('Required DOM elements for download not found');
+                if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
+                return;
+            }
+
+            const filteredNFTs = Array.from(nftContainer.querySelectorAll('.nft-card')).map((card, index) => {
+                const img = card.querySelector('img');
+                const video = card.querySelector('video');
+                const titleElement = card.querySelector('h3');
+                const title = titleElement ? titleElement.textContent : `NFT_${index + 1}`;
+                return {
+                    url: img ? img.src : video ? video.src : null,
+                    name: title,
+                };
+            }).filter(nft => nft.url && nft.url !== 'https://via.placeholder.com/150');
+
+            if (filteredNFTs.length === 0) {
+                errorDiv.textContent = 'No valid assets to download.';
+                return;
+            }
+
+            modalTitle.textContent = 'Creating ZIP File';
+            progressText.textContent = `Preparing ${filteredNFTs.length} assets...`;
+            progressBar.style.width = '0%';
+            progressModal.style.display = 'flex';
+            cancelButton.style.display = 'block';
+
+            isDownloadCancelled = false;
+            cancelButton.onclick = () => {
+                isDownloadCancelled = true;
+                progressText.textContent = 'Download cancelled.';
+                progressBar.style.width = '0%';
+                setTimeout(() => {
+                    progressModal.style.display = 'none';
+                }, 1000);
+            };
+
+            let processed = 0;
+            for (const [index, nft] of filteredNFTs.entries()) {
+                if (isDownloadCancelled) {
+                    console.log('Download cancelled by user');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(nft.url);
+                    if (!response.ok) {
+                        console.error(`Failed to fetch asset ${nft.name}: ${response.statusText}`);
+                        continue;
+                    }
+                    const blob = await response.blob();
+                    const extension = nft.url.endsWith('.mp4') ? 'mp4' : 'png';
+                    const sanitizedName = sanitizeFileNameForZip(nft.name);
+                    const fileName = `${sanitizedName}_${index + 1}.${extension}`;
+                    zip.file(fileName, blob);
+                    processed++;
+                    const progressPercent = (processed / filteredNFTs.length) * 100;
+                    progressBar.style.width = `${progressPercent}%`;
+                    progressText.textContent = `Processing ${processed} of ${filteredNFTs.length} assets...`;
+                } catch (error) {
+                    console.error(`Error downloading ${nft.name}: ${error.message}`);
+                }
+            }
+
+            if (isDownloadCancelled) {
+                console.log('Download process aborted');
+                return;
+            }
+
+            if (processed === 0) {
+                progressModal.style.display = 'none';
+                errorDiv.textContent = 'No assets could be downloaded.';
+                return;
+            }
+
+            progressText.textContent = 'Generating ZIP file...';
+            try {
+                const content = await zip.generateAsync({ type: 'blob' });
+                saveAs(content, `${currentUsername}_nfts.zip`);
+                progressText.textContent = 'Download complete!';
+                progressBar.style.width = '100%';
+                setTimeout(() => {
+                    progressModal.style.display = 'none';
+                }, 1000);
+            } catch (error) {
+                console.error(`Error generating ZIP: ${error.message}`);
+                progressModal.style.display = 'none';
+                errorDiv.textContent = 'Failed to generate ZIP file.';
+            }
+        }
+
+        function updateDisplay() {
+            const displayMode = document.getElementById('displayMode')?.value;
+            const cardSize = document.getElementById('cardSize')?.value;
+            const nftContainer = document.getElementById('nftContainer');
+
+            if (!nftContainer) {
+                console.error('NFT container not found');
+                return;
+            }
+
+            nftContainer.className = `nft-container ${displayMode}-mode ${cardSize}-size`;
+
+            if (displayMode === 'thumbnail') {
+                const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
+                nftContainer.style.width = '100%';
+                nftContainer.style.maxWidth = '100vw';
+                nftContainer.style.gridTemplateColumns = `repeat(auto-fill, ${cardWidth}px)`;
+            } else {
+                nftContainer.style.gridTemplateColumns = '';
+                nftContainer.style.width = '';
+                nftContainer.style.maxWidth = '100vw';
+            }
+
+            filterNFTs();
+        }
+
+        function setupEventListeners() {
+            const usernameInput = document.getElementById('usernameInput');
+            const loginUsernameInput = document.getElementById('loginUsernameInput');
+            const themeButton = document.getElementById('themeButton');
+            const collectionFilter = document.getElementById('collectionFilter');
+            const displayMode = document.getElementById('displayMode');
+            const cardSize = document.getElementById('cardSize');
+            const sortBy = document.getElementById('sortBy');
+            const navbarMenu = document.getElementById('navbarMenu');
+            const confirmLoginButton = document.getElementById('confirmLoginButton');
+            const cancelLoginButton = document.getElementById('cancelLoginButton');
+            const myProfileLink = document.getElementById('myProfileLink');
+            const logoutLink = document.getElementById('logoutLink');
+            const loginLink = document.getElementById('loginLink');
+
+            if (!usernameInput || !loginUsernameInput || !themeButton || !collectionFilter || 
+                !displayMode || !cardSize || !sortBy || !navbarMenu || !confirmLoginButton || 
+                !cancelLoginButton || !myProfileLink || !logoutLink || !loginLink) {
+                console.error('One or more DOM elements not found');
+                const errorDiv = document.getElementById('error');
+                if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
+                return;
+            }
+
+            const isMobile = window.innerWidth <= 768;
+            const debounceDelay = isMobile ? 500 : 300;
+
+            usernameInput.addEventListener('input', () => {
+                clearTimeout(debounceTimeout);
+                debounceTimeout = setTimeout(() => {
+                    const query = sanitizeInput(usernameInput.value.trim());
+                    searchProfiles(query);
+                }, debounceDelay);
+            });
+
+            usernameInput.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter') {
+                    clearSuggestions();
+                    fetchProfileAndNFTs();
+                }
+            });
+
+            usernameInput.addEventListener('blur', () => {
+                resetViewportZoom();
+            });
+
+            loginUsernameInput.addEventListener('input', () => {
+                clearTimeout(debounceTimeout);
+                debounceTimeout = setTimeout(() => {
+                    const query = sanitizeInput(loginUsernameInput.value.trim());
+                    searchLoginProfiles(query);
+                }, debounceDelay);
+            });
+
+            loginUsernameInput.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter') {
+                    clearLoginSuggestions();
+                    // Don't trigger handleLogin directly; wait for confirm button
+                }
+            });
+
+            confirmLoginButton.addEventListener('click', handleLogin);
+            cancelLoginButton.addEventListener('click', resetLoginModal);
+
+            themeButton.addEventListener('click', toggleTheme);
+
+            collectionFilter.addEventListener('change', filterNFTs);
+            displayMode.addEventListener('change', updateDisplay);
+            cardSize.addEventListener('change', updateDisplay);
+            sortBy.addEventListener('change', filterNFTs);
+
+            myProfileLink.addEventListener('click', (event) => {
+                event.preventDefault();
+                if (loggedInUser) {
+                    usernameInput.value = loggedInUser.username;
+                    fetchProfileAndNFTs();
+                    navbarMenu.classList.remove('active');
+                    const toggle = document.querySelector('.navbar-toggle');
+                    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            logoutLink.addEventListener('click', logout);
+
+            loginLink.addEventListener('click', showLoginModal);
+
+            navbarMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    navbarMenu.classList.remove('active');
+                    const toggle = document.querySelector('.navbar-toggle');
+                    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+                });
+            });
+
+            document.addEventListener('touchstart', (event) => {
+                if (event.touches.length > 1) {
+                    event.preventDefault();
+                }
+            }, { passive: false });
+        }
+
+        function initialize() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            const themeButton = document.getElementById('themeButton');
+            if (themeButton) {
+                themeButton.textContent = savedTheme.charAt(0).toUpperCase() + savedTheme.slice(1);
+            }
+
+            const savedUser = localStorage.getItem('loggedInUser');
+            if (savedUser) {
+                try {
+                    loggedInUser = JSON.parse(savedUser);
+                    updateLoginLink();
+                } catch (error) {
+                    console.error('Error parsing saved user:', error);
+                    localStorage.removeItem('loggedInUser');
+                }
+            }
+
+            setupEventListeners();
+
+            const hash = window.location.hash.replace('#', '');
+            if (hash) {
+                const usernameInput = document.getElementById('usernameInput');
+                if (usernameInput) {
+                    const [username, collection] = hash.split('/#');
+                    usernameInput.value = username;
+                    fetchProfileAndNFTs();
+                }
+            }
+        }
+
+        window.addEventListener('popstate', (event) => {
+            const usernameInput = document.getElementById('usernameInput');
+            if (!usernameInput) return;
+
+            const hash = window.location.hash.replace('#', '');
+            if (hash) {
+                const [username, collection] = hash.split('/#');
+                if (username !== lastSearchedUsername) {
+                    usernameInput.value = username;
+                    fetchProfileAndNFTs();
+                } else {
+                    const collectionFilter = document.getElementById('collectionFilter');
+                    if (collectionFilter) {
+                        collectionFilter.value = collection ? decodeURIComponent(collection) : '';
+                        filterNFTs();
+                    }
+                }
+            } else {
+                usernameInput.value = '';
+                const profileHeader = document.getElementById('profileHeader');
+                const nftContainer = document.getElementById('nftContainer');
+                const nftCountContainer = document.getElementById('nftCountContainer');
+                const noResultsDiv = document.getElementById('noResults');
+                const controls = document.getElementById('controls');
+                const collectionTitle = document.getElementById('collectionTitle');
+                const collectionFilter = document.getElementById('collectionFilter');
+                const downloadZipButton = document.getElementById('downloadZipButton');
+
+                if (profileHeader) profileHeader.style.display = 'none';
+                if (nftContainer) nftContainer.innerHTML = '';
+                if (nftCountContainer) nftCountContainer.innerHTML = '';
+                if (noResultsDiv) noResultsDiv.style.display = 'none';
+                if (controls) controls.classList.remove('visible');
+                if (collectionTitle) {
+                    collectionTitle.textContent = '';
+                    collectionTitle.classList.remove('visible');
+                }
+                if (collectionFilter) {
+                    collectionFilter.innerHTML = '<option value="">All Collections</option>';
+                    collectionFilter.disabled = true;
+                }
+                if (downloadZipButton) downloadZipButton.style.display = 'none';
+
+                allNFTs = [];
+                currentUsername = '';
+            }
+        });
+
+        initialize();
+    </script>
 </body>
 </html>
