@@ -752,6 +752,10 @@
             text-align: center;
             box-shadow: var(--shadow);
             color: var(--text-dark);
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
         .progress-bar {
@@ -780,7 +784,7 @@
             display: flex;
             justify-content: center;
             gap: 10px;
-            margin-top: 10px;
+            margin-top: 20px;
         }
 
         .modal-buttons button {
@@ -822,6 +826,7 @@
         #loginModal .navbar-search input {
             width: 100%;
             max-width: none;
+            height: 36px;
         }
 
         #loginModal .suggestions {
@@ -839,6 +844,7 @@
             gap: 10px;
             margin: 10px 0;
             justify-content: center;
+            min-height: 46px;
         }
 
         .selected-username {
@@ -1131,6 +1137,7 @@
                 max-width: 320px;
                 padding: 12px;
                 font-size: 14px;
+                min-height: 240px;
             }
 
             .progress-text {
@@ -1172,6 +1179,7 @@
 
             .selected-profile {
                 margin: 8px 0;
+                min-height: 36px;
             }
 
             .selected-username {
@@ -1269,6 +1277,7 @@
 
             .modal-content {
                 max-width: 280px;
+                min-height: 220px;
             }
 
             .footer {
@@ -1421,7 +1430,7 @@
 
         <div class="modal" id="loginModal">
             <div class="modal-content">
-                <h3>Enter your Crypto.com/NFT Profile</h3>
+                <h3 id="loginModalTitle">Enter your Crypto.com/NFT Profile</h3>
                 <div class="navbar-search" id="loginSearchContainer">
                     <input type="text" id="loginUsernameInput" placeholder="Crypto.com/nft/profile" autocomplete="on" />
                     <div class="suggestions" id="loginSuggestions"></div>
@@ -1581,13 +1590,16 @@
             const loginSearchContainer = document.getElementById('loginSearchContainer');
             const selectedProfileContainer = document.getElementById('selectedProfileContainer');
             const confirmLoginButton = document.getElementById('confirmLoginButton');
-            if (loginModal && loginUsernameInput && loginSearchContainer && selectedProfileContainer && confirmLoginButton) {
+            const loginModalTitle = document.getElementById('loginModalTitle');
+            if (loginModal && loginUsernameInput && loginSearchContainer && selectedProfileContainer && confirmLoginButton && loginModalTitle) {
                 loginModal.style.display = 'flex';
                 loginUsernameInput.value = '';
                 loginUsernameInput.focus();
                 loginSearchContainer.style.display = 'flex';
                 selectedProfileContainer.style.display = 'none';
                 confirmLoginButton.style.display = 'none';
+                loginModalTitle.style.display = 'block';
+                loginModalTitle.textContent = 'Enter your Crypto.com/NFT Profile';
                 clearLoginSuggestions();
                 const navbarMenu = document.getElementById('navbarMenu');
                 if (navbarMenu) {
@@ -1747,8 +1759,9 @@
             const selectedProfilePicture = document.getElementById('selectedProfilePicture');
             const selectedUsername = document.getElementById('selectedUsername');
             const confirmLoginButton = document.getElementById('confirmLoginButton');
+            const loginModalTitle = document.getElementById('loginModalTitle');
 
-            if (loginUsernameInput && loginSearchContainer && selectedProfileContainer && selectedProfilePicture && selectedUsername && confirmLoginButton) {
+            if (loginUsernameInput && loginSearchContainer && selectedProfileContainer && selectedProfilePicture && selectedUsername && confirmLoginButton && loginModalTitle) {
                 loginUsernameInput.value = username;
                 loginSearchContainer.style.display = 'none';
                 selectedProfileContainer.style.display = 'flex';
@@ -1756,6 +1769,7 @@
                 selectedProfilePicture.src = avatarUrl || '/assets/fallback-icon.png';
                 selectedProfilePicture.style.display = avatarUrl ? 'block' : 'none';
                 confirmLoginButton.style.display = 'inline-block';
+                loginModalTitle.style.display = 'none';
                 clearLoginSuggestions();
             }
         }
@@ -1828,12 +1842,15 @@
             const loginSearchContainer = document.getElementById('loginSearchContainer');
             const selectedProfileContainer = document.getElementById('selectedProfileContainer');
             const confirmLoginButton = document.getElementById('confirmLoginButton');
-            if (loginModal && loginUsernameInput && loginSearchContainer && selectedProfileContainer && confirmLoginButton) {
+            const loginModalTitle = document.getElementById('loginModalTitle');
+            if (loginModal && loginUsernameInput && loginSearchContainer && selectedProfileContainer && confirmLoginButton && loginModalTitle) {
                 loginModal.style.display = 'none';
                 loginUsernameInput.value = '';
                 loginSearchContainer.style.display = 'flex';
                 selectedProfileContainer.style.display = 'none';
                 confirmLoginButton.style.display = 'none';
+                loginModalTitle.style.display = 'block';
+                loginModalTitle.textContent = 'Enter your Crypto.com/NFT Profile';
                 clearLoginSuggestions();
             }
         }
@@ -2272,52 +2289,41 @@
                     controls.classList.add('visible');
 
                     const hash = window.location.hash;
-                    const hashParts = hash.split('/#');
-                    if (hashParts.length > 1 && hashParts[1]) {
-                        const collection = decodeURIComponent(hashParts[1]);
-                        collectionFilter.value = collection;
-                        filterNFTs();
-                    } else {
-                        updateDisplay();
+                    const collectionMatch = hash.match(/\/%23(.+)$/);
+                    const collectionFromUrl = collectionMatch ? decodeURIComponent(collectionMatch[1]) : '';
+                    if (collectionFromUrl) {
+                        collectionFilter.value = collectionFromUrl;
                     }
+
+                    filterNFTs();
                 } else {
                     noResultsDiv.style.display = 'block';
-                    resetViewportZoom();
                 }
             } catch (error) {
-                if (!isProfileLoadingCancelled) {
-                    console.error(`Error in fetchProfileAndNFTs: ${error.message}`);
-                    clearInterval(progressInterval);
-                    progressModal.style.display = 'none';
-                    errorDiv.textContent = error.message.includes('user[id=') && error.message.includes('not found')
-                        ? 'No profile found'
-                        : `Error: ${error.message}`;
-                    resetViewportZoom();
-                }
+                clearInterval(progressInterval);
+                progressModal.style.display = 'none';
+                console.error(`Error fetching profile/NFTs: ${error.message}`);
+                errorDiv.textContent = error.message.includes('user[id=') && error.message.includes('not found')
+                    ? 'No profile found'
+                    : `Error: ${error.message}`;
+                noResultsDiv.style.display = 'block';
+                resetViewportZoom();
             }
         }
 
         function populateCollectionFilter(nfts) {
             const collectionFilter = document.getElementById('collectionFilter');
-            if (!collectionFilter) return;
+            if (!collectionFilter) {
+                console.error('Collection filter not found');
+                return;
+            }
 
-            const collectionCounts = {};
-            nfts.forEach(nft => {
-                const collectionName = nft.collection?.name;
-                if (collectionName) {
-                    collectionCounts[collectionName] = (collectionCounts[collectionName] || 0) + 1;
-                }
-            });
-
-            const sortedCollections = Object.keys(collectionCounts).sort((a, b) => {
-                return collectionCounts[b] - collectionCounts[a];
-            });
-
+            const collections = [...new Set(nfts.map(nft => nft.collection?.name).filter(Boolean))].sort();
             collectionFilter.innerHTML = '<option value="">All Collections</option>';
-            sortedCollections.forEach(collection => {
+            collections.forEach(collection => {
                 const option = document.createElement('option');
                 option.value = collection;
-                option.textContent = `${collection} (${collectionCounts[collection]})`;
+                option.textContent = collection;
                 collectionFilter.appendChild(option);
             });
         }
@@ -2664,7 +2670,6 @@
             loginUsernameInput.addEventListener('keypress', (event) => {
                 if (event.key === 'Enter') {
                     clearLoginSuggestions();
-                    // Don't trigger handleLogin directly; wait for confirm button
                 }
             });
 
