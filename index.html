@@ -1720,13 +1720,17 @@
                     suggestions.appendChild(item);
                     suggestions.style.display = 'block';
                 } else {
-                    suggestions.innerHTML = '<div class="suggestion-item">No profile found for this username</div>';
+                    suggestions.innerHTML = '<div class="suggestion-item">No profile found</div>';
                     suggestions.style.display = 'block';
                 }
             } catch (error) {
                 if (error.message !== 'Search cancelled') {
                     console.error(`Error in searchLoginProfiles: ${error.message}`);
-                    suggestions.innerHTML = `<div class="suggestion-item">Error: ${error.message}</div>`;
+                    suggestions.innerHTML = `<div class="suggestion-item">${
+                        error.message.includes('user[id=') && error.message.includes('not found')
+                            ? 'No profile found'
+                            : `Error: ${error.message}`
+                    }</div>`;
                     suggestions.style.display = 'block';
                 }
             } finally {
@@ -1808,11 +1812,13 @@
                         fetchProfileAndNFTs();
                     }
                 } else {
-                    errorDiv.textContent = 'Profile not found.';
+                    errorDiv.textContent = 'No profile found';
                 }
             } catch (error) {
                 console.error(`Login error: ${error.message}`);
-                errorDiv.textContent = `Error: ${error.message}`;
+                errorDiv.textContent = error.message.includes('user[id=') && error.message.includes('not found')
+                    ? 'No profile found'
+                    : `Error: ${error.message}`;
             }
         }
 
@@ -1953,13 +1959,17 @@
                     suggestions.appendChild(item);
                     suggestions.style.display = 'block';
                 } else {
-                    suggestions.innerHTML = '<div class="suggestion-item">No profile found for this username</div>';
+                    suggestions.innerHTML = '<div class="suggestion-item">No profile found</div>';
                     suggestions.style.display = 'block';
                 }
             } catch (error) {
                 if (error.message !== 'Search cancelled') {
                     console.error(`Error in searchProfiles: ${error.message}`);
-                    suggestions.innerHTML = `<div class="suggestion-item">Error: ${error.message}</div>`;
+                    suggestions.innerHTML = `<div class="suggestion-item">${
+                        error.message.includes('user[id=') && error.message.includes('not found')
+                            ? 'No profile found'
+                            : `Error: ${error.message}`
+                    }</div>`;
                     suggestions.style.display = 'block';
                 }
             } finally {
@@ -2227,7 +2237,7 @@
                     clearInterval(progressInterval);
                     progressModal.style.display = 'none';
                     noResultsDiv.style.display = 'block';
-                    errorDiv.textContent = 'Profile not found.';
+                    errorDiv.textContent = 'No profile found';
                     resetViewportZoom();
                     return;
                 }
@@ -2279,7 +2289,9 @@
                     console.error(`Error in fetchProfileAndNFTs: ${error.message}`);
                     clearInterval(progressInterval);
                     progressModal.style.display = 'none';
-                    errorDiv.textContent = `Error: ${error.message}`;
+                    errorDiv.textContent = error.message.includes('user[id=') && error.message.includes('not found')
+                        ? 'No profile found'
+                        : `Error: ${error.message}`;
                     resetViewportZoom();
                 }
             }
