@@ -1564,10 +1564,16 @@
         }
 
         function loadUserFilters() {
-            if (!currentUsername) return;
+            if (!currentUsername || !allNFTs || !allNFTs.length) {
+                console.log('loadUserFilters skipped: no username or NFTs');
+                return;
+            }
 
             const savedFilters = localStorage.getItem(`filters_${currentUsername}`);
-            if (!savedFilters) return;
+            if (!savedFilters) {
+                console.log('No saved filters found for:', currentUsername);
+                return;
+            }
 
             try {
                 const filters = JSON.parse(savedFilters);
@@ -1586,19 +1592,23 @@
                     sortBy.value = filters.sortBy;
                 }
                 if (collectionFilter && filters.collectionFilter) {
+                    // Retarder l'application du filtre pour s'assurer que le DOM est prêt
                     setTimeout(() => {
                         const optionExists = Array.from(collectionFilter.options).some(
                             option => option.value === filters.collectionFilter
                         );
                         if (optionExists) {
+                            console.log('Applying saved collection filter:', filters.collectionFilter);
                             collectionFilter.value = filters.collectionFilter;
+                            filterNFTs();
                         } else {
                             console.warn(`Saved collection ${filters.collectionFilter} not found in filter options`);
                             collectionFilter.value = '';
+                            filterNFTs();
                         }
-                        filterNFTs();
-                    }, 0);
+                    }, 100); // Délai de 100ms pour garantir la mise à jour du DOM
                 } else {
+                    console.log('No collection filter to apply, calling filterNFTs');
                     filterNFTs();
                 }
             } catch (error) {
@@ -1989,7 +1999,7 @@
                     return;
                 }
 
-                SECONDS.innerHTML = '';
+                suggestions.innerHTML = '';
                 if (profileData && profileData.username) {
                     const item = document.createElement('div');
                     item.className = 'suggestion-item';
@@ -2213,6 +2223,11 @@
                 return;
             }
 
+            console.log('Starting fetchProfileAndNFTs for:', username);
+
+            // Réinitialiser l'état
+            currentUsername = '';
+            allNFTs = [];
             displayMode.value = 'full';
             cardSize.value = 'medium';
             sortBy.value = 'default';
@@ -2324,11 +2339,16 @@
                 }, 500);
 
                 if (allNFTs.length > 0) {
+                    console.log('Populating collection filter with', allNFTs.length, 'NFTs');
                     populateCollectionFilter(allNFTs);
                     collectionFilter.disabled = false;
                     controls.classList.add('visible');
+                    // Afficher les NFTs avant d'appliquer les filtres
+                    console.log('Displaying NFTs initially with', allNFTs.length, 'assets');
+                    displayNFTs(allNFTs, '');
                     loadUserFilters();
                 } else {
+                    console.log('No NFTs found, showing no results');
                     noResultsDiv.style.display = 'block';
                     resetViewportZoom();
                 }
@@ -2380,6 +2400,8 @@
                 errorDiv.textContent = 'No username provided';
                 return;
             }
+
+            console.log('Starting fetchProfileAndNFTsForLogin for:', sanitizedUsername);
 
             // Réinitialiser l'état
             currentUsername = '';
@@ -2495,11 +2517,16 @@
                 }, 500);
 
                 if (allNFTs.length > 0) {
+                    console.log('Populating collection filter with', allNFTs.length, 'NFTs');
                     populateCollectionFilter(allNFTs);
                     collectionFilter.disabled = false;
                     controls.classList.add('visible');
+                    // Afficher les NFTs avant d'appliquer les filtres
+                    console.log('Displaying NFTs initially with', allNFTs.length, 'assets');
+                    displayNFTs(allNFTs, '');
                     loadUserFilters();
                 } else {
+                    console.log('No NFTs found, showing no results');
                     noResultsDiv.style.display = 'block';
                     resetViewportZoom();
                 }
@@ -2553,7 +2580,10 @@
                 return;
             }
 
+            console.log('Filtering NFTs with', allNFTs.length, 'assets');
+
             if (!allNFTs || !allNFTs.length) {
+                console.log('No NFTs to filter, displaying empty');
                 displayNFTs([], '');
                 collectionTitle.textContent = '';
                 collectionTitle.classList.remove('visible');
@@ -2575,6 +2605,8 @@
             } else {
                 filteredNFTs.sort((a, b) => a.id.localeCompare(b.id));
             }
+
+            console.log('Filtered NFTs:', filteredNFTs.length, 'for collection:', collectionValue || 'All');
 
             collectionTitle.textContent = collectionValue || 'All Collections';
             collectionTitle.classList.add('visible');
@@ -2601,9 +2633,11 @@
                 return;
             }
 
+            console.log('Displaying NFTs:', assets.length, 'assets for collection:', selectedCollection || 'All');
+
             countContainer.innerHTML = '';
+            container.innerHTML = ''; // Vider explicitement le conteneur
             container.className = `nft-container ${displayMode}-mode ${cardSize}-size`;
-            container.innerHTML = '';
 
             const countElement = document.createElement('p');
             countElement.className = 'nft-count';
@@ -2644,6 +2678,7 @@
                     }
 
                     mediaElement.onerror = () => {
+                        console.error('Media failed to load for asset:', asset.name || 'Unnamed');
                         card.innerHTML = '';
                         const placeholder = document.createElement('div');
                         placeholder.className = 'media-placeholder';
@@ -2683,6 +2718,7 @@
                     }
 
                     mediaElement.onerror = () => {
+                        console.error('Media failed to load for asset:', asset.name || 'Unnamed');
                         card.innerHTML = '';
                         const placeholder = document.createElement('div');
                         placeholder.className = 'media-placeholder';
