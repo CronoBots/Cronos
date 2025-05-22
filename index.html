@@ -109,7 +109,9 @@
             color: var(--text-dark);
             font-size: 0.8rem;
             line-height: 1;
-            margin: 0 8px;
+            margin: 0 10px;
+            opacity: 0.5;
+            font-weight: normal;
         }
 
         .user-profile {
@@ -117,49 +119,28 @@
             align-items: center;
             gap: 8px;
             cursor: pointer;
-            position: relative;
         }
 
         .user-profile-picture {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
             object-fit: cover;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
-        .user-profile-username {
+        .navbar-menu a#myProfileLink,
+        .navbar-menu a#logoutLink {
             color: var(--text-dark);
             font-size: 1rem;
             text-transform: uppercase;
             font-weight: 700;
-        }
-
-        .user-submenu {
-            position: absolute;
-            top: calc(100% + 5px);
-            right: 0;
-            background-color: var(--collection-bg);
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-            z-index: 1000;
-            min-width: 150px;
-            overflow: hidden;
-        }
-
-        .submenu-item {
-            padding: 10px 15px;
-            color: var(--text-dark);
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            font-weight: 700;
-            cursor: pointer;
             transition: var(--transition);
         }
 
-        .submenu-item:hover {
-            background-color: var(--color1);
-            color: #fff;
+        .navbar-menu a#myProfileLink:hover,
+        .navbar-menu a#logoutLink:hover {
+            color: var(--color1);
         }
 
         .navbar-search {
@@ -954,6 +935,7 @@
             .navbar-divider {
                 margin: 5px 0;
                 font-size: 0.7rem;
+                opacity: 0.5;
             }
 
             .user-profile {
@@ -964,24 +946,14 @@
             }
 
             .user-profile-picture {
-                width: 24px;
-                height: 24px;
-            }
-
-            .user-profile-username {
-                font-size: 0.9rem;
-            }
-
-            .user-submenu {
-                position: static;
-                width: 100%;
+                width: 32px;
+                height: 32px;
                 border-radius: 6px;
-                margin-top: 5px;
             }
 
-            .submenu-item {
-                padding: 8px 12px;
-                font-size: 0.85rem;
+            .navbar-menu a#myProfileLink,
+            .navbar-menu a#logoutLink {
+                font-size: 0.9rem;
             }
 
             h1 {
@@ -1202,6 +1174,17 @@
                 top: 48px;
             }
 
+            .user-profile-picture {
+                width: 28px;
+                height: 28px;
+                border-radius: 5px;
+            }
+
+            .navbar-menu a#myProfileLink,
+            .navbar-menu a#logoutLink {
+                font-size: 0.85rem;
+            }
+
             .profile-picture img {
                 width: 80px;
                 height: 80px;
@@ -1290,16 +1273,13 @@
             <div class="suggestions" id="suggestions"></div>
         </div>
         <div class="navbar-menu" id="navbarMenu">
-            <a href="https://cronobots.github.io/Cronos/" aria-label="Home">Home</a>
+            <a href="https://cronobots.github.io/Cronos" aria-label="Home">Home</a>
             <a href="#collections" aria-label="Collections">Collections</a>
-            <span class="navbar-divider" id="navbarDivider" style="display: none;"> | </span>
+            <span class="navbar-divider"> | </span>
+            <a href="#" id="myProfileLink" style="display: none;" aria-label="My Profile">My Profile</a>
+            <a href="#" id="logoutLink" style="display: none;" aria-label="Logout">Logout</a>
             <div class="user-profile" id="userProfile" style="display: none;">
                 <img id="userProfilePicture" src="" alt="User Profile" class="user-profile-picture" />
-                <span id="userProfileUsername" class="user-profile-username"></span>
-                <div class="user-submenu" id="userSubmenu" style="display: none;">
-                    <div class="submenu-item" id="myProfileOption">My Profile</div>
-                    <div class="submenu-item" id="logoutOption">Logout</div>
-                </div>
             </div>
         </div>
         <button class="navbar-toggle" aria-label="Toggle menu" aria-expanded="false" onclick="toggleMenu()">☰</button>
@@ -1526,27 +1506,25 @@
         function updateLoginLink() {
             const userProfile = document.getElementById('userProfile');
             const userProfilePicture = document.getElementById('userProfilePicture');
-            const userProfileUsername = document.getElementById('userProfileUsername');
+            const myProfileLink = document.getElementById('myProfileLink');
+            const logoutLink = document.getElementById('logoutLink');
             const navbarDivider = document.getElementById('navbarDivider');
 
-            if (!userProfile || !userProfilePicture || !userProfileUsername || !navbarDivider) return;
+            if (!userProfile || !userProfilePicture || !myProfileLink || !logoutLink || !navbarDivider) return;
 
             if (loggedInUser) {
                 userProfilePicture.src = loggedInUser.avatar || '/assets/fallback-icon.png';
-                userProfileUsername.textContent = loggedInUser.username;
+                myProfileLink.textContent = 'My Profile';
+                myProfileLink.href = `#${loggedInUser.username}`;
                 userProfile.style.display = 'flex';
+                myProfileLink.style.display = 'inline-block';
+                logoutLink.style.display = 'inline-block';
                 navbarDivider.style.display = 'inline';
             } else {
                 userProfile.style.display = 'none';
+                myProfileLink.style.display = 'none';
+                logoutLink.style.display = 'none';
                 navbarDivider.style.display = 'none';
-            }
-        }
-
-        function toggleUserSubmenu() {
-            const userSubmenu = document.getElementById('userSubmenu');
-            if (userSubmenu) {
-                const isVisible = userSubmenu.style.display === 'block';
-                userSubmenu.style.display = isVisible ? 'none' : 'block';
             }
         }
 
@@ -2360,28 +2338,34 @@
             const cancelButton = document.getElementById('cancelDownloadButton');
 
             if (!nftContainer || !errorDiv || !progressModal || !progressBar || !progressText || !modalTitle || !cancelButton) {
-                console.error('Required DOM elements not found');
+                console.error('Required DOM elements for download not found');
+                if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
                 return;
             }
 
-            const collectionFilter = document.getElementById('collectionFilter');
-            const collectionValue = collectionFilter ? collectionFilter.value : '';
-            let filteredNFTs = collectionValue
-                ? allNFTs.filter(nft => nft.collection?.name === collectionValue)
-                : [...allNFTs];
+            const filteredNFTs = Array.from(nftContainer.querySelectorAll('.nft-card')).map((card, index) => {
+                const img = card.querySelector('img');
+                const video = card.querySelector('video');
+                const titleElement = card.querySelector('h3');
+                const title = titleElement ? titleElement.textContent : `NFT_${index + 1}`;
+                return {
+                    url: img ? img.src : video ? video.src : null,
+                    name: title,
+                };
+            }).filter(nft => nft.url && nft.url !== 'https://via.placeholder.com/150');
 
             if (filteredNFTs.length === 0) {
-                errorDiv.textContent = 'No NFTs available to download.';
+                errorDiv.textContent = 'No valid assets to download.';
                 return;
             }
 
-            isDownloadCancelled = false;
             modalTitle.textContent = 'Creating ZIP File';
-            progressModal.style.display = 'flex';
-            progressText.textContent = `Preparing to download ${filteredNFTs.length} NFTs`;
+            progressText.textContent = `Preparing ${filteredNFTs.length} assets...`;
             progressBar.style.width = '0%';
+            progressModal.style.display = 'flex';
             cancelButton.style.display = 'block';
 
+            isDownloadCancelled = false;
             cancelButton.onclick = () => {
                 isDownloadCancelled = true;
                 progressText.textContent = 'Download cancelled.';
@@ -2391,67 +2375,83 @@
                 }, 1000);
             };
 
+            let processed = 0;
+            for (const [index, nft] of filteredNFTs.entries()) {
+                if (isDownloadCancelled) {
+                    console.log('Download cancelled by user');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(nft.url);
+                    if (!response.ok) {
+                        console.error(`Failed to fetch asset ${nft.name}: ${response.statusText}`);
+                        continue;
+                    }
+                    const blob = await response.blob();
+                    const extension = nft.url.endsWith('.mp4') ? 'mp4' : 'png';
+                    const sanitizedName = sanitizeFileNameForZip(nft.name);
+                    const fileName = `${sanitizedName}_${index + 1}.${extension}`;
+                    zip.file(fileName, blob);
+                    processed++;
+                    const progressPercent = (processed / filteredNFTs.length) * 100;
+                    progressBar.style.width = `${progressPercent}%`;
+                    progressText.textContent = `Processing ${processed} of ${filteredNFTs.length} assets...`;
+                } catch (error) {
+                    console.error(`Error downloading ${nft.name}: ${error.message}`);
+                }
+            }
+
+            if (isDownloadCancelled) {
+                console.log('Download process aborted');
+                return;
+            }
+
+            if (processed === 0) {
+                progressModal.style.display = 'none';
+                errorDiv.textContent = 'No assets could be downloaded.';
+                return;
+            }
+
+            progressText.textContent = 'Generating ZIP file...';
             try {
-                const nameCounts = {};
-                for (let i = 0; i < filteredNFTs.length; i++) {
-                    if (isDownloadCancelled) return;
-
-                    const asset = filteredNFTs[i];
-                    const url = asset.cover?.url;
-                    if (!url) continue;
-
-                    const isVideo = url.endsWith('.mp4');
-                    const extension = isVideo ? '.mp4' : url.endsWith('.gif') ? '.gif' : '.png';
-                    let baseFileName = asset.name || `unnamed_nft_${i + 1}`;
-                    baseFileName = sanitizeFileNameForZip(baseFileName);
-                    let fileName = baseFileName + extension;
-
-                                        if (nameCounts[baseFileName]) {
-                        nameCounts[baseFileName]++;
-                        fileName = `${baseFileName}_${nameCounts[baseFileName]}${extension}`;
-                    } else {
-                        nameCounts[baseFileName] = 1;
-                    }
-
-                    progressText.textContent = `Downloading:\n${fileName} (${i + 1}/${filteredNFTs.length})`;
-                    progressBar.style.width = `${((i + 1) / filteredNFTs.length) * 100}%`;
-
-                    try {
-                        const response = await fetch(url, {
-                            mode: 'cors',
-                            credentials: 'omit'
-                        });
-
-                        if (!response.ok) {
-                            throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
-                        }
-
-                        const blob = await response.blob();
-                        zip.file(fileName, blob);
-                    } catch (err) {
-                        console.error(`Error fetching ${url}: ${err.message}`);
-                    }
-                }
-
-                if (isDownloadCancelled) return;
-
-                progressText.textContent = 'Generating ZIP file.';
-                const zipBlob = await zip.generateAsync({ type: 'blob' });
-                saveAs(zipBlob, `${currentUsername}_nfts.zip`);
-            } catch (error) {
-                if (!isDownloadCancelled) {
-                    console.error('Error creating ZIP:', error.message);
-                    errorDiv.textContent = 'Error creating ZIP file. Some files may not have been included.';
-                }
-            } finally {
-                if (!isDownloadCancelled) {
+                const content = await zip.generateAsync({ type: 'blob' });
+                saveAs(content, `${currentUsername}_nfts.zip`);
+                progressText.textContent = 'Download complete!';
+                progressBar.style.width = '100%';
+                setTimeout(() => {
                     progressModal.style.display = 'none';
-                }
-                cancelButton.style.display = 'none';
+                }, 1000);
+            } catch (error) {
+                console.error(`Error generating ZIP: ${error.message}`);
+                progressModal.style.display = 'none';
+                errorDiv.textContent = 'Failed to generate ZIP file.';
             }
         }
 
         function updateDisplay() {
+            const displayMode = document.getElementById('displayMode')?.value;
+            const cardSize = document.getElementById('cardSize')?.value;
+            const nftContainer = document.getElementById('nftContainer');
+
+            if (!nftContainer) {
+                console.error('NFT container not found');
+                return;
+            }
+
+            nftContainer.className = `nft-container ${displayMode}-mode ${cardSize}-size`;
+
+            if (displayMode === 'thumbnail') {
+                const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
+                nftContainer.style.width = '100%';
+                nftContainer.style.maxWidth = '100vw';
+                nftContainer.style.gridTemplateColumns = `repeat(auto-fill, ${cardWidth}px)`;
+            } else {
+                nftContainer.style.gridTemplateColumns = '';
+                nftContainer.style.width = '';
+                nftContainer.style.maxWidth = '100vw';
+            }
+
             filterNFTs();
         }
 
@@ -2466,13 +2466,12 @@
             const navbarMenu = document.getElementById('navbarMenu');
             const confirmLoginButton = document.getElementById('confirmLoginButton');
             const cancelLoginButton = document.getElementById('cancelLoginButton');
-            const userProfile = document.getElementById('userProfile');
-            const myProfileOption = document.getElementById('myProfileOption');
-            const logoutOption = document.getElementById('logoutOption');
+            const myProfileLink = document.getElementById('myProfileLink');
+            const logoutLink = document.getElementById('logoutLink');
 
             if (!usernameInput || !loginUsernameInput || !themeButton || !collectionFilter || 
                 !displayMode || !cardSize || !sortBy || !navbarMenu || !confirmLoginButton || 
-                !cancelLoginButton || !userProfile || !myProfileOption || !logoutOption) {
+                !cancelLoginButton || !myProfileLink || !logoutLink) {
                 console.error('One or more DOM elements not found');
                 const errorDiv = document.getElementById('error');
                 if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
@@ -2532,34 +2531,22 @@
             cardSize.addEventListener('change', updateDisplay);
             sortBy.addEventListener('change', filterNFTs);
 
-            // Clic sur le profil utilisateur pour afficher/masquer le sous-menu
-            userProfile.addEventListener('click', (event) => {
+            // Gestion des liens My Profile et Logout
+            myProfileLink.addEventListener('click', (event) => {
                 event.preventDefault();
-                toggleUserSubmenu();
-            });
-
-            // Gestion des options du sous-menu
-            myProfileOption.addEventListener('click', () => {
-                const usernameInput = document.getElementById('usernameInput');
-                if (usernameInput && loggedInUser) {
+                if (loggedInUser) {
                     usernameInput.value = loggedInUser.username;
                     fetchProfileAndNFTs();
-                    toggleUserSubmenu();
+                    const navbarMenu = document.getElementById('navbarMenu');
+                    if (navbarMenu) {
+                        navbarMenu.classList.remove('active');
+                        const toggle = document.querySelector('.navbar-toggle');
+                        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+                    }
                 }
             });
 
-            logoutOption.addEventListener('click', (event) => {
-                logout(event);
-                toggleUserSubmenu();
-            });
-
-            // Fermer le sous-menu si on clique en dehors
-            document.addEventListener('click', (event) => {
-                const userSubmenu = document.getElementById('userSubmenu');
-                if (userSubmenu && !userProfile.contains(event.target) && !userSubmenu.contains(event.target)) {
-                    userSubmenu.style.display = 'none';
-                }
-            });
+            logoutLink.addEventListener('click', logout);
 
             navbarMenu.querySelectorAll('a').forEach(link => {
                 link.addEventListener('click', () => {
@@ -2576,7 +2563,7 @@
             }, { passive: false });
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        function initialize() {
             const savedTheme = localStorage.getItem('theme') || 'dark';
             document.documentElement.setAttribute('data-theme', savedTheme);
             const themeButton = document.getElementById('themeButton');
@@ -2584,33 +2571,79 @@
                 themeButton.textContent = savedTheme.charAt(0).toUpperCase() + savedTheme.slice(1);
             }
 
-            // Vérifier si un utilisateur est connecté
             const savedUser = localStorage.getItem('loggedInUser');
             if (savedUser) {
-                loggedInUser = JSON.parse(savedUser);
-                updateLoginLink();
-                const usernameInput = document.getElementById('usernameInput');
-                if (usernameInput && loggedInUser.username) {
-                    usernameInput.value = loggedInUser.username;
-                    fetchProfileAndNFTs();
-                }
-            } else {
-                updateLoginLink();
-            }
-
-            const hash = window.location.hash;
-            if (hash && hash.startsWith('#') && !loggedInUser) {
-                const hashParts = hash.split('/#');
-                const username = sanitizeInput(hashParts[0].substring(1));
-                const usernameInput = document.getElementById('usernameInput');
-                if (usernameInput && username) {
-                    usernameInput.value = username;
-                    fetchProfileAndNFTs();
+                try {
+                    loggedInUser = JSON.parse(savedUser);
+                    updateLoginLink();
+                } catch (error) {
+                    console.error('Error parsing saved user:', error);
+                    localStorage.removeItem('loggedInUser');
                 }
             }
 
             setupEventListeners();
+
+            const hash = window.location.hash.replace('#', '');
+            if (hash) {
+                const usernameInput = document.getElementById('usernameInput');
+                if (usernameInput) {
+                    const [username, collection] = hash.split('/#');
+                    usernameInput.value = username;
+                    fetchProfileAndNFTs();
+                }
+            }
+        }
+
+        window.addEventListener('popstate', (event) => {
+            const usernameInput = document.getElementById('usernameInput');
+            if (!usernameInput) return;
+
+            const hash = window.location.hash.replace('#', '');
+            if (hash) {
+                const [username, collection] = hash.split('/#');
+                if (username !== lastSearchedUsername) {
+                    usernameInput.value = username;
+                    fetchProfileAndNFTs();
+                } else {
+                    const collectionFilter = document.getElementById('collectionFilter');
+                    if (collectionFilter) {
+                        collectionFilter.value = collection ? decodeURIComponent(collection) : '';
+                        filterNFTs();
+                    }
+                }
+            } else {
+                usernameInput.value = '';
+                const profileHeader = document.getElementById('profileHeader');
+                const nftContainer = document.getElementById('nftContainer');
+                const nftCountContainer = document.getElementById('nftCountContainer');
+                const noResultsDiv = document.getElementById('noResults');
+                const controls = document.getElementById('controls');
+                const collectionTitle = document.getElementById('collectionTitle');
+                const collectionFilter = document.getElementById('collectionFilter');
+                const downloadZipButton = document.getElementById('downloadZipButton');
+
+                if (profileHeader) profileHeader.style.display = 'none';
+                if (nftContainer) nftContainer.innerHTML = '';
+                if (nftCountContainer) nftCountContainer.innerHTML = '';
+                if (noResultsDiv) noResultsDiv.style.display = 'none';
+                if (controls) controls.classList.remove('visible');
+                if (collectionTitle) {
+                    collectionTitle.textContent = '';
+                    collectionTitle.classList.remove('visible');
+                }
+                if (collectionFilter) {
+                    collectionFilter.innerHTML = '<option value="">All Collections</option>';
+                    collectionFilter.disabled = true;
+                }
+                if (downloadZipButton) downloadZipButton.style.display = 'none';
+
+                allNFTs = [];
+                currentUsername = '';
+            }
         });
+
+        initialize();
     </script>
 </body>
 </html>
