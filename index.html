@@ -2740,107 +2740,107 @@ function sanitizeFileNameForZip(name) {
             }
         }
 
-async function downloadNFTsAsZip() {
-    const zip = new JSZip();
-    const nftContainer = document.getElementById('nftContainer');
-    const errorDiv = document.getElementById('error');
-    const progressModal = document.getElementById('progressModal');
-    const progressBar = document.getElementById('progressBar');
-    const progressText = document.getElementById('progressText');
-    const modalTitle = document.getElementById('modalTitle');
-    const cancelButton = document.getElementById('cancelDownloadButton');
-
-    if (!nftContainer || !errorDiv || !progressModal || !progressBar || !progressText || !modalTitle || !cancelButton) {
-        console.error('Required DOM elements for download not found');
-        if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
-        return;
-    }
-
-    const filteredNFTs = Array.from(nftContainer.querySelectorAll('.nft-card')).map((card, index) => {
-        const img = card.querySelector('img');
-        const video = card.querySelector('video');
-        const titleElement = card.querySelector('h3') || card.querySelector('.tooltip'); // Utiliser tooltip en mode thumbnail
-        const title = titleElement ? titleElement.textContent : `NFT_${index + 1}`;
-        return {
-            url: img ? img.src : video ? video.src : null,
-            name: title,
-        };
-    }).filter(nft => nft.url && nft.url !== 'https://via.placeholder.com/150');
-
-    if (filteredNFTs.length === 0) {
-        errorDiv.textContent = 'No valid assets to download.';
-        return;
-    }
-
-    modalTitle.textContent = 'Creating ZIP File';
-    progressText.textContent = `Preparing ${filteredNFTs.length} assets...`;
-    progressBar.style.width = '0%';
-    progressModal.style.display = 'flex';
-    cancelButton.style.display = 'block';
-
-    isDownloadCancelled = false;
-    cancelButton.onclick = () => {
-        isDownloadCancelled = true;
-        progressText.textContent = 'Download cancelled.';
-        progressBar.style.width = '0%';
-        setTimeout(() => {
-            progressModal.style.display = 'none';
-        }, 1000);
-    };
-
-    let processed = 0;
-    for (const [index, nft] of filteredNFTs.entries()) {
-        if (isDownloadCancelled) {
-            console.log('Download cancelled by user');
-            return;
-        }
-
-        try {
-            const response = await fetch(nft.url);
-            if (!response.ok) {
-                console.error(`Failed to fetch asset ${nft.name}: ${response.statusText}`);
-                continue;
+        async function downloadNFTsAsZip() {
+            const zip = new JSZip();
+            const nftContainer = document.getElementById('nftContainer');
+            const errorDiv = document.getElementById('error');
+            const progressModal = document.getElementById('progressModal');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const modalTitle = document.getElementById('modalTitle');
+            const cancelButton = document.getElementById('cancelDownloadButton');
+        
+            if (!nftContainer || !errorDiv || !progressModal || !progressBar || !progressText || !modalTitle || !cancelButton) {
+                console.error('Required DOM elements for download not found');
+                if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
+                return;
             }
-            const blob = await response.blob();
-            const extension = nft.url.endsWith('.mp4') ? 'mp4' : 'png';
-            const sanitizedName = sanitizeFileNameForZip(nft.name);
-            const fileName = `${sanitizedName}.${extension}`; // Utiliser le nom directement avec l'extension
-            zip.file(fileName, blob);
-            processed++;
-            const progressPercent = (processed / filteredNFTs.length) * 100;
-            progressBar.style.width = `${progressPercent}%`;
-            progressText.textContent = `Downloading: ${processed}/${filteredNFTs.length}`;
-        } catch (error) {
-            console.error(`Error downloading ${nft.name}: ${error.message}`);
+        
+            const filteredNFTs = Array.from(nftContainer.querySelectorAll('.nft-card')).map((card, index) => {
+                const img = card.querySelector('img');
+                const video = card.querySelector('video');
+                const titleElement = card.querySelector('h3') || card.querySelector('.tooltip'); // Utiliser tooltip en mode thumbnail
+                const title = titleElement ? titleElement.textContent : `NFT_${index + 1}`;
+                return {
+                    url: img ? img.src : video ? video.src : null,
+                    name: title,
+                };
+            }).filter(nft => nft.url && nft.url !== 'https://via.placeholder.com/150');
+        
+            if (filteredNFTs.length === 0) {
+                errorDiv.textContent = 'No valid assets to download.';
+                return;
+            }
+        
+            modalTitle.textContent = 'Creating ZIP File';
+            progressText.textContent = `Preparing ${filteredNFTs.length} assets...`;
+            progressBar.style.width = '0%';
+            progressModal.style.display = 'flex';
+            cancelButton.style.display = 'block';
+        
+            isDownloadCancelled = false;
+            cancelButton.onclick = () => {
+                isDownloadCancelled = true;
+                progressText.textContent = 'Download cancelled.';
+                progressBar.style.width = '0%';
+                setTimeout(() => {
+                    progressModal.style.display = 'none';
+                }, 1000);
+            };
+        
+            let processed = 0;
+            for (const [index, nft] of filteredNFTs.entries()) {
+                if (isDownloadCancelled) {
+                    console.log('Download cancelled by user');
+                    return;
+                }
+        
+                try {
+                    const response = await fetch(nft.url);
+                    if (!response.ok) {
+                        console.error(`Failed to fetch asset ${nft.name}: ${response.statusText}`);
+                        continue;
+                    }
+                    const blob = await response.blob();
+                    const extension = nft.url.endsWith('.mp4') ? 'mp4' : 'png';
+                    const sanitizedName = sanitizeFileNameForZip(nft.name);
+                    const fileName = `${sanitizedName}.${extension}`; // Utiliser le nom directement avec l'extension
+                    zip.file(fileName, blob);
+                    processed++;
+                    const progressPercent = (processed / filteredNFTs.length) * 100;
+                    progressBar.style.width = `${progressPercent}%`;
+                    progressText.textContent = `Downloading: ${processed}/${filteredNFTs.length}`;
+                } catch (error) {
+                    console.error(`Error downloading ${nft.name}: ${error.message}`);
+                }
+            }
+        
+            if (isDownloadCancelled) {
+                console.log('Download process aborted');
+                return;
+            }
+        
+            if (processed === 0) {
+                progressModal.style.display = 'none';
+                errorDiv.textContent = 'No assets could be downloaded.';
+                return;
+            }
+        
+            progressText.textContent = 'Generating ZIP file.';
+            try {
+                const content = await zip.generateAsync({ type: 'blob' });
+                saveAs(content, `${currentUsername}_nfts.zip`);
+                progressText.textContent = 'Download complete!';
+                progressBar.style.width = '100%';
+                setTimeout(() => {
+                    progressModal.style.display = 'none';
+                }, 1000);
+            } catch (error) {
+                console.error(`Error generating ZIP: ${error.message}`);
+                progressModal.style.display = 'none';
+                errorDiv.textContent = 'Failed to generate ZIP file.';
+            }
         }
-    }
-
-    if (isDownloadCancelled) {
-        console.log('Download process aborted');
-        return;
-    }
-
-    if (processed === 0) {
-        progressModal.style.display = 'none';
-        errorDiv.textContent = 'No assets could be downloaded.';
-        return;
-    }
-
-    progressText.textContent = 'Generating ZIP file.';
-    try {
-        const content = await zip.generateAsync({ type: 'blob' });
-        saveAs(content, `${currentUsername}_nfts.zip`);
-        progressText.textContent = 'Download complete!';
-        progressBar.style.width = '100%';
-        setTimeout(() => {
-            progressModal.style.display = 'none';
-        }, 1000);
-    } catch (error) {
-        console.error(`Error generating ZIP: ${error.message}`);
-        progressModal.style.display = 'none';
-        errorDiv.textContent = 'Failed to generate ZIP file.';
-    }
-}
 
         function updateDisplay() {
             const displayMode = document.getElementById('displayMode')?.value;
