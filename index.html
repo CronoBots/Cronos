@@ -833,6 +833,21 @@
             margin-top: 20px;
         }
 
+        .selected-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            justify-content: center;
+        }
+
+        .selected-username {
+            color: var(--text-dark);
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -1154,6 +1169,19 @@
                 font-size: 12px;
                 margin: 15px auto 15px auto;
             }
+
+            .selected-profile {
+                margin: 8px 0;
+            }
+
+            .selected-username {
+                font-size: 1rem;
+            }
+
+            .user-profile-picture {
+                width: 32px;
+                height: 32px;
+            }
         }
 
         @media screen and (max-width: 480px) {
@@ -1261,6 +1289,10 @@
             .theme-toggle button {
                 padding: 6px 12px;
                 font-size: 12px;
+            }
+
+            .selected-username {
+                font-size: 0.9rem;
             }
         }
     </style>
@@ -1390,13 +1422,17 @@
         <div class="modal" id="loginModal">
             <div class="modal-content">
                 <h3>Enter your Crypto.com/NFT Profile</h3>
-                <div class="navbar-search">
+                <div class="navbar-search" id="loginSearchContainer">
                     <input type="text" id="loginUsernameInput" placeholder="Crypto.com/nft/profile" autocomplete="on" />
                     <div class="suggestions" id="loginSuggestions"></div>
                 </div>
+                <div class="selected-profile" id="selectedProfileContainer" style="display: none;">
+                    <img id="selectedProfilePicture" src="" alt="Selected Profile" class="user-profile-picture" />
+                    <span id="selectedUsername" class="selected-username"></span>
+                </div>
                 <div class="modal-buttons">
                     <button id="cancelLoginButton" class="cancel-button">Cancel</button>
-                    <button id="confirmLoginButton" class="confirm-button">Confirm</button>
+                    <button id="confirmLoginButton" class="confirm-button" style="display: none;">Confirm</button>
                 </div>
             </div>
         </div>
@@ -1542,10 +1578,16 @@
             event.preventDefault();
             const loginModal = document.getElementById('loginModal');
             const loginUsernameInput = document.getElementById('loginUsernameInput');
-            if (loginModal && loginUsernameInput) {
+            const loginSearchContainer = document.getElementById('loginSearchContainer');
+            const selectedProfileContainer = document.getElementById('selectedProfileContainer');
+            const confirmLoginButton = document.getElementById('confirmLoginButton');
+            if (loginModal && loginUsernameInput && loginSearchContainer && selectedProfileContainer && confirmLoginButton) {
                 loginModal.style.display = 'flex';
                 loginUsernameInput.value = '';
                 loginUsernameInput.focus();
+                loginSearchContainer.style.display = 'flex';
+                selectedProfileContainer.style.display = 'none';
+                confirmLoginButton.style.display = 'none';
                 clearLoginSuggestions();
                 const navbarMenu = document.getElementById('navbarMenu');
                 if (navbarMenu) {
@@ -1671,8 +1713,9 @@
                     item.appendChild(text);
 
                     item.dataset.username = profileData.username;
+                    item.dataset.avatar = profileData.avatar?.url || '';
                     item.addEventListener('click', () => {
-                        selectLoginSuggestion(profileData.username);
+                        selectLoginSuggestion(profileData.username, profileData.avatar?.url);
                     });
                     suggestions.appendChild(item);
                     suggestions.style.display = 'block';
@@ -1693,10 +1736,22 @@
             }
         }
 
-        function selectLoginSuggestion(username) {
+        function selectLoginSuggestion(username, avatarUrl) {
             const loginUsernameInput = document.getElementById('loginUsernameInput');
-            if (loginUsernameInput) {
+            const loginSearchContainer = document.getElementById('loginSearchContainer');
+            const selectedProfileContainer = document.getElementById('selectedProfileContainer');
+            const selectedProfilePicture = document.getElementById('selectedProfilePicture');
+            const selectedUsername = document.getElementById('selectedUsername');
+            const confirmLoginButton = document.getElementById('confirmLoginButton');
+
+            if (loginUsernameInput && loginSearchContainer && selectedProfileContainer && selectedProfilePicture && selectedUsername && confirmLoginButton) {
                 loginUsernameInput.value = username;
+                loginSearchContainer.style.display = 'none';
+                selectedProfileContainer.style.display = 'flex';
+                selectedUsername.textContent = username;
+                selectedProfilePicture.src = avatarUrl || '/assets/fallback-icon.png';
+                selectedProfilePicture.style.display = avatarUrl ? 'block' : 'none';
+                confirmLoginButton.style.display = 'inline-block';
                 clearLoginSuggestions();
             }
         }
@@ -1758,6 +1813,22 @@
             } catch (error) {
                 console.error(`Login error: ${error.message}`);
                 errorDiv.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        function resetLoginModal() {
+            const loginModal = document.getElementById('loginModal');
+            const loginUsernameInput = document.getElementById('loginUsernameInput');
+            const loginSearchContainer = document.getElementById('loginSearchContainer');
+            const selectedProfileContainer = document.getElementById('selectedProfileContainer');
+            const confirmLoginButton = document.getElementById('confirmLoginButton');
+            if (loginModal && loginUsernameInput && loginSearchContainer && selectedProfileContainer && confirmLoginButton) {
+                loginModal.style.display = 'none';
+                loginUsernameInput.value = '';
+                loginSearchContainer.style.display = 'flex';
+                selectedProfileContainer.style.display = 'none';
+                confirmLoginButton.style.display = 'none';
+                clearLoginSuggestions();
             }
         }
 
@@ -2581,16 +2652,12 @@
             loginUsernameInput.addEventListener('keypress', (event) => {
                 if (event.key === 'Enter') {
                     clearLoginSuggestions();
-                    handleLogin();
+                    // Don't trigger handleLogin directly; wait for confirm button
                 }
             });
 
             confirmLoginButton.addEventListener('click', handleLogin);
-            cancelLoginButton.addEventListener('click', () => {
-                const loginModal = document.getElementById('loginModal');
-                if (loginModal) loginModal.style.display = 'none';
-                clearLoginSuggestions();
-            });
+            cancelLoginButton.addEventListener('click', resetLoginModal);
 
             themeButton.addEventListener('click', toggleTheme);
 
