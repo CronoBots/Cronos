@@ -107,11 +107,14 @@
 
         .navbar-divider {
             color: var(--text-dark);
-            font-size: 0.8rem;
+            font-size: 1.2rem; /* Augmenter pour une barre plus longue */
             line-height: 1;
-            margin: 0 10px;
-            opacity: 0.5;
-            font-weight: normal;
+            margin: 0 12px;
+            opacity: 0.4; /* Plus fine visuellement */
+            font-weight: 100; /* Police plus légère pour affiner */
+            display: flex;
+            align-items: center; /* Centrer verticalement */
+            height: 30px; /* Hauteur explicite pour allonger */
         }
 
         .user-profile {
@@ -130,7 +133,8 @@
         }
 
         .navbar-menu a#myProfileLink,
-        .navbar-menu a#logoutLink {
+        .navbar-menu a#logoutLink,
+        .navbar-menu a#loginLink {
             color: var(--text-dark);
             font-size: 1rem;
             text-transform: uppercase;
@@ -139,7 +143,8 @@
         }
 
         .navbar-menu a#myProfileLink:hover,
-        .navbar-menu a#logoutLink:hover {
+        .navbar-menu a#logoutLink:hover,
+        .navbar-menu a#loginLink:hover {
             color: var(--color1);
         }
 
@@ -934,8 +939,9 @@
 
             .navbar-divider {
                 margin: 5px 0;
-                font-size: 0.7rem;
-                opacity: 0.5;
+                font-size: 1rem;
+                opacity: 0.4;
+                height: 20px;
             }
 
             .user-profile {
@@ -952,7 +958,8 @@
             }
 
             .navbar-menu a#myProfileLink,
-            .navbar-menu a#logoutLink {
+            .navbar-menu a#logoutLink,
+            .navbar-menu a#loginLink {
                 font-size: 0.9rem;
             }
 
@@ -1181,7 +1188,8 @@
             }
 
             .navbar-menu a#myProfileLink,
-            .navbar-menu a#logoutLink {
+            .navbar-menu a#logoutLink,
+            .navbar-menu a#loginLink {
                 font-size: 0.85rem;
             }
 
@@ -1278,6 +1286,7 @@
             <span class="navbar-divider"> | </span>
             <a href="#" id="myProfileLink" style="display: none;" aria-label="My Profile">My Profile</a>
             <a href="#" id="logoutLink" style="display: none;" aria-label="Logout">Logout</a>
+            <a href="#" id="loginLink" aria-label="Login">Login</a>
             <div class="user-profile" id="userProfile" style="display: none;">
                 <img id="userProfilePicture" src="" alt="User Profile" class="user-profile-picture" />
             </div>
@@ -1508,9 +1517,9 @@
             const userProfilePicture = document.getElementById('userProfilePicture');
             const myProfileLink = document.getElementById('myProfileLink');
             const logoutLink = document.getElementById('logoutLink');
-            const navbarDivider = document.getElementById('navbarDivider');
+            const loginLink = document.getElementById('loginLink');
 
-            if (!userProfile || !userProfilePicture || !myProfileLink || !logoutLink || !navbarDivider) return;
+            if (!userProfile || !userProfilePicture || !myProfileLink || !logoutLink || !loginLink) return;
 
             if (loggedInUser) {
                 userProfilePicture.src = loggedInUser.avatar || '/assets/fallback-icon.png';
@@ -1519,12 +1528,12 @@
                 userProfile.style.display = 'flex';
                 myProfileLink.style.display = 'inline-block';
                 logoutLink.style.display = 'inline-block';
-                navbarDivider.style.display = 'inline';
+                loginLink.style.display = 'none';
             } else {
                 userProfile.style.display = 'none';
                 myProfileLink.style.display = 'none';
                 logoutLink.style.display = 'none';
-                navbarDivider.style.display = 'none';
+                loginLink.style.display = 'inline-block';
             }
         }
 
@@ -2281,10 +2290,6 @@
                     container.appendChild(card);
                 });
             } else {
-                container.style.gridTemplateColumns = '';
-                container.style.width = '';
-                container.style.maxWidth = '100vw';
-
                 assets.forEach((asset, index) => {
                     const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
                     const card = document.createElement('div');
@@ -2315,13 +2320,12 @@
                         card.appendChild(placeholder);
                     };
 
-                    const title = document.createElement('h3');
-                    const name = asset.name || 'Unnamed NFT';
-                    const highlightedName = name.replace(/(#|\d+)/g, '<span class="highlight">$1</span>');
-                    title.innerHTML = highlightedName;
-
                     card.appendChild(mediaElement);
+
+                    const title = document.createElement('h3');
+                    title.innerHTML = asset.name ? normalizeText(asset.name) : 'Unnamed NFT';
                     card.appendChild(title);
+
                     container.appendChild(card);
                 });
             }
@@ -2468,10 +2472,11 @@
             const cancelLoginButton = document.getElementById('cancelLoginButton');
             const myProfileLink = document.getElementById('myProfileLink');
             const logoutLink = document.getElementById('logoutLink');
+            const loginLink = document.getElementById('loginLink');
 
             if (!usernameInput || !loginUsernameInput || !themeButton || !collectionFilter || 
                 !displayMode || !cardSize || !sortBy || !navbarMenu || !confirmLoginButton || 
-                !cancelLoginButton || !myProfileLink || !logoutLink) {
+                !cancelLoginButton || !myProfileLink || !logoutLink || !loginLink) {
                 console.error('One or more DOM elements not found');
                 const errorDiv = document.getElementById('error');
                 if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
@@ -2531,22 +2536,21 @@
             cardSize.addEventListener('change', updateDisplay);
             sortBy.addEventListener('change', filterNFTs);
 
-            // Gestion des liens My Profile et Logout
+            // Gestion des liens My Profile, Logout et Login
             myProfileLink.addEventListener('click', (event) => {
                 event.preventDefault();
                 if (loggedInUser) {
                     usernameInput.value = loggedInUser.username;
                     fetchProfileAndNFTs();
-                    const navbarMenu = document.getElementById('navbarMenu');
-                    if (navbarMenu) {
-                        navbarMenu.classList.remove('active');
-                        const toggle = document.querySelector('.navbar-toggle');
-                        if (toggle) toggle.setAttribute('aria-expanded', 'false');
-                    }
+                    navbarMenu.classList.remove('active');
+                    const toggle = document.querySelector('.navbar-toggle');
+                    if (toggle) toggle.setAttribute('aria-expanded', 'false');
                 }
             });
 
             logoutLink.addEventListener('click', logout);
+
+            loginLink.addEventListener('click', showLoginModal);
 
             navbarMenu.querySelectorAll('a').forEach(link => {
                 link.addEventListener('click', () => {
