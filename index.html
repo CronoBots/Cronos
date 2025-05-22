@@ -107,14 +107,14 @@
 
         .navbar-divider {
             color: var(--text-dark);
-            font-size: 1.2rem; /* Augmenter pour une barre plus longue */
+            font-size: 1.2rem;
             line-height: 1;
             margin: 0 12px;
-            opacity: 0.4; /* Plus fine visuellement */
-            font-weight: 100; /* Police plus légère pour affiner */
+            opacity: 0.4;
+            font-weight: 100;
             display: flex;
-            align-items: center; /* Centrer verticalement */
-            height: 30px; /* Hauteur explicite pour allonger */
+            align-items: center;
+            height: 30px;
         }
 
         .user-profile {
@@ -1421,6 +1421,7 @@
         let isDownloadCancelled = false;
         let isProfileLoadingCancelled = false;
         let loggedInUser = null;
+        let activeSearch = null;
 
         const profileQuery = `
             query User($id: ID!, $cacheId: ID) {
@@ -1489,7 +1490,7 @@
         }
 
         function sanitizeInput(input) {
-            return input.replace(/[<>"'&]/g, '');
+            return input.replace(/[<>]/g, '').trim();
         }
 
         function sanitizeFileNameForZip(name) {
@@ -1563,6 +1564,36 @@
             }
         }
 
+        async function fetchWithCache(key, fetchFn, retries = 3, delay = 1000) {
+            if (cache.has(key)) {
+                console.log(`Cache hit for ${key}`);
+                return cache.get(key);
+            }
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+                    const data = await fetchFn(controller.signal);
+                    clearTimeout(timeoutId);
+                    if (data) {
+                        cache.set(key, data);
+                    } else {
+                        console.log(`Not caching null response for ${key}`);
+                    }
+                    return data;
+                } catch (error) {
+                    if (i < retries - 1 && error.message.includes('429')) {
+                        console.log(`Rate limit hit for ${key}, retrying in ${delay}ms...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2;
+                    } else {
+                        console.error(`Fetch error for ${key}:`, error.message);
+                        throw error;
+                    }
+                }
+            }
+        }
+
         async function searchLoginProfiles(query) {
             const suggestions = document.getElementById('loginSuggestions');
             if (!suggestions) {
@@ -1579,16 +1610,28 @@
             suggestions.innerHTML = '<div class="suggestion-item">Searching...</div>';
             suggestions.style.display = 'block';
 
+            if (activeSearch) {
+                activeSearch.cancel = true;
+            }
+
+            const searchToken = { cancel: false };
+            activeSearch = searchToken;
+
             try {
-                const profileData = await fetchWithCache(`profile_${query.toLowerCase()}`, async () => {
+                const profileData = await fetchWithCache(`profile_${query}`, async (signal) => {
                     const response = await fetch(graphqlEndpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             query: profileQuery,
-                            variables: { id: query.toLowerCase(), cacheId: `getUserQuery-Profile-${query.toLowerCase()}` }
-                        })
+                            variables: { id: query, cacheId: `getUserQuery-Profile-${query}` }
+                        }),
+                        signal
                     });
+
+                    if (searchToken.cancel) {
+                        throw new Error('Search cancelled');
+                    }
 
                     if (!response.ok) {
                         throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
@@ -1601,6 +1644,11 @@
 
                     return result.data?.public?.user;
                 });
+
+                if (searchToken.cancel) {
+                    console.log('Search cancelled, ignoring result');
+                    return;
+                }
 
                 suggestions.innerHTML = '';
                 if (profileData && profileData.username) {
@@ -1629,13 +1677,19 @@
                     suggestions.appendChild(item);
                     suggestions.style.display = 'block';
                 } else {
-                    suggestions.innerHTML = '<div class="suggestion-item">No profile found</div>';
+                    suggestions.innerHTML = '<div class="suggestion-item">No profile found for this username</div>';
                     suggestions.style.display = 'block';
                 }
             } catch (error) {
-                console.error(`Error in searchLoginProfiles: ${error.message}`);
-                suggestions.innerHTML = '<div class="suggestion-item">No profile found</div>';
-                suggestions.style.display = 'block';
+                if (error.message !== 'Search cancelled') {
+                    console.error(`Error in searchLoginProfiles: ${error.message}`);
+                    suggestions.innerHTML = `<div class="suggestion-item">Error: ${error.message}</div>`;
+                    suggestions.style.display = 'block';
+                }
+            } finally {
+                if (activeSearch === searchToken) {
+                    activeSearch = null;
+                }
             }
         }
 
@@ -1660,14 +1714,15 @@
             }
 
             try {
-                const profileData = await fetchWithCache(`profile_${username.toLowerCase()}`, async () => {
+                const profileData = await fetchWithCache(`profile_${username}`, async (signal) => {
                     const response = await fetch(graphqlEndpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             query: profileQuery,
-                            variables: { id: username.toLowerCase(), cacheId: `getUserQuery-Profile-${username.toLowerCase()}` }
-                        })
+                            variables: { id: username, cacheId: `getUserQuery-Profile-${username}` }
+                        }),
+                        signal
                     });
 
                     if (!response.ok) {
@@ -1743,21 +1798,6 @@
             window.location.href = homeUrl;
         }
 
-        async function fetchWithCache(key, fetchFn) {
-            if (cache.has(key)) {
-                console.log(`Cache hit for ${key}`);
-                return cache.get(key);
-            }
-            try {
-                const data = await fetchFn();
-                cache.set(key, data);
-                return data;
-            } catch (error) {
-                console.error(`Fetch error for ${key}:`, error.message);
-                throw error;
-            }
-        }
-
         async function searchProfiles(query) {
             const suggestions = document.getElementById('suggestions');
             if (!suggestions) {
@@ -1775,16 +1815,28 @@
             suggestions.innerHTML = '<div class="suggestion-item">Searching...</div>';
             suggestions.style.display = 'block';
 
+            if (activeSearch) {
+                activeSearch.cancel = true;
+            }
+
+            const searchToken = { cancel: false };
+            activeSearch = searchToken;
+
             try {
-                const profileData = await fetchWithCache(`profile_${query.toLowerCase()}`, async () => {
+                const profileData = await fetchWithCache(`profile_${query}`, async (signal) => {
                     const response = await fetch(graphqlEndpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             query: profileQuery,
-                            variables: { id: query.toLowerCase(), cacheId: `getUserQuery-Profile-${query.toLowerCase()}` }
-                        })
+                            variables: { id: query, cacheId: `getUserQuery-Profile-${query}` }
+                        }),
+                        signal
                     });
+
+                    if (searchToken.cancel) {
+                        throw new Error('Search cancelled');
+                    }
 
                     if (!response.ok) {
                         throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
@@ -1797,6 +1849,11 @@
 
                     return result.data?.public?.user;
                 });
+
+                if (searchToken.cancel) {
+                    console.log('Search cancelled, ignoring result');
+                    return;
+                }
 
                 suggestions.innerHTML = '';
                 if (profileData && profileData.username) {
@@ -1825,13 +1882,19 @@
                     suggestions.appendChild(item);
                     suggestions.style.display = 'block';
                 } else {
-                    suggestions.innerHTML = '<div class="suggestion-item">No profile found</div>';
+                    suggestions.innerHTML = '<div class="suggestion-item">No profile found for this username</div>';
                     suggestions.style.display = 'block';
                 }
             } catch (error) {
-                console.error(`Error in searchProfiles: ${error.message}`);
-                suggestions.innerHTML = '<div class="suggestion-item">No profile found</div>';
-                suggestions.style.display = 'block';
+                if (error.message !== 'Search cancelled') {
+                    console.error(`Error in searchProfiles: ${error.message}`);
+                    suggestions.innerHTML = `<div class="suggestion-item">Error: ${error.message}</div>`;
+                    suggestions.style.display = 'block';
+                }
+            } finally {
+                if (activeSearch === searchToken) {
+                    activeSearch = null;
+                }
             }
         }
 
@@ -1929,7 +1992,7 @@
             }
 
             username.textContent = profileData.username || 'Unknown';
-            currentUsername = profileData.username?.toLowerCase() || '';
+            currentUsername = profileData.username || '';
             displayName.textContent = profileData.displayName || '';
             displayName.style.display = profileData.displayName ? 'block' : 'none';
             currentDisplayName = profileData.displayName || profileData.username || 'Unknown';
@@ -2012,7 +2075,7 @@
                 return;
             }
 
-            currentUsername = username.toLowerCase();
+            currentUsername = username;
             lastSearchedUsername = currentUsername;
             clearSuggestions();
 
@@ -2061,14 +2124,15 @@
             }, 500);
 
             try {
-                const profileData = await fetchWithCache(`profile_${currentUsername}`, async () => {
+                const profileData = await fetchWithCache(`profile_${currentUsername}`, async (signal) => {
                     const response = await fetch(graphqlEndpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             query: profileQuery,
                             variables: { id: currentUsername, cacheId: `getUserQuery-Profile-${currentUsername}` }
-                        })
+                        }),
+                        signal
                     });
 
                     if (!response.ok) {
@@ -2092,6 +2156,7 @@
                     clearInterval(progressInterval);
                     progressModal.style.display = 'none';
                     noResultsDiv.style.display = 'block';
+                    errorDiv.textContent = 'Profile not found.';
                     resetViewportZoom();
                     return;
                 }
@@ -2486,7 +2551,6 @@
             const isMobile = window.innerWidth <= 768;
             const debounceDelay = isMobile ? 500 : 300;
 
-            // Événements pour la recherche de profils
             usernameInput.addEventListener('input', () => {
                 clearTimeout(debounceTimeout);
                 debounceTimeout = setTimeout(() => {
@@ -2506,7 +2570,6 @@
                 resetViewportZoom();
             });
 
-            // Événements pour la recherche dans la modale de connexion
             loginUsernameInput.addEventListener('input', () => {
                 clearTimeout(debounceTimeout);
                 debounceTimeout = setTimeout(() => {
@@ -2536,7 +2599,6 @@
             cardSize.addEventListener('change', updateDisplay);
             sortBy.addEventListener('change', filterNFTs);
 
-            // Gestion des liens My Profile, Logout et Login
             myProfileLink.addEventListener('click', (event) => {
                 event.preventDefault();
                 if (loggedInUser) {
