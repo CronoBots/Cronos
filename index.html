@@ -1526,17 +1526,15 @@
         }
 
         function sanitizeInput(input) {
-            return input.replace(/[<>]/g, '').trim();
+            return input.replace(/[<>]/g, '').trim().toLowerCase();
         }
 
-function sanitizeFileNameForZip(name) {
-    // Si le nom est vide ou null, utiliser un nom par défaut
-    if (!name || name.trim() === '') {
-        return 'unnamed_nft';
-    }
-    // Remplacer uniquement les caractères interdits dans les noms de fichiers
-    return name.replace(/[\/\\:*?"<>|]/g, '_').trim();
-}
+        function sanitizeFileNameForZip(name) {
+            if (!name || name.trim() === '') {
+                return 'unnamed_nft';
+            }
+            return name.replace(/[\/\\:*?"<>|]/g, '_').trim();
+        }
 
         function toggleTheme() {
             const themeButton = document.getElementById('themeButton');
@@ -1562,7 +1560,7 @@ function sanitizeFileNameForZip(name) {
                 sortBy: document.getElementById('sortBy')?.value || 'default'
             };
 
-            localStorage.setItem(`filters_${currentUsername}`, JSON.stringify(filters));
+            localStorage.setItem(`filters_${currentUsername.toLowerCase()}`, JSON.stringify(filters));
             console.log('Filters saved for profile:', currentUsername, filters);
         }
 
@@ -1572,7 +1570,7 @@ function sanitizeFileNameForZip(name) {
                 return;
             }
 
-            const savedFilters = localStorage.getItem(`filters_${currentUsername}`);
+            const savedFilters = localStorage.getItem(`filters_${currentUsername.toLowerCase()}`);
             if (!savedFilters) {
                 console.log('No saved filters found for:', currentUsername);
                 return;
@@ -1595,7 +1593,6 @@ function sanitizeFileNameForZip(name) {
                     sortBy.value = filters.sortBy;
                 }
                 if (collectionFilter && filters.collectionFilter) {
-                    // Retarder l'application du filtre pour s'assurer que le DOM est prêt
                     setTimeout(() => {
                         const optionExists = Array.from(collectionFilter.options).some(
                             option => option.value === filters.collectionFilter
@@ -1609,7 +1606,7 @@ function sanitizeFileNameForZip(name) {
                             collectionFilter.value = '';
                             filterNFTs();
                         }
-                    }, 100); // Délai de 100ms pour garantir la mise à jour du DOM
+                    }, 100);
                 } else {
                     console.log('No collection filter to apply, calling filterNFTs');
                     filterNFTs();
@@ -1631,7 +1628,7 @@ function sanitizeFileNameForZip(name) {
             if (loggedInUser) {
                 userProfilePicture.src = loggedInUser.avatar || '/assets/fallback-icon.png';
                 myProfileLink.textContent = 'My Profile';
-                myProfileLink.href = `#${loggedInUser.username}`;
+                myProfileLink.href = `#${loggedInUser.username.toLowerCase()}`;
                 userProfile.style.display = 'flex';
                 myProfileLink.style.display = 'inline-block';
                 logoutLink.style.display = 'inline-block';
@@ -1910,7 +1907,7 @@ function sanitizeFileNameForZip(name) {
             loggedInUser = null;
             localStorage.removeItem('loggedInUser');
             if (username) {
-                localStorage.removeItem(`filters_${username}`);
+                localStorage.removeItem(`filters_${username.toLowerCase()}`);
             }
             updateLoginLink();
             const profileHeader = document.getElementById('profileHeader');
@@ -2221,7 +2218,7 @@ function sanitizeFileNameForZip(name) {
             }
 
             const username = sanitizeInput(usernameInput.value.trim());
-            if (!username || username === currentUsername) {
+            if (!username || username.toLowerCase() === currentUsername.toLowerCase()) {
                 console.log('fetchProfileAndNFTs skipped:', { username, currentUsername });
                 return;
             }
@@ -2319,7 +2316,7 @@ function sanitizeFileNameForZip(name) {
 
                 updateProfileUI(profileData);
 
-                const newUrl = `${window.location.pathname}#${currentUsername}`;
+                const newUrl = `${window.location.pathname}#${currentUsername.toLowerCase()}`;
                 history.pushState({ username: currentUsername }, '', newUrl);
 
                 progressText.textContent = `0 assets`;
@@ -2346,7 +2343,6 @@ function sanitizeFileNameForZip(name) {
                     populateCollectionFilter(allNFTs);
                     collectionFilter.disabled = false;
                     controls.classList.add('visible');
-                    // Afficher les NFTs avant d'appliquer les filtres
                     console.log('Displaying NFTs initially with', allNFTs.length, 'assets');
                     displayNFTs(allNFTs, '');
                     loadUserFilters();
@@ -2497,7 +2493,7 @@ function sanitizeFileNameForZip(name) {
 
                 updateProfileUI(profileData);
 
-                const newUrl = `${window.location.pathname}#${currentUsername}`;
+                const newUrl = `${window.location.pathname}#${currentUsername.toLowerCase()}`;
                 history.pushState({ username: currentUsername }, '', newUrl);
 
                 progressText.textContent = `0 assets`;
@@ -2524,7 +2520,6 @@ function sanitizeFileNameForZip(name) {
                     populateCollectionFilter(allNFTs);
                     collectionFilter.disabled = false;
                     controls.classList.add('visible');
-                    // Afficher les NFTs avant d'appliquer les filtres
                     console.log('Displaying NFTs initially with', allNFTs.length, 'assets');
                     displayNFTs(allNFTs, '');
                     loadUserFilters();
@@ -2616,8 +2611,8 @@ function sanitizeFileNameForZip(name) {
 
             const encodedCollection = collectionValue ? encodeURIComponent(collectionValue) : '';
             const newUrl = encodedCollection
-                ? `${window.location.pathname}#${currentUsername}/#${encodedCollection}`
-                : `${window.location.pathname}#${currentUsername}`;
+                ? `${window.location.pathname}#${currentUsername.toLowerCase()}/#${encodedCollection}`
+                : `${window.location.pathname}#${currentUsername.toLowerCase()}`;
             history.pushState({ username: currentUsername, collection: collectionValue }, '', newUrl);
 
             displayNFTs(filteredNFTs, collectionValue);
@@ -2759,7 +2754,7 @@ function sanitizeFileNameForZip(name) {
             const filteredNFTs = Array.from(nftContainer.querySelectorAll('.nft-card')).map((card, index) => {
                 const img = card.querySelector('img');
                 const video = card.querySelector('video');
-                const titleElement = card.querySelector('h3') || card.querySelector('.tooltip'); // Utiliser tooltip en mode thumbnail
+                const titleElement = card.querySelector('h3') || card.querySelector('.tooltip');
                 const title = titleElement ? titleElement.textContent : `NFT_${index + 1}`;
                 return {
                     url: img ? img.src : video ? video.src : null,
@@ -2804,7 +2799,7 @@ function sanitizeFileNameForZip(name) {
                     const blob = await response.blob();
                     const extension = nft.url.endsWith('.mp4') ? 'mp4' : 'png';
                     const sanitizedName = sanitizeFileNameForZip(nft.name);
-                    const fileName = `${sanitizedName}.${extension}`; // Utiliser le nom directement avec l'extension
+                    const fileName = `${sanitizedName}.${extension}`;
                     zip.file(fileName, blob);
                     processed++;
                     const progressPercent = (processed / filteredNFTs.length) * 100;
@@ -2961,12 +2956,6 @@ function sanitizeFileNameForZip(name) {
                     if (toggle) toggle.setAttribute('aria-expanded', 'false');
                 });
             });
-
-            document.addEventListener('touchstart', (event) => {
-                if (event.touches.length > 1) {
-                    event.preventDefault();
-                }
-            }, { passive: false });
         }
 
         function initialize() {
@@ -2990,7 +2979,7 @@ function sanitizeFileNameForZip(name) {
 
             setupEventListeners();
 
-            const hash = window.location.hash.replace('#', '');
+            const hash = window.location.hash.replace('#', '').toLowerCase();
             if (hash) {
                 const [username, collection] = hash.split('/#');
                 const usernameInput = document.getElementById('usernameInput');
@@ -3021,10 +3010,10 @@ function sanitizeFileNameForZip(name) {
             const usernameInput = document.getElementById('usernameInput');
             if (!usernameInput) return;
 
-            const hash = window.location.hash.replace('#', '');
+            const hash = window.location.hash.replace('#', '').toLowerCase();
             if (hash) {
                 const [username, collection] = hash.split('/#');
-                if (username !== lastSearchedUsername) {
+                if (username !== lastSearchedUsername.toLowerCase()) {
                     usernameInput.value = username;
                     fetchProfileAndNFTs().then(() => {
                         const collectionFilter = document.getElementById('collectionFilter');
