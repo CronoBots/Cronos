@@ -1373,40 +1373,46 @@
             const downloadCollageButton = document.getElementById('downloadCollageButton');
             const displayMode = document.getElementById('displayMode')?.value || 'thumbnail';
             const cardSize = document.getElementById('cardSize')?.value || 'small';
-
+        
             if (!container || !countContainer || !downloadZipButton || !downloadCollageButton) {
                 console.error('NFT container, count container, or download buttons not found');
                 return;
             }
-
+        
             console.log('Displaying NFTs:', assets.length, 'assets for collection:', selectedCollection || 'All');
-
+        
             countContainer.innerHTML = '';
             container.innerHTML = '';
             container.className = `nft-container ${displayMode}-mode ${cardSize}-size`;
-
+        
             const countElement = document.createElement('p');
             countElement.className = 'nft-count';
             countElement.innerHTML = selectedCollection
                 ? `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets on this collection.`
                 : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets.`;
             countContainer.appendChild(countElement);
-
-            downloadZipButton.textContent = `DOWNLOAD ${assets.length} ASSETS`;
-            downloadZipButton.style.display = assets.length > 0 ? 'inline-block' : 'none';
-            downloadCollageButton.style.display = assets.length > 0 ? 'inline-block' : 'none';
-
+        
+            // Afficher les boutons seulement si un profil est visité et qu'il y a des assets
+            if (currentUsername && assets.length > 0) {
+                downloadZipButton.textContent = `DOWNLOAD ${assets.length} ASSETS`;
+                downloadZipButton.style.display = 'inline-block';
+                downloadCollageButton.style.display = 'inline-block';
+            } else {
+                downloadZipButton.style.display = 'none';
+                downloadCollageButton.style.display = 'none';
+            }
+        
             if (displayMode === 'thumbnail') {
                 const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
                 container.style.width = '100%';
                 container.style.maxWidth = '100vw';
                 container.style.gridTemplateColumns = `repeat(auto-fill, ${cardWidth}px)`;
-
+        
                 assets.forEach((asset, index) => {
                     const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
                     const card = document.createElement('div');
                     card.className = 'nft-card';
-
+        
                     let mediaElement;
                     if (imageUrl.endsWith('.mp4')) {
                         mediaElement = document.createElement('video');
@@ -1423,7 +1429,7 @@
                         mediaElement.decoding = 'async';
                         mediaElement.sizes = '(max-width: 768px) 80px, 200px';
                     }
-
+        
                     mediaElement.onerror = () => {
                         console.error('Media failed to load for asset:', asset.name || 'Unnamed');
                         card.innerHTML = '';
@@ -1432,12 +1438,12 @@
                         placeholder.textContent = 'Média indisponible';
                         card.appendChild(placeholder);
                     };
-
+        
                     const tooltip = document.createElement('span');
                     tooltip.className = 'tooltip';
                     tooltip.textContent = asset.name || 'Unnamed NFT';
                     card.appendChild(tooltip);
-
+        
                     card.appendChild(mediaElement);
                     container.appendChild(card);
                 });
@@ -1446,7 +1452,7 @@
                     const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
                     const card = document.createElement('div');
                     card.className = 'nft-card';
-
+        
                     let mediaElement;
                     if (imageUrl.endsWith('.mp4')) {
                         mediaElement = document.createElement('video');
@@ -1463,7 +1469,7 @@
                         mediaElement.decoding = 'async';
                         mediaElement.sizes = '(max-width: 768px) 80px, 200px';
                     }
-
+        
                     mediaElement.onerror = () => {
                         console.error('Media failed to load for asset:', asset.name || 'Unnamed');
                         card.innerHTML = '';
@@ -1472,18 +1478,17 @@
                         placeholder.textContent = 'Média indisponible';
                         card.appendChild(placeholder);
                     };
-
+        
                     card.appendChild(mediaElement);
-
+        
                     const title = document.createElement('h3');
                     title.innerHTML = asset.name ? normalizeText(asset.name) : 'Unnamed NFT';
                     card.appendChild(title);
-
+        
                     container.appendChild(card);
                 });
             }
         }
-
         async function downloadNFTsAsZip() {
             const zip = new JSZip();
             const nftContainer = document.getElementById('nftContainer');
@@ -1924,7 +1929,7 @@
             if (themeButton) {
                 themeButton.textContent = savedTheme.charAt(0).toUpperCase() + savedTheme.slice(1);
             }
-
+        
             const savedUser = localStorage.getItem('loggedInUser');
             if (savedUser) {
                 try {
@@ -1935,10 +1940,17 @@
                     localStorage.removeItem('loggedInUser');
                 }
             }
-
+        
+            // Masquer les boutons de téléchargement par défaut
+            const downloadZipButton = document.getElementById('downloadZipButton');
+            const downloadCollageButton = document.getElementById('downloadCollageButton');
+            if (downloadZipButton && downloadCollageButton) {
+                downloadZipButton.style.display = 'none';
+                downloadCollageButton.style.display = 'none';
+            }
+        
             setupEventListeners();
-
-            // MODIFIÉ: Charger uniquement username et collection depuis l'URL
+        
             const { username, collection } = parseUrlHash();
             if (username) {
                 const usernameInput = document.getElementById('usernameInput');
@@ -1960,7 +1972,6 @@
                                 if (errorDiv) errorDiv.textContent = `Collection ${collection} not found.`;
                             }
                         }
-                        // MODIFIÉ: Réinitialiser chain et curated
                         if (chainFilter) chainFilter.value = '';
                         if (curatedFilter) curatedFilter.value = '';
                         filterNFTs();
