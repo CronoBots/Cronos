@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Browse smarter. Collect better – Powered by CronoBots">
     <title>CronoBots | Browse smarter. Collect better</title>
-    <link rel="icon" type="image/png" href="Icon.png">
+    <link rel="icon" type="image/png" href="icon.png">
     <link rel="preload" href="icon.png" as="image">
     <link rel="preload" href="Geomanist-Bold.otf" as="font" type="font/otf" crossorigin>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -2618,26 +2618,33 @@
                 return;
             }
         
+            // Journaliser les valeurs de source et isCurated pour débogage
+            console.log('Available source values:', [...new Set(allNFTs.map(nft => nft.defaultListingV2?.source || 'undefined'))]);
+            console.log('Available isCurated values:', [...new Set(allNFTs.map(nft => nft.isCurated !== undefined ? nft.isCurated : 'undefined'))]);
+        
             let filteredNFTs = [...allNFTs];
         
             // Filtrer par collection
             const collectionValue = collectionFilter.value;
             if (collectionValue) {
                 filteredNFTs = filteredNFTs.filter(nft => nft.collection?.name === collectionValue);
+                console.log('After collection filter:', filteredNFTs.length, 'NFTs');
             }
         
             // Filtrer par chaîne
             const chainValue = chainFilter.value;
+            console.log('Selected chain value:', chainValue);
             if (chainValue) {
                 filteredNFTs = filteredNFTs.filter(nft => {
-                    const network = nft.externalNftMetadata?.network?.toUpperCase();
+                    const source = nft.defaultListingV2?.source?.toUpperCase() || '';
                     if (chainValue === 'CRONOS') {
-                        return network === 'CRONOS';
+                        return source === 'CRONOS';
                     } else if (chainValue === 'CRONOS_POS') {
-                        return network === 'CDC_NFT';
+                        return source === 'CDC_NFT';
                     }
                     return true; // Pour "ALL CHAINS" (chainValue === '')
                 });
+                console.log('After chain filter:', filteredNFTs.length, 'NFTs');
             }
         
             // Trier les NFTs
@@ -2652,7 +2659,7 @@
                 filteredNFTs.sort((a, b) => a.id.localeCompare(b.id));
             }
         
-            console.log('Filtered NFTs:', filteredNFTs.length, 'for collection:', collectionValue || 'All', 'and chain:', chainValue || 'All');
+            console.log('Final filtered NFTs:', filteredNFTs.length, 'for collection:', collectionValue || 'All', 'and chain:', chainValue || 'All');
         
             collectionTitle.textContent = collectionValue || 'All Collections';
             collectionTitle.classList.add('visible');
@@ -2667,7 +2674,6 @@
             displayNFTs(filteredNFTs, collectionValue);
             saveUserFilters();
         }
-
         function displayNFTs(assets, selectedCollection) {
             const container = document.getElementById('nftContainer');
             const countContainer = document.getElementById('nftCountContainer');
