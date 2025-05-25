@@ -1402,15 +1402,14 @@
                         <option value="large">Large</option>
                     </select>
                 </div>
-            <div class="control-group">
-                <label for="sortBy">SORT BY:</label>
-                <select id="sortBy" onchange="filterNFTs()">
-                    <option value="default">Default</option>
-                    <option value="rank">Rank</option>
-                    <option value="newest">Newest</option>
-                    <option value="oldest">Oldest</option>
-                </select>
-            </div>
+                <div class="control-group">
+                    <label for="sortBy">SORT BY:</label>
+                    <select id="sortBy" onchange="filterNFTs()">
+                        <option value="newest" selected>Newest</option>
+                        <option value="rank">Rank</option>
+                        <option value="oldest">Oldest</option>
+                    </select>
+                </div>
             </div>
             <h2 id="collectionTitle" class="collection-title"></h2>
         </div>
@@ -2365,7 +2364,7 @@
             allNFTs = [];
             displayMode.value = 'thumbnail';
             cardSize.value = 'small';
-            sortBy.value = 'default';
+            sortBy.value = 'newest';
             collectionFilter.innerHTML = '<option value="">All Collections</option>';
             collectionFilter.value = '';
             collectionFilter.disabled = true;
@@ -2593,12 +2592,11 @@
             const sortValue = sortBy.value;
             if (sortValue === 'rank') {
                 filteredNFTs.sort((a, b) => (a.defaultRarityRank || Infinity) - (b.defaultRarityRank || Infinity));
-            } else if (sortValue === 'newest') {
-                filteredNFTs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             } else if (sortValue === 'oldest') {
                 filteredNFTs.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
             } else {
-                filteredNFTs.sort((a, b) => a.id.localeCompare(b.id));
+                // Par défaut, trier par 'newest'
+                filteredNFTs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             }
         
             console.log('Final filtered NFTs:', filteredNFTs.length, 'for collection:', collectionValue || 'All', 'chain:', chainValue || 'All', 'curated:', curatedValue || 'All');
