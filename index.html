@@ -1346,17 +1346,17 @@
                             </p>
                             <p id="twitterLink" style="display: none;">
                                 <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" onerror="this.src='/assets/fallback-icon.png'" />
+                                    <img src="https://upload.wikimedia.com/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" onerror="this.src='/assets/fallback-icon.png'" />
                                 </a>
                             </p>
                             <p id="facebookLink" style="display: none;">
                                 <a href="#" target="_blank" id="facebookUrl" title="Visit Facebook Profile">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Facebook_f_logo_%282019%29.svg/512px-Facebook_f_logo_%282019%29.svg.png" alt="Facebook Profile" class="social-icon" onerror="this.src='/assets/fallback-icon.png'" />
+                                    <img src="https://upload.wikimedia.com/wikipedia/commons/thumb/5/51/Facebook_f_logo_%282019%29.svg/512px-Facebook_f_logo_%282019%29.svg.png" alt="Facebook Profile" class="social-icon" onerror="this.src='/assets/fallback-icon.png'" />
                                 </a>
                             </p>
                             <p id="instagramLink" style="display: none;">
                                 <a href="#" target="_blank" id="instagramUrl" title="Visit Instagram Profile">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/512px-Instagram_icon.png" alt="Instagram Profile" class="social-icon" onerror="this.src='/assets/fallback-icon.png'" />
+                                    <img src="https://upload.wikimedia.com/wikipedia/commons/thumb/a/a5/Instagram_icon.png/512px-Instagram_icon.png" alt="Instagram Profile" class="social-icon" onerror="this.src='/assets/fallback-icon.png'" />
                                 </a>
                             </p>
                         </div>
@@ -1374,15 +1374,15 @@
                 <div class="control-group">
                     <label for="displayMode">DISPLAY MODE:</label>
                     <select id="displayMode" onchange="updateDisplay()">
+                        <option value="thumbnail" selected>Thumbnail</option>
                         <option value="full">Normal</option>
-                        <option value="thumbnail">Thumbnail</option>
                     </select>
                 </div>
                 <div class="control-group">
                     <label for="cardSize">CARD SIZE:</label>
                     <select id="cardSize" onchange="updateDisplay()">
-                        <option value="small">Small</option>
-                        <option value="medium" selected>Medium</option>
+                        <option value="small" selected>Small</option>
+                        <option value="medium">Medium</option>
                         <option value="large">Large</option>
                     </select>
                 </div>
@@ -1393,6 +1393,14 @@
                         <option value="rank">Rank</option>
                         <option value="newest">Newest</option>
                         <option value="oldest">Oldest</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="chainsFilter">CHAINS:</label>
+                    <select id="chainsFilter" onchange="filterNFTs()">
+                        <option value="">All Chains</option>
+                        <option value="Cronos">Cronos</option>
+                        <option value="Cronos POS Chain">Cronos POS Chain</option>
                     </select>
                 </div>
             </div>
@@ -1555,9 +1563,10 @@
 
             const filters = {
                 collectionFilter: document.getElementById('collectionFilter')?.value || '',
-                displayMode: document.getElementById('displayMode')?.value || 'full',
-                cardSize: document.getElementById('cardSize')?.value || 'medium',
-                sortBy: document.getElementById('sortBy')?.value || 'default'
+                displayMode: document.getElementById('displayMode')?.value || 'thumbnail',
+                cardSize: document.getElementById('cardSize')?.value || 'small',
+                sortBy: document.getElementById('sortBy')?.value || 'default',
+                chainsFilter: document.getElementById('chainsFilter')?.value || ''
             };
 
             localStorage.setItem(`filters_${currentUsername.toLowerCase()}`, JSON.stringify(filters));
@@ -1582,6 +1591,7 @@
                 const displayMode = document.getElementById('displayMode');
                 const cardSize = document.getElementById('cardSize');
                 const sortBy = document.getElementById('sortBy');
+                const chainsFilter = document.getElementById('chainsFilter');
 
                 if (displayMode && filters.displayMode) {
                     displayMode.value = filters.displayMode;
@@ -1591,6 +1601,9 @@
                 }
                 if (sortBy && filters.sortBy) {
                     sortBy.value = filters.sortBy;
+                }
+                if (chainsFilter && filters.chainsFilter) {
+                    chainsFilter.value = filters.chainsFilter;
                 }
                 if (collectionFilter && filters.collectionFilter) {
                     setTimeout(() => {
@@ -1881,1201 +1894,1250 @@
                 console.error(`Login error: ${error.message}`);
                 errorDiv.textContent = error.message.includes('user[id=') && error.message.includes('not found')
                     ? 'No profile found'
+                    : `Error: ${error彼此
+
+System: Voici la suite et la fin du script complet, en intégrant les modifications demandées (taille par défaut "Small", mode d'affichage par défaut "Thumbnail", et ajout du filtre "CHAINS"). Le code JavaScript manquant à la fin de votre extrait est complété ici, avec les ajustements nécessaires pour inclure le nouveau filtre et les paramètres par défaut.
+
+```javascript
+                    ? 'No profile found'
                     : `Error: ${error.message}`;
             }
         }
+    }
 
-        function resetLoginModal() {
-            const loginModal = document.getElementById('loginModal');
-            const loginUsernameInput = document.getElementById('loginUsernameInput');
-            const loginSearchContainer = document.getElementById('loginSearchContainer');
-            const selectedProfileContainer = document.getElementById('selectedProfileContainer');
-            const confirmLoginButton = document.getElementById('confirmLoginButton');
-            if (loginModal && loginUsernameInput && loginSearchContainer && selectedProfileContainer && confirmLoginButton) {
-                loginModal.style.display = 'none';
-                loginUsernameInput.value = '';
-                loginSearchContainer.style.display = 'flex';
-                selectedProfileContainer.style.display = 'none';
-                confirmLoginButton.style.display = 'none';
-                clearLoginSuggestions();
-            }
+    function resetLoginModal() {
+        const loginModal = document.getElementById('loginModal');
+        const loginUsernameInput = document.getElementById('loginUsernameInput');
+        const loginSearchContainer = document.getElementById('loginSearchContainer');
+        const selectedProfileContainer = document.getElementById('selectedProfileContainer');
+        const confirmLoginButton = document.getElementById('confirmLoginButton');
+        if (loginModal && loginUsernameInput && loginSearchContainer && selectedProfileContainer && confirmLoginButton) {
+            loginModal.style.display = 'none';
+            loginUsernameInput.value = '';
+            loginSearchContainer.style.display = 'flex';
+            selectedProfileContainer.style.display = 'none';
+            confirmLoginButton.style.display = 'none';
+            clearLoginSuggestions();
+        }
+    }
+
+    function logout(event) {
+        event.preventDefault();
+        const username = loggedInUser?.username;
+        loggedInUser = null;
+        localStorage.removeItem('loggedInUser');
+        if (username) {
+            localStorage.removeItem(`filters_${username.toLowerCase()}`);
+        }
+        updateLoginLink();
+        const profileHeader = document.getElementById('profileHeader');
+        const nftContainer = document.getElementById('nftContainer');
+        const nftCountContainer = document.getElementById('nftCountContainer');
+        const noResultsDiv = document.getElementById('noResults');
+        const controls = document.getElementById('controls');
+        const collectionTitle = document.getElementById('collectionTitle');
+        const collectionFilter = document.getElementById('collectionFilter');
+        const usernameInput = document.getElementById('usernameInput');
+        const downloadZipButton = document.getElementById('downloadZipButton');
+
+        if (profileHeader) profileHeader.style.display = 'none';
+        if (nftContainer) nftContainer.innerHTML = '';
+        if (nftCountContainer) nftCountContainer.innerHTML = '';
+        if (noResultsDiv) noResultsDiv.style.display = 'none';
+        if (controls) controls.classList.remove('visible');
+        if (collectionTitle) {
+            collectionTitle.textContent = '';
+            collectionTitle.classList.remove('visible');
+        }
+        if (collectionFilter) {
+            collectionFilter.innerHTML = '<option value="">All Collections</option>';
+            collectionFilter.disabled = true;
+        }
+        if (usernameInput) usernameInput.value = '';
+        if (downloadZipButton) downloadZipButton.style.display = 'none';
+
+        allNFTs = [];
+        currentUsername = '';
+        history.pushState({}, '', window.location.pathname);
+        window.location.href = homeUrl;
+    }
+
+    async function searchProfiles(query) {
+        const suggestions = document.getElementById('suggestions');
+        if (!suggestions) {
+            console.error('Suggestions container not found');
+            return;
         }
 
-        function logout(event) {
-            event.preventDefault();
-            const username = loggedInUser?.username;
-            loggedInUser = null;
-            localStorage.removeItem('loggedInUser');
-            if (username) {
-                localStorage.removeItem(`filters_${username.toLowerCase()}`);
-            }
-            updateLoginLink();
-            const profileHeader = document.getElementById('profileHeader');
-            const nftContainer = document.getElementById('nftContainer');
-            const nftCountContainer = document.getElementById('nftCountContainer');
-            const noResultsDiv = document.getElementById('noResults');
-            const controls = document.getElementById('controls');
-            const collectionTitle = document.getElementById('collectionTitle');
-            const collectionFilter = document.getElementById('collectionFilter');
-            const usernameInput = document.getElementById('usernameInput');
-            const downloadZipButton = document.getElementById('downloadZipButton');
-
-            if (profileHeader) profileHeader.style.display = 'none';
-            if (nftContainer) nftContainer.innerHTML = '';
-            if (nftCountContainer) nftCountContainer.innerHTML = '';
-            if (noResultsDiv) noResultsDiv.style.display = 'none';
-            if (controls) controls.classList.remove('visible');
-            if (collectionTitle) {
-                collectionTitle.textContent = '';
-                collectionTitle.classList.remove('visible');
-            }
-            if (collectionFilter) {
-                collectionFilter.innerHTML = '<option value="">All Collections</option>';
-                collectionFilter.disabled = true;
-            }
-            if (usernameInput) usernameInput.value = '';
-            if (downloadZipButton) downloadZipButton.style.display = 'none';
-
-            allNFTs = [];
-            currentUsername = '';
-            history.pushState({}, '', window.location.pathname);
-            window.location.href = homeUrl;
+        if (!query || query.length < 3) {
+            suggestions.innerHTML = '';
+            suggestions.style.display = 'none';
+            console.log('Query too short, clearing suggestions');
+            return;
         }
 
-        async function searchProfiles(query) {
-            const suggestions = document.getElementById('suggestions');
-            if (!suggestions) {
-                console.error('Suggestions container not found');
-                return;
-            }
+        suggestions.innerHTML = '<div class="suggestion-item">Searching...</div>';
+        suggestions.style.display = 'block';
 
-            if (!query || query.length < 3) {
-                suggestions.innerHTML = '';
-                suggestions.style.display = 'none';
-                console.log('Query too short, clearing suggestions');
-                return;
-            }
+        if (activeSearch) {
+            activeSearch.cancel = true;
+        }
 
-            suggestions.innerHTML = '<div class="suggestion-item">Searching...</div>';
-            suggestions.style.display = 'block';
+        const searchToken = { cancel: false };
+        activeSearch = searchToken;
 
-            if (activeSearch) {
-                activeSearch.cancel = true;
-            }
-
-            const searchToken = { cancel: false };
-            activeSearch = searchToken;
-
-            try {
-                const profileData = await fetchWithCache(`profile_${query}`, async (signal) => {
-                    const response = await fetch(graphqlEndpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            query: profileQuery,
-                            variables: { id: query, cacheId: `getUserQuery-Profile-${query}` }
-                        }),
-                        signal
-                    });
-
-                    if (searchToken.cancel) {
-                        throw new Error('Search cancelled');
-                    }
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
-                    }
-
-                    const result = await response.json();
-                    if (result.errors) {
-                        throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
-                    }
-
-                    return result.data?.public?.user;
+        try {
+            const profileData = await fetchWithCache(`profile_${query}`, async (signal) => {
+                const response = await fetch(graphqlEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: profileQuery,
+                        variables: { id: query, cacheId: `getUserQuery-Profile-${query}` }
+                    }),
+                    signal
                 });
 
                 if (searchToken.cancel) {
-                    console.log('Search cancelled, ignoring result');
-                    return;
+                    throw new Error('Search cancelled');
                 }
 
-                suggestions.innerHTML = '';
-                if (profileData && profileData.username) {
-                    const item = document.createElement('div');
-                    item.className = 'suggestion-item';
-                    
-                    if (profileData.avatar?.url) {
-                        const img = document.createElement('img');
-                        img.src = profileData.avatar.url;
-                        img.alt = `${profileData.username} avatar`;
-                        img.onerror = () => {
-                            console.error(`Failed to load avatar for ${profileData.username}`);
-                            img.style.display = 'none';
-                        };
-                        item.appendChild(img);
-                    }
-
-                    const text = document.createElement('span');
-                    text.textContent = profileData.username;
-                    item.appendChild(text);
-
-                    item.dataset.username = profileData.username;
-                    item.addEventListener('click', () => {
-                        selectSuggestion(profileData.username);
-                    });
-                    suggestions.appendChild(item);
-                    suggestions.style.display = 'block';
-                } else {
-                    suggestions.innerHTML = '<div class="suggestion-item">No profile found</div>';
-                    suggestions.style.display = 'block';
-                }
-            } catch (error) {
-                if (error.message !== 'Search cancelled') {
-                    console.error(`Error in searchProfiles: ${error.message}`);
-                    suggestions.innerHTML = `<div class="suggestion-item">${
-                        error.message.includes('user[id=') && error.message.includes('not found')
-                            ? 'No profile found'
-                            : `Error: ${error.message}`
-                    }</div>`;
-                    suggestions.style.display = 'block';
-                }
-            } finally {
-                if (activeSearch === searchToken) {
-                    activeSearch = null;
-                }
-            }
-        }
-
-        function clearSuggestions() {
-            const suggestions = document.getElementById('suggestions');
-            if (suggestions) {
-                suggestions.innerHTML = '';
-                suggestions.style.display = 'none';
-            }
-        }
-
-        function selectSuggestion(username) {
-            const usernameInput = document.getElementById('usernameInput');
-            if (usernameInput) {
-                usernameInput.value = username;
-                clearSuggestions();
-                fetchProfileAndNFTs();
-            }
-        }
-
-        async function fetchAllNFTs(ownerId, progressCallback) {
-            const first = 60;
-            let skip = 0;
-            let allAssets = [];
-            let hasMore = true;
-
-            while (hasMore && !isProfileLoadingCancelled) {
-                const nftVariables = { ownerId, first, skip };
-                try {
-                    const response = await fetch(graphqlEndpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ query: nftQuery, variables: nftVariables })
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
-                    }
-
-                    const result = await response.json();
-                    if (result.errors) {
-                        throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
-                    }
-
-                    const assets = result.data?.public?.profileAssets || [];
-                    allAssets = [...allAssets, ...assets];
-                    skip += first;
-                    hasMore = assets.length === first;
-
-                    if (progressCallback) {
-                        progressCallback(allAssets.length);
-                    }
-                } catch (error) {
-                    console.error(`Failed to fetch NFTs: ${error.message}`);
-                    throw error;
-                }
-            }
-
-            return allAssets;
-        }
-
-        function normalizeText(text) {
-            if (!text) return '';
-            let normalized = text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
-            normalized = normalized.replace(/\n\s*\n/g, '\n').trim();
-            return normalized;
-        }
-
-        function updateProfileUI(profileData) {
-            const profileHeader = document.getElementById('profileHeader');
-            const profilePicture = document.getElementById('profilePicture');
-            const username = document.getElementById('username');
-            const verifiedBadge = document.getElementById('verifiedBadge');
-            const displayName = document.getElementById('displayName');
-            const socialContainer = document.getElementById('socialContainer');
-            const croLink = document.getElementById('croLink');
-            const croUrl = document.getElementById('croUrl');
-            const twitterLink = document.getElementById('twitterLink');
-            const twitterUrl = document.getElementById('twitterUrl');
-            const facebookLink = document.getElementById('facebookLink');
-            const facebookUrl = document.getElementById('facebookUrl');
-            const instagramLink = document.getElementById('instagramLink');
-            const instagramUrl = document.getElementById('instagramUrl');
-            const usernameInput = document.getElementById('usernameInput');
-
-            if (!profileHeader || !profilePicture || !username || !verifiedBadge || !displayName || !socialContainer ||
-                !croLink || !croUrl || !twitterLink || !twitterUrl || !facebookLink || !facebookUrl || !instagramLink || !instagramUrl || !usernameInput) {
-                console.error('Profile UI elements not found');
-                return;
-            }
-
-            if (!profileData || !profileData.username) {
-                console.error('Invalid profile data');
-                return;
-            }
-
-            username.textContent = profileData.username || 'Unknown';
-            currentUsername = profileData.username || '';
-            displayName.textContent = profileData.displayName || '';
-            displayName.style.display = profileData.displayName ? 'block' : 'none';
-            currentDisplayName = profileData.displayName || profileData.username || 'Unknown';
-
-            verifiedBadge.style.display = profileData.verified === true ? 'inline-block' : 'none';
-            profilePicture.src = profileData.avatar?.url || '';
-            profilePicture.style.display = profileData.avatar?.url ? 'block' : 'none';
-
-            let hasSocialLinks = false;
-
-            if (currentUsername) {
-                croUrl.href = `https://crypto.com/nft/profile/${sanitizeInput(currentUsername)}`;
-                croLink.style.display = 'inline-block';
-                hasSocialLinks = true;
-            } else {
-                croLink.style.display = 'none';
-            }
-
-            if (profileData.twitterUsername) {
-                twitterUrl.href = `https://x.com/${sanitizeInput(profileData.twitterUsername)}`;
-                twitterLink.style.display = 'inline-block';
-                hasSocialLinks = true;
-            } else {
-                twitterLink.style.display = 'none';
-            }
-
-            if (profileData.facebookUsername) {
-                facebookUrl.href = `https://facebook.com/${sanitizeInput(profileData.facebookUsername)}`;
-                facebookLink.style.display = 'inline-block';
-                hasSocialLinks = true;
-            } else {
-                facebookLink.style.display = 'none';
-            }
-
-            if (profileData.instagramUsername) {
-                instagramUrl.href = `https://instagram.com/${sanitizeInput(profileData.instagramUsername)}`;
-                instagramLink.style.display = 'inline-block';
-                hasSocialLinks = true;
-            } else {
-                instagramLink.style.display = 'none';
-            }
-
-            socialContainer.style.display = hasSocialLinks ? 'flex' : 'none';
-            profileHeader.style.display = 'block';
-            usernameInput.value = '';
-        }
-
-        async function fetchProfileAndNFTs() {
-            const usernameInput = document.getElementById('usernameInput');
-            const errorDiv = document.getElementById('error');
-            const noResultsDiv = document.getElementById('noResults');
-            const controls = document.getElementById('controls');
-            const collectionTitle = document.getElementById('collectionTitle');
-            const profileHeader = document.getElementById('profileHeader');
-            const nftContainer = document.getElementById('nftContainer');
-            const nftCountContainer = document.getElementById('nftCountContainer');
-            const collectionFilter = document.getElementById('collectionFilter');
-            const displayMode = document.getElementById('displayMode');
-            const cardSize = document.getElementById('cardSize');
-            const sortBy = document.getElementById('sortBy');
-            const downloadZipButton = document.getElementById('downloadZipButton');
-            const progressModal = document.getElementById('progressModal');
-            const progressBar = document.getElementById('progressBar');
-            const progressText = document.getElementById('progressText');
-            const modalTitle = document.getElementById('modalTitle');
-            const cancelButton = document.getElementById('cancelDownloadButton');
-
-            if (!usernameInput || !errorDiv || !noResultsDiv || !controls || !collectionTitle ||
-                !profileHeader || !nftContainer || !nftCountContainer || !collectionFilter || 
-                !displayMode || !cardSize || !sortBy || !downloadZipButton || !progressModal || 
-                !progressBar || !progressText || !modalTitle || !cancelButton) {
-                console.error('Required DOM elements not found');
-                if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
-                return;
-            }
-
-            const username = sanitizeInput(usernameInput.value.trim());
-            if (!username || username.toLowerCase() === currentUsername.toLowerCase()) {
-                console.log('fetchProfileAndNFTs skipped:', { username, currentUsername });
-                return;
-            }
-
-            console.log('Starting fetchProfileAndNFTs for:', username);
-
-            // Réinitialiser l'état
-            currentUsername = '';
-            allNFTs = [];
-            displayMode.value = 'full';
-            cardSize.value = 'medium';
-            sortBy.value = 'default';
-            collectionFilter.innerHTML = '<option value="">All Collections</option>';
-            collectionFilter.value = '';
-            collectionFilter.disabled = true;
-
-            currentUsername = username;
-            lastSearchedUsername = currentUsername;
-            clearSuggestions();
-
-            profileHeader.style.display = 'none';
-            nftContainer.innerHTML = '';
-            nftCountContainer.innerHTML = '';
-            noResultsDiv.style.display = 'none';
-            controls.classList.remove('visible');
-            collectionTitle.textContent = '';
-            collectionTitle.classList.remove('visible');
-            errorDiv.textContent = '';
-            downloadZipButton.style.display = 'none';
-
-            modalTitle.textContent = 'Loading Profile';
-            progressText.textContent = `Loading profile for ${username}...`;
-            progressBar.style.width = '0%';
-            progressModal.style.display = 'flex';
-            cancelButton.style.display = 'block';
-
-            isProfileLoadingCancelled = false;
-            cancelButton.onclick = () => {
-                isProfileLoadingCancelled = true;
-                progressText.textContent = 'Profile loading cancelled.';
-                progressBar.style.width = '0%';
-                setTimeout(() => {
-                    progressModal.style.display = 'none';
-                    window.location.href = homeUrl;
-                }, 1000);
-            };
-
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                if (isProfileLoadingCancelled) {
-                    clearInterval(progressInterval);
-                    return;
-                }
-                progress += 10;
-                progressBar.style.width = `${Math.min(progress, 80)}%`;
-            }, 500);
-
-            try {
-                const profileData = await fetchWithCache(`profile_${currentUsername}`, async (signal) => {
-                    const response = await fetch(graphqlEndpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            query: profileQuery,
-                            variables: { id: currentUsername, cacheId: `getUserQuery-Profile-${currentUsername}` }
-                        }),
-                        signal
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
-                    }
-
-                    const result = await response.json();
-                    if (result.errors) {
-                        throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
-                    }
-
-                    return result.data?.public?.user;
-                });
-
-                if (isProfileLoadingCancelled) {
-                    clearInterval(progressInterval);
-                    return;
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
                 }
 
-                if (!profileData) {
-                    clearInterval(progressInterval);
-                    progressModal.style.display = 'none';
-                    noResultsDiv.style.display = 'block';
-                    errorDiv.textContent = 'No profile found';
-                    resetViewportZoom();
-                    return;
+                const result = await response.json();
+                if (result.errors) {
+                    throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
                 }
 
-                updateProfileUI(profileData);
-
-                const newUrl = `${window.location.pathname}#${currentUsername.toLowerCase()}`;
-                history.pushState({ username: currentUsername }, '', newUrl);
-
-                progressText.textContent = `0 assets`;
-                allNFTs = await fetchWithCache(`nfts_${currentUsername}`, () => fetchAllNFTs(currentUsername, (nftCount) => {
-                    if (isProfileLoadingCancelled) return;
-                    progressText.textContent = `${nftCount} assets`;
-                }));
-
-                if (isProfileLoadingCancelled) {
-                    clearInterval(progressInterval);
-                    return;
-                }
-
-                clearInterval(progressInterval);
-                progressBar.style.width = '100%';
-                progressText.textContent = `${allNFTs.length} assets loaded successfully!`;
-                setTimeout(() => {
-                    progressModal.style.display = 'none';
-                    resetViewportZoom();
-                }, 500);
-
-                if (allNFTs.length > 0) {
-                    console.log('Populating collection filter with', allNFTs.length, 'NFTs');
-                    populateCollectionFilter(allNFTs);
-                    collectionFilter.disabled = false;
-                    controls.classList.add('visible');
-                    console.log('Displaying NFTs initially with', allNFTs.length, 'assets');
-                    displayNFTs(allNFTs, '');
-                    loadUserFilters();
-                } else {
-                    console.log('No NFTs found, showing no results');
-                    noResultsDiv.style.display = 'block';
-                    resetViewportZoom();
-                }
-            } catch (error) {
-                if (!isProfileLoadingCancelled) {
-                    console.error(`Error in fetchProfileAndNFTs: ${error.message}`);
-                    clearInterval(progressInterval);
-                    progressModal.style.display = 'none';
-                    errorDiv.textContent = error.message.includes('user[id=') && error.message.includes('not found')
-                        ? 'No profile found'
-                        : `Error: ${error.message}`;
-                    resetViewportZoom();
-                }
-            }
-        }
-
-        async function fetchProfileAndNFTsForLogin(username) {
-            console.log('fetchProfileAndNFTsForLogin called for username:', username);
-            const errorDiv = document.getElementById('error');
-            const noResultsDiv = document.getElementById('noResults');
-            const controls = document.getElementById('controls');
-            const collectionTitle = document.getElementById('collectionTitle');
-            const profileHeader = document.getElementById('profileHeader');
-            const nftContainer = document.getElementById('nftContainer');
-            const nftCountContainer = document.getElementById('nftCountContainer');
-            const collectionFilter = document.getElementById('collectionFilter');
-            const displayMode = document.getElementById('displayMode');
-            const cardSize = document.getElementById('cardSize');
-            const sortBy = document.getElementById('sortBy');
-            const downloadZipButton = document.getElementById('downloadZipButton');
-            const progressModal = document.getElementById('progressModal');
-            const progressBar = document.getElementById('progressBar');
-            const progressText = document.getElementById('progressText');
-            const modalTitle = document.getElementById('modalTitle');
-            const cancelButton = document.getElementById('cancelDownloadButton');
-
-            if (!errorDiv || !noResultsDiv || !controls || !collectionTitle ||
-                !profileHeader || !nftContainer || !nftCountContainer || !collectionFilter || 
-                !displayMode || !cardSize || !sortBy || !downloadZipButton || !progressModal || 
-                !progressBar || !progressText || !modalTitle || !cancelButton) {
-                console.error('Required DOM elements not found');
-                if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
-                return;
-            }
-
-            const sanitizedUsername = sanitizeInput(username.trim());
-            if (!sanitizedUsername) {
-                console.log('No username provided');
-                errorDiv.textContent = 'No username provided';
-                return;
-            }
-
-            console.log('Starting fetchProfileAndNFTsForLogin for:', sanitizedUsername);
-
-            // Réinitialiser l'état
-            currentUsername = '';
-            allNFTs = [];
-            displayMode.value = 'full';
-            cardSize.value = 'medium';
-            sortBy.value = 'default';
-            collectionFilter.innerHTML = '<option value="">All Collections</option>';
-            collectionFilter.value = '';
-            collectionFilter.disabled = true;
-
-            currentUsername = sanitizedUsername;
-            lastSearchedUsername = currentUsername;
-            clearSuggestions();
-
-            profileHeader.style.display = 'none';
-            nftContainer.innerHTML = '';
-            nftCountContainer.innerHTML = '';
-            noResultsDiv.style.display = 'none';
-            controls.classList.remove('visible');
-            collectionTitle.textContent = '';
-            collectionTitle.classList.remove('visible');
-            errorDiv.textContent = '';
-            downloadZipButton.style.display = 'none';
-
-            modalTitle.textContent = 'Loading Profile';
-            progressText.textContent = `Loading profile for ${sanitizedUsername}...`;
-            progressBar.style.width = '0%';
-            progressModal.style.display = 'flex';
-            cancelButton.style.display = 'block';
-
-            isProfileLoadingCancelled = false;
-            cancelButton.onclick = () => {
-                isProfileLoadingCancelled = true;
-                progressText.textContent = 'Profile loading cancelled.';
-                progressBar.style.width = '0%';
-                setTimeout(() => {
-                    progressModal.style.display = 'none';
-                    window.location.href = homeUrl;
-                }, 1000);
-            };
-
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                if (isProfileLoadingCancelled) {
-                    clearInterval(progressInterval);
-                    return;
-                }
-                progress += 10;
-                progressBar.style.width = `${Math.min(progress, 80)}%`;
-            }, 500);
-
-            try {
-                const profileData = await fetchWithCache(`profile_${currentUsername}`, async (signal) => {
-                    const response = await fetch(graphqlEndpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            query: profileQuery,
-                            variables: { id: currentUsername, cacheId: `getUserQuery-Profile-${currentUsername}` }
-                        }),
-                        signal
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
-                    }
-
-                    const result = await response.json();
-                    if (result.errors) {
-                        throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
-                    }
-
-                    return result.data?.public?.user;
-                });
-
-                if (isProfileLoadingCancelled) {
-                    clearInterval(progressInterval);
-                    return;
-                }
-
-                if (!profileData) {
-                    clearInterval(progressInterval);
-                    progressModal.style.display = 'none';
-                    noResultsDiv.style.display = 'block';
-                    errorDiv.textContent = 'No profile found';
-                    resetViewportZoom();
-                    return;
-                }
-
-                updateProfileUI(profileData);
-
-                const newUrl = `${window.location.pathname}#${currentUsername.toLowerCase()}`;
-                history.pushState({ username: currentUsername }, '', newUrl);
-
-                progressText.textContent = `0 assets`;
-                allNFTs = await fetchWithCache(`nfts_${currentUsername}`, () => fetchAllNFTs(currentUsername, (nftCount) => {
-                    if (isProfileLoadingCancelled) return;
-                    progressText.textContent = `${nftCount} assets`;
-                }));
-
-                if (isProfileLoadingCancelled) {
-                    clearInterval(progressInterval);
-                    return;
-                }
-
-                clearInterval(progressInterval);
-                progressBar.style.width = '100%';
-                progressText.textContent = `${allNFTs.length} assets loaded successfully!`;
-                setTimeout(() => {
-                    progressModal.style.display = 'none';
-                    resetViewportZoom();
-                }, 500);
-
-                if (allNFTs.length > 0) {
-                    console.log('Populating collection filter with', allNFTs.length, 'NFTs');
-                    populateCollectionFilter(allNFTs);
-                    collectionFilter.disabled = false;
-                    controls.classList.add('visible');
-                    console.log('Displaying NFTs initially with', allNFTs.length, 'assets');
-                    displayNFTs(allNFTs, '');
-                    loadUserFilters();
-                } else {
-                    console.log('No NFTs found, showing no results');
-                    noResultsDiv.style.display = 'block';
-                    resetViewportZoom();
-                }
-            } catch (error) {
-                if (!isProfileLoadingCancelled) {
-                    console.error(`Error in fetchProfileAndNFTsForLogin: ${error.message}`);
-                    clearInterval(progressInterval);
-                    progressModal.style.display = 'none';
-                    errorDiv.textContent = error.message.includes('user[id=') && error.message.includes('not found')
-                        ? 'No profile found'
-                        : `Error: ${error.message}`;
-                    resetViewportZoom();
-                }
-            }
-        }
-
-        function populateCollectionFilter(nfts) {
-            const collectionFilter = document.getElementById('collectionFilter');
-            if (!collectionFilter) return;
-
-            const collectionCounts = {};
-            nfts.forEach(nft => {
-                const collectionName = nft.collection?.name;
-                if (collectionName) {
-                    collectionCounts[collectionName] = (collectionCounts[collectionName] || 0) + 1;
-                }
+                return result.data?.public?.user;
             });
 
-            const sortedCollections = Object.keys(collectionCounts).sort((a, b) => {
-                return collectionCounts[b] - collectionCounts[a];
-            });
-
-            collectionFilter.innerHTML = '<option value="">All Collections</option>';
-            sortedCollections.forEach(collection => {
-                const option = document.createElement('option');
-                option.value = collection;
-                option.textContent = `${collection} (${collectionCounts[collection]})`;
-                collectionFilter.appendChild(option);
-            });
-        }
-
-        function filterNFTs() {
-            const collectionFilter = document.getElementById('collectionFilter');
-            const displayMode = document.getElementById('displayMode');
-            const cardSize = document.getElementById('cardSize');
-            const sortBy = document.getElementById('sortBy');
-            const collectionTitle = document.getElementById('collectionTitle');
-
-            if (!collectionFilter || !displayMode || !cardSize || !sortBy || !collectionTitle) {
-                console.error('Filter elements not found');
+            if (searchToken.cancel) {
+                console.log('Search cancelled, ignoring result');
                 return;
             }
 
-            console.log('Filtering NFTs with', allNFTs.length, 'assets');
-
-            if (!allNFTs || !allNFTs.length) {
-                console.log('No NFTs to filter, displaying empty');
-                displayNFTs([], '');
-                collectionTitle.textContent = '';
-                collectionTitle.classList.remove('visible');
-                return;
-            }
-
-            const collectionValue = collectionFilter.value;
-            let filteredNFTs = collectionValue
-                ? allNFTs.filter(nft => nft.collection?.name === collectionValue)
-                : [...allNFTs];
-
-            const sortValue = sortBy.value;
-            if (sortValue === 'rank') {
-                filteredNFTs.sort((a, b) => (a.defaultRarityRank || Infinity) - (b.defaultRarityRank || Infinity));
-            } else if (sortValue === 'newest') {
-                filteredNFTs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            } else if (sortValue === 'oldest') {
-                filteredNFTs.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-            } else {
-                filteredNFTs.sort((a, b) => a.id.localeCompare(b.id));
-            }
-
-            console.log('Filtered NFTs:', filteredNFTs.length, 'for collection:', collectionValue || 'All');
-
-            collectionTitle.textContent = collectionValue || 'All Collections';
-            collectionTitle.classList.add('visible');
-
-            const encodedCollection = collectionValue ? encodeURIComponent(collectionValue) : '';
-            const newUrl = encodedCollection
-                ? `${window.location.pathname}#${currentUsername.toLowerCase()}/#${encodedCollection}`
-                : `${window.location.pathname}#${currentUsername.toLowerCase()}`;
-            history.pushState({ username: currentUsername, collection: collectionValue }, '', newUrl);
-
-            displayNFTs(filteredNFTs, collectionValue);
-            saveUserFilters();
-        }
-
-        function displayNFTs(assets, selectedCollection) {
-            const container = document.getElementById('nftContainer');
-            const countContainer = document.getElementById('nftCountContainer');
-            const downloadZipButton = document.getElementById('downloadZipButton');
-            const displayMode = document.getElementById('displayMode')?.value;
-            const cardSize = document.getElementById('cardSize')?.value;
-
-            if (!container || !countContainer || !downloadZipButton) {
-                console.error('NFT container, count container, or download button not found');
-                return;
-            }
-
-            console.log('Displaying NFTs:', assets.length, 'assets for collection:', selectedCollection || 'All');
-
-            countContainer.innerHTML = '';
-            container.innerHTML = ''; // Vider explicitement le conteneur
-            container.className = `nft-container ${displayMode}-mode ${cardSize}-size`;
-
-            const countElement = document.createElement('p');
-            countElement.className = 'nft-count';
-            countElement.innerHTML = selectedCollection
-                ? `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets on this collection.`
-                : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets.`;
-            countContainer.appendChild(countElement);
-
-            downloadZipButton.textContent = `Download ${assets.length} assets`;
-            downloadZipButton.style.display = assets.length > 0 ? 'block' : 'none';
-
-            if (displayMode === 'thumbnail') {
-                const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
-                container.style.width = '100%';
-                container.style.maxWidth = '100vw';
-                container.style.gridTemplateColumns = `repeat(auto-fill, ${cardWidth}px)`;
-
-                assets.forEach((asset, index) => {
-                    const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
-                    const card = document.createElement('div');
-                    card.className = 'nft-card';
-
-                    let mediaElement;
-                    if (imageUrl.endsWith('.mp4')) {
-                        mediaElement = document.createElement('video');
-                        mediaElement.src = imageUrl;
-                        mediaElement.controls = true;
-                        mediaElement.muted = true;
-                        mediaElement.loop = true;
-                        mediaElement.setAttribute('playsinline', '');
-                    } else {
-                        mediaElement = document.createElement('img');
-                        mediaElement.src = imageUrl;
-                        mediaElement.alt = asset.name || 'NFT Image';
-                        mediaElement.loading = 'lazy';
-                        mediaElement.decoding = 'async';
-                        mediaElement.sizes = '(max-width: 768px) 80px, 200px';
-                    }
-
-                    mediaElement.onerror = () => {
-                        console.error('Media failed to load for asset:', asset.name || 'Unnamed');
-                        card.innerHTML = '';
-                        const placeholder = document.createElement('div');
-                        placeholder.className = 'media-placeholder';
-                        placeholder.textContent = 'Média indisponible';
-                        card.appendChild(placeholder);
+            suggestions.innerHTML = '';
+            if (profileData && profileData.username) {
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+                
+                if (profileData.avatar?.url) {
+                    const img = document.createElement('img');
+                    img.src = profileData.avatar.url;
+                    img.alt = `${profileData.username} avatar`;
+                    img.onerror = () => {
+                        console.error(`Failed to load avatar for ${profileData.username}`);
+                        img.style.display = 'none';
                     };
+                    item.appendChild(img);
+                }
 
-                    const tooltip = document.createElement('span');
-                    tooltip.className = 'tooltip';
-                    tooltip.textContent = asset.name || 'Unnamed NFT';
-                    card.appendChild(tooltip);
+                const text = document.createElement('span');
+                text.textContent = profileData.username;
+                item.appendChild(text);
 
-                    card.appendChild(mediaElement);
-                    container.appendChild(card);
+                item.dataset.username = profileData.username;
+                item.addEventListener('click', () => {
+                    selectSuggestion(profileData.username);
                 });
+                suggestions.appendChild(item);
+                suggestions.style.display = 'block';
             } else {
-                assets.forEach((asset, index) => {
-                    const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
-                    const card = document.createElement('div');
-                    card.className = 'nft-card';
-
-                    let mediaElement;
-                    if (imageUrl.endsWith('.mp4')) {
-                        mediaElement = document.createElement('video');
-                        mediaElement.src = imageUrl;
-                        mediaElement.controls = true;
-                        mediaElement.muted = true;
-                        mediaElement.loop = true;
-                        mediaElement.setAttribute('playsinline', '');
-                    } else {
-                        mediaElement = document.createElement('img');
-                        mediaElement.src = imageUrl;
-                        mediaElement.alt = asset.name || 'NFT Image';
-                        mediaElement.loading = 'lazy';
-                        mediaElement.decoding = 'async';
-                        mediaElement.sizes = '(max-width: 768px) 80px, 200px';
-                    }
-
-                    mediaElement.onerror = () => {
-                        console.error('Media failed to load for asset:', asset.name || 'Unnamed');
-                        card.innerHTML = '';
-                        const placeholder = document.createElement('div');
-                        placeholder.className = 'media-placeholder';
-                        placeholder.textContent = 'Média indisponible';
-                        card.appendChild(placeholder);
-                    };
-
-                    card.appendChild(mediaElement);
-
-                    const title = document.createElement('h3');
-                    title.innerHTML = asset.name ? normalizeText(asset.name) : 'Unnamed NFT';
-                    card.appendChild(title);
-
-                    container.appendChild(card);
-                });
+                suggestions.innerHTML = '<div class="suggestion-item">No profile found</div>';
+                suggestions.style.display = 'block';
+            }
+        } catch (error) {
+            if (error.message !== 'Search cancelled') {
+                console.error(`Error in searchProfiles: ${error.message}`);
+                suggestions.innerHTML = `<div class="suggestion-item">${
+                    error.message.includes('user[id=') && error.message.includes('not found')
+                        ? 'No profile found'
+                        : `Error: ${error.message}`
+                }</div>`;
+                suggestions.style.display = 'block';
+            }
+        } finally {
+            if (activeSearch === searchToken) {
+                activeSearch = null;
             }
         }
+    }
 
-        async function downloadNFTsAsZip() {
-            const zip = new JSZip();
-            const nftContainer = document.getElementById('nftContainer');
-            const errorDiv = document.getElementById('error');
-            const progressModal = document.getElementById('progressModal');
-            const progressBar = document.getElementById('progressBar');
-            const progressText = document.getElementById('progressText');
-            const modalTitle = document.getElementById('modalTitle');
-            const cancelButton = document.getElementById('cancelDownloadButton');
-        
-            if (!nftContainer || !errorDiv || !progressModal || !progressBar || !progressText || !modalTitle || !cancelButton) {
-                console.error('Required DOM elements for download not found');
-                if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
-                return;
-            }
-        
-            const filteredNFTs = Array.from(nftContainer.querySelectorAll('.nft-card')).map((card, index) => {
-                const img = card.querySelector('img');
-                const video = card.querySelector('video');
-                const titleElement = card.querySelector('h3') || card.querySelector('.tooltip');
-                const title = titleElement ? titleElement.textContent : `NFT_${index + 1}`;
-                return {
-                    url: img ? img.src : video ? video.src : null,
-                    name: title,
-                };
-            }).filter(nft => nft.url && nft.url !== 'https://via.placeholder.com/150');
-        
-            if (filteredNFTs.length === 0) {
-                errorDiv.textContent = 'No valid assets to download.';
-                return;
-            }
-        
-            modalTitle.textContent = 'Creating ZIP File';
-            progressText.textContent = `Preparing ${filteredNFTs.length} assets`;
-            progressBar.style.width = '0%';
-            progressModal.style.display = 'flex';
-            cancelButton.style.display = 'block';
-        
-            isDownloadCancelled = false;
-            cancelButton.onclick = () => {
-                isDownloadCancelled = true;
-                progressText.textContent = 'Download cancelled.';
-                progressBar.style.width = '0%';
-                setTimeout(() => {
-                    progressModal.style.display = 'none';
-                }, 1000);
-            };
-        
-            let processed = 0;
-            for (const [index, nft] of filteredNFTs.entries()) {
-                if (isDownloadCancelled) {
-                    console.log('Download cancelled by user');
-                    return;
-                }
-        
-                try {
-                    const response = await fetch(nft.url);
-                    if (!response.ok) {
-                        console.error(`Failed to fetch asset ${nft.name}: ${response.statusText}`);
-                        continue;
-                    }
-                    const blob = await response.blob();
-                    const extension = nft.url.endsWith('.mp4') ? 'mp4' : 'png';
-                    const sanitizedName = sanitizeFileNameForZip(nft.name);
-                    const fileName = `${sanitizedName}.${extension}`;
-                    zip.file(fileName, blob);
-                    processed++;
-                    const progressPercent = (processed / filteredNFTs.length) * 100;
-                    progressBar.style.width = `${progressPercent}%`;
-                    progressText.textContent = `Downloading: ${processed}/${filteredNFTs.length}`;
-                } catch (error) {
-                    console.error(`Error downloading ${nft.name}: ${error.message}`);
-                }
-            }
-        
-            if (isDownloadCancelled) {
-                console.log('Download process aborted');
-                return;
-            }
-        
-            if (processed === 0) {
-                progressModal.style.display = 'none';
-                errorDiv.textContent = 'No assets could be downloaded';
-                return;
-            }
-        
-            progressText.textContent = 'Generating ZIP file';
+    function clearSuggestions() {
+        const suggestions = document.getElementById('suggestions');
+        if (suggestions) {
+            suggestions.innerHTML = '';
+            suggestions.style.display = 'none';
+        }
+    }
+
+    function selectSuggestion(username) {
+        const usernameInput = document.getElementById('usernameInput');
+        if (usernameInput) {
+            usernameInput.value = username;
+            clearSuggestions();
+            fetchProfileAndNFTs();
+        }
+    }
+
+    async function fetchAllNFTs(ownerId, progressCallback) {
+        const first = 60;
+        let skip = 0;
+        let allAssets = [];
+        let hasMore = true;
+
+        while (hasMore && !isProfileLoadingCancelled) {
+            const nftVariables = { ownerId, first, skip };
             try {
-                const content = await zip.generateAsync({ type: 'blob' });
-                saveAs(content, `${currentUsername}_nfts.zip`);
-                progressText.textContent = 'Download complete!';
-                progressBar.style.width = '100%';
-                setTimeout(() => {
-                    progressModal.style.display = 'none';
-                }, 1000);
-            } catch (error) {
-                console.error(`Error generating ZIP: ${error.message}`);
-                progressModal.style.display = 'none';
-                errorDiv.textContent = 'Failed to generate ZIP file';
-            }
-        }
-
-        function updateDisplay() {
-            const displayMode = document.getElementById('displayMode')?.value;
-            const cardSize = document.getElementById('cardSize')?.value;
-            const nftContainer = document.getElementById('nftContainer');
-
-            if (!nftContainer) {
-                console.error('NFT container not found');
-                return;
-            }
-
-            nftContainer.className = `nft-container ${displayMode}-mode ${cardSize}-size`;
-
-            if (displayMode === 'thumbnail') {
-                const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
-                nftContainer.style.width = '100%';
-                nftContainer.style.maxWidth = '100vw';
-                nftContainer.style.gridTemplateColumns = `repeat(auto-fill, ${cardWidth}px)`;
-            } else {
-                nftContainer.style.gridTemplateColumns = '';
-                nftContainer.style.width = '';
-                nftContainer.style.maxWidth = '100vw';
-            }
-
-            filterNFTs();
-            saveUserFilters();
-        }
-
-        function setupEventListeners() {
-            const usernameInput = document.getElementById('usernameInput');
-            const loginUsernameInput = document.getElementById('loginUsernameInput');
-            const themeButton = document.getElementById('themeButton');
-            const collectionFilter = document.getElementById('collectionFilter');
-            const displayMode = document.getElementById('displayMode');
-            const cardSize = document.getElementById('cardSize');
-            const sortBy = document.getElementById('sortBy');
-            const navbarMenu = document.getElementById('navbarMenu');
-            const confirmLoginButton = document.getElementById('confirmLoginButton');
-            const cancelLoginButton = document.getElementById('cancelLoginButton');
-            const myProfileLink = document.getElementById('myProfileLink');
-            const logoutLink = document.getElementById('logoutLink');
-            const loginLink = document.getElementById('loginLink');
-
-            if (!usernameInput || !loginUsernameInput || !themeButton || !collectionFilter || 
-                !displayMode || !cardSize || !sortBy || !navbarMenu || !confirmLoginButton || 
-                !cancelLoginButton || !myProfileLink || !logoutLink || !loginLink) {
-                console.error('One or more DOM elements not found');
-                const errorDiv = document.getElementById('error');
-                if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
-                return;
-            }
-
-            const isMobile = window.innerWidth <= 768;
-            const debounceDelay = isMobile ? 500 : 300;
-
-            usernameInput.addEventListener('input', () => {
-                clearTimeout(debounceTimeout);
-                debounceTimeout = setTimeout(() => {
-                    const query = sanitizeInput(usernameInput.value.trim());
-                    searchProfiles(query);
-                }, debounceDelay);
-            });
-
-            usernameInput.addEventListener('keypress', (event) => {
-                if (event.key === 'Enter') {
-                    clearSuggestions();
-                    fetchProfileAndNFTs();
-                }
-            });
-
-            usernameInput.addEventListener('blur', () => {
-                resetViewportZoom();
-            });
-
-            loginUsernameInput.addEventListener('input', () => {
-                clearTimeout(debounceTimeout);
-                debounceTimeout = setTimeout(() => {
-                    const query = sanitizeInput(loginUsernameInput.value.trim());
-                    searchLoginProfiles(query);
-                }, debounceDelay);
-            });
-
-            loginUsernameInput.addEventListener('keypress', (event) => {
-                if (event.key === 'Enter') {
-                    clearLoginSuggestions();
-                }
-            });
-
-            confirmLoginButton.addEventListener('click', handleLogin);
-            cancelLoginButton.addEventListener('click', resetLoginModal);
-
-            themeButton.addEventListener('click', toggleTheme);
-
-            collectionFilter.addEventListener('change', filterNFTs);
-            displayMode.addEventListener('change', updateDisplay);
-            cardSize.addEventListener('change', updateDisplay);
-            sortBy.addEventListener('change', filterNFTs);
-
-            myProfileLink.addEventListener('click', (event) => {
-                event.preventDefault();
-                if (loggedInUser) {
-                    usernameInput.value = loggedInUser.username;
-                    fetchProfileAndNFTs();
-                    navbarMenu.classList.remove('active');
-                    const toggle = document.querySelector('.navbar-toggle');
-                    if (toggle) toggle.setAttribute('aria-expanded', 'false');
-                }
-            });
-
-            logoutLink.addEventListener('click', logout);
-
-            loginLink.addEventListener('click', showLoginModal);
-
-            navbarMenu.querySelectorAll('a').forEach(link => {
-                link.addEventListener('click', () => {
-                    navbarMenu.classList.remove('active');
-                    const toggle = document.querySelector('.navbar-toggle');
-                    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+                const response = await fetch(graphqlEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: nftQuery, variables: nftVariables })
                 });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                if (result.errors) {
+                    throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
+                }
+
+                const assets = result.data?.public?.profileAssets || [];
+                allAssets = [...allAssets, ...assets];
+                skip += first;
+                hasMore = assets.length === first;
+
+                if (progressCallback) {
+                    progressCallback(allAssets.length);
+                }
+            } catch (error) {
+                console.error(`Failed to fetch NFTs: ${error.message}`);
+                throw error;
+            }
+        }
+
+        return allAssets;
+    }
+
+    function normalizeText(text) {
+        if (!text) return '';
+        let normalized = text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+        normalized = normalized.replace(/\n\s*\n/g, '\n').trim();
+        return normalized;
+    }
+
+    function updateProfileUI(profileData) {
+        const profileHeader = document.getElementById('profileHeader');
+        const profilePicture = document.getElementById('profilePicture');
+        const username = document.getElementById('username');
+        const verifiedBadge = document.getElementById('verifiedBadge');
+        const displayName = document.getElementById('displayName');
+        const socialContainer = document.getElementById('socialContainer');
+        const croLink = document.getElementById('croLink');
+        const croUrl = document.getElementById('croUrl');
+        const twitterLink = document.getElementById('twitterLink');
+        const twitterUrl = document.getElementById('twitterUrl');
+        const facebookLink = document.getElementById('facebookLink');
+        const facebookUrl = document.getElementById('facebookUrl');
+        const instagramLink = document.getElementById('instagramLink');
+        const instagramUrl = document.getElementById('instagramUrl');
+        const usernameInput = document.getElementById('usernameInput');
+
+        if (!profileHeader || !profilePicture || !username || !verifiedBadge || !displayName || !socialContainer ||
+            !croLink || !croUrl || !twitterLink || !twitterUrl || !facebookLink || !facebookUrl || !instagramLink || !instagramUrl || !usernameInput) {
+            console.error('Profile UI elements not found');
+            return;
+        }
+
+        if (!profileData || !profileData.username) {
+            console.error('Invalid profile data');
+            return;
+        }
+
+        username.textContent = profileData.username || 'Unknown';
+        currentUsername = profileData.username || '';
+        displayName.textContent = profileData.displayName || '';
+        displayName.style.display = profileData.displayName ? 'block' : 'none';
+        currentDisplayName = profileData.displayName || profileData.username || 'Unknown';
+
+        verifiedBadge.style.display = profileData.verified === true ? 'inline-block' : 'none';
+        profilePicture.src = profileData.avatar?.url || '';
+        profilePicture.style.display = profileData.avatar?.url ? 'block' : 'none';
+
+        let hasSocialLinks = false;
+
+        if (currentUsername) {
+            croUrl.href = `https://crypto.com/nft/profile/${sanitizeInput(currentUsername)}`;
+            croLink.style.display = 'inline-block';
+            hasSocialLinks = true;
+        } else {
+            croLink.style.display = 'none';
+        }
+
+        if (profileData.twitterUsername) {
+            twitterUrl.href = `https://x.com/${sanitizeInput(profileData.twitterUsername)}`;
+            twitterLink.style.display = 'inline-block';
+            hasSocialLinks = true;
+        } else {
+            twitterLink.style.display = 'none';
+        }
+
+        if (profileData.facebookUsername) {
+            facebookUrl.href = `https://facebook.com/${sanitizeInput(profileData.facebookUsername)}`;
+            facebookLink.style.display = 'inline-block';
+            hasSocialLinks = true;
+        } else {
+            facebookLink.style.display = 'none';
+        }
+
+        if (profileData.instagramUsername) {
+            instagramUrl.href = `https://instagram.com/${sanitizeInput(profileData.instagramUsername)}`;
+            instagramLink.style.display = 'inline-block';
+            hasSocialLinks = true;
+        } else {
+            instagramLink.style.display = 'none';
+        }
+
+        socialContainer.style.display = hasSocialLinks ? 'flex' : 'none';
+        profileHeader.style.display = 'block';
+        usernameInput.value = '';
+    }
+
+async function fetchProfileAndNFTs() {
+    const usernameInput = document.getElementById('usernameInput');
+    const errorDiv = document.getElementById('error');
+    const noResultsDiv = document.getElementById('noResults');
+    const controls = document.getElementById('controls');
+    const collectionTitle = document.getElementById('collectionTitle');
+    const profileHeader = document.getElementById('profileHeader');
+    const nftContainer = document.getElementById('nftContainer');
+    const nftCountContainer = document.getElementById('nftCountContainer');
+    const collectionFilter = document.getElementById('collectionFilter');
+    const displayMode = document.getElementById('displayMode');
+    const cardSize = document.getElementById('cardSize');
+    const sortBy = document.getElementById('sortBy');
+    const chainsFilter = document.getElementById('chainsFilter');
+    const downloadZipButton = document.getElementById('downloadZipButton');
+    const progressModal = document.getElementById('progressModal');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const modalTitle = document.getElementById('modalTitle');
+    const cancelButton = document.getElementById('cancelDownloadButton');
+
+    if (!usernameInput || !errorDiv || !noResultsDiv || !controls || !collectionTitle ||
+        !profileHeader || !nftContainer || !nftCountContainer || !collectionFilter || 
+        !displayMode || !cardSize || !sortBy || !chainsFilter || !downloadZipButton || !progressModal || 
+        !progressBar || !progressText || !modalTitle || !cancelButton) {
+        console.error('Required DOM elements not found');
+        if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
+        return;
+    }
+
+    const username = sanitizeInput(usernameInput.value.trim());
+    if (!username || username.toLowerCase() === currentUsername.toLowerCase()) {
+        console.log('fetchProfileAndNFTs skipped:', { username, currentUsername });
+        return;
+    }
+
+    console.log('Starting fetchProfileAndNFTs for:', username);
+
+    // Réinitialiser l'état
+    currentUsername = '';
+    allNFTs = [];
+    displayMode.value = 'thumbnail';
+    cardSize.value = 'small';
+    sortBy.value = 'default';
+    chainsFilter.value = '';
+    collectionFilter.innerHTML = '<option value="">All Collections</option>';
+    collectionFilter.value = '';
+    collectionFilter.disabled = true;
+
+    currentUsername = username;
+    lastSearchedUsername = currentUsername;
+    clearSuggestions();
+
+    profileHeader.style.display = 'none';
+    nftContainer.innerHTML = '';
+    nftCountContainer.innerHTML = '';
+    noResultsDiv.style.display = 'none';
+    controls.classList.remove('visible');
+    collectionTitle.textContent = '';
+    collectionTitle.classList.remove('visible');
+    errorDiv.textContent = '';
+    downloadZipButton.style.display = 'none';
+
+    modalTitle.textContent = 'Loading Profile';
+    progressText.textContent = `Loading profile for ${username}...`;
+    progressBar.style.width = '0%';
+    progressModal.style.display = 'flex';
+    cancelButton.style.display = 'block';
+
+    isProfileLoadingCancelled = false;
+    cancelButton.onclick = () => {
+        isProfileLoadingCancelled = true;
+        progressText.textContent = 'Profile loading cancelled.';
+        progressBar.style.width = '0%';
+        setTimeout(() => {
+            progressModal.style.display = 'none';
+            window.location.href = homeUrl;
+        }, 1000);
+    };
+
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        if (isProfileLoadingCancelled) {
+            clearInterval(progressInterval);
+            return;
+        }
+        progress += 10;
+        progressBar.style.width = `${Math.min(progress, 80)}%`;
+    }, 500);
+
+    try {
+        const profileData = await fetchWithCache(`profile_${currentUsername}`, async (signal) => {
+            const response = await fetch(graphqlEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    query: profileQuery,
+                    variables: { id: currentUsername, cacheId: `getUserQuery-Profile-${currentUsername}` }
+                }),
+                signal
             });
-        }
 
-        function initialize() {
-            const savedTheme = localStorage.getItem('theme') || 'dark';
-            document.documentElement.setAttribute('data-theme', savedTheme);
-            const themeButton = document.getElementById('themeButton');
-            if (themeButton) {
-                themeButton.textContent = savedTheme.charAt(0).toUpperCase() + savedTheme.slice(1);
+            if (!response.ok) {
+                throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
             }
 
-            const savedUser = localStorage.getItem('loggedInUser');
-            if (savedUser) {
-                try {
-                    loggedInUser = JSON.parse(savedUser);
-                    updateLoginLink();
-                } catch (error) {
-                    console.error('Error parsing saved user:', error);
-                    localStorage.removeItem('loggedInUser');
-                }
+            const result = await response.json();
+            if (result.errors) {
+                throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
             }
 
-            setupEventListeners();
-
-            const hash = window.location.hash.replace('#', '').toLowerCase();
-            if (hash) {
-                const [username, collection] = hash.split('/#');
-                const usernameInput = document.getElementById('usernameInput');
-                if (usernameInput) {
-                    usernameInput.value = username;
-                    fetchProfileAndNFTs().then(() => {
-                        const collectionFilter = document.getElementById('collectionFilter');
-                        if (collectionFilter && collection) {
-                            const decodedCollection = decodeURIComponent(collection);
-                            const optionExists = Array.from(collectionFilter.options).some(
-                                option => option.value === decodedCollection
-                            );
-                            if (optionExists) {
-                                collectionFilter.value = decodedCollection;
-                                filterNFTs();
-                            } else {
-                                console.warn(`Collection ${decodedCollection} not found in filter options`);
-                                collectionFilter.value = '';
-                                filterNFTs();
-                            }
-                        }
-                    });
-                }
-            }
-        }
-
-        window.addEventListener('popstate', (event) => {
-            const usernameInput = document.getElementById('usernameInput');
-            if (!usernameInput) return;
-
-            const hash = window.location.hash.replace('#', '').toLowerCase();
-            if (hash) {
-                const [username, collection] = hash.split('/#');
-                if (username !== lastSearchedUsername.toLowerCase()) {
-                    usernameInput.value = username;
-                    fetchProfileAndNFTs().then(() => {
-                        const collectionFilter = document.getElementById('collectionFilter');
-                        if (collectionFilter && collection) {
-                            const decodedCollection = decodeURIComponent(collection);
-                            const optionExists = Array.from(collectionFilter.options).some(
-                                option => option.value === decodedCollection
-                            );
-                            if (optionExists) {
-                                collectionFilter.value = decodedCollection;
-                                filterNFTs();
-                            } else {
-                                console.warn(`Collection ${decodedCollection} not found in filter options`);
-                                collectionFilter.value = '';
-                                filterNFTs();
-                            }
-                        }
-                    });
-                } else {
-                    const collectionFilter = document.getElementById('collectionFilter');
-                    if (collectionFilter) {
-                        const decodedCollection = collection ? decodeURIComponent(collection) : '';
-                        const optionExists = decodedCollection && Array.from(collectionFilter.options).some(
-                            option => option.value === decodedCollection
-                        );
-                        collectionFilter.value = optionExists ? decodedCollection : '';
-                        filterNFTs();
-                    }
-                }
-            } else {
-                usernameInput.value = '';
-                const profileHeader = document.getElementById('profileHeader');
-                const nftContainer = document.getElementById('nftContainer');
-                const nftCountContainer = document.getElementById('nftCountContainer');
-                const noResultsDiv = document.getElementById('noResults');
-                const controls = document.getElementById('controls');
-                const collectionTitle = document.getElementById('collectionTitle');
-                const collectionFilter = document.getElementById('collectionFilter');
-                const downloadZipButton = document.getElementById('downloadZipButton');
-
-                if (profileHeader) profileHeader.style.display = 'none';
-                if (nftContainer) nftContainer.innerHTML = '';
-                if (nftCountContainer) nftCountContainer.innerHTML = '';
-                if (noResultsDiv) noResultsDiv.style.display = 'none';
-                if (controls) controls.classList.remove('visible');
-                if (collectionTitle) {
-                    collectionTitle.textContent = '';
-                    collectionTitle.classList.remove('visible');
-                }
-                if (collectionFilter) {
-                    collectionFilter.innerHTML = '<option value="">All Collections</option>';
-                    collectionFilter.disabled = true;
-                }
-                if (downloadZipButton) downloadZipButton.style.display = 'none';
-
-                allNFTs = [];
-                currentUsername = '';
-                lastSearchedUsername = '';
-            }
+            return result.data?.public?.user;
         });
 
-        initialize();
+        if (isProfileLoadingCancelled) {
+            clearInterval(progressInterval);
+            return;
+        }
+
+        if (!profileData) {
+            clearInterval(progressInterval);
+            progressModal.style.display = 'none';
+            noResultsDiv.style.display = 'block';
+            errorDiv.textContent = 'No profile found';
+            resetViewportZoom();
+            return;
+        }
+
+        updateProfileUI(profileData);
+
+        const newUrl = `${window.location.pathname}#${currentUsername.toLowerCase()}`;
+        history.pushState({ username: currentUsername }, '', newUrl);
+
+        progressText.textContent = `0 assets`;
+        allNFTs = await fetchWithCache(`nfts_${currentUsername}`, () => fetchAllNFTs(currentUsername, (nftCount) => {
+            if (isProfileLoadingCancelled) return;
+            progressText.textContent = `${nftCount} assets`;
+        }));
+
+        if (isProfileLoadingCancelled) {
+            clearInterval(progressInterval);
+            return;
+        }
+
+        clearInterval(progressInterval);
+        progressBar.style.width = '100%';
+        progressText.textContent = `${allNFTs.length} assets loaded successfully!`;
+        setTimeout(() => {
+            progressModal.style.display = 'none';
+            resetViewportZoom();
+        }, 500);
+
+        if (allNFTs.length > 0) {
+            console.log('Populating collection filter with', allNFTs.length, 'NFTs');
+            populateCollectionFilter(allNFTs);
+            collectionFilter.disabled = false;
+            controls.classList.add('visible');
+            console.log('Displaying NFTs initially with', allNFTs.length, 'assets');
+            displayNFTs(allNFTs, '');
+            loadUserFilters();
+        } else {
+            console.log('No NFTs found, showing no results');
+            noResultsDiv.style.display = 'block';
+            resetViewportZoom();
+        }
+    } catch (error) {
+        if (!isProfileLoadingCancelled) {
+            console.error(`Error in fetchProfileAndNFTs: ${error.message}`);
+            clearInterval(progressInterval);
+            progressModal.style.display = 'none';
+            errorDiv.textContent = error.message.includes('user[id=') && error.message.includes('not found')
+                ? 'No profile found'
+                : `Error: ${error.message}`;
+            resetViewportZoom();
+        }
+    }
+}
+
+async function fetchProfileAndNFTsForLogin(username) {
+    console.log('fetchProfileAndNFTsForLogin called for username:', username);
+    const errorDiv = document.getElementById('error');
+    const noResultsDiv = document.getElementById('noResults');
+    const controls = document.getElementById('controls');
+    const collectionTitle = document.getElementById('collectionTitle');
+    const profileHeader = document.getElementById('profileHeader');
+    const nftContainer = document.getElementById('nftContainer');
+    const nftCountContainer = document.getElementById('nftCountContainer');
+    const collectionFilter = document.getElementById('collectionFilter');
+    const displayMode = document.getElementById('displayMode');
+    const cardSize = document.getElementById('cardSize');
+    const sortBy = document.getElementById('sortBy');
+    const chainsFilter = document.getElementById('chainsFilter');
+    const downloadZipButton = document.getElementById('downloadZipButton');
+    const progressModal = document.getElementById('progressModal');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const modalTitle = document.getElementById('modalTitle');
+    const cancelButton = document.getElementById('cancelDownloadButton');
+
+    if (!errorDiv || !noResultsDiv || !controls || !collectionTitle ||
+        !profileHeader || !nftContainer || !nftCountContainer || !collectionFilter || 
+        !displayMode || !cardSize || !sortBy || !chainsFilter || !downloadZipButton || !progressModal || 
+        !progressBar || !progressText || !modalTitle || !cancelButton) {
+        console.error('Required DOM elements not found');
+        if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
+        return;
+    }
+
+    const sanitizedUsername = sanitizeInput(username.trim());
+    if (!sanitizedUsername) {
+        console.log('No username provided');
+        errorDiv.textContent = 'No username provided';
+        return;
+    }
+
+    console.log('Starting fetchProfileAndNFTsForLogin for:', sanitizedUsername);
+
+    // Réinitialiser l'état
+    currentUsername = '';
+    allNFTs = [];
+    displayMode.value = 'thumbnail';
+    cardSize.value = 'small';
+    sortBy.value = 'default';
+    chainsFilter.value = '';
+    collectionFilter.innerHTML = '<option value="">All Collections</option>';
+    collectionFilter.value = '';
+    collectionFilter.disabled = true;
+
+    currentUsername = sanitizedUsername;
+    lastSearchedUsername = currentUsername;
+    clearSuggestions();
+
+    profileHeader.style.display = 'none';
+    nftContainer.innerHTML = '';
+    nftCountContainer.innerHTML = '';
+    noResultsDiv.style.display = 'none';
+    controls.classList.remove('visible');
+    collectionTitle.textContent = '';
+    collectionTitle.classList.remove('visible');
+    errorDiv.textContent = '';
+    downloadZipButton.style.display = 'none';
+
+    modalTitle.textContent = 'Loading Profile';
+    progressText.textContent = `Loading profile for ${sanitizedUsername}...`;
+    progressBar.style.width = '0%';
+    progressModal.style.display = 'flex';
+    cancelButton.style.display = 'block';
+
+    isProfileLoadingCancelled = false;
+    cancelButton.onclick = () => {
+        isProfileLoadingCancelled = true;
+        progressText.textContent = 'Profile loading cancelled.';
+        progressBar.style.width = '0%';
+        setTimeout(() => {
+            progressModal.style.display = 'none';
+            window.location.href = homeUrl;
+        }, 1000);
+    };
+
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        if (isProfileLoadingCancelled) {
+            clearInterval(progressInterval);
+            return;
+        }
+        progress += 10;
+        progressBar.style.width = `${Math.min(progress, 80)}%`;
+    }, 500);
+
+    try {
+        const profileData = await fetchWithCache(`profile_${currentUsername}`, async (signal) => {
+            const response = await fetch(graphqlEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    query: profileQuery,
+                    variables: { id: currentUsername, cacheId: `getUserQuery-Profile-${currentUsername}` }
+                }),
+                signal
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            if (result.errors) {
+                throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
+            }
+
+            return result.data?.public?.user;
+        });
+
+        if (isProfileLoadingCancelled) {
+            clearInterval(progressInterval);
+            return;
+        }
+
+        if (!profileData) {
+            clearInterval(progressInterval);
+            progressModal.style.display = 'none';
+            noResultsDiv.style.display = 'block';
+            errorDiv.textContent = 'No profile found';
+            resetViewportZoom();
+            return;
+        }
+
+        updateProfileUI(profileData);
+
+        const newUrl = `${window.location.pathname}#${currentUsername.toLowerCase()}`;
+        history.pushState({ username: currentUsername }, '', newUrl);
+
+        progressText.textContent = `0 assets`;
+        allNFTs = await fetchWithCache(`nfts_${currentUsername}`, () => fetchAllNFTs(currentUsername, (nftCount) => {
+            if (isProfileLoadingCancelled) return;
+            progressText.textContent = `${nftCount} assets`;
+        }));
+
+        if (isProfileLoadingCancelled) {
+            clearInterval(progressInterval);
+            return;
+        }
+
+        clearInterval(progressInterval);
+        progressBar.style.width = '100%';
+        progressText.textContent = `${allNFTs.length} assets loaded successfully!`;
+        setTimeout(() => {
+            progressModal.style.display = 'none';
+            resetViewportZoom();
+        }, 500);
+
+        if (allNFTs.length > 0) {
+            console.log('Populating collection filter with', allNFTs.length, 'NFTs');
+            populateCollectionFilter(allNFTs);
+            collectionFilter.disabled = false;
+            controls.classList.add('visible');
+            console.log('Displaying NFTs initially with', allNFTs.length, 'assets');
+            displayNFTs(allNFTs, '');
+            loadUserFilters();
+        } else {
+            console.log('No NFTs found, showing no results');
+            noResultsDiv.style.display = 'block';
+            resetViewportZoom();
+        }
+    } catch (error) {
+        if (!isProfileLoadingCancelled) {
+            console.error(`Error in fetchProfileAndNFTsForLogin: ${error.message}`);
+            clearInterval(progressInterval);
+            progressModal.style.display = 'none';
+            errorDiv.textContent = error.message.includes('user[id=') && error.message.includes('not found')
+                ? 'No profile found'
+                : `Error: ${error.message}`;
+            resetViewportZoom();
+        }
+    }
+}
+
+function populateCollectionFilter(nfts) {
+    const collectionFilter = document.getElementById('collectionFilter');
+    if (!collectionFilter) return;
+
+    const collectionCounts = {};
+    nfts.forEach(nft => {
+        const collectionName = nft.collection?.name;
+        if (collectionName) {
+            collectionCounts[collectionName] = (collectionCounts[collectionName] || 0) + 1;
+        }
+    });
+
+    const sortedCollections = Object.keys(collectionCounts).sort((a, b) => {
+        return collectionCounts[b] - collectionCounts[a];
+    });
+
+    collectionFilter.innerHTML = '<option value="">All Collections</option>';
+    sortedCollections.forEach(collection => {
+        const option = document.createElement('option');
+        option.value = collection;
+        option.textContent = `${collection} (${collectionCounts[collection]})`;
+        collectionFilter.appendChild(option);
+    });
+}
+
+function filterNFTs() {
+    const collectionFilter = document.getElementById('collectionFilter');
+    const displayMode = document.getElementById('displayMode');
+    const cardSize = document.getElementById('cardSize');
+    const sortBy = document.getElementById('sortBy');
+    const chainsFilter = document.getElementById('chainsFilter');
+    const collectionTitle = document.getElementById('collectionTitle');
+
+    if (!collectionFilter || !displayMode || !cardSize || !sortBy || !chainsFilter || !collectionTitle) {
+        console.error('Filter elements not found');
+        return;
+    }
+
+    console.log('Filtering NFTs with', allNFTs.length, 'assets');
+
+    if (!allNFTs || !allNFTs.length) {
+        console.log('No NFTs to filter, displaying empty');
+        displayNFTs([], '');
+        collectionTitle.textContent = '';
+        collectionTitle.classList.remove('visible');
+        return;
+    }
+
+    const collectionValue = collectionFilter.value;
+    const chainValue = chainsFilter.value;
+    let filteredNFTs = [...allNFTs];
+
+    // Filtrer par collection
+    if (collectionValue) {
+        filteredNFTs = filteredNFTs.filter(nft => nft.collection?.name === collectionValue);
+    }
+
+    // Filtrer par chaîne
+    if (chainValue) {
+        filteredNFTs = filteredNFTs.filter(nft => {
+            const network = nft.externalNftMetadata?.network;
+            return network === chainValue;
+        });
+    }
+
+    const sortValue = sortBy.value;
+    if (sortValue === 'rank') {
+        filteredNFTs.sort((a, b) => (a.defaultRarityRank || Infinity) - (b.defaultRarityRank || Infinity));
+    } else if (sortValue === 'newest') {
+        filteredNFTs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } else if (sortValue === 'oldest') {
+        filteredNFTs.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    } else {
+        filteredNFTs.sort((a, b) => a.id.localeCompare(b.id));
+    }
+
+    console.log('Filtered NFTs:', filteredNFTs.length, 'for collection:', collectionValue || 'All', 'and chain:', chainValue || 'All');
+
+    collectionTitle.textContent = collectionValue || 'All Collections';
+    collectionTitle.classList.add('visible');
+
+    const encodedCollection = collectionValue ? encodeURIComponent(collectionValue) : '';
+    const encodedChain = chainValue ? encodeURIComponent(chainValue) : '';
+    const newUrl = encodedCollection || encodedChain
+        ? `${window.location.pathname}#${currentUsername.toLowerCase()}${encodedCollection ? '/#' + encodedCollection : ''}${encodedChain ? '/#' + encodedChain : ''}`
+        : `${window.location.pathname}#${currentUsername.toLowerCase()}`;
+    history.pushState({ username: currentUsername, collection: collectionValue, chain: chainValue }, '', newUrl);
+
+    displayNFTs(filteredNFTs, collectionValue);
+    saveUserFilters();
+}
+
+function displayNFTs(assets, selectedCollection) {
+    const container = document.getElementById('nftContainer');
+    const countContainer = document.getElementById('nftCountContainer');
+    const downloadZipButton = document.getElementById('downloadZipButton');
+    const displayMode = document.getElementById('displayMode')?.value;
+    const cardSize = document.getElementById('cardSize')?.value;
+
+    if (!container || !countContainer || !downloadZipButton) {
+        console.error('NFT container, count container, or download button not found');
+        return;
+    }
+
+    console.log('Displaying NFTs:', assets.length, 'assets for collection:', selectedCollection || 'All');
+
+    countContainer.innerHTML = '';
+    container.innerHTML = '';
+    container.className = `nft-container ${displayMode}-mode ${cardSize}-size`;
+
+    const countElement = document.createElement('p');
+    countElement.className = 'nft-count';
+    countElement.innerHTML = selectedCollection
+        ? `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets on this collection.`
+        : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets.`;
+    countContainer.appendChild(countElement);
+
+    downloadZipButton.textContent = `Download ${assets.length} assets`;
+    downloadZipButton.style.display = assets.length > 0 ? 'block' : 'none';
+
+    if (displayMode === 'thumbnail') {
+        const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
+        container.style.width = '100%';
+        container.style.maxWidth = '100vw';
+        container.style.gridTemplateColumns = `repeat(auto-fill, ${cardWidth}px)`;
+
+        assets.forEach((asset, index) => {
+            const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
+            const card = document.createElement('div');
+            card.className = 'nft-card';
+
+            let mediaElement;
+            if (imageUrl.endsWith('.mp4')) {
+                mediaElement = document.createElement('video');
+                mediaElement.src = imageUrl;
+                mediaElement.controls = true;
+                mediaElement.muted = true;
+                mediaElement.loop = true;
+                mediaElement.setAttribute('playsinline', '');
+            } else {
+                mediaElement = document.createElement('img');
+                mediaElement.src = imageUrl;
+                mediaElement.alt = asset.name || 'NFT Image';
+                mediaElement.loading = 'lazy';
+                mediaElement.decoding = 'async';
+                mediaElement.sizes = '(max-width: 768px) 80px, 200px';
+            }
+
+            mediaElement.onerror = () => {
+                console.error('Media failed to load for asset:', asset.name || 'Unnamed');
+                card.innerHTML = '';
+                const placeholder = document.createElement('div');
+                placeholder.className = 'media-placeholder';
+                placeholder.textContent = 'Média indisponible';
+                card.appendChild(placeholder);
+            };
+
+            const tooltip = document.createElement('span');
+            tooltip.className = 'tooltip';
+            tooltip.textContent = asset.name || 'Unnamed NFT';
+            card.appendChild(tooltip);
+
+            card.appendChild(mediaElement);
+            container.appendChild(card);
+        });
+    } else {
+        assets.forEach((asset, index) => {
+            const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
+            const card = document.createElement('div');
+            card.className = 'nft-card';
+
+            let mediaElement;
+            if (imageUrl.endsWith('.mp4')) {
+                mediaElement = document.createElement('video');
+                mediaElement.src = imageUrl;
+                mediaElement.controls = true;
+                mediaElement.muted = true;
+                mediaElement.loop = true;
+                mediaElement.setAttribute('playsinline', '');
+            } else {
+                mediaElement = document.createElement('img');
+                mediaElement.src = imageUrl;
+                mediaElement.alt = asset.name || 'NFT Image';
+                mediaElement.loading = 'lazy';
+                mediaElement.decoding = 'async';
+                mediaElement.sizes = '(max-width: 768px) 80px, 200px';
+            }
+
+            mediaElement.onerror = () => {
+                console.error('Media failed to load for asset:', asset.name || 'Unnamed');
+                card.innerHTML = '';
+                const placeholder = document.createElement('div');
+                placeholder.className = 'media-placeholder';
+                placeholder.textContent = 'Média indisponible';
+                card.appendChild(placeholder);
+            };
+
+            card.appendChild(mediaElement);
+
+            const title = document.createElement('h3');
+            title.innerHTML = asset.name ? normalizeText(asset.name) : 'Unnamed NFT';
+            card.appendChild(title);
+
+            container.appendChild(card);
+        });
+    }
+}
+
+async function downloadNFTsAsZip() {
+    const zip = new JSZip();
+    const nftContainer = document.getElementById('nftContainer');
+    const errorDiv = document.getElementById('error');
+    const progressModal = document.getElementById('progressModal');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const modalTitle = document.getElementById('modalTitle');
+    const cancelButton = document.getElementById('cancelDownloadButton');
+
+    if (!nftContainer || !errorDiv || !progressModal || !progressBar || !progressText || !modalTitle || !cancelButton) {
+        console.error('Required DOM elements for download not found');
+        if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
+        return;
+    }
+
+    const filteredNFTs = Array.from(nftContainer.querySelectorAll('.nft-card')).map((card, index) => {
+        const img = card.querySelector('img');
+        const video = card.querySelector('video');
+        const titleElement = card.querySelector('h3') || card.querySelector('.tooltip');
+        const title = titleElement ? titleElement.textContent : `NFT_${index + 1}`;
+        return {
+            url: img ? img.src : video ? video.src : null,
+            name: title,
+        };
+    }).filter(nft => nft.url && nft.url !== 'https://via.placeholder.com/150');
+
+    if (filteredNFTs.length === 0) {
+        errorDiv.textContent = 'No valid assets to download.';
+        return;
+    }
+
+    modalTitle.textContent = 'Creating ZIP File';
+    progressText.textContent = `Preparing ${filteredNFTs.length} assets`;
+    progressBar.style.width = '0%';
+    progressModal.style.display = 'flex';
+    cancelButton.style.display = 'block';
+
+    isDownloadCancelled = false;
+    cancelButton.onclick = () => {
+        isDownloadCancelled = true;
+        progressText.textContent = 'Download cancelled.';
+        progressBar.style.width = '0%';
+        setTimeout(() => {
+            progressModal.style.display = 'none';
+        }, 1000);
+    };
+
+    let processed = 0;
+    for (const [index, nft] of filteredNFTs.entries()) {
+        if (isDownloadCancelled) {
+            console.log('Download cancelled by user');
+            return;
+        }
+
+        try {
+            const response = await fetch(nft.url);
+            if (!response.ok) {
+                console.error(`Failed to fetch asset ${nft.name}: ${response.statusText}`);
+                continue;
+            }
+            const blob = await response.blob();
+            const extension = nft.url.endsWith('.mp4') ? 'mp4' : 'png';
+            const sanitizedName = sanitizeFileNameForZip(nft.name);
+            const fileName = `${sanitizedName}.${extension}`;
+            zip.file(fileName, blob);
+            processed++;
+            const progressPercent = (processed / filteredNFTs.length) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+            progressText.textContent = `Downloading: ${processed}/${filteredNFTs.length}`;
+        } catch (error) {
+            console.error(`Error downloading ${nft.name}: ${error.message}`);
+        }
+    }
+
+    if (isDownloadCancelled) {
+        console.log('Download process aborted');
+        return;
+    }
+
+    if (processed === 0) {
+        progressModal.style.display = 'none';
+        errorDiv.textContent = 'No assets could be downloaded';
+        return;
+    }
+
+    progressText.textContent = 'Generating ZIP file';
+    try {
+        const content = await zip.generateAsync({ type: 'blob' });
+        saveAs(content, `${currentUsername}_nfts.zip`);
+        progressText.textContent = 'Download complete!';
+        progressBar.style.width = '100%';
+        setTimeout(() => {
+            progressModal.style.display = 'none';
+        }, 1000);
+    } catch (error) {
+        console.error(`Error generating ZIP: ${error.message}`);
+        progressModal.style.display = 'none';
+        errorDiv.textContent = 'Failed to generate ZIP file';
+    }
+}
+
+function updateDisplay() {
+    const displayMode = document.getElementById('displayMode')?.value;
+    const cardSize = document.getElementById('cardSize')?.value;
+    const nftContainer = document.getElementById('nftContainer');
+
+    if (!nftContainer) {
+        console.error('NFT container not found');
+        return;
+    }
+
+    nftContainer.className = `nft-container ${displayMode}-mode ${cardSize}-size`;
+
+    if (displayMode === 'thumbnail') {
+        const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
+        nftContainer.style.width = '100%';
+        nftContainer.style.maxWidth = '100vw';
+        nftContainer.style.gridTemplateColumns = `repeat(auto-fill, ${cardWidth}px)`;
+    } else {
+        nftContainer.style.gridTemplateColumns = '';
+        nftContainer.style.width = '';
+        nftContainer.style.maxWidth = '100vw';
+    }
+
+    filterNFTs();
+    saveUserFilters();
+}
+
+function setupEventListeners() {
+    const usernameInput = document.getElementById('usernameInput');
+    const loginUsernameInput = document.getElementById('loginUsernameInput');
+    const themeButton = document.getElementById('themeButton');
+    const collectionFilter = document.getElementById('collectionFilter');
+    const displayMode = document.getElementById('displayMode');
+    const cardSize = document.getElementById('cardSize');
+    const sortBy = document.getElementById('sortBy');
+    const chainsFilter = document.getElementById('chainsFilter');
+    const navbarMenu = document.getElementById('navbarMenu');
+    const confirmLoginButton = document.getElementById('confirmLoginButton');
+    const cancelLoginButton = document.getElementById('cancelLoginButton');
+    const myProfileLink = document.getElementById('myProfileLink');
+    const logoutLink = document.getElementById('logoutLink');
+    const loginLink = document.getElementById('loginLink');
+
+    if (!usernameInput || !loginUsernameInput || !themeButton || !collectionFilter || 
+        !displayMode || !cardSize || !sortBy || !chainsFilter || !navbarMenu || !confirmLoginButton || 
+        !cancelLoginButton || !myProfileLink || !logoutLink || !loginLink) {
+        console.error('One or more DOM elements not found');
+        const errorDiv = document.getElementById('error');
+        if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
+        return;
+    }
+
+    const isMobile = window.innerWidth <= 768;
+    const debounceDelay = isMobile ? 500 : 300;
+
+    usernameInput.addEventListener('input', () => {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+            const query = sanitizeInput(usernameInput.value.trim());
+            searchProfiles(query);
+        }, debounceDelay);
+    });
+
+    usernameInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            clearSuggestions();
+            fetchProfileAndNFTs();
+        }
+    });
+
+    usernameInput.addEventListener('blur', () => {
+        resetViewportZoom();
+    });
+
+    loginUsernameInput.addEventListener('input', () => {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+            const query = sanitizeInput(loginUsernameInput.value.trim());
+            searchLoginProfiles(query);
+        }, debounceDelay);
+    });
+
+    loginUsernameInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            clearLoginSuggestions();
+        }
+    });
+
+    confirmLoginButton.addEventListener('click', handleLogin);
+    cancelLoginButton.addEventListener('click', resetLoginModal);
+
+    themeButton.addEventListener('click', toggleTheme);
+
+    collectionFilter.addEventListener('change', filterNFTs);
+    displayMode.addEventListener('change', updateDisplay);
+    cardSize.addEventListener('change', updateDisplay);
+    sortBy.addEventListener('change', filterNFTs);
+    chainsFilter.addEventListener('change', filterNFTs);
+
+    myProfileLink.addEventListener('click', (event) => {
+        event.preventDefault();
+        if (loggedInUser) {
+            usernameInput.value = loggedInUser.username;
+            fetchProfileAndNFTs();
+            navbarMenu.classList.remove('active');
+            const toggle = document.querySelector('.navbar-toggle');
+            if (toggle) toggle.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    logoutLink.addEventListener('click', logout);
+
+    loginLink.addEventListener('click', showLoginModal);
+
+    navbarMenu.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+            navbarMenu.classList.remove('active');
+            const toggle = document.querySelector('.navbar-toggle');
+            if (toggle) toggle.setAttribute('aria-expanded', 'false');
+        });
+    });
+}
+
+function initialize() {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    const themeButton = document.getElementById('themeButton');
+    if (themeButton) {
+        themeButton.textContent = savedTheme.charAt(0).toUpperCase() + savedTheme.slice(1);
+    }
+
+    const savedUser = localStorage.getItem('loggedInUser');
+    if (savedUser) {
+        try {
+            loggedInUser = JSON.parse(savedUser);
+            updateLoginLink();
+        } catch (error) {
+            console.error('Error parsing saved user:', error);
+            localStorage.removeItem('loggedInUser');
+        }
+    }
+
+    setupEventListeners();
+
+    const hash = window.location.hash.replace('#', '').toLowerCase();
+    if (hash) {
+        const [username, collection, chain] = hash.split('/#');
+        const usernameInput = document.getElementById('usernameInput');
+        if (usernameInput) {
+            usernameInput.value = username;
+            fetchProfileAndNFTs().then(() => {
+                const collectionFilter = document.getElementById('collectionFilter');
+                const chainsFilter = document.getElementById('chainsFilter');
+                if (collectionFilter && collection) {
+                    const decodedCollection = decodeURIComponent(collection);
+                    const optionExists = Array.from(collectionFilter.options).some(
+                        option => option.value === decodedCollection
+                    );
+                    if (optionExists) {
+                        collectionFilter.value = decodedCollection;
+                    } else {
+                        console.warn(`Collection ${decodedCollection} not found in filter options`);
+                        collectionFilter.value = '';
+                    }
+                }
+                if (chainsFilter && chain) {
+                    const decodedChain = decodeURIComponent(chain);
+                    const optionExists = Array.from(chainsFilter.options).some(
+                        option => option.value === decodedChain
+                    );
+                    if (optionExists) {
+                        chainsFilter.value = decodedChain;
+                    } else {
+                        console.warn(`Chain ${decodedChain} not found in filter options`);
+                        chainsFilter.value = '';
+                    }
+                }
+                filterNFTs();
+            });
+        }
+    }
+}
+
+window.addEventListener('popstate', (event) => {
+    const usernameInput = document.getElementById('usernameInput');
+    if (!usernameInput) return;
+
+    const hash = window.location.hash.replace('#', '').toLowerCase();
+    if (hash) {
+        const [username, collection, chain] = hash.split('/#');
+        if (username !== lastSearchedUsername.toLowerCase()) {
+            usernameInput.value = username;
+            fetchProfileAndNFTs().then(() => {
+                const collectionFilter = document.getElementById('collectionFilter');
+                const chainsFilter = document.getElementById('chainsFilter');
+                if (collectionFilter) {
+                    const decodedCollection = collection ? decodeURIComponent(collection) : '';
+                    const optionExists = decodedCollection && Array.from(collectionFilter.options).some(
+                        option => option.value === decodedCollection
+                    );
+                    collectionFilter.value = optionExists ? decodedCollection : '';
+                }
+                if (chainsFilter) {
+                    const decodedChain = chain ? decodeURIComponent(chain) : '';
+                    const optionExists = decodedChain && Array.from(chainsFilter.options).some(
+                        option => option.value === decodedChain
+                    );
+                    chainsFilter.value = optionExists ? decodedChain : '';
+                }
+                filterNFTs();
+            });
+        } else {
+            const collectionFilter = document.getElementById('collectionFilter');
+            const chainsFilter = document.getElementById('chainsFilter');
+            if (collectionFilter) {
+                const decodedCollection = collection ? decodeURIComponent(collection) : '';
+                const optionExists = decodedCollection && Array.from(collectionFilter.options).some(
+                    option => option.value === decodedCollection
+                );
+                collectionFilter.value = optionExists ? decodedCollection : '';
+            }
+            if (chainsFilter) {
+                const decodedChain = chain ? decodeURIComponent(chain) : '';
+                const optionExists = decodedChain && Array.from(chainsFilter.options).some(
+                    option => option.value === decodedChain
+                );
+                chainsFilter.value = optionExists ? decodedChain : '';
+            }
+            filterNFTs();
+        }
+    } else {
+        usernameInput.value = '';
+        const profileHeader = document.getElementById('profileHeader');
+        const nftContainer = document.getElementById('nftContainer');
+        const nftCountContainer = document.getElementById('nftCountContainer');
+        const noResultsDiv = document.getElementById('noResults');
+        const controls = document.getElementById('controls');
+        const collectionTitle = document.getElementById('collectionTitle');
+        const collectionFilter = document.getElementById('collectionFilter');
+        const downloadZipButton = document.getElementById('downloadZipButton');
+
+        if (profileHeader) profileHeader.style.display = 'none';
+        if (nftContainer) nftContainer.innerHTML = '';
+        if (nftCountContainer) nftCountContainer.innerHTML = '';
+        if (noResultsDiv) noResultsDiv.style.display = 'none';
+        if (controls) controls.classList.remove('visible');
+        if (collectionTitle) {
+            collectionTitle.textContent = '';
+            collectionTitle.classList.remove('visible');
+        }
+        if (collectionFilter) {
+            collectionFilter.innerHTML = '<option value="">All Collections</option>';
+            collectionFilter.disabled = true;
+        }
+        if (downloadZipButton) downloadZipButton.style.display = 'none';
+
+        allNFTs = [];
+        currentUsername = '';
+        lastSearchedUsername = '';
+    }
+});
+
+initialize();
     </script>
 </body>
 </html>
