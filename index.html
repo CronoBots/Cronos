@@ -2618,8 +2618,9 @@
                 return;
             }
         
-            // Journaliser les valeurs de source et isCurated pour débogage
-            console.log('Available source values:', [...new Set(allNFTs.map(nft => nft.defaultListingV2?.source || 'undefined'))]);
+            // Journaliser les valeurs pour débogage
+            console.log('Available isExternalNft values:', [...new Set(allNFTs.map(nft => nft.isExternalNft !== undefined ? nft.isExternalNft : 'undefined'))]);
+            console.log('Available network values:', [...new Set(allNFTs.map(nft => nft.isExternalNft ? nft.externalNftMetadata?.network || 'undefined' : 'N/A'))]);
             console.log('Available isCurated values:', [...new Set(allNFTs.map(nft => nft.isCurated !== undefined ? nft.isCurated : 'undefined'))]);
         
             let filteredNFTs = [...allNFTs];
@@ -2636,11 +2637,12 @@
             console.log('Selected chain value:', chainValue);
             if (chainValue) {
                 filteredNFTs = filteredNFTs.filter(nft => {
-                    const source = nft.defaultListingV2?.source?.toUpperCase() || '';
+                    const isExternalNft = nft.isExternalNft;
+                    const network = nft.externalNftMetadata?.network?.toUpperCase() || '';
                     if (chainValue === 'CRONOS') {
-                        return source === 'CRONOS';
+                        return isExternalNft === true && network === 'CRONOS';
                     } else if (chainValue === 'CRONOS_POS') {
-                        return source === 'CDC_NFT';
+                        return isExternalNft === false;
                     }
                     return true; // Pour "ALL CHAINS" (chainValue === '')
                 });
@@ -2674,6 +2676,7 @@
             displayNFTs(filteredNFTs, collectionValue);
             saveUserFilters();
         }
+        
         function displayNFTs(assets, selectedCollection) {
             const container = document.getElementById('nftContainer');
             const countContainer = document.getElementById('nftCountContainer');
