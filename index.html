@@ -1390,21 +1390,21 @@
                 <div class="control-group">
                     <label for="displayMode">DISPLAY MODE:</label>
                     <select id="displayMode" onchange="updateDisplay()">
+                        <option value="thumbnail" selected>Thumbnail</option>
                         <option value="full">Normal</option>
-                        <option value="thumbnail">Thumbnail</option>
                     </select>
                 </div>
                 <div class="control-group">
                     <label for="cardSize">CARD SIZE:</label>
                     <select id="cardSize" onchange="updateDisplay()">
-                        <option value="small">Small</option>
-                        <option value="medium" selected>Medium</option>
+                        <option value="small" selected>Small</option>
+                        <option value="medium">Medium</option>
                         <option value="large">Large</option>
                     </select>
                 </div>
                 <div class="control-group">
                     <label for="sortBy">SORT BY:</label>
-                    <select id="sortBy" onchange="filterNFTs()">
+                    < makeselect id="sortBy" onchange="filterNFTs()">
                         <option value="default">Default</option>
                         <option value="rank">Rank</option>
                         <option value="newest">Newest</option>
@@ -1565,77 +1565,6 @@
             localStorage.setItem('theme', newTheme);
             themeButton.textContent = newTheme.charAt(0).toUpperCase() + newTheme.slice(1);
             console.log('Theme set to:', newTheme);
-        }
-
-        function saveUserFilters() {
-            if (!currentUsername) return;
-
-            const filters = {
-                collectionFilter: document.getElementById('collectionFilter')?.value || '',
-                chainFilter: document.getElementById('chainFilter')?.value || '',
-                displayMode: document.getElementById('displayMode')?.value || 'full',
-                cardSize: document.getElementById('cardSize')?.value || 'medium',
-                sortBy: document.getElementById('sortBy')?.value || 'default'
-            };
-
-            localStorage.setItem(`filters_${currentUsername.toLowerCase()}`, JSON.stringify(filters));
-            console.log('Filters saved for profile:', currentUsername, filters);
-        }
-
-        function loadUserFilters() {
-            if (!currentUsername || !allNFTs || !allNFTs.length) {
-                console.log('loadUserFilters skipped: no username or NFTs');
-                return;
-            }
-
-            const savedFilters = localStorage.getItem(`filters_${currentUsername.toLowerCase()}`);
-            if (!savedFilters) {
-                console.log('No saved filters found for:', currentUsername);
-                return;
-            }
-
-            try {
-                const filters = JSON.parse(savedFilters);
-                const collectionFilter = document.getElementById('collectionFilter');
-                const chainFilter = document.getElementById('chainFilter');
-                const displayMode = document.getElementById('displayMode');
-                const cardSize = document.getElementById('cardSize');
-                const sortBy = document.getElementById('sortBy');
-
-                if (displayMode && filters.displayMode) {
-                    displayMode.value = filters.displayMode;
-                }
-                if (cardSize && filters.cardSize) {
-                    cardSize.value = filters.cardSize;
-                }
-                if (sortBy && filters.sortBy) {
-                    sortBy.value = filters.sortBy;
-                }
-                if (chainFilter && filters.chainFilter) {
-                    chainFilter.value = filters.chainFilter;
-                }
-                if (collectionFilter && filters.collectionFilter) {
-                    setTimeout(() => {
-                        const optionExists = Array.from(collectionFilter.options).some(
-                            option => option.value === filters.collectionFilter
-                        );
-                        if (optionExists) {
-                            console.log('Applying saved collection filter:', filters.collectionFilter);
-                            collectionFilter.value = filters.collectionFilter;
-                            filterNFTs();
-                        } else {
-                            console.warn(`Saved collection ${filters.collectionFilter} not found in filter options`);
-                            collectionFilter.value = '';
-                            filterNFTs();
-                        }
-                    }, 100);
-                } else {
-                    console.log('No collection filter to apply, calling filterNFTs');
-                    filterNFTs();
-                }
-            } catch (error) {
-                console.error('Error loading saved filters:', error);
-            }
         }
 
         function updateLoginLink() {
@@ -1928,9 +1857,6 @@
             const username = loggedInUser?.username;
             loggedInUser = null;
             localStorage.removeItem('loggedInUser');
-            if (username) {
-                localStorage.removeItem(`filters_${username.toLowerCase()}`);
-            }
             updateLoginLink();
             const profileHeader = document.getElementById('profileHeader');
             const nftContainer = document.getElementById('nftContainer');
@@ -2255,8 +2181,8 @@
             // Réinitialiser l'état
             currentUsername = '';
             allNFTs = [];
-            displayMode.value = 'full';
-            cardSize.value = 'medium';
+            displayMode.value = 'thumbnail';
+            cardSize.value = 'small';
             sortBy.value = 'default';
             collectionFilter.innerHTML = '<option value="">All Collections</option>';
             collectionFilter.value = '';
@@ -2377,7 +2303,6 @@
                     controls.classList.add('visible');
                     console.log('Displaying NFTs initially with', allNFTs.length, 'assets');
                     displayNFTs(allNFTs, '');
-                    loadUserFilters();
                 } else {
                     console.log('No NFTs found, showing no results');
                     noResultsDiv.style.display = 'block';
@@ -2438,8 +2363,8 @@
             // Réinitialiser l'état
             currentUsername = '';
             allNFTs = [];
-            displayMode.value = 'full';
-            cardSize.value = 'medium';
+            displayMode.value = 'thumbnail';
+            cardSize.value = 'small';
             sortBy.value = 'default';
             collectionFilter.innerHTML = '<option value="">All Collections</option>';
             collectionFilter.value = '';
@@ -2560,7 +2485,6 @@
                     controls.classList.add('visible');
                     console.log('Displaying NFTs initially with', allNFTs.length, 'assets');
                     displayNFTs(allNFTs, '');
-                    loadUserFilters();
                 } else {
                     console.log('No NFTs found, showing no results');
                     noResultsDiv.style.display = 'block';
@@ -2628,21 +2552,18 @@
                 return;
             }
         
-            // Journaliser les valeurs pour débogage
             console.log('Available isExternalNft values:', [...new Set(allNFTs.map(nft => nft.isExternalNft !== undefined ? nft.isExternalNft : 'undefined'))]);
             console.log('Available network values:', [...new Set(allNFTs.map(nft => nft.isExternalNft ? nft.externalNftMetadata?.network || 'undefined' : 'N/A'))]);
             console.log('Available isCurated values:', [...new Set(allNFTs.map(nft => nft.isCurated !== undefined ? nft.isCurated : 'undefined'))]);
         
             let filteredNFTs = [...allNFTs];
         
-            // Filtrer par collection
             const collectionValue = collectionFilter.value;
             if (collectionValue) {
                 filteredNFTs = filteredNFTs.filter(nft => nft.collection?.name === collectionValue);
                 console.log('After collection filter:', filteredNFTs.length, 'NFTs');
             }
         
-            // Filtrer par chaîne
             const chainValue = chainFilter.value;
             console.log('Selected chain value:', chainValue);
             if (chainValue) {
@@ -2654,23 +2575,21 @@
                     } else if (chainValue === 'CRONOS_POS') {
                         return isExternalNft === false;
                     }
-                    return true; // Pour "ALL CHAINS" (chainValue === '')
+                    return true;
                 });
                 console.log('After chain filter:', filteredNFTs.length, 'NFTs');
             }
         
-            // Filtrer par curation
             const curatedValue = curatedFilter.value;
             console.log('Selected curated value:', curatedValue);
             if (curatedValue) {
                 filteredNFTs = filteredNFTs.filter(nft => {
-                    const isCurated = nft.isCurated !== undefined ? nft.isCurated : false; // Par défaut, non curaté si undefined
+                    const isCurated = nft.isCurated !== undefined ? nft.isCurated : false;
                     return curatedValue === 'true' ? isCurated === true : curatedValue === 'false' ? isCurated === false : true;
                 });
                 console.log('After curated filter:', filteredNFTs.length, 'NFTs');
             }
         
-            // Trier les NFTs
             const sortValue = sortBy.value;
             if (sortValue === 'rank') {
                 filteredNFTs.sort((a, b) => (a.defaultRarityRank || Infinity) - (b.defaultRarityRank || Infinity));
@@ -2696,7 +2615,6 @@
             history.pushState({ username: currentUsername, collection: collectionValue, chain: chainValue, curated: curatedValue }, '', newUrl);
         
             displayNFTs(filteredNFTs, collectionValue);
-            saveUserFilters();
         }
         
         function displayNFTs(assets, selectedCollection) {
@@ -2918,8 +2836,8 @@
         }
 
         function updateDisplay() {
-            const displayMode = document.getElementById('displayMode')?.value;
-            const cardSize = document.getElementById('cardSize')?.value;
+            const displayMode = document.getElementById('displayMode')?.value || 'thumbnail';
+            const cardSize = document.getElementById('cardSize')?.value || 'small';
             const nftContainer = document.getElementById('nftContainer');
 
             if (!nftContainer) {
@@ -2941,7 +2859,6 @@
             }
 
             filterNFTs();
-            saveUserFilters();
         }
 
         function setupEventListeners() {
