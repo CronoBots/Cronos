@@ -1380,6 +1380,14 @@
                     </select>
                 </div>
                 <div class="control-group">
+                    <label for="curatedFilter">CURATION:</label>
+                    <select id="curatedFilter" onchange="filterNFTs()">
+                        <option value="">ALL</option>
+                        <option value="true">CURATED</option>
+                        <option value="false">NON CURATED</option>
+                    </select>
+                </div>
+                <div class="control-group">
                     <label for="displayMode">DISPLAY MODE:</label>
                     <select id="displayMode" onchange="updateDisplay()">
                         <option value="full">Normal</option>
@@ -2598,12 +2606,13 @@
         function filterNFTs() {
             const collectionFilter = document.getElementById('collectionFilter');
             const chainFilter = document.getElementById('chainFilter');
+            const curatedFilter = document.getElementById('curatedFilter');
             const displayMode = document.getElementById('displayMode');
             const cardSize = document.getElementById('cardSize');
             const sortBy = document.getElementById('sortBy');
             const collectionTitle = document.getElementById('collectionTitle');
         
-            if (!collectionFilter || !chainFilter || !displayMode || !cardSize || !sortBy || !collectionTitle) {
+            if (!collectionFilter || !chainFilter || !curatedFilter || !displayMode || !cardSize || !sortBy || !collectionTitle) {
                 console.error('Filter elements not found');
                 return;
             }
@@ -2649,6 +2658,17 @@
                 console.log('After chain filter:', filteredNFTs.length, 'NFTs');
             }
         
+            // Filtrer par curation
+            const curatedValue = curatedFilter.value;
+            console.log('Selected curated value:', curatedValue);
+            if (curatedValue) {
+                filteredNFTs = filteredNFTs.filter(nft => {
+                    const isCurated = nft.isCurated;
+                    return curatedValue === 'true' ? isCurated === true : curatedValue === 'false' ? isCurated === false : true;
+                });
+                console.log('After curated filter:', filteredNFTs.length, 'NFTs');
+            }
+        
             // Trier les NFTs
             const sortValue = sortBy.value;
             if (sortValue === 'rank') {
@@ -2661,17 +2681,18 @@
                 filteredNFTs.sort((a, b) => a.id.localeCompare(b.id));
             }
         
-            console.log('Final filtered NFTs:', filteredNFTs.length, 'for collection:', collectionValue || 'All', 'and chain:', chainValue || 'All');
+            console.log('Final filtered NFTs:', filteredNFTs.length, 'for collection:', collectionValue || 'All', 'chain:', chainValue || 'All', 'curated:', curatedValue || 'All');
         
             collectionTitle.textContent = collectionValue || 'All Collections';
             collectionTitle.classList.add('visible');
         
             const encodedCollection = collectionValue ? encodeURIComponent(collectionValue) : '';
             const encodedChain = chainValue ? encodeURIComponent(chainValue) : '';
-            const newUrl = encodedCollection || encodedChain
-                ? `${window.location.pathname}#${currentUsername.toLowerCase()}/#${encodedCollection}${encodedChain ? `/#${encodedChain}` : ''}`
+            const encodedCurated = curatedValue ? encodeURIComponent(curatedValue) : '';
+            const newUrl = encodedCollection || encodedChain || encodedCurated
+                ? `${window.location.pathname}#${currentUsername.toLowerCase()}/#${encodedCollection}${encodedChain ? `/#${encodedChain}` : ''}${encodedCurated ? `/#${encodedCurated}` : ''}`
                 : `${window.location.pathname}#${currentUsername.toLowerCase()}`;
-            history.pushState({ username: currentUsername, collection: collectionValue, chain: chainValue }, '', newUrl);
+            history.pushState({ username: currentUsername, collection: collectionValue, chain: chainValue, curated: curatedValue }, '', newUrl);
         
             displayNFTs(filteredNFTs, collectionValue);
             saveUserFilters();
