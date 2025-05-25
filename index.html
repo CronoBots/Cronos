@@ -2300,8 +2300,8 @@
                     populateCollectionFilter(allNFTs);
                     collectionFilter.disabled = false;
                     controls.classList.add('visible');
-                    console.log('Displaying NFTs initially with', allNFTs.length, 'assets');
-                    displayNFTs(allNFTs, '');
+                    console.log('Applying filters and displaying NFTs with', allNFTs.length, 'assets');
+                    filterNFTs();
                 } else {
                     console.log('No NFTs found, showing no results');
                     noResultsDiv.style.display = 'block';
@@ -2482,8 +2482,8 @@
                     populateCollectionFilter(allNFTs);
                     collectionFilter.disabled = false;
                     controls.classList.add('visible');
-                    console.log('Displaying NFTs initially with', allNFTs.length, 'assets');
-                    displayNFTs(allNFTs, '');
+                    console.log('Applying filters and displaying NFTs with', allNFTs.length, 'assets');
+                    filterNFTs();
                 } else {
                     console.log('No NFTs found, showing no results');
                     noResultsDiv.style.display = 'block';
@@ -2589,11 +2589,12 @@
                 console.log('After curated filter:', filteredNFTs.length, 'NFTs');
             }
         
-            const sortValue = sortBy.value;
+            const sortValue = sortBy.value || 'newest'; // Défaut à 'newest' si sortBy.value est indéfini
+            console.log('Selected sort value:', sortValue);
             if (sortValue === 'rank') {
                 filteredNFTs.sort((a, b) => (a.defaultRarityRank || Infinity) - (b.defaultRarityRank || Infinity));
             } else if (sortValue === 'oldest') {
-                filteredNFTs.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                filteredNFTs.sort((a, b) => new Date(a.createdAt) - new Date(a.createdAt));
             } else {
                 // Par défaut, trier par 'newest'
                 filteredNFTs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
