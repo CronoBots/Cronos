@@ -1528,23 +1528,24 @@ a:hover {
 
     .nft-container.thumbnail-mode .nft-card {
         width: 100%;
-        aspect-ratio: .1fr; /* position: relative */
-        overflow-x: auto;
+        aspect-ratio: 1 / 1;
+        position: relative;
+        overflow: visible;
         padding: 0;
         margin: 0;
-        background-color: var(--collection-bg);
+        background: var(--collection-bg);
         box-shadow: none;
         border: 1px solid transparent;
-        border-radius: .2px; /* display: block */
-        display: flex;
-        transition: transform .0s ease, box-shadow .3px ease; /* Reduced duration */
+        border-radius: 4px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease, filter 0.3s ease;
     }
 
     .nft-container.thumbnail-mode .nft-card:hover {
-        transform: translateY(-4px); /* Reduced translateY */
-        box-shadow: .0 .0px .3px .0px rgba(0, 0, 0, 0.3); /* Reduced shadow */
-        border: .1px solid; /* Reduced border */
-        z-index: 1;
+        transform: translateY(-4px) scale(1.2);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--color1);
+        filter: brightness(1.1);
+        z-index: 100;
     }
 
     .nft-container.thumbnail-mode .nft-card img,
@@ -1556,89 +1557,56 @@ a:hover {
         height: 100%;
         object-fit: cover;
         transform: translate(-50%, -50%);
-        border-radius: 0px;
-        margin: none0px;
+        border-radius: 4px;
+        margin: 0;
         padding: 0;
         display: block;
-        transition: transform .0s ease;
+        transition: transform 0.3s ease;
     }
 
     .nft-container.thumbnail-mode .nft-card:hover img,
     .nft-container.thumbnail-mode .nft-card:hover video {
-        transform: translate(-50%, -50%) scale(.1.15); /* Reduced scale */
+        transform: translate(-50%, -50%) scale(1.15);
     }
 
     .nft-container.thumbnail-mode .nft-card .media-placeholder {
+        position: absolute;
+        top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
-        border-radius: .4px;
-        margin: none;
-        padding: none;
+        border-radius: 4px;
+        margin: 0;
+        padding: 0;
         display: flex;
         align-items: center;
         justify-content: center;
         background-color: #333;
         color: var(--text-dark);
-        font-size: .8em;
+        font-size: 0.8em;
         text-align: center;
     }
 
-    .nft-card:hover {
-        transform: none; /* Reduced translateY */
-        box-shadow: .0 .0 .4px; /* Reduced shadow */
-        z-index: 2;
-    }
-
-    .nft-card .tooltip {
-        margin: .5em;
-        padding: .5em;
-    }
-
     .modal-content {
-        max-width: none 100%;
-    }
-
-    .tile-container {
-        margin: .2em;
-        box-shadow: 0 2px none0px;
+        max-width: 100%;
         padding: 12px;
     }
 
-    .tile-footer-logo {
-        height: .80px;
-    }
-
-    .tile-theme-toggle {
-        margin-top: none;
-        display: none;
-        justify-content: flex-end;
-        align-items: 100%;
-        width: 100%;
-        border: none;
-        order: 1;
-    }
-
-    .tile-button {
-        padding: .6px 12px;
-        margin: none;
-    }
-
-    .tile-download-buttons {
-        display: none;
+    .download-buttons {
         margin-bottom: 15px;
         gap: 10px;
-        flex-direction: row;
+        flex-direction: column;
     }
 
-    .tile-downloadZipButton,
-    .tile-downloadCollageButton {
+    #downloadZipButton,
+    #downloadCollageButton {
         padding: 6px 12px;
         width: 180px;
         height: 32px;
         font-size: 12px;
     }
 
-    .tile-selected-username {
+    .selected-username {
         font-size: 0.9rem;
     }
 }
@@ -1671,5 +1639,165 @@ a:hover {
 
     .social-container .social-icon {
         border-radius: 3px !important;
+    }
+}
+
+/* Donation Section */
+.donation-section {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    color: var(--text-dark);
+    font-size: 0.9rem;
+    max-width: 250px;
+    z-index: 10;
+}
+
+.donation-section h4 {
+    font-size: 1.1rem;
+    margin: 0;
+    text-transform: uppercase;
+    color: var(--color1);
+}
+
+.donation-section p {
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+.wallet-address {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #333;
+    padding: 6px 10px;
+    border-radius: 6px;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+[data-theme="light"] .wallet-address {
+    background-color: #e0e0e0;
+}
+
+#walletAddress {
+    font-size: 0.8rem;
+    color: var(--text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+}
+
+#copyWalletButton {
+    background: none;
+    border: none;
+    color: var(--color1);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 2px;
+    transition: var(--transition);
+}
+
+#copyWalletButton:hover {
+    transform: scale(1.1);
+}
+
+.donation-progress {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.progress-label {
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.donation-progress .progress-bar {
+    width: 100%;
+    height: 12px;
+    background-color: #333;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+[data-theme="light"] .donation-progress .progress-bar {
+    background-color: #ccc;
+}
+
+.donation-progress .progress {
+    height: 100%;
+    background-color: var(--color1);
+    transition: width 0.3s ease;
+}
+
+.donation-note {
+    font-size: 0.8rem;
+    color: var(--text-dark);
+    opacity: 0.8;
+}
+
+/* Responsive Adjustments for Donation Section */
+@media screen and (max-width: 768px) {
+    .donation-section {
+        position: static;
+        align-items: center;
+        max-width: none;
+        width: 100%;
+        padding: 0 15px;
+        margin-bottom: 10px;
+        order: 1;
+    }
+
+    .donation-section h4 {
+        font-size: 1rem;
+    }
+
+    .wallet-address {
+        max-width: 90%;
+    }
+
+    #walletAddress {
+        max-width: 150px;
+    }
+
+    .donation-progress .progress-bar {
+        height: 10px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .donation-section {
+        padding: 0 10px;
+    }
+
+    .donation-section h4 {
+        font-size: 0.9rem;
+    }
+
+    .wallet-address {
+        padding: 4px 8px;
+    }
+
+    #walletAddress {
+        font-size: 0.75rem;
+        max-width: 120px;
+    }
+
+    #copyWalletButton {
+        font-size: 0.9rem;
+    }
+
+    .donation-progress .progress-bar {
+        height: 8px;
+    }
+
+    .donation-note {
+        font-size: 0.75rem;
     }
 }
