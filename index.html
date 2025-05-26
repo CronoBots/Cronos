@@ -1950,6 +1950,7 @@
             }
         
             setupEventListeners();
+            setupTooltipPositioning();
         
             const { username, collection } = parseUrlHash();
             if (username) {
@@ -2095,8 +2096,73 @@
                 currentUsername = '';
                 lastSearchedUsername = '';
             }
+        function setupTooltipPositioning() {
+            const isMobile = window.innerWidth <= 768;
+            if (!isMobile) return; // Ne s'applique qu'aux appareils mobiles
+        
+            const nftContainer = document.getElementById('nftContainer');
+            if (!nftContainer) return;
+        
+            function updateTooltipClasses() {
+                const cards = nftContainer.querySelectorAll('.nft-card');
+                const containerRect = nftContainer.getBoundingClientRect();
+                const cardWidth = cards.length > 0 ? cards[0].offsetWidth : 0;
+                const cardsPerRow = Math.floor(containerRect.width / cardWidth) || 1;
+        
+                cards.forEach((card, index) => {
+                    // Supprimer les classes existantes
+                    card.classList.remove('tooltip-left', 'tooltip-right');
+        
+                    // Calculer la colonne de la carte
+                    const column = index % cardsPerRow;
+        
+                    // Première colonne : tooltip aligné à gauche
+                    if (column === 0) {
+                        card.classList.add('tooltip-left');
+                    }
+                    // Dernière colonne : tooltip aligné à droite
+                    else if (column === cardsPerRow - 1) {
+                        card.classList.add('tooltip-right');
+                    }
+                    // Colonnes intermédiaires : garder le comportement par défaut (centré)
+                });
+            }
+        
+            // Mettre à jour les classes au chargement et lors du redimensionnement
+            updateTooltipClasses();
+            window.addEventListener('resize', updateTooltipClasses);
+        
+            // Gérer l'affichage des tooltips au clic
+            let activeCard = null;
+        
+            nftContainer.addEventListener('click', (event) => {
+                const card = event.target.closest('.nft-card');
+                if (!card) return;
+        
+                // Si une carte est déjà active, la désactiver
+                if (activeCard && activeCard !== card) {
+                    activeCard.classList.remove('tooltip-active');
+                }
+        
+                // Basculer l'état de la carte cliquée
+                if (card === activeCard) {
+                    card.classList.remove('tooltip-active');
+                    activeCard = null;
+                } else {
+                    card.classList.add('tooltip-active');
+                    activeCard = card;
+                }
+            });
+        
+            // Masquer le tooltip si on clique en dehors des cartes
+            document.addEventListener('click', (event) => {
+                if (!event.target.closest('.nft-card') && activeCard) {
+                    activeCard.classList.remove('tooltip-active');
+                    activeCard = null;
+                }
+            });
+        }
         });
-
         document.addEventListener('DOMContentLoaded', initialize);
     </script>
 </body>
