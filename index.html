@@ -2121,17 +2121,15 @@
                 const containerRect = nftContainer.getBoundingClientRect();
                 const cardWidth = cards[0].offsetWidth || 100;
                 const cardsPerRow = Math.max(1, Math.floor(containerRect.width / cardWidth));
-                console.log(`Cards per row: ${cardsPerRow}, Container width: ${containerRect.width}, Card width: ${cardWidth}`);
+                console.log(`Cards per row: ${cardsPerRow}`);
         
                 cards.forEach((card, index) => {
                     card.classList.remove('tooltip-left', 'tooltip-right');
                     const column = index % cardsPerRow;
                     if (column === 0) {
                         card.classList.add('tooltip-left');
-                        console.log(`Card ${index} set as tooltip-left`);
                     } else if (column === cardsPerRow - 1) {
                         card.classList.add('tooltip-right');
-                        console.log(`Card ${index} set as tooltip-right`);
                     }
                 });
             }
@@ -2141,40 +2139,33 @@
         
             let activeCard = null;
         
-            nftContainer.addEventListener('click', (event) => {
+            nftContainer.addEventListener('touchstart', (event) => {
                 event.preventDefault();
-                event.stopPropagation(); // Empêche la propagation pour éviter les conflits
+                event.stopPropagation();
                 const card = event.target.closest('.nft-card');
-                if (!card) {
-                    console.log('Click outside NFT card');
-                    return;
-                }
+                if (!card) return;
         
-                console.log(`Clicked on card: ${card.querySelector('.tooltip')?.textContent || 'No tooltip'}`);
+                console.log(`Touched card: ${card.querySelector('.tooltip')?.textContent || 'No tooltip'}`);
         
                 if (activeCard && activeCard !== card) {
                     activeCard.classList.remove('tooltip-active');
-                    console.log('Deactivated previous card');
                 }
         
                 if (card === activeCard) {
                     card.classList.remove('tooltip-active');
                     activeCard = null;
-                    console.log('Deactivated current card');
                 } else {
                     card.classList.add('tooltip-active');
                     activeCard = card;
-                    console.log('Activated card');
                 }
-            });
+            }, { passive: false });
         
-            document.addEventListener('click', (event) => {
+            document.addEventListener('touchstart', (event) => {
                 if (!event.target.closest('.nft-card') && activeCard) {
                     activeCard.classList.remove('tooltip-active');
                     activeCard = null;
-                    console.log('Click outside, deactivated tooltip');
                 }
-            });
+            }, { passive: false });
         }
         });
         document.addEventListener('DOMContentLoaded', initialize);
