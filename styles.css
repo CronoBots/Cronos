@@ -476,6 +476,7 @@ a:hover {
     position: relative;
     transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease, filter 0.3s ease;
     border: 1px solid transparent;
+    touch-action: manipulation; /* Améliore les interactions tactiles */
 }
 
 .nft-card:hover {
@@ -904,26 +905,33 @@ a:hover {
 }
 
 @media screen and (max-width: 768px) {
+    /* Styles spécifiques pour les tooltips sur mobile */
     .nft-card .tooltip {
         max-width: calc(100vw - 20px);
         white-space: nowrap;
         font-size: 0.8em;
         padding: 6px 10px;
-        text-align: center;
         margin: 0;
+        visibility: hidden;
+        opacity: 0;
+        z-index: 120; /* Augmenter le z-index pour éviter les conflits */
     }
 
+    /* Désactiver le hover sur mobile */
     .nft-container.thumbnail-mode .nft-card:hover .tooltip {
         visibility: hidden;
         opacity: 0;
     }
 
+    /* Activer le tooltip pour les cartes avec .tooltip-active */
     .nft-container.thumbnail-mode .nft-card.tooltip-active .tooltip {
-        visibility: visible;
-        opacity: 1;
+        visibility: visible !important;
+        opacity: 1 !important;
         transform: none;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
     }
 
+    /* Tooltip pour les cartes à gauche */
     .nft-container.thumbnail-mode .nft-card.tooltip-left .tooltip {
         left: 0;
         transform: none;
@@ -931,6 +939,7 @@ a:hover {
         text-align: left;
     }
 
+    /* Tooltip pour les cartes à droite */
     .nft-container.thumbnail-mode .nft-card.tooltip-right .tooltip {
         right: 0;
         left: auto;
