@@ -698,7 +698,7 @@ a:hover {
     flex-direction: column;
     align-items: center;
     position: relative;
-    padding-bottom: 60px;
+    padding-bottom: 20px;
 }
 
 .footer-logo {
@@ -706,6 +706,7 @@ a:hover {
     height: auto;
     object-fit: contain;
     margin-bottom: 10px;
+    order: 1;
 }
 
 .footer p {
@@ -713,9 +714,10 @@ a:hover {
     margin: 0;
     font-size: 0.9rem;
     text-transform: uppercase;
-    position: relative;
-    text-align: center;
-    width: 100%;
+    order: 3;
+    position: absolute;
+    bottom: 20px;
+    right: 120px;
 }
 
 .theme-toggle {
@@ -725,6 +727,7 @@ a:hover {
     display: flex;
     align-items: center;
     gap: 10px;
+    order: 4;
 }
 
 .theme-toggle label {
@@ -782,6 +785,12 @@ a:hover {
 }
 
 .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 2000;
     justify-content: center;
@@ -860,7 +869,7 @@ a:hover {
 
 #loginModal .navbar-search {
     margin: 10px 0;
-    width: flex;
+    width: 100%;
     max-width: none;
 }
 
@@ -875,7 +884,6 @@ a:hover {
 }
 
 #loginModal .modal-buttons {
-    display: flex;
     margin-top: 20px;
 }
 
@@ -883,25 +891,25 @@ a:hover {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin: 10px  !important;
+    margin: 10px 0;
     justify-content: center;
 }
 
 .selected-username {
     color: var(--text-dark);
     font-size: 1.2rem;
-    font-weight: bold;
+    font-weight: normal;
+    text-transform: uppercase;
 }
 
 @keyframes fadeIn {
-    0% { opacity: 0; }
-    100% { opacity: 1; }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 @keyframes pulse {
-    0% { opacity: 1; }
+    0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
-    100% { opacity: 1; }
 }
 
 @keyframes slideDown {
@@ -912,7 +920,7 @@ a:hover {
 .donation-section {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     gap: 8px;
     color: var(--text-dark);
     font-size: 0.9rem;
@@ -921,7 +929,7 @@ a:hover {
     z-index: 10;
     margin: 10px 0;
     position: absolute;
-    bottom: 20px;
+    bottom: 60px;
     left: 20px;
 }
 
@@ -930,20 +938,68 @@ a:hover {
     margin: 0;
     text-transform: uppercase;
     color: #4caf50;
+    align-self: center;
     width: 100%;
-    text-align: center-align;
+    text-align: center;
+}
+
+.wallet-address {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    max-width: 300px;
+    position: relative;
+    align-items: center;
+}
+
+.wallet-address::before {
+    content: "or";
+    font-size: 0.75rem;
+    color: var(--text-dark);
+    text-transform: uppercase;
+    margin: 4px 0;
+    font-family: 'Geomanist-Bold', sans-serif;
+}
+
+.wallet-address-button {
+    background-color: #333;
+    color: var(--text-dark);
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: var(--transition);
+    flex: 1;
+    min-width: 0;
+    max-width: 100%;
+    font-family: 'Geomanist-Bold', sans-serif;
+}
+
+[data-theme="light"] .wallet-address-button {
+    background-color: #e0e0e0;
+}
+
+.wallet-address-button:hover {
+    background-color: var(--color1);
+    color: #fff;
 }
 
 .donation-progress {
     width: 100%;
     max-width: 300px;
- margin-top: 8px;
+    margin-top: 8px;
 }
 
 .progress-label {
     font-size: 0.85rem;
     margin-bottom: 4px;
- display: block;
+    display: block;
 }
 
 .donation-progress .progress-bar {
@@ -962,55 +1018,6 @@ a:hover {
     height: 100%;
     background-color: #4caf50;
     transition: width 0.3s ease;
-}
-
-.wallet-address {
-    display: flex;
-    flex-direction: row;
-    gap: 6px;
-    width: 100%;
-    max-width: 300px;
-    align-items: center;
-    justify-content: space-between !important;
-}
-
-.wallet-address-button {
-    background-color: #333;
-    color: var(--text-dark);
-    border: none;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    cursor: pointer;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    transition: var(--transition);
-    flex: 1;
-    max-width: 47%;
-    font-family: 'Geomanist-Bold', sans-serif;
-}
-
-.wallet-address-button:nth-child(2)::before {
-    content: "or";
-    font-size: 0.75rem;
-    color: var(--text-dark);
-    text-transform: uppercase;
-    margin: 0 6px;
-    font-family: 'Geomanist-Bold', sans-serif;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-[data-theme="light"] .wallet-address-button {
-    background-color: #e0e0e0;
-}
-
-.wallet-address-button:hover {
-    background-color: var(--color1);
-    color: #fff;
 }
 
 #scrollToTopButton {
@@ -1401,7 +1408,7 @@ a:hover {
         justify-content: center;
         background-color: #333;
         color: var(--text-dark);
-        font-size: 0.8;
+        font-size: 0.8em;
         text-align: center;
     }
 
@@ -1411,8 +1418,8 @@ a:hover {
     }
 
     .nft-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        transform: translateY(-8px) scale(1.2);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
         border: 1px solid var(--color1);
         filter: brightness(1.1);
         z-index: 100;
@@ -1423,7 +1430,7 @@ a:hover {
         border-radius: 8px;
     }
 
-    .nft-card .header {
+    .nft-card h3 {
         font-size: 0.75em;
         margin: 4px 0;
     }
@@ -1442,365 +1449,380 @@ a:hover {
 
     .modal-buttons button {
         padding: 6px 12px;
-        margin-top: 20px;
         font-size: 12px;
     }
 
     .footer {
         padding: 15px;
         box-shadow: var(--shadow);
-        padding-bottom: 15px !important;
+        position: relative;
     }
 
     .footer-logo {
-        width: 80px !important;
+        max-width: 80px;
     }
 
     .theme-toggle {
-        margin-top: 0;
         right: 15px;
         bottom: 15px;
+        margin-top: 0;
     }
 
-    .theme-toggle .button {
+    .theme-toggle button {
         padding: 6px 12px;
         font-size: 12px;
     }
 
     .download-buttons {
         gap: 10px;
-        margin: 40px auto 20px auto !important;
+        margin: 40px auto 20px;
         flex-direction: row;
         justify-content: center;
     }
 
-    .download-buttons button {
-        padding: 180px 16px !important;
-        width: 36px;
-        height: auto 36px;
-        font-size: !12px;
+    #downloadZipButton,
+    #downloadCollageButton {
+        padding: 8px 16px;
+        width: 180px;
+        height: 36px;
+        font-size: 12px;
     }
 
     .selected-profile {
-        margin: 8px 0 !important;
+        margin: 8px 0;
     }
 
-    .selected-profile .username {
+    .selected-username {
         font-size: 1rem;
     }
+
     .user-profile-picture {
         width: 32px;
         height: 32px;
     }
-    
+
     .donation-section {
         order: 1;
-        padding: 0 15px !important;
-        margin-bottom: 10px !important;
+        position: static;
+        align-items: center;
+        max-width: none;
+        width: 100%;
+        padding: 0 15px;
+        margin-bottom: 10px;
     }
 
-    
-    .donation-section .h4 {
-        font-size: 0.9rem !important;
+    .donation-section h4 {
+        font-size: 0.9rem;
+        align-self: center;
+        text-align: center;
     }
 
     .wallet-address {
-        flex-direction: row !important;
-        gap: 4px;
-        width: 90% !important;
-        max-width: none !important;
+        flex-direction: row;
+        gap: 6px;
+        max-width: 90%;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    .wallet-address::before {
+        content: "or";
+        font-size: 0.7rem;
+        color: var(--text-dark);
+        text-transform: uppercase;
+        margin: 0 6px;
+        font-family: 'Geomanist-Bold', sans-serif;
     }
 
     .wallet-address-button {
-        font-size: 0.7rem !important;
-        padding: 4px !important;
-        margin-bottom: 8px !important;
-    }
-
-    .wallet-address-button:nth-child(2)::before {
-        font-size: 0.7rem !important;
-        margin: !4px;
+        font-size: 0.7rem;
+        padding: 4px 8px;
+        flex: 1;
+        max-width: 45%;
     }
 
     .donation-progress .progress-bar {
         height: 10px;
     }
 
-    #scroll-to-top-button {
+    #scrollToTopButton {
         display: block;
         width: 36px;
         height: 36px;
-        font-size: 20px !important;
+        font-size: 1rem;
     }
 }
 
 @media screen and (max-width: 480px) {
     .nft-card .tooltip {
-        font-size: 8px !important;
-        padding: 5px 8px !important;
-        max-width: 200px !important;
-        margin: none !important;
-        width: max-content !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis;
+        font-size: 0.75em;
+        padding: 5px 8px;
+        max-width: 200px;
+        white-space: normal;
+        overflow-wrap: break-word;
     }
 
     .navbar {
-        height: 48px !important;
-        padding: 6px !important;
+        padding: 6px;
+        height: 48px;
     }
 
-    .navbar-title {
-        display: none !important;
+    .navbar-logo img {
+        height: 28px;
     }
 
     .navbar-search input {
-        height: 32px !important;
-        font-size: !16px;
+        height: 32px;
+        font-size: 16px;
     }
 
     .navbar-toggle {
-        width: !36px;
-        height: !36px;
-        font-size: !important;
+        width: 36px;
+        height: 36px;
+        font-size: 1.3rem;
     }
 
     .navbar-menu {
-        margin: !48px;
-    }
-
-    .user-profile-image {
-        width: 28px !important;
-        height: 28px;
-        border-radius: !5px;
-    }
-
-    .navbar-menu a#myProfileLink, .navbar-menu a#logoutLink, .navbar-menu a#loginLink {
-        font-size: !important;
-    }
-
-    .profile-picture img {
-        width: !100px;
-        height: !100px;
-        border-radius: !important;
-    }
-
-    .username {
-        font-size: !20px;
-    }
-
-    .display-name {
-        font-size: !important;
-        position: !static;
-        margin-top: 6px !important;
-        text-align: !left;
-    }
-
-    .verified-badge {
-        width: 14px !important;
-        height: 14px !important;
-    }
-
-    .social-container {
-        width: calc(100px + 8px) !important;
-        height: 0 !important;
-        margin-top: !important;
-    }
-
-    .social-item {
-        width: !important;
-        height: !important;
-        border-radius: !important;
-    }
-
-    .control-group {
-        margin: 15px 10px !important;
-        gap: 8px !important;
-    }
-    
-    .control-group label {
-        font-size: !important;
-        margin-bottom: !important;
-        margin-bottom: !important;
-        margin-right !important;
-    }
-    
-    .control-group select {
-        width: !180px;
-        font-size: !important;
-        height: !important;
-    }
-
-    .control-group {
-        gap: !important;
-        padding: !important;
-    }
-
-    .nft-container {
-        margin: !important;
-        width: !important;
-        !important;
-    }
-
-    .nft-container .small-size {
-        grid-template-columns: repeat( auto-fill, minmax(60px, 1fr) ) !important;
-    }
-
-    .nft-container .medium-size {
-        grid-template-columns: repeat( auto-fill, minmax(90px, ) !important) !important;
-    }
-
-    .nft-container .large-size {
-        grid-template-columns: repeat( auto-fill, minmax(110px, 1fr) ) !important;
-    }
-
-    .nft-container .thumbnail {
-        display: grid !important;
-        gap: 6px !important;
-        padding: !important;
-        box-sizing: !important;
-        width: !important;
-        max-width: !important;
-    }
-
-    .nft-container.thumbnail .small-size {
-        grid-template-columns: !important;
-    }
-
-    .nft-container.thumbnail .medium-size {
-        grid-template-columns: !important;
-    }
-
-    .nft-container.thumbnail .large-size {
-        grid-template-columns: !important;
-    }
-
-    .nft-container.thumbnail .nft-card {
-        width: !important;
-        aspect-ratio: !important;
-        position: !important;
-        overflow: !important;
-        padding: !important;
-        margin: !important;
-        background: !important;
-        box-shadow: !important;
-        border: !important;
-        border-radius: !important;
-        transition: !important;
-    }
-
-    .nft-container.thumbnail .nft-card:hover {
-        transform: !important;
-        box-shadow: !important;
-        border: !important;
-        filter: !important;
-        z-index: !important;
-    }
-
-    .nft-container.thumbnail .nft-card img,
-    .nft-container.thumbnail .nft-card video {
-        position: !important;
-        top: !important;
-        left: !important;
-        width: !important;
-        height: !important;
-        object-fit: !important;
-        transform: !important;
-        border-radius: !important;
-        margin: !important;
-        padding: !important;
-        display: !important;
-        transition: !important;
-    }
-
-    .nft-container.thumbnail .nft-card:hover img,
-    .nft-container.thumbnail .nft-card:hover video {
-        transform: !important;
-    }
-
-    .nft-container.thumbnail .nft-card .media-placeholder {
-        position: !important;
-        top: !important;
-        left: !important;
-        width: !important;
-        height: !important;
-        border-radius: !important;
-        margin: !important;
-        padding: !important;
-        display: !important;
-        align-items: !important;
-        justify-content: !important;
-        background-color: !important;
-        color: !important;
-        font-size: !important;
-        text-align: !important;
-    }
-
-    .modal-content {
-        max-width: !important;
-        padding: !important;
-    }
-
-    .download-buttons {
-        gap: !important;
-        margin: !important;
-        flex-direction: !important;
-    }
-
-    .download-buttons button {
-        padding: !important;
-        width: !important;
-        height: !important;
-        font-size: !important;
-    }
-
-    .selected-profile {
-        margin: !important;
-    }
-
-    .selected-profile .username {
-        font-size: !important;
+        top: 48px;
     }
 
     .user-profile-picture {
-        width: !important;
-        height: !important;
+        width: 28px;
+        height: 28px;
+        border-radius: 5px;
+    }
+
+    .navbar-menu a#myProfileLink,
+    .navbar-menu a#logoutLink,
+    .navbar-menu a#loginLink {
+        font-size: 0.85rem;
+    }
+
+    .profile-picture img {
+        width: 100px;
+        height: 100px;
+        border-radius: 10px;
+    }
+
+    .username {
+        font-size: 20px;
+    }
+
+    .display-name {
+        font-size: 16px;
+        position: static;
+        margin-top: 6px;
+        text-align: left;
+    }
+
+    .verified-badge {
+        width: 14px;
+        height: 14px;
+    }
+
+    .social-container {
+        position: absolute;
+        top: auto;
+        bottom: 0;
+        left: calc(100px + 8px);
+        display: flex;
+        gap: 8px;
+        align-items: flex-end;
+    }
+
+    .social-icon {
+        width: 16px !important;
+        height: 16px !important;
+        border-radius: 3px !important;
+    }
+
+    .controls {
+        gap: 8px;
+        margin: 15px 15px 15px 0;
+    }
+
+    .control-group {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 2px;
+        margin-bottom: 8px;
+        margin-right: 15px;
+    }
+
+    .controls label {
+        font-size: 13px;
+        margin-bottom: 0;
+        text-align: right;
+        white-space: nowrap;
+        margin-right: 2px;
+        line-height: 30px;
+    }
+
+    .controls select {
+        max-width: 180px;
+        font-size: 11px;
+        height: 30px;
+        padding: 5px;
+    }
+
+    .nft-container {
+        gap: 10px;
+        padding: 0 6px;
+    }
+
+    .nft-container.small-size {
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    }
+
+    .nft-container.medium-size {
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    }
+
+    .nft-container.large-size {
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    }
+
+    .nft-container.thumbnail-mode {
+        display: grid;
+        gap: 6px;
+        padding: 0 11px;
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 100vw;
+    }
+
+    .nft-container.thumbnail-mode.small-size {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .nft-container.thumbnail-mode.medium-size {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .nft-container.thumbnail-mode.large-size {
+        grid-template-columns: 1fr;
+    }
+
+    .nft-container.thumbnail-mode .nft-card {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        position: relative;
+        overflow: visible;
+        padding: 0;
+        margin: 0;
+        background: var(--collection-bg);
+        box-shadow: none;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease, filter 0.3s ease;
+    }
+
+    .nft-container.thumbnail-mode .nft-card:hover {
+        transform: translateY(-4px) scale(1.2);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--color1);
+        filter: brightness(1.1);
+        z-index: 100;
+    }
+
+    .nft-container.thumbnail-mode .nft-card img,
+    .nft-container.thumbnail-mode .nft-card video {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: translate(-50%, -50%);
+        border-radius: 4px;
+        margin: 0;
+        padding: 0;
+        display: block;
+        transition: transform 0.3s ease;
+    }
+
+    .nft-container.thumbnail-mode .nft-card:hover img,
+    .nft-container.thumbnail-mode .nft-card:hover video {
+        transform: translate(-50%, -50%) scale(1.15);
+    }
+
+    .nft-container.thumbnail-mode .nft-card .media-placeholder {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 4px;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #333;
+        color: var(--text-dark);
+        font-size: 0.8em;
+        text-align: center;
+    }
+
+    .modal-content {
+        max-width: 100%;
+        padding: 12px;
+    }
+
+    .download-buttons {
+        gap: 10px;
+        margin: 40px auto;
+        flex-direction: row;
+    }
+
+    #downloadZipButton,
+    #downloadCollageButton {
+        padding: 6px 8px;
+        width: 180px;
+        height: 32px;
+        font-size: 12px;
+    }
+
+    .selected-username {
+        font-size: 0.9rem;
     }
 
     .donation-section {
-        order: !important;
-        padding: !important;
+        order: 1;
+        padding: 0 10px;
     }
 
-    .donation-section .h4 {
-        font-size: !important;
+    .donation-section h4 {
+        font-size: 0.9rem;
     }
 
     .wallet-address {
-        gap: !important;
-        width: !important;
-        max-width: !important;
+        flex-direction: row;
+        gap: 4px;
+        max-width: 95%;
+    }
+
+    .wallet-address::before {
+        font-size: 0.65rem;
+        margin: 0 4px;
     }
 
     .wallet-address-button {
-        font-size: !important;
-        padding: !px !important;
-    }
-
-    .wallet-address-button:nth-child(2)::before {
-        font-size: !important;
-        margin: !important;
+        font-size: 0.65rem;
+        padding: 4px 6px;
+        max-width: 45%;
     }
 
     .donation-progress .progress-bar {
-        height: !important;
+        height: 8px;
     }
 
-    #scroll-to-top-button {
-        width: !important;
-        height: !important;
-        font-size: !important;
+    #scrollToTopButton {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
     }
 }
 
@@ -1814,23 +1836,23 @@ a:hover {
         max-width: 100vw !important;
     }
 
-    .nft-container.thumbnail-mode .small-size {
+    .nft-container.thumbnail-mode.small-size {
         grid-template-columns: repeat(3, 1fr) !important;
     }
 
-    .nft-container.thumbnail-mode .medium-size {
+    .nft-container.thumbnail-mode.medium-size {
         grid-template-columns: repeat(2, 1fr) !important;
     }
 
-    .nft-container.thumbnail-mode .large-size {
+    .nft-container.thumbnail-mode.large-size {
         grid-template-columns: 1fr !important;
     }
 
     .social-icon {
-        border: !important;
+        border-radius: 3px !important;
     }
 
     .social-container .social-icon {
-        border-radius: !important;
+        border-radius: 3px !important;
     }
 }
