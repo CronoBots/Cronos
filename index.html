@@ -21,7 +21,7 @@
     <nav class="navbar">
         <div class="navbar-logo">
             <img src="CRONOBOTS.png" alt="Cronobots Logo">
-            <span class="navbar-logo-text">CRONOS.WTF</span>
+            <span class="navbar-logo-text">CRONOBOTS</span>
         </div>
         <div class="navbar-search">
             <input type="text" id="usernameInput" placeholder="Crypto.com/nft/profile" aria-describedby="usernameHelp" autocomplete="on" />
@@ -176,10 +176,9 @@
         <p>CRONOS.WTF | DEVELOPPED BY UNSCOOP</p>
         <div class="donation-section">
             <h4>Your support makes this possible</h4>
-            <p>Unscoop.cro or 0x9829e44fd04f3788F27096875Df0D2772173Ab3d</p>
             <div class="wallet-address">
-                <span id="walletAddress">0x9829e44fd04f3788F27096875Df0D2772173Ab3d</span>
-                <button id="copyWalletButton" title="Copy Wallet Address">📋</button>
+                <button class="wallet-address-button" title="Copy Unscoop.cro Address">Unscoop.cro</button>
+                <button class="wallet-address-button" title="Copy Wallet Address">0x9829e44fd04f3788F27096875Df0D2772173Ab3d</button>
             </div>
             <div class="donation-progress">
                 <span class="progress-label">Progress: <span id="progressPercent">1</span>%</span>
@@ -187,13 +186,14 @@
                     <div class="progress" id="donationProgressBar" style="width: 1%;"></div>
                 </div>
             </div>
-            <p class="donation-note">All donations go towards hosting and development costs.</p>
         </div>
         <div class="theme-toggle">
             <label for="themeButton">Theme:</label>
             <button id="themeButton">Dark</button>
         </div>
     </footer>
+
+    <button id="scrollToTopButton" aria-label="Scroll to top">↑</button>
 
     <script>
         const cache = new Map();
@@ -1400,7 +1400,6 @@
                 : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets.`;
             countContainer.appendChild(countElement);
 
-            // Afficher les boutons uniquement si des résultats filtrés existent et un utilisateur est chargé
             downloadZipButton.style.display = assets.length > 0 && currentUsername ? 'inline-block' : 'none';
             downloadCollageButton.style.display = assets.length > 0 && currentUsername ? 'inline-block' : 'none';
             if (assets.length > 0) {
@@ -1742,37 +1741,37 @@
         }
 
         function setupDonation() {
-            const copyWalletButton = document.getElementById('copyWalletButton');
-            const walletAddress = document.getElementById('walletAddress');
+            const walletButtons = document.querySelectorAll('.wallet-address-button');
             const errorDiv = document.getElementById('error');
 
-            if (!copyWalletButton || !walletAddress || !errorDiv) {
-                console.error('Donation elements not found');
+            if (!walletButtons.length || !errorDiv) {
+                console.error('Wallet buttons or error div not found');
                 return;
             }
 
-            copyWalletButton.addEventListener('click', () => {
-                try {
-                    navigator.clipboard.writeText(walletAddress.textContent).then(() => {
-                        const originalText = copyWalletButton.textContent;
-                        copyWalletButton.textContent = '✅';
-                        setTimeout(() => {
-                            copyWalletButton.textContent = originalText;
-                        }, 2000);
-                    }).catch(err => {
-                        console.error('Failed to copy wallet address:', err);
-                        errorDiv.textContent = 'Failed to copy wallet address';
-                        setTimeout(() => {
-                            errorDiv.textContent = '';
-                        }, 3000);
-                    });
-                } catch (err) {
-                    console.error('Clipboard API not supported:', err);
-                    errorDiv.textContent = 'Clipboard not supported';
-                    setTimeout(() => {
-                        errorDiv.textContent = '';
-                    }, 3000);
-                }
+            walletButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const address = button.textContent.trim();
+                    try {
+                        navigator.clipboard.writeText(address).then(() => {
+                            const originalText = button.textContent;
+                            button.textContent = '✓ Copied';
+                            button.disabled = true;
+                            setTimeout(() => {
+                                button.textContent = originalText;
+                                button.disabled = false;
+                            }, 2000);
+                        }).catch(err => {
+                            console.error('Failed to copy address:', err);
+                            errorDiv.textContent = 'Failed to copy address';
+                            setTimeout(() => errorDiv.textContent = '', 3000);
+                        });
+                    } catch (err) {
+                        console.error('Clipboard not supported:', err);
+                        errorDiv.textContent = 'Clipboard not supported';
+                        setTimeout(() => errorDiv.textContent = '', 3000);
+                    }
+                });
             });
         }
 
@@ -1792,10 +1791,11 @@
             const myProfileLink = document.getElementById('myProfileLink');
             const logoutLink = document.getElementById('logoutLink');
             const loginLink = document.getElementById('loginLink');
+            const scrollToTopButton = document.getElementById('scrollToTopButton');
 
             if (!usernameInput || !loginUsernameInput || !themeButton || !collectionFilter || 
                 !chainFilter || !curatedFilter || !displayMode || !cardSize || !sortBy || !navbarMenu || 
-                !confirmLoginButton || !cancelLoginButton || !myProfileLink || !logoutLink || !loginLink) {
+                !confirmLoginButton || !cancelLoginButton || !myProfileLink || !logoutLink || !loginLink || !scrollToTopButton) {
                 console.error('One or more DOM elements not found');
                 const errorDiv = document.getElementById('error');
                 if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
@@ -1872,6 +1872,18 @@
                     if (toggle) toggle.setAttribute('aria-expanded', 'false');
                 });
             });
+
+            // Gestion du bouton de défilement
+            if (isMobile) {
+                const toggleScrollButton = () => {
+                    scrollToTopButton.style.display = window.scrollY > 200 ? 'block' : 'none';
+                };
+                window.addEventListener('scroll', toggleScrollButton);
+                scrollToTopButton.addEventListener('click', () => {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+                toggleScrollButton(); // Vérification initiale
+            }
         }
 
         function displayNFTs(assets, selectedCollection) {
@@ -2242,37 +2254,37 @@
         }
 
         function setupDonation() {
-            const copyWalletButton = document.getElementById('copyWalletButton');
-            const walletAddress = document.getElementById('walletAddress');
+            const walletButtons = document.querySelectorAll('.wallet-address-button');
             const errorDiv = document.getElementById('error');
 
-            if (!copyWalletButton || !walletAddress || !errorDiv) {
-                console.error('Donation elements not found');
+            if (!walletButtons.length || !errorDiv) {
+                console.error('Wallet buttons or error div not found');
                 return;
             }
 
-            copyWalletButton.addEventListener('click', () => {
-                try {
-                    navigator.clipboard.writeText(walletAddress.textContent).then(() => {
-                        const originalText = copyWalletButton.textContent;
-                        copyWalletButton.textContent = '✅';
-                        setTimeout(() => {
-                            copyWalletButton.textContent = originalText;
-                        }, 2000);
-                    }).catch(err => {
-                        console.error('Failed to copy wallet address:', err);
-                        errorDiv.textContent = 'Failed to copy wallet address';
-                        setTimeout(() => {
-                            errorDiv.textContent = '';
-                        }, 3000);
-                    });
-                } catch (err) {
-                    console.error('Clipboard API not supported:', err);
-                    errorDiv.textContent = 'Clipboard not supported';
-                    setTimeout(() => {
-                        errorDiv.textContent = '';
-                    }, 3000);
-                }
+            walletButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const address = button.textContent.trim();
+                    try {
+                        navigator.clipboard.writeText(address).then(() => {
+                            const originalText = button.textContent;
+                            button.textContent = '✓ Copied';
+                            button.disabled = true;
+                            setTimeout(() => {
+                                button.textContent = originalText;
+                                button.disabled = false;
+                            }, 2000);
+                        }).catch(err => {
+                            console.error('Failed to copy address:', err);
+                            errorDiv.textContent = 'Failed to copy address';
+                            setTimeout(() => errorDiv.textContent = '', 3000);
+                        });
+                    } catch (err) {
+                        console.error('Clipboard not supported:', err);
+                        errorDiv.textContent = 'Clipboard not supported';
+                        setTimeout(() => errorDiv.textContent = '', 3000);
+                    }
+                });
             });
         }
 
