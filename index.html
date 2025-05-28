@@ -1522,6 +1522,7 @@
                 return;
             }
 
+            modalButtons.style.display = 'flex';
             modalTitle.textContent = 'Creating ZIP File';
             progressText.textContent = `Preparing ${filteredAssets.length} assets`;
             progressBar.style.width = '0%';
@@ -1596,7 +1597,7 @@
             const nftContainer = document.getElementById('nftContainer');
             const errorDiv = document.getElementById('error');
             const progressModal = document.getElementById('progressModal');
-            const progressBar = document.getElementById('progressBar');
+            const progressBar = document.getElementşaById('progressBar');
             const progressText = document.getElementById('progressText');
             const modalTitle = document.getElementById('modalTitle');
             const cancelButton = document.getElementById('cancelDownloadButton');
@@ -1865,30 +1866,22 @@
             window.addEventListener('popstate', () => {
                 const { username, collection } = parseUrlHash();
                 if (username && username !== currentUsername) {
-                    currentUsername = username;
                     const usernameInput = document.getElementById('usernameInput');
                     if (usernameInput) {
                         usernameInput.value = username;
                         fetchProfileAndNFTs();
                     }
-                } else if (!username) {
-                    const profileHeader = document.getElementById('profileHeader');
-                    const nftContainer = document.getElementById('nftContainer');
-                    const nftCountContainer = document.getElementById('nftCountContainer');
-                    const noResultsDiv = document.getElementById('noResults');
-                    const controls = document.getElementById('controls');
-                    const collectionTitle = document.getElementById('collectionTitle');
-                    if (profileHeader) profileHeader.style.display = 'none';
-                    if (nftContainer) nftContainer.innerHTML = '';
-                    if (nftCountContainer) nftCountContainer.innerHTML = '';
-                    if (noResultsDiv) noResultsDiv.style.display = 'none';
-                    if (controls) controls.classList.remove('visible');
-                    if (collectionTitle) {
-                        collectionTitle.textContent = '';
-                        collectionTitle.classList.remove('visible');
+                } else if (username === currentUsername && collection) {
+                    const collectionFilter = document.getElementById('collectionFilter');
+                    if (collectionFilter) {
+                        const optionExists = Array.from(collectionFilter.options).some(
+                            option => option.value === collection
+                        );
+                        if (optionExists) {
+                            collectionFilter.value = collection;
+                            filterNFTs();
+                        }
                     }
-                    allNFTs = [];
-                    currentUsername = '';
                 }
             });
 
@@ -1897,15 +1890,30 @@
             });
 
             window.addEventListener('scroll', () => {
-                if (window.scrollY > 300) {
-                    scrollToTopButton.style.display = 'block';
-                } else {
-                    scrollToTopButton.style.display = 'none';
+                if (scrollToTopButton) {
+                    scrollToTopButton.style.display = window.scrollY > 300 ? 'block' : 'none';
+                }
+            });
+
+            document.addEventListener('click', (event) => {
+                const suggestions = document.getElementById('suggestions');
+                const loginSuggestions = document.getElementById('loginSuggestions');
+                const usernameInput = document.getElementById('usernameInput');
+                const loginUsernameInput = document.getElementById('loginUsernameInput');
+
+                if (suggestions && !suggestions.contains(event.target) && event.target !== usernameInput) {
+                    clearSuggestions();
+                }
+
+                if (loginSuggestions && !loginSuggestions.contains(event.target) && event.target !== loginUsernameInput) {
+                    clearLoginSuggestions();
                 }
             });
         }
 
         function initialize() {
+            console.log('Initializing application...');
+
             const savedTheme = localStorage.getItem('theme') || 'dark';
             document.documentElement.setAttribute('data-theme', savedTheme);
             const themeButton = document.getElementById('themeButton');
@@ -1915,14 +1923,19 @@
 
             const savedUser = localStorage.getItem('loggedInUser');
             if (savedUser) {
-                loggedInUser = JSON.parse(savedUser);
-                updateLoginLink();
+                try {
+                    loggedInUser = JSON.parse(savedUser);
+                    updateLoginLink();
+                } catch (error) {
+                    console.error('Error parsing saved user:', error);
+                }
             }
 
             setupDonation();
             setupEventListeners();
 
             const { username, collection } = parseUrlHash();
+            console.log('Parsed URL hash:', { username, collection });
             if (username) {
                 const usernameInput = document.getElementById('usernameInput');
                 if (usernameInput) {
@@ -1931,16 +1944,9 @@
                 }
             }
 
-            const errorDiv = document.getElementById('error');
-            if (errorDiv) errorDiv.textContent = '';
-
-            const progressModal = document.getElementById('progressModal');
-            if (progressModal) progressModal.style.display = 'none';
-
+            resetViewport();
             console.log('Initialization complete');
         }
 
         document.addEventListener('DOMContentLoaded', initialize);
     </script>
-</body>
-</html>
