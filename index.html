@@ -21,7 +21,7 @@
     <nav class="navbar">
         <div class="navbar-logo">
             <img src="CRONOBOTS.png" alt="Cronobots Logo">
-            <span class="navbar-logo-text">CRONOBOTS</span>
+            <span class="navbar-logo-text">CRONOS.WTF</span>
         </div>
         <div class="navbar-search">
             <input type="text" id="usernameInput" placeholder="Crypto.com/nft/profile" aria-describedby="usernameHelp" autocomplete="on" />
@@ -135,8 +135,8 @@
         <div id="nftCountContainer"></div>
         <div class="nft-container" id="nftContainer"></div>
         <div class="download-buttons">
-            <button id="downloadZipButton" onclick="downloadNFTsAsZip()">DOWNLOAD ASSETS</button>
-            <button id="downloadCollageButton" onclick="downloadCollage()">DOWNLOAD COLLAGE</button>
+            <button id="downloadZipButton" style="display: none;" onclick="downloadNFTsAsZip()">DOWNLOAD ASSETS</button>
+            <button id="downloadCollageButton" style="display: none;" onclick="downloadCollage()">DOWNLOAD COLLAGE</button>
         </div>
 
         <div class="modal" id="progressModal">
@@ -176,13 +176,18 @@
         <p>CRONOS.WTF | DEVELOPPED BY UNSCOOP</p>
         <div class="donation-section">
             <h4>Your support makes this possible</h4>
-            <p>Unscoop.cro or 0x9829e44fd04f3788F27096875Df0D2772173Ab3d <p>
+            <p>Unscoop.cro or 0x9829e44fd04f3788F27096875Df0D2772173Ab3d</p>
+            <div class="wallet-address">
+                <span id="walletAddress">0x9829e44fd04f3788F27096875Df0D2772173Ab3d</span>
+                <button id="copyWalletButton" title="Copy Wallet Address">📋</button>
+            </div>
             <div class="donation-progress">
                 <span class="progress-label">Progress: <span id="progressPercent">1</span>%</span>
                 <div class="progress-bar">
                     <div class="progress" id="donationProgressBar" style="width: 1%;"></div>
                 </div>
             </div>
+            <p class="donation-note">All donations go towards hosting and development costs.</p>
         </div>
         <div class="theme-toggle">
             <label for="themeButton">Theme:</label>
@@ -263,7 +268,7 @@
             };
         }
 
-        function resetViewportZoom() {
+        function resetViewport() {
             window.scrollTo(0, 0);
         }
 
@@ -1007,7 +1012,7 @@
                     progressModal.style.display = 'none';
                     noResultsDiv.style.display = 'block';
                     errorDiv.textContent = 'No profile found';
-                    resetViewportZoom();
+                    resetViewport();
                     return;
                 }
 
@@ -1029,7 +1034,7 @@
                 progressText.textContent = `${allNFTs.length} assets loaded successfully!`;
                 setTimeout(() => {
                     progressModal.style.display = 'none';
-                    resetViewportZoom();
+                    resetViewport();
                 }, 500);
 
                 if (allNFTs.length > 0) {
@@ -1053,7 +1058,7 @@
                 } else {
                     console.log('No NFTs found, showing no results');
                     noResultsDiv.style.display = 'block';
-                    resetViewportZoom();
+                    resetViewport();
                 }
             } catch (error) {
                 if (!isProfileLoadingCancelled) {
@@ -1063,7 +1068,7 @@
                     errorDiv.textContent = error.message.includes('user[id=') && error.message.includes('not found')
                         ? 'No profile found'
                         : `Error: ${error.message}`;
-                    resetViewportZoom();
+                    resetViewport();
                 }
             }
         }
@@ -1197,7 +1202,7 @@
                     progressModal.style.display = 'none';
                     noResultsDiv.style.display = 'block';
                     errorDiv.textContent = 'No profile found';
-                    resetViewportZoom();
+                    resetViewport();
                     return;
                 }
 
@@ -1219,7 +1224,7 @@
                 progressText.textContent = `${allNFTs.length} assets loaded successfully!`;
                 setTimeout(() => {
                     progressModal.style.display = 'none';
-                    resetViewportZoom();
+                    resetViewport();
                 }, 500);
 
                 if (allNFTs.length > 0) {
@@ -1243,7 +1248,7 @@
                 } else {
                     console.log('No NFTs found, showing no results');
                     noResultsDiv.style.display = 'block';
-                    resetViewportZoom();
+                    resetViewport();
                 }
             } catch (error) {
                 if (!isProfileLoadingCancelled) {
@@ -1253,7 +1258,7 @@
                     errorDiv.textContent = error.message.includes('user[id=') && error.message.includes('not found')
                         ? 'No profile found'
                         : `Error: ${error.message}`;
-                    resetViewportZoom();
+                    resetViewport();
                 }
             }
         }
@@ -1395,13 +1400,11 @@
                 : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets.`;
             countContainer.appendChild(countElement);
 
-            if (currentUsername && assets.length > 0) {
+            // Afficher les boutons uniquement si des résultats filtrés existent et un utilisateur est chargé
+            downloadZipButton.style.display = assets.length > 0 && currentUsername ? 'inline-block' : 'none';
+            downloadCollageButton.style.display = assets.length > 0 && currentUsername ? 'inline-block' : 'none';
+            if (assets.length > 0) {
                 downloadZipButton.textContent = `DOWNLOAD ${assets.length} ASSETS`;
-                downloadZipButton.style.display = 'inline-block';
-                downloadCollageButton.style.display = 'inline-block';
-            } else {
-                downloadZipButton.style.display = 'none';
-                downloadCollageButton.style.display = 'none';
             }
 
             if (displayMode === 'thumbnail') {
@@ -1818,7 +1821,7 @@
             });
 
             usernameInput.addEventListener('blur', () => {
-                resetViewportZoom();
+                resetViewport();
             });
 
             loginUsernameInput.addEventListener('input', () => {
@@ -1868,6 +1871,408 @@
                     const toggle = document.querySelector('.navbar-toggle');
                     if (toggle) toggle.setAttribute('aria-expanded', 'false');
                 });
+            });
+        }
+
+        function displayNFTs(assets, selectedCollection) {
+            const container = document.getElementById('nftContainer');
+            const countContainer = document.getElementById('nftCountContainer');
+            const downloadZipButton = document.getElementById('downloadZipButton');
+            const downloadCollageButton = document.getElementById('downloadCollageButton');
+            const displayMode = document.getElementById('displayMode')?.value || 'thumbnail';
+            const cardSize = document.getElementById('cardSize')?.value || 'small';
+
+            if (!container || !countContainer || !downloadZipButton || !downloadCollageButton) {
+                console.error('NFT container, count container, or download buttons not found');
+                return;
+            }
+
+            console.log('Displaying NFTs:', assets.length, 'assets for collection:', selectedCollection || 'All');
+
+            countContainer.innerHTML = '';
+            container.innerHTML = '';
+            container.className = `nft-container ${displayMode}-mode ${cardSize}-size`;
+
+            const countElement = document.createElement('p');
+            countElement.className = 'nft-count';
+            countElement.innerHTML = selectedCollection
+                ? `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets on this collection.`
+                : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets.`;
+            countContainer.appendChild(countElement);
+
+            // Afficher les boutons uniquement si des résultats filtrés existent et un utilisateur est chargé
+            downloadZipButton.style.display = assets.length > 0 && currentUsername ? 'inline-block' : 'none';
+            downloadCollageButton.style.display = assets.length > 0 && currentUsername ? 'inline-block' : 'none';
+            if (assets.length > 0) {
+                downloadZipButton.textContent = `DOWNLOAD ${assets.length} ASSETS`;
+            }
+
+            if (displayMode === 'thumbnail') {
+                const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
+                container.style.width = '100%';
+                container.style.maxWidth = '100vw';
+                container.style.gridTemplateColumns = `repeat(auto-fill, ${cardWidth}px)`;
+
+                assets.forEach((asset, index) => {
+                    const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
+                    const card = document.createElement('div');
+                    card.className = 'nft-card';
+
+                    let mediaElement;
+                    if (imageUrl.endsWith('.mp4')) {
+                        mediaElement = document.createElement('video');
+                        mediaElement.src = imageUrl;
+                        mediaElement.controls = true;
+                        mediaElement.muted = true;
+                        mediaElement.loop = true;
+                        mediaElement.setAttribute('playsinline', '');
+                    } else {
+                        mediaElement = document.createElement('img');
+                        mediaElement.src = imageUrl;
+                        mediaElement.alt = asset.name || 'NFT Image';
+                        mediaElement.loading = 'lazy';
+                        mediaElement.decoding = 'async';
+                        mediaElement.sizes = '(max-width: 768px) 80px, 200px';
+                    }
+
+                    mediaElement.onerror = () => {
+                        console.error('Media failed to load for asset:', asset.name || 'Unnamed');
+                        card.innerHTML = '';
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'media-placeholder';
+                        placeholder.textContent = 'Média indisponible';
+                        card.appendChild(placeholder);
+                    };
+
+                    const tooltip = document.createElement('span');
+                    tooltip.className = 'tooltip';
+                    tooltip.textContent = asset.name || 'Unnamed NFT';
+                    card.appendChild(tooltip);
+
+                    card.appendChild(mediaElement);
+                    container.appendChild(card);
+                });
+            } else {
+                assets.forEach((asset, index) => {
+                    const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
+                    const card = document.createElement('div');
+                    card.className = 'nft-card';
+
+                    let mediaElement;
+                    if (imageUrl.endsWith('.mp4')) {
+                        mediaElement = document.createElement('video');
+                        mediaElement.src = imageUrl;
+                        mediaElement.controls = true;
+                        mediaElement.muted = true;
+                        mediaElement.loop = true;
+                        mediaElement.setAttribute('playsinline', '');
+                    } else {
+                        mediaElement = document.createElement('img');
+                        mediaElement.src = imageUrl;
+                        mediaElement.alt = asset.name || 'NFT Image';
+                        mediaElement.loading = 'lazy';
+                        mediaElement.decoding = 'async';
+                        mediaElement.sizes = '(max-width: 768px) 80px, 200px';
+                    }
+
+                    mediaElement.onerror = () => {
+                        console.error('Media failed to load for asset:', asset.name || 'Unnamed');
+                        card.innerHTML = '';
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'media-placeholder';
+                        placeholder.textContent = 'Média indisponible';
+                        card.appendChild(placeholder);
+                    };
+
+                    card.appendChild(mediaElement);
+
+                    const title = document.createElement('h3');
+                    title.innerHTML = asset.name ? normalizeText(asset.name) : 'Unnamed NFT';
+                    card.appendChild(title);
+
+                    container.appendChild(card);
+                });
+            }
+        }
+
+        async function downloadNFTsAsZip() {
+            const zip = new JSZip();
+            const nftContainer = document.getElementById('nftContainer');
+            const errorDiv = document.getElementById('error');
+            const progressModal = document.getElementById('progressModal');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const modalTitle = document.getElementById('modalTitle');
+            const cancelButton = document.getElementById('cancelDownloadButton');
+
+            if (!nftContainer || !errorDiv || !progressModal || !progressBar || !progressText || !modalTitle || !cancelButton) {
+                console.error('Required DOM elements for download not found');
+                if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
+                return;
+            }
+
+            const filteredNFTs = Array.from(nftContainer.querySelectorAll('.nft-card')).map((card, index) => {
+                const img = card.querySelector('img');
+                const video = card.querySelector('video');
+                const titleElement = card.querySelector('h3') || card.querySelector('.tooltip');
+                const title = titleElement ? titleElement.textContent : `NFT_${index + 1}`;
+                return {
+                    url: img ? img.src : video ? video.src : null,
+                    name: title,
+                };
+            }).filter(nft => nft.url && nft.url !== 'https://via.placeholder.com/150');
+
+            if (filteredNFTs.length === 0) {
+                errorDiv.textContent = 'No valid assets to download.';
+                return;
+            }
+
+            modalTitle.textContent = 'Creating ZIP File';
+            progressText.textContent = `Preparing ${filteredNFTs.length} assets`;
+            progressBar.style.width = '0%';
+            progressModal.style.display = 'flex';
+            cancelButton.style.display = 'block';
+
+            isDownloadCancelled = false;
+            cancelButton.onclick = () => {
+                isDownloadCancelled = true;
+                progressText.textContent = 'Download cancelled.';
+                progressBar.style.width = '0%';
+                setTimeout(() => {
+                    progressModal.style.display = 'none';
+                }, 1000);
+            };
+
+            let processed = 0;
+            for (const [index, nft] of filteredNFTs.entries()) {
+                if (isDownloadCancelled) {
+                    console.log('Download cancelled by user');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(nft.url);
+                    if (!response.ok) {
+                        console.error(`Failed to fetch asset ${nft.name}: ${response.statusText}`);
+                        continue;
+                    }
+                    const blob = await response.blob();
+                    const extension = nft.url.endsWith('.mp4') ? 'mp4' : 'png';
+                    const sanitizedName = sanitizeFileNameForZip(nft.name);
+                    const fileName = `${sanitizedName}.${extension}`;
+                    zip.file(fileName, blob);
+                    processed++;
+                    const progressPercent = (processed / filteredNFTs.length) * 100;
+                    progressBar.style.width = `${progressPercent}%`;
+                    progressText.textContent = `Downloading: ${processed}/${filteredNFTs.length}`;
+                } catch (error) {
+                    console.error(`Error downloading ${nft.name}: ${error.message}`);
+                }
+            }
+
+            if (isDownloadCancelled) {
+                console.log('Download process aborted');
+                return;
+            }
+
+            if (processed === 0) {
+                progressModal.style.display = 'none';
+                errorDiv.textContent = 'No assets could be downloaded';
+                return;
+            }
+
+            progressText.textContent = 'Generating ZIP file';
+            try {
+                const content = await zip.generateAsync({ type: 'blob' });
+                saveAs(content, `${currentUsername}_nfts.zip`);
+                progressText.textContent = 'Download complete!';
+                progressBar.style.width = '100%';
+                setTimeout(() => {
+                    progressModal.style.display = 'none';
+                }, 1000);
+            } catch (error) {
+                console.error(`Error generating ZIP: ${error.message}`);
+                progressModal.style.display = 'none';
+                errorDiv.textContent = 'Failed to generate ZIP file';
+            }
+        }
+
+        async function downloadCollage() {
+            const nftContainer = document.getElementById('nftContainer');
+            const errorDiv = document.getElementById('error');
+            const progressModal = document.getElementById('progressModal');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const modalTitle = document.getElementById('modalTitle');
+            const cancelButton = document.getElementById('cancelDownloadButton');
+
+            if (!nftContainer || !errorDiv || !progressModal || !progressBar || !progressText || !modalTitle || !cancelButton) {
+                console.error('Required DOM elements for collage download not found');
+                if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
+                return;
+            }
+
+            const cards = nftContainer.querySelectorAll('.nft-card:not(.empty)');
+            if (cards.length === 0) {
+                errorDiv.textContent = 'No assets to include in the collage.';
+                return;
+            }
+
+            modalTitle.textContent = 'Creating Collage';
+            progressText.textContent = `Preparing collage with ${cards.length} assets`;
+            progressBar.style.width = '0%';
+            progressModal.style.display = 'flex';
+            cancelButton.style.display = 'block';
+
+            isDownloadCancelled = false;
+            cancelButton.onclick = () => {
+                isDownloadCancelled = true;
+                progressText.textContent = 'Collage creation cancelled.';
+                progressBar.style.width = '0%';
+                setTimeout(() => {
+                    progressModal.style.display = 'none';
+                }, 1000);
+            };
+
+            try {
+                const gridSize = Math.ceil(Math.sqrt(cards.length));
+                const imageSize = 300;
+                const canvas = document.createElement('canvas');
+                canvas.width = gridSize * imageSize;
+                canvas.height = gridSize * imageSize;
+                const ctx = canvas.getContext('2d');
+
+                ctx.fillStyle = '#333';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                let processed = 0;
+                for (let i = 0; i < cards.length; i++) {
+                    if (isDownloadCancelled) {
+                        console.log('Collage creation cancelled');
+                        return;
+                    }
+
+                    const card = cards[i];
+                    const img = card.querySelector('img');
+                    const video = card.querySelector('video');
+                    let mediaUrl = img ? img.src : video ? video.currentSrc : null;
+
+                    if (!mediaUrl || mediaUrl === 'https://via.placeholder.com/150') {
+                        console.warn(`Invalid media for card ${i + 1}`);
+                        processed++;
+                        continue;
+                    }
+
+                    try {
+                        const response = await fetch(mediaUrl + (mediaUrl.includes('?') ? '&' : '?') + 'quality=high');
+                        if (!response.ok) {
+                            console.error(`Failed to fetch media for card ${i + 1}: ${response.statusText}`);
+                            processed++;
+                            continue;
+                        }
+                        const blob = await response.blob();
+                        const imageBitmap = await createImageBitmap(blob);
+
+                        const row = Math.floor(i / gridSize);
+                        const col = i % gridSize;
+                        ctx.drawImage(imageBitmap, col * imageSize, row * imageSize, imageSize, imageSize);
+                        imageBitmap.close();
+
+                        processed++;
+                        const progressPercent = (processed / cards.length) * 100;
+                        progressBar.style.width = `${progressPercent}%`;
+                        progressText.textContent = `Processing: ${processed}/${cards.length}`;
+                    } catch (error) {
+                        console.error(`Error processing media for card ${i + 1}: ${error.message}`);
+                        processed++;
+                    }
+                }
+
+                if (isDownloadCancelled) {
+                    console.log('Collage creation aborted');
+                    return;
+                }
+
+                if (processed === 0) {
+                    progressModal.style.display = 'none';
+                    errorDiv.textContent = 'No valid assets could be included in the collage';
+                    return;
+                }
+
+                progressText.textContent = 'Generating collage image';
+                canvas.toBlob((blob) => {
+                    saveAs(blob, `${currentUsername}_collage.png`);
+                    progressText.textContent = 'Collage download complete!';
+                    progressBar.style.width = '100%';
+                    setTimeout(() => {
+                        progressModal.style.display = 'none';
+                    }, 1000);
+                }, 'image/png', 1.0);
+            } catch (error) {
+                console.error(`Error generating collage: ${error.message}`);
+                progressModal.style.display = 'none';
+                errorDiv.textContent = 'Failed to generate collage image';
+            }
+        }
+
+        function updateDisplay() {
+            const displayMode = document.getElementById('displayMode')?.value || 'thumbnail';
+            const cardSize = document.getElementById('cardSize')?.value || 'small';
+            const nftContainer = document.getElementById('nftContainer');
+
+            if (!nftContainer) {
+                console.error('NFT container not found');
+                return;
+            }
+
+            nftContainer.className = `nft-container ${displayMode}-mode ${cardSize}-size`;
+
+            if (displayMode === 'thumbnail') {
+                const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
+                nftContainer.style.width = '100%';
+                nftContainer.style.maxWidth = '100vw';
+                nftContainer.style.gridTemplateColumns = `repeat(auto-fill, ${cardWidth}px)`;
+            } else {
+                nftContainer.style.gridTemplateColumns = '';
+                nftContainer.style.width = '';
+                nftContainer.style.maxWidth = '100vw';
+            }
+
+            filterNFTs();
+        }
+
+        function setupDonation() {
+            const copyWalletButton = document.getElementById('copyWalletButton');
+            const walletAddress = document.getElementById('walletAddress');
+            const errorDiv = document.getElementById('error');
+
+            if (!copyWalletButton || !walletAddress || !errorDiv) {
+                console.error('Donation elements not found');
+                return;
+            }
+
+            copyWalletButton.addEventListener('click', () => {
+                try {
+                    navigator.clipboard.writeText(walletAddress.textContent).then(() => {
+                        const originalText = copyWalletButton.textContent;
+                        copyWalletButton.textContent = '✅';
+                        setTimeout(() => {
+                            copyWalletButton.textContent = originalText;
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Failed to copy wallet address:', err);
+                        errorDiv.textContent = 'Failed to copy wallet address';
+                        setTimeout(() => {
+                            errorDiv.textContent = '';
+                        }, 3000);
+                    });
+                } catch (err) {
+                    console.error('Clipboard API not supported:', err);
+                    errorDiv.textContent = 'Clipboard not supported';
+                    setTimeout(() => {
+                        errorDiv.textContent = '';
+                    }, 3000);
+                }
             });
         }
 
