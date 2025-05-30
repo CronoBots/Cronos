@@ -1297,14 +1297,14 @@
             const cardSize = document.getElementById('cardSize');
             const sortBy = document.getElementById('sortBy');
             const collectionTitle = document.getElementById('collectionTitle');
-        
+
             if (!collectionFilter || !chainFilter || !curatedFilter || !displayMode || !cardSize || !sortBy || !collectionTitle) {
                 console.error('Filter elements not found');
                 return;
             }
-        
+
             console.log('Filtering NFTs with', allNFTs.length, 'assets');
-        
+
             if (!allNFTs || !allNFTs.length) {
                 console.log('No NFTs to filter, displaying empty');
                 displayNFTs([], '');
@@ -1312,19 +1312,19 @@
                 collectionTitle.classList.remove('visible');
                 return;
             }
-        
+
             console.log('Available isExternalNft values:', [...new Set(allNFTs.map(nft => nft.isExternalNft !== undefined ? nft.isExternalNft : 'undefined'))]);
             console.log('Available network values:', [...new Set(allNFTs.map(nft => nft.isExternalNft ? nft.externalNftMetadata?.network || 'undefined' : 'N/A'))]);
             console.log('Available isCurated values:', [...new Set(allNFTs.map(nft => nft.isCurated !== undefined ? nft.isCurated : 'undefined'))]);
-        
+
             let filteredNFTs = [...allNFTs];
-        
+
             const collectionValue = collectionFilter.value;
             if (collectionValue) {
                 filteredNFTs = filteredNFTs.filter(nft => nft.collection?.name === collectionValue);
                 console.log('After collection filter:', filteredNFTs.length, 'NFTs');
             }
-        
+
             const chainValue = chainFilter.value;
             console.log('Selected chain value:', chainValue);
             if (chainValue) {
@@ -1340,7 +1340,7 @@
                 });
                 console.log('After chain filter:', filteredNFTs.length, 'NFTs');
             }
-        
+
             const curatedValue = curatedFilter.value;
             console.log('Selected curated value:', curatedValue);
             if (curatedValue) {
@@ -1350,7 +1350,7 @@
                 });
                 console.log('After curated filter:', filteredNFTs.length, 'NFTs');
             }
-        
+
             const sortValue = sortBy.value || 'newest';
             console.log('Selected sort value:', sortValue);
             if (sortValue === 'rank') {
@@ -1360,16 +1360,18 @@
             } else {
                 filteredNFTs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             }
-        
+
             console.log('Final filtered NFTs:', filteredNFTs.length, 'for collection:', collectionValue || 'All', 'chain:', chainValue || 'All', 'curated:', curatedValue || 'All');
-        
+
             collectionTitle.textContent = collectionValue || 'All Collections';
             collectionTitle.classList.add('visible');
-        
-            // Modification : URL ne contient que le nom d'utilisateur
-            const newUrl = `${window.location.pathname}#${encodeURIComponent(currentUsername.toLowerCase())}`;
-            history.pushState({ username: currentUsername }, '', newUrl);
-        
+
+            const encodedCollection = collectionValue ? encodeURIComponent(collectionValue) : '';
+            const newUrl = encodedCollection
+                ? `${window.location.pathname}#${encodeURIComponent(currentUsername.toLowerCase())}/#${encodedCollection}`
+                : `${window.location.pathname}#${encodeURIComponent(currentUsername.toLowerCase())}`;
+            history.pushState({ username: currentUsername, collection: collectionValue }, '', newUrl);
+
             displayNFTs(filteredNFTs, collectionValue);
         }
 
