@@ -252,7 +252,6 @@ const nftQuery = `
 const graphqlEndpoint = "https://crypto.com/nft-api/graphql";
 const homeUrl = "https://cronobots.github.io/Cronos";
 
-// --- Utility Functions ---
 function parseUrlHash() {
     const hash = window.location.hash.substring(1);
     if (!hash) return { username: null, collection: null };
@@ -311,7 +310,6 @@ function normalizeText(text) {
     return normalized;
 }
 
-// --- Authentication Functions ---
 function updateLoginLink() {
     const userProfile = document.getElementById('userProfile');
     const userProfilePicture = document.getElementById('userProfilePicture');
@@ -429,7 +427,6 @@ function logout(event) {
     window.location.href = homeUrl;
 }
 
-// --- Data Fetching Functions ---
 async function fetchWithCache(key, fetchFn, retries = 3, delay = 1000) {
     if (cache.has(key)) {
         console.log(`Cache hit for ${key}`);
@@ -501,7 +498,6 @@ async function fetchAllNFTs(ownerId, progressCallback) {
     return allAssets;
 }
 
-// --- Profile Search Functions ---
 async function searchProfiles(query) {
     const suggestions = document.getElementById('suggestions');
     if (!suggestions) {
@@ -805,7 +801,6 @@ async function handleLogin() {
     }
 }
 
-// --- Profile and NFT Fetching ---
 function updateProfileUI(profileData) {
     const profileHeader = document.getElementById('profileHeader');
     const profilePicture = document.getElementById('profilePicture');
@@ -1258,7 +1253,6 @@ async function fetchProfileAndNFTsForLogin(username) {
     }
 }
 
-// --- NFT Filtering and Display ---
 function populateCollectionFilter(nfts) {
     const collectionFilter = document.getElementById('collectionFilter');
     if (!collectionFilter) return;
@@ -1400,11 +1394,6 @@ function displayNFTs(assets, selectedCollection) {
         downloadZipButton.textContent = `DOWNLOAD ${assets.length} ASSETS`;
     }
 
-    const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
-    container.style.width = '100%';
-    container.style.maxWidth = '100vw';
-    container.style.gridTemplateColumns = `repeat(auto-fill, ${cardWidth}px)`;
-
     assets.forEach((asset, index) => {
         const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
         const card = document.createElement('div');
@@ -1438,15 +1427,17 @@ function displayNFTs(assets, selectedCollection) {
 
         const tooltip = document.createElement('span');
         tooltip.className = 'tooltip';
-        tooltip.textContent = asset.name || 'Unnamed NFT';
+        tooltip.textContent = asset.name && asset.name.trim() !== '' ? asset.name : 'Unnamed NFT';
         card.appendChild(tooltip);
 
         card.appendChild(mediaElement);
         container.appendChild(card);
     });
+
+    // Appeler updateDisplay après avoir créé les cartes pour recalculer la grille
+    updateDisplay();
 }
 
-// --- Download Functions ---
 async function downloadNFTsAsZip() {
     const zip = new JSZip();
     const nftContainer = document.getElementById('nftContainer');
@@ -1667,24 +1658,54 @@ async function downloadCollage() {
     }
 }
 
-// --- Display and Donation Setup ---
 function updateDisplay() {
     const cardSize = document.getElementById('cardSize')?.value || 'small';
     const nftContainer = document.getElementById('nftContainer');
 
     if (!nftContainer) {
-        console.error('NFT container not found');
+        console.error('Conteneur NFT non trouvé');
         return;
     }
 
     nftContainer.className = `nft-container thumbnail-mode ${cardSize}-size`;
 
-    const cardWidth = cardSize === 'small' ? 110 : cardSize === 'large' ? 280 : 180;
-    nftContainer.style.width = '100%';
-    nftContainer.style.maxWidth = '100vw';
-    nftContainer.style.gridTemplateColumns = `repeat(auto-fill, ${cardWidth}px)`;
+    // Définir les tailles de base des cartes et le gap
+    const baseCardWidth = cardSize === 'small' ? 110 : cardSize === 'medium' ? 180 : 280;
+    const isMobile = window.innerWidth <= 768;
+    const gap = isMobile ? (window.innerWidth <= 480 ? 6 : 10) : 4;
+    const totalMargin = 100; // 50px gauche + 50px droite sur toutes les tailles d'écran
 
-    filterNFTs();
+    // Calculer la largeur disponible en utilisant window.innerWidth
+    const availableWidth = window.innerWidth - totalMargin;
+
+    // Calculer le nombre de colonnes en fonction de la taille de base
+    const columnWidthWithGap = baseCardWidth + gap;
+    let numColumns = Math.floor((availableWidth + gap) / columnWidthWithGap);
+    numColumns = Math.max(1, numColumns); // Minimum 1 colonne
+
+    // Calculer la taille ajustée des colonnes pour remplir l'espace
+    const totalGaps = (numColumns - 1) * gap;
+    let adjustedColumnWidth = (availableWidth - totalGaps) / numColumns;
+
+    // Ajouter des contraintes de taille minimale/maximale
+    const minWidth = baseCardWidth * 0.8; // 80% de la taille de base
+    const maxWidth = baseCardWidth * 1.2; // 120% de la taille de base
+    adjustedColumnWidth = Math.min(Math.max(adjustedColumnWidth, minWidth), maxWidth);
+
+    // Réajuster le nombre de colonnes si nécessaire pour respecter les contraintes
+    if (adjustedColumnWidth !== (availableWidth - totalGaps) / numColumns) {
+        const newColumnWidthWithGap = adjustedColumnWidth + gap;
+        numColumns = Math.floor((availableWidth + gap) / newColumnWidthWithGap);
+        numColumns = Math.max(1, numColumns);
+    }
+
+    // Appliquer la taille ajustée aux colonnes
+    nftContainer.style.gridTemplateColumns = `repeat(${numColumns}, ${adjustedColumnWidth}px)`;
+
+    // Forcer un recalcul du layout
+    nftContainer.style.display = 'none';
+    nftContainer.offsetHeight; // Forcer un reflow
+    nftContainer.style.display = 'grid';
 }
 
 function setupDonation() {
@@ -1722,7 +1743,6 @@ function setupDonation() {
     });
 }
 
-// --- Event Listeners ---
 function setupEventListeners() {
     const usernameInput = document.getElementById('usernameInput');
     const loginUsernameInput = document.getElementById('loginUsernameInput');
@@ -1829,7 +1849,6 @@ function setupEventListeners() {
     toggleScrollButton();
 }
 
-// --- Initialization ---
 function initialize() {
     const savedTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
@@ -1861,6 +1880,16 @@ function initialize() {
     setupEventListeners();
     setupDonation();
 
+    // Ajouter un listener pour le redimensionnement de la fenêtre
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(updateDisplay, 100);
+    });
+
+    // Appeler updateDisplay pour initialiser la grille dès le chargement
+    updateDisplay();
+
     window.addEventListener('popstate', () => {
         const { username, collection } = parseUrlHash();
         if (username) {
@@ -1872,8 +1901,6 @@ function initialize() {
         }
     });
 }
-
 document.addEventListener('DOMContentLoaded', initialize);
-    </script>
-</body>
+    </script></body>
 </html>
