@@ -1301,21 +1301,60 @@ function filterNFTs() {
         return;
     }
 
-    console.log('Available isExternalNft values:', [...new Set(allNFTs.map(nft => nft.isExternalNft !== undefined ? nft.isExternalNft : 'undefined'))]);
-    console.log('Available network values:', [...new Set(allNFTs.map(nft => nft.isExternalNft ? nft.externalNftMetadata?.network || 'undefined' : 'N/A'))]);
-    console.log('Available isCurated values:', [...new Set(allNFTs.map(nft => nft.isCurated !== undefined ? nft.isCurated : 'undefined'))]);
-
     let filteredNFTs = [...allNFTs];
 
     const collectionValue = collectionFilter.value;
     if (collectionValue) {
         filteredNFTs = filteredNFTs.filter(nft => nft.collection?.name === collectionValue);
         console.log('After collection filter:', filteredNFTs.length, 'NFTs');
+
+        // Déterminer les valeurs pour CURATION et CHAINS basées sur la collection sélectionnée
+        let allCurated = true;
+        let allNonCurated = true;
+        let allCronos = true;
+        let allCronosPos = true;
+
+        filteredNFTs.forEach(nft => {
+            const isCurated = nft.isCurated !== undefined ? nft.isCurated : false;
+            const isExternalNft = nft.isExternalNft;
+            const network = nft.externalNftMetadata?.network?.toUpperCase() || '';
+
+            if (!isCurated) allCurated = false;
+            if (isCurated) allNonCurated = false;
+            if (!(isExternalNft === true && network === 'CRONOS')) allCronos = false;
+            if (isExternalNft !== false) allCronosPos = false;
+        });
+
+        // Mettre à jour le filtre CURATION
+        if (allCurated) {
+            curatedFilter.value = 'true';
+        } else if (allNonCurated) {
+            curatedFilter.value = 'false';
+        } else {
+            curatedFilter.value = ''; // Mélange de curated et non-curated
+        }
+        curatedFilter.disabled = true;
+
+        // Mettre à jour le filtre CHAINS
+        if (allCronos) {
+            chainFilter.value = 'CRONOS';
+        } else if (allCronosPos) {
+            chainFilter.value = 'CRONOS_POS';
+        } else {
+            chainFilter.value = ''; // Mélange de chaînes
+        }
+        chainFilter.disabled = true;
+    } else {
+        // Réactiver les filtres et réinitialiser leurs valeurs pour "ALL COLLECTIONS"
+        chainFilter.disabled = false;
+        curatedFilter.disabled = false;
+        chainFilter.value = '';
+        curatedFilter.value = '';
     }
 
     const chainValue = chainFilter.value;
     console.log('Selected chain value:', chainValue);
-    if (chainValue) {
+    if (chainValue && !chainFilter.disabled) {
         filteredNFTs = filteredNFTs.filter(nft => {
             const isExternalNft = nft.isExternalNft;
             const network = nft.externalNftMetadata?.network?.toUpperCase() || '';
@@ -1331,12 +1370,12 @@ function filterNFTs() {
 
     const curatedValue = curatedFilter.value;
     console.log('Selected curated value:', curatedValue);
-    if (curatedValue) {
+    if (curatedValue && !curatedFilter.disabled) {
         filteredNFTs = filteredNFTs.filter(nft => {
             const isCurated = nft.isCurated !== undefined ? nft.isCurated : false;
             return curatedValue === 'true' ? isCurated === true : curatedValue === 'false' ? isCurated === false : true;
         });
-        console.log('After curated filter:', filteredNFTs.length, 'NFTs');
+        console.log('After curated.tp://x.ai/grok filter:', filteredNFTs.length, 'NFTs');
     }
 
     const sortValue = sortBy.value || 'newest';
@@ -1669,43 +1708,77 @@ function updateDisplay() {
 
     nftContainer.className = `nft-container thumbnail-mode ${cardSize}-size`;
 
-    // Définir les tailles de base des cartes et le gap
+    // Définir les tailles de base des cartes et l'écart (gap)
     const baseCardWidth = cardSize === 'small' ? 110 : cardSize === 'medium' ? 180 : 280;
     const isMobile = window.innerWidth <= 768;
-    const gap = isMobile ? (window.innerWidth <= 480 ? 6 : 10) : 4;
-    const totalMargin = 100; // 50px gauche + 50px droite sur toutes les tailles d'écran
+    const isVerySmallScreen = window.innerWidth <= 480;
+    const gap = isVerySmallScreen ? 6 : isMobile ? 10 : 4;
 
-    // Calculer la largeur disponible en utilisant window.innerWidth
-    const availableWidth = window.innerWidth - totalMargin;
+    // Marges fixes de nftContainer (50px à gauche, 50px à droite)
+    const marginLeft = 50;
+    const marginRight = 50;
+    const totalMargin = marginLeft + marginRight;
 
-    // Calculer le nombre de colonnes en fonction de la taille de base
+    // Calculer la largeur disponible : largeur de la fenêtre - marges
+    const availableWidth = document.documentElement.clientWidth - totalMargin;
+
+    // Calculer le nombre de colonnes initial
     const columnWidthWithGap = baseCardWidth + gap;
     let numColumns = Math.floor((availableWidth + gap) / columnWidthWithGap);
     numColumns = Math.max(1, numColumns); // Minimum 1 colonne
 
-    // Calculer la taille ajustée des colonnes pour remplir l'espace
+    // Calculer la largeur ajustée des colonnes
     const totalGaps = (numColumns - 1) * gap;
     let adjustedColumnWidth = (availableWidth - totalGaps) / numColumns;
 
-    // Ajouter des contraintes de taille minimale/maximale
+    // Appliquer des contraintes de taille minimale/maximale
     const minWidth = baseCardWidth * 0.8; // 80% de la taille de base
-    const maxWidth = baseCardWidth * 1.2; // 120% de la taille de base
+    let maxWidth = baseCardWidth * 1.2; // 120% de la taille de base par défaut
+    if (cardSize === 'large') {
+        maxWidth = baseCardWidth * 1.5; // Assouplir la contrainte pour mode large (150%)
+    }
     adjustedColumnWidth = Math.min(Math.max(adjustedColumnWidth, minWidth), maxWidth);
 
-    // Réajuster le nombre de colonnes si nécessaire pour respecter les contraintes
-    if (adjustedColumnWidth !== (availableWidth - totalGaps) / numColumns) {
-        const newColumnWidthWithGap = adjustedColumnWidth + gap;
-        numColumns = Math.floor((availableWidth + gap) / newColumnWidthWithGap);
-        numColumns = Math.max(1, numColumns);
+    // Réajuster le nombre de colonnes si la largeur totale dépasse availableWidth
+    let totalWidthWithAdjusted = numColumns * adjustedColumnWidth + totalGaps;
+    if (totalWidthWithAdjusted > availableWidth) {
+        numColumns = Math.max(1, numColumns - 1);
+        const newTotalGaps = (numColumns - 1) * gap;
+        adjustedColumnWidth = (availableWidth - newTotalGaps) / numColumns;
+        adjustedColumnWidth = Math.min(Math.max(adjustedColumnWidth, minWidth), maxWidth);
+        totalWidthWithAdjusted = numColumns * adjustedColumnWidth + newTotalGaps;
     }
 
-    // Appliquer la taille ajustée aux colonnes
+    // Maximiser l'espace en mode "large" si l'espace est sous-utilisé
+    if (cardSize === 'large' && totalWidthWithAdjusted < availableWidth * 0.95) {
+        // Si l'espace utilisé est inférieur à 95% de la largeur disponible, augmenter la largeur des colonnes
+        adjustedColumnWidth = (availableWidth - totalGaps) / numColumns;
+        adjustedColumnWidth = Math.min(Math.max(adjustedColumnWidth, minWidth), maxWidth);
+        totalWidthWithAdjusted = numColumns * adjustedColumnWidth + totalGaps;
+    }
+
+    // Appliquer la grille
     nftContainer.style.gridTemplateColumns = `repeat(${numColumns}, ${adjustedColumnWidth}px)`;
+
+    // Vérifier si la grille dépasse la marge droite
+    const containerRect = nftContainer.getBoundingClientRect();
+    const windowRightEdge = document.documentElement.clientWidth - marginRight;
+    if (containerRect.right > windowRightEdge + 1) {
+        console.warn(`Débordement détecté: container.right=${containerRect.right}px, windowRightEdge=${windowRightEdge}px`);
+        numColumns = Math.max(1, numColumns - 1);
+        const newTotalGaps = (numColumns - 1) * gap;
+        adjustedColumnWidth = (availableWidth - newTotalGaps) / numColumns;
+        adjustedColumnWidth = Math.min(Math.max(adjustedColumnWidth, minWidth), maxWidth);
+        nftContainer.style.gridTemplateColumns = `repeat(${numColumns}, ${adjustedColumnWidth}px)`;
+    }
 
     // Forcer un recalcul du layout
     nftContainer.style.display = 'none';
     nftContainer.offsetHeight; // Forcer un reflow
     nftContainer.style.display = 'grid';
+
+    // Débogage visuel
+    console.log(`updateDisplay: clientWidth=${document.documentElement.clientWidth}px, marginLeft=${marginLeft}px, marginRight=${marginRight}px, availableWidth=${availableWidth}px, numColumns=${numColumns}, adjustedColumnWidth=${adjustedColumnWidth}px, totalWidth=${totalWidthWithAdjusted}px, container.right=${nftContainer.getBoundingClientRect().right}px, expectedRightEdge=${windowRightEdge}px`);
 }
 
 function setupDonation() {
