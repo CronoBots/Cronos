@@ -174,14 +174,12 @@
 <div class="donation-section">
     <h4>Your support makes this possible</h4>
     <div class="donation-progress">
-        <span class="progress-label">Progress: <span id="progressPercent">1</span>%</span>
         <div class="progress-bar">
+            <span class="progress-label">Progress: <span id="progressPercent">1</span>%</span>
             <div class="progress" id="donationProgressBar" style="width: 1%;"></div>
         </div>
     </div>
     <div class="wallet-address">
-        <button class="wallet-address-button" title="Copy Unscoop.cro Address">Unscoop.cro</button>
-        <span class="wallet-divider">or</span>
         <button class="wallet-address-button" title="Copy Wallet Address">0x9829e44fd04f3788F27096875Df0D2772173Ab3d</button>
     </div>
 </div>
@@ -1291,7 +1289,11 @@ function filterNFTs() {
         return;
     }
 
-    console.log('Filtering NFTs with', allNFTs.length, 'assets');
+    console.log('Filtering NFTs with', allNFTs.length, 'assets', {
+        collection: collectionFilter.value,
+        chain: chainFilter.value,
+        curated: curatedFilter.value
+    });
 
     if (!allNFTs || !allNFTs.length) {
         console.log('No NFTs to filter, displaying empty');
@@ -1326,32 +1328,22 @@ function filterNFTs() {
         });
 
         // Mettre à jour le filtre CURATION
-        if (allCurated) {
-            curatedFilter.value = 'true';
-        } else if (allNonCurated) {
-            curatedFilter.value = 'false';
-        } else {
-            curatedFilter.value = ''; // Mélange de curated et non-curated
-        }
+        curatedFilter.value = allCurated ? 'true' : allNonCurated ? 'false' : '';
         curatedFilter.disabled = true;
+        console.log('CURATION filter: value=', curatedFilter.value, 'disabled=', curatedFilter.disabled);
 
         // Mettre à jour le filtre CHAINS
-        if (allCronos) {
-            chainFilter.value = 'CRONOS';
-        } else if (allCronosPos) {
-            chainFilter.value = 'CRONOS_POS';
-        } else {
-            chainFilter.value = ''; // Mélange de chaînes
-        }
+        chainFilter.value = allCronos ? 'CRONOS' : allCronosPos ? 'CRONOS_POS' : '';
         chainFilter.disabled = true;
+        console.log('CHAINS filter: value=', chainFilter.value, 'disabled=', chainFilter.disabled);
     } else {
-        // Réactiver les filtres et réinitialiser explicitement à leurs valeurs par défaut
+        // Réactiver les filtres et préserver leurs valeurs actuelles
         chainFilter.disabled = false;
         curatedFilter.disabled = false;
-        chainFilter.value = ''; // Valeur par défaut pour CHAINS
-        curatedFilter.value = ''; // Valeur par défaut pour CURATION
+        console.log('ALL COLLECTIONS selected: CURATION enabled=', !curatedFilter.disabled, 'value=', curatedFilter.value);
+        console.log('ALL COLLECTIONS selected: CHAINS enabled=', !chainFilter.disabled, 'value=', chainFilter.value);
 
-        // Appliquer les filtres si des valeurs sont définies (bien que par défaut elles soient vides ici)
+        // Appliquer le filtre CHAINS si une valeur est sélectionnée
         const chainValue = chainFilter.value;
         if (chainValue) {
             filteredNFTs = filteredNFTs.filter(nft => {
@@ -1367,16 +1359,18 @@ function filterNFTs() {
             console.log('After chain filter (ALL COLLECTIONS):', filteredNFTs.length, 'NFTs');
         }
 
+        // Appliquer le filtre CURATION si une valeur est sélectionnée
         const curatedValue = curatedFilter.value;
         if (curatedValue) {
             filteredNFTs = filteredNFTs.filter(nft => {
                 const isCurated = nft.isCurated !== undefined ? nft.isCurated : false;
-                return curatedValue === 'true' ? isCurated === true : curatedValue === 'false' ? isCurated === false : true;
+                return curatedValue === 'true' ? isCurated : curatedValue === 'false' ? !isCurated : true;
             });
             console.log('After curated filter (ALL COLLECTIONS):', filteredNFTs.length, 'NFTs');
         }
     }
 
+    // Appliquer le tri
     const sortValue = sortBy.value || 'newest';
     console.log('Selected sort value:', sortValue);
     if (sortValue === 'rank') {
