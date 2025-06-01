@@ -1485,12 +1485,50 @@ function displayNFTs(assets, selectedCollection) {
         tooltip.textContent = asset.name && asset.name.trim() !== '' ? asset.name : 'Unnamed NFT';
         card.appendChild(tooltip);
 
+        // Ajout du bouton de téléchargement avec icône SVG
+        if (imageUrl !== 'https://via.placeholder.com/150') {
+            const downloadButton = document.createElement('button');
+            downloadButton.className = 'download-nft-btn';
+            downloadButton.title = 'Download NFT';
+            downloadButton.innerHTML = `
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                </svg>
+            `;
+            downloadButton.onclick = () => downloadSingleNFT(imageUrl, asset.name || `NFT_${index + 1}`);
+            card.appendChild(downloadButton);
+        }
+
         card.appendChild(mediaElement);
         container.appendChild(card);
     });
 
     // Appeler updateDisplay après avoir créé les cartes pour recalculer la grille
     updateDisplay();
+}
+
+async function downloadSingleNFT(url, name) {
+    const errorDiv = document.getElementById('error');
+    if (!errorDiv) {
+        console.error('Error div not found');
+        return;
+    }
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch asset: ${response.statusText}`);
+        }
+        const blob = await response.blob();
+        const extension = url.endsWith('.mp4') ? 'mp4' : 'png';
+        const sanitizedName = sanitizeFileNameForZip(name);
+        const fileName = `${sanitizedName}.${extension}`;
+        saveAs(blob, fileName);
+    } catch (error) {
+        console.error(`Error downloading NFT ${name}: ${error.message}`);
+        errorDiv.textContent = `Failed to download ${name}: ${error.message}`;
+        setTimeout(() => errorDiv.textContent = '', 3000);
+    }
 }
 
 async function downloadNFTsAsZip() {
