@@ -165,27 +165,41 @@
     </div>
 
 <footer class="footer">
-    <img src="CRONOBOTS.png" alt="Cronobots Logo" class="footer-logo">
-    <p class="footer-text">CRONOS.WTF | DEVELOPED BY UNSCOOP</p>
-    <div class="theme-toggle">
-        <label for="themeButton">Theme:</label>
-        <button id="themeButton">Dark</button>
-    </div>
-<div class="donation-section">
-    <h4>Your support makes this possible</h4>
-    <div class="donation-progress">
-        <div class="progress-bar">
-            <span class="progress-label">Progress: <span id="progressPercent">1</span>%</span>
-            <div class="progress" id="donationProgressBar" style="width: 1%;"></div>
+    <div class="footer-left">
+        <div class="footer-logo-container">
+            <div class="footer-socials">
+                <a href="https://x.com/LoadedPixel_CDC" target="_blank" title="Visit X Profile">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="footer-social-icon" onerror="this.src='/assets/fallback-icon.png'" />
+                </a>
+                <a href="https://discord.com/" target="_blank" title="Visit Discord Profile">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Discord_Logo.svg/512px-Discord_Logo.svg.png" alt="Discord Profile" class="footer-social-icon" onerror="this.src='/assets/fallback-icon.png'" />
+                </a>
+            </div>
+            <img src="CRONOBOTS.png" alt="Cronobots Logo" class="footer-logo">
+            <p class="footer-text">DEVELOPED BY UNSCOOP</p>
         </div>
     </div>
-    <div class="wallet-address">
-        <button class="wallet-address-button" title="Copy Wallet Address">0x9829e44fd04f3788F27096875Df0D2772173Ab3d</button>
+    <div class="footer-center">
+        <div class="donation-section">
+            <h4>Your support makes this possible</h4>
+            <div class="donation-progress">
+                <span class="progress-label">Progress: <span id="progressPercent">1</span>%</span>
+                <div class="progress-bar">
+                    <div class="progress" id="donationProgressBar" style="width: 1%;"></div>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
+    <div class="footer-right">
+        <div class="theme-toggle">
+            <label for="themeButton">Theme:</label>
+            <button id="themeButton">CDC</button>
+        </div>
+    </div>
 </footer>
 
-    <button id="scrollToTopButton" aria-label="Scroll to top">↑</button>
+<button id="scrollToTopButton" aria-label="Scroll to top">↑</button>
+<button id="scrollToBottomButton" aria-label="Scroll to bottom">↓</button>
 
     <script>
         const cache = new Map();
@@ -264,6 +278,18 @@ function resetViewport() {
     window.scrollTo(0, 0);
 }
 
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
 function toggleMenu() {
     const menu = document.getElementById('navbarMenu');
     const toggle = document.querySelector('.navbar-toggle');
@@ -280,11 +306,14 @@ function sanitizeInput(input) {
     return input.replace(/[<>]/g, '').trim().toLowerCase();
 }
 
-function sanitizeFileNameForZip(name) {
+function sanitizeFileNameForZip(name, index = 0) {
     if (!name || name.trim() === '') {
-        return 'unnamed_nft';
+        return `unnamed_nft_${index}`;
     }
-    return name.replace(/[\/\\:*?"<>|]/g, '_').trim();
+    // Supprimer les caractères non valides et limiter la longueur
+    let sanitized = name.replace(/[\/\\:*?"<>|]/g, '_').trim();
+    sanitized = sanitized.replace(/\s+/g, '_').substring(0, 100); // Limiter à 100 caractères
+    return sanitized || `unnamed_nft_${index}`;
 }
 
 function toggleTheme() {
@@ -294,10 +323,10 @@ function toggleTheme() {
         return;
     }
     const currentTheme = document.documentElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    const newTheme = currentTheme === 'dark' ? 'cdc' : 'dark'; // Remplacer 'light' par 'cdc'
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
-    themeButton.textContent = newTheme.charAt(0).toUpperCase() + newTheme.slice(1);
+    themeButton.textContent = newTheme === 'dark' ? 'CDC' : 'Dark'; // Mettre à jour le texte du bouton
     console.log('Theme set to:', newTheme);
 }
 
@@ -426,6 +455,10 @@ function logout(event) {
 }
 
 async function fetchWithCache(key, fetchFn, retries = 3, delay = 1000) {
+    if (key.startsWith('image_')) {
+        // Ignorer le cache pour les URLs d'images
+        return await fetchFn();
+    }
     if (cache.has(key)) {
         console.log(`Cache hit for ${key}`);
         return cache.get(key);
@@ -1369,7 +1402,7 @@ function filterNFTs() {
         console.log('CHAINS filter: value=', chainFilter.value, 'disabled=', chainFilter.disabled);
     }
 
-    // Appliquer le filtre CHAINS si une valeur est sélectionnée
+    // Apply CHAINS filter if a value is selected
     if (chainFilter.value) {
         filteredNFTs = filteredNFTs.filter(nft => {
             const isExternalNft = nft.isExternalNft;
@@ -1384,7 +1417,7 @@ function filterNFTs() {
         console.log('After chain filter:', filteredNFTs.length, 'NFTs');
     }
 
-    // Appliquer le filtre CURATION si une valeur est sélectionnée
+    // Apply CURATION filter if a value is selected
     if (curatedFilter.value) {
         filteredNFTs = filteredNFTs.filter(nft => {
             const isCurated = nft.isCurated !== undefined ? nft.isCurated : false;
@@ -1393,7 +1426,7 @@ function filterNFTs() {
         console.log('After curated filter:', filteredNFTs.length, 'NFTs');
     }
 
-    // Appliquer le tri
+    // Apply sorting
     const sortValue = sortBy.value || 'newest';
     console.log('Selected sort value:', sortValue);
     if (sortValue === 'rank') {
@@ -1408,12 +1441,6 @@ function filterNFTs() {
 
     collectionTitle.textContent = collectionValue || 'All Collections';
     collectionTitle.classList.add('visible');
-
-    const encodedCollection = collectionValue ? encodeURIComponent(collectionValue) : '';
-    const newUrl = encodedCollection
-        ? `${window.location.pathname}#${encodeURIComponent(currentUsername.toLowerCase())}/#${encodedCollection}`
-        : `${window.location.pathname}#${encodeURIComponent(currentUsername.toLowerCase())}`;
-    history.pushState({ username: currentUsername, collection: collectionValue }, '', newUrl);
 
     displayNFTs(filteredNFTs, collectionValue);
 }
@@ -1507,7 +1534,35 @@ function displayNFTs(assets, selectedCollection) {
     updateDisplay();
 }
 
-async function downloadSingleNFT(url, name) {
+async function fetchWithRetry(url, retries = 3, delay = 1000) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // Timeout de 30s
+            const response = await fetch(url, {
+                method: 'GET',
+                mode: 'cors',
+                cache: 'no-cache',
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            if (!response.ok) {
+                if (response.status === 429 && i < retries - 1) {
+                    console.log(`Rate limit hit for ${url}, retrying in ${delay}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2;
+                    continue;
+                }
+                throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+            }
+            return response;
+        } catch (error) {
+            if (i === retries - 1) throw error;
+        }
+    }
+}
+
+async function downloadSingleNFT(url, name, index) {
     const errorDiv = document.getElementById('error');
     if (!errorDiv) {
         console.error('Error div not found');
@@ -1515,19 +1570,40 @@ async function downloadSingleNFT(url, name) {
     }
 
     try {
-        const response = await fetch(url);
+        const response = await fetchWithRetry(url, 3, 2000);
         if (!response.ok) {
-            throw new Error(`Failed to fetch asset: ${response.statusText}`);
+            throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+        }
+        const contentType = response.headers.get('content-type');
+        let extension = 'png';
+        if (contentType.includes('video/mp4')) {
+            extension = 'mp4';
+        } else if (contentType.includes('image/jpeg')) {
+            extension = 'jpg';
+        } else if (contentType.includes('image/gif')) {
+            extension = 'gif';
+        } else if (!contentType.includes('image/png')) {
+            throw new Error(`Unsupported file type: ${contentType}`);
         }
         const blob = await response.blob();
-        const extension = url.endsWith('.mp4') ? 'mp4' : 'png';
-        const sanitizedName = sanitizeFileNameForZip(name);
+        if (!blob || blob.size === 0) {
+            throw new Error('Received empty or invalid blob');
+        }
+        console.log(`Downloading ${name}: URL=${url}, Content-Type=${contentType}, Status=${response.status}`);
+        const sanitizedName = sanitizeFileNameForZip(name, index);
         const fileName = `${sanitizedName}.${extension}`;
-        saveAs(blob, fileName);
+        const urlObj = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = urlObj;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(urlObj);
     } catch (error) {
         console.error(`Error downloading NFT ${name}: ${error.message}`);
         errorDiv.textContent = `Failed to download ${name}: ${error.message}`;
-        setTimeout(() => errorDiv.textContent = '', 3000);
+        setTimeout(() => errorDiv.textContent = '', 5000);
     }
 }
 
@@ -1835,41 +1911,6 @@ function updateDisplay() {
     console.log(`updateDisplay: clientWidth=${document.documentElement.clientWidth}px, marginLeft=${marginLeft}px, marginRight=${marginRight}px, availableWidth=${availableWidth}px, numColumns=${numColumns}, adjustedColumnWidth=${adjustedColumnWidth}px, totalWidth=${totalWidthWithAdjusted}px, container.right=${nftContainer.getBoundingClientRect().right}px, expectedRightEdge=${windowRightEdge}px`);
 }
 
-function setupDonation() {
-    const walletButtons = document.querySelectorAll('.wallet-address-button');
-    const errorDiv = document.getElementById('error');
-
-    if (!walletButtons.length || !errorDiv) {
-        console.error('Wallet buttons or error div not found');
-        return;
-    }
-
-    walletButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const address = button.textContent.trim();
-            try {
-                navigator.clipboard.writeText(address).then(() => {
-                    const originalText = button.textContent;
-                    button.textContent = 'Copied';
-                    button.disabled = true;
-                    setTimeout(() => {
-                        button.textContent = originalText;
-                        button.disabled = false;
-                    }, 2000);
-                }).catch(err => {
-                    console.error('Failed to copy address:', err);
-                    errorDiv.textContent = 'Failed to copy address';
-                    setTimeout(() => errorDiv.textContent = '', 3000);
-                });
-            } catch (err) {
-                console.error('Clipboard not supported:', err);
-                errorDiv.textContent = 'Clipboard not supported';
-                setTimeout(() => errorDiv.textContent = '', 3000);
-            }
-        });
-    });
-}
-
 function setupEventListeners() {
     const usernameInput = document.getElementById('usernameInput');
     const loginUsernameInput = document.getElementById('loginUsernameInput');
@@ -1886,149 +1927,154 @@ function setupEventListeners() {
     const logoutLink = document.getElementById('logoutLink');
     const loginLink = document.getElementById('loginLink');
     const scrollToTopButton = document.getElementById('scrollToTopButton');
+    const scrollToBottomButton = document.getElementById('scrollToBottomButton');
+    const navbarToggle = document.querySelector('.navbar-toggle');
+    const downloadZipButton = document.getElementById('downloadZipButton');
+    const downloadCollageButton = document.getElementById('downloadCollageButton');
 
+    // Vérification des éléments DOM
     if (!usernameInput || !loginUsernameInput || !themeButton || !collectionFilter || 
         !chainFilter || !curatedFilter || !cardSize || !sortBy || !navbarMenu || 
-        !confirmLoginButton || !cancelLoginButton || !myProfileLink || !logoutLink || !loginLink || !scrollToTopButton) {
+        !confirmLoginButton || !cancelLoginButton || !myProfileLink || !logoutLink || 
+        !loginLink || !navbarToggle || !downloadZipButton || !downloadCollageButton) {
         console.error('One or more DOM elements not found');
         const errorDiv = document.getElementById('error');
         if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
         return;
     }
 
-    const debounceDelay = window.innerWidth <= 768 ? 500 : 300;
+    // Vérification spécifique pour les boutons de défilement
+    if (!scrollToTopButton || !scrollToBottomButton) {
+        console.warn('Scroll buttons not found in DOM');
+        return;
+    }
 
-    // Gestionnaire pour l'entrée de l'utilisateur
-    usernameInput.addEventListener('input', () => {
-        clearTimeout(debounceTimeout);
-        debounceTimeout = setTimeout(() => {
-            const query = sanitizeInput(usernameInput.value.trim());
-            searchProfiles(query);
-        }, debounceDelay);
-    });
-
-    usernameInput.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter') {
-            clearSuggestions();
-            fetchProfileAndNFTs();
-        }
-    });
-
-    usernameInput.addEventListener('blur', () => {
-        resetViewport();
-    });
-
-    // Gestionnaire pour l'entrée de connexion
-    loginUsernameInput.addEventListener('input', () => {
-        clearTimeout(debounceTimeout);
-        debounceTimeout = setTimeout(() => {
-            const query = sanitizeInput(loginUsernameInput.value.trim());
-            searchLoginProfiles(query);
-        }, debounceDelay);
-    });
-
-    loginUsernameInput.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter') {
-            clearLoginSuggestions();
-        }
-    });
-
-    // Boutons de connexion
-    confirmLoginButton.addEventListener('click', handleLogin);
-    cancelLoginButton.addEventListener('click', resetLoginForm);
-
-    // Changement de thème
+    // Gestion du basculement du thème
     themeButton.addEventListener('click', toggleTheme);
 
-    // Gestionnaire pour le filtre de collection
-    collectionFilter.addEventListener('change', () => {
-        console.log('collectionFilter changed to:', collectionFilter.value);
-        if (!collectionFilter.value) {
-            // Lorsque "ALL COLLECTIONS" est sélectionné, réinitialiser et activer les filtres
-            chainFilter.value = '';
-            curatedFilter.value = '';
-            chainFilter.disabled = false;
-            curatedFilter.disabled = false;
-            console.log('ALL COLLECTIONS selected: CHAINS enabled=', !chainFilter.disabled, 'value=', chainFilter.value);
-            console.log('ALL COLLECTIONS selected: CURATION enabled=', !curatedFilter.disabled, 'value=', curatedFilter.value);
+    // Gestion du menu mobile
+    navbarToggle.addEventListener('click', toggleMenu);
+
+    // Gestion de la recherche
+    usernameInput.addEventListener('input', debounce(async (e) => {
+        const query = sanitizeInput(e.target.value);
+        if (query.length > 2) {
+            await searchProfiles(query);
+        } else {
+            clearSuggestions();
         }
-        filterNFTs();
+    }, 300));
+
+    // Gestion de la recherche dans le modal de connexion
+    loginUsernameInput.addEventListener('input', debounce(async (e) => {
+        const query = sanitizeInput(e.target.value);
+        if (query.length > 2) {
+            await searchLoginProfiles(query);
+        } else {
+            clearLoginSuggestions();
+        }
+    }, 300));
+
+    // Gestion de la sélection des suggestions
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('suggestion-item')) {
+            const username = e.target.dataset.username;
+            const input = e.target.closest('#loginModal') ? loginUsernameInput : usernameInput;
+            input.value = username;
+            if (e.target.closest('#loginModal')) {
+                selectLoginSuggestion(username, e.target.dataset.avatar);
+            } else {
+                selectSuggestion(username);
+            }
+        }
     });
 
-    // Gestionnaire pour le filtre CHAINS
-    chainFilter.addEventListener('change', () => {
-        console.log('chainFilter changed to:', chainFilter.value, 'disabled=', chainFilter.disabled);
-        if (!collectionFilter.value) {
-            // S'assurer que le filtre reste modifiable pour "ALL COLLECTIONS"
-            chainFilter.disabled = false;
-            curatedFilter.disabled = false;
-        }
-        filterNFTs();
-    });
-
-    // Gestionnaire pour le filtre CURATION
-    curatedFilter.addEventListener('change', () => {
-        console.log('curatedFilter changed to:', curatedFilter.value, 'disabled=', curatedFilter.disabled);
-        if (!collectionFilter.value) {
-            // S'assurer que le filtre reste modifiable pour "ALL COLLECTIONS"
-            chainFilter.disabled = false;
-            curatedFilter.disabled = false;
-        }
-        filterNFTs();
-    });
-
-    // Autres filtres
+    // Gestion des filtres
+    collectionFilter.addEventListener('change', filterNFTs);
+    chainFilter.addEventListener('change', filterNFTs);
+    curatedFilter.addEventListener('change', filterNFTs);
     cardSize.addEventListener('change', updateDisplay);
-    sortBy.addEventListener('change', () => {
-        console.log('sortBy changed to:', sortBy.value);
-        filterNFTs();
-    });
+    sortBy.addEventListener('change', filterNFTs);
 
-    // Gestionnaire pour le lien "Mon profil"
-    myProfileLink.addEventListener('click', (event) => {
-        event.preventDefault();
-        if (loggedInUser) {
-            usernameInput.value = loggedInUser.username;
-            fetchProfileAndNFTs();
-            navbarMenu.classList.remove('active');
-            const toggle = document.querySelector('.navbar-toggle');
-            if (toggle) toggle.setAttribute('aria-expanded', 'false');
-        }
-    });
-
-    // Déconnexion
-    logoutLink.addEventListener('click', logout);
-
-    // Affichage du modal de connexion
+    // Gestion du modal de connexion
     loginLink.addEventListener('click', showLoginModal);
 
-    // Fermeture du menu de navigation après un clic sur un lien
-    navbarMenu.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', () => {
-            navbarMenu.classList.remove('active');
-            const toggle = document.querySelector('.navbar-toggle');
-            if (toggle) toggle.setAttribute('aria-expanded', 'false');
-        });
+    cancelLoginButton.addEventListener('click', resetLoginForm);
+
+    confirmLoginButton.addEventListener('click', handleLogin);
+
+    // Gestion du profil et déconnexion
+    myProfileLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (loggedInUser?.username) {
+            fetchProfileAndNFTsForLogin(loggedInUser.username);
+        }
     });
 
-    // Gestion du bouton de retour en haut
-    const toggleScrollButton = () => {
-        scrollToTopButton.style.display = window.scrollY > 200 ? 'block' : 'none';
-        scrollToTopButton.classList.toggle('visible', window.scrollY > 200);
+    logoutLink.addEventListener('click', logout);
+
+    // Gestion des boutons de téléchargement
+    downloadZipButton.addEventListener('click', downloadNFTsAsZip);
+    downloadCollageButton.addEventListener('click', downloadCollage);
+
+    // Gestion des boutons de défilement
+    const toggleScrollButtons = () => {
+        const scrollY = window.scrollY;
+        const windowHeight = window.innerHeight;
+        const documentHeight = document.documentElement.scrollHeight;
+        const isScrollable = documentHeight > windowHeight + 100; // Page doit être assez longue
+
+        // Afficher le bouton "Scroll to Top" si défilé vers le bas et page défilable
+        const showTopButton = isScrollable && scrollY > 200;
+        scrollToTopButton.style.display = showTopButton ? 'block' : 'none';
+        scrollToTopButton.classList.toggle('visible', showTopButton);
+
+        // Afficher le bouton "Scroll to Bottom" si pas à la fin et page défilable
+        const isAtBottom = scrollY + windowHeight >= documentHeight - 10;
+        const showBottomButton = isScrollable && !isAtBottom;
+        scrollToBottomButton.style.display = showBottomButton ? 'block' : 'none';
+        scrollToBottomButton.classList.toggle('visible', showBottomButton);
+
+        // Débogage
+        console.log('toggleScrollButtons:', {
+            scrollY,
+            windowHeight,
+            documentHeight,
+            isScrollable,
+            showTopButton,
+            showBottomButton
+        });
     };
-    window.addEventListener('scroll', toggleScrollButton);
+
+    // Écouteurs pour le défilement et le redimensionnement
+    window.addEventListener('scroll', toggleScrollButtons);
+    window.addEventListener('resize', toggleScrollButtons);
+
+    // Observer les changements dans le DOM (ex. ajout de NFTs)
+    const observer = new MutationObserver(toggleScrollButtons);
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Gestion des clics sur les boutons
     scrollToTopButton.addEventListener('click', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
-    toggleScrollButton();
+
+    scrollToBottomButton.addEventListener('click', () => {
+        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+    });
+
+    // Appeler au chargement
+    toggleScrollButtons();
 }
 
 function initialize() {
     const savedTheme = localStorage.getItem('theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', savedTheme);
+    // Si le thème sauvegardé est 'light', le remplacer par 'cdc'
+    const initialTheme = savedTheme === 'light' ? 'cdc' : savedTheme;
+    document.documentElement.setAttribute('data-theme', initialTheme);
     const themeButton = document.getElementById('themeButton');
     if (themeButton) {
-        themeButton.textContent = savedTheme.charAt(0).toUpperCase() + savedTheme.slice(1);
+        themeButton.textContent = initialTheme === 'dark' ? 'CDC' : 'Dark'; // Mettre à jour le texte initial
     }
 
     const savedUser = localStorage.getItem('loggedInUser');
@@ -2052,7 +2098,6 @@ function initialize() {
     }
 
     setupEventListeners();
-    setupDonation();
 
     // Ajouter un listener pour le redimensionnement de la fenêtre
     let resizeTimeout;
