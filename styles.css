@@ -3,18 +3,18 @@
     --color2: #2C2C2C;
     --text-dark: #fff;
     --text-light: #333;
-    --collection-bg: #1a1a1a;
+    --collection-bg: #1a1a1a; /* Fond de la barre de navigation et de la modale en mode sombre */
     --shadow: 0 2px 4px rgba(255,255,255,0.1);
     --bg-light: #f4f4f4;
     --transition: all 0.3s ease;
 }
 
-[data-theme="light"] {
+[data-theme="cdc"] {
     --color2: var(--bg-light);
-    --text-dark: var(--text-light);
-    --collection-bg: #fff;
+    --text-dark: #fff; /* Texte blanc en mode CDC */
+    --collection-bg: #0b1426; /* Fond de la barre de navigation et du footer en mode CDC */
     --shadow: 0 2px 4px rgba(0,0,0,0.1);
-    --color1: #e04e2d;
+    --color1: #11bafa; /* Couleur des boutons en mode CDC */
 }
 
 @font-face {
@@ -98,6 +98,33 @@ body {
     color: var(--color1);
 }
 
+.navbar-menu a#loginLink {
+    padding: 8px 16px;
+    border-radius: 8px;
+    background-color: var(--color1);
+    color: var(--text-dark);
+    cursor: pointer;
+    font-family: 'Geomanist-Bold', sans-serif;
+    text-transform: uppercase;
+    font-weight: normal;
+    transition: var(--transition);
+    display: inline-block;
+    line-height: 1;
+}
+
+.navbar-menu a#loginLink:hover {
+    transform: scale(1.05);
+    text-decoration: none;
+}
+
+.navbar-menu a#loginLink:active {
+    transform: scale(0.95);
+}
+
+[data-theme="cdc"] .navbar-menu a#loginLink {
+    color: #fff;
+}
+
 .navbar-divider {
     color: var(--text-dark);
     font-size: 1.2rem;
@@ -126,8 +153,7 @@ body {
 }
 
 .navbar-menu a#myProfileLink,
-.navbar-menu a#logoutLink,
-.navbar-menu a#loginLink {
+.navbar-menu a#logoutLink {
     color: var(--text-dark);
     font-size: 1rem;
     text-transform: uppercase;
@@ -136,8 +162,7 @@ body {
 }
 
 .navbar-menu a#myProfileLink:hover,
-.navbar-menu a#logoutLink:hover,
-.navbar-menu a#loginLink:hover {
+.navbar-menu a#logoutLink:hover {
     color: var(--color1);
 }
 
@@ -166,14 +191,14 @@ body {
     -webkit-appearance: none;
 }
 
-[data-theme="light"] .navbar-search input {
+[data-theme="cdc"] .navbar-search input {
     border: 1px solid #333;
     background-color: #fff;
     color: #000;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-[data-theme="light"] .navbar-search input::placeholder {
+[data-theme="cdc"] .navbar-search input::placeholder {
     color: #555;
 }
 
@@ -369,6 +394,10 @@ a:hover {
     left: 0;
 }
 
+[data-theme="cdc"] .display-name {
+    color: #000;
+}
+
 .controls {
     display: none;
     flex-direction: column;
@@ -403,6 +432,11 @@ a:hover {
     white-space: nowrap;
     margin-right: 10px;
     line-height: 32px;
+    font-family: 'Geomanist-Bold', sans-serif;
+}
+
+[data-theme="cdc"] .controls label {
+    color: #000;
 }
 
 .controls select {
@@ -424,6 +458,7 @@ a:hover {
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
+    font-family: 'Geomanist-Bold', sans-serif;
 }
 
 .controls select:hover {
@@ -438,6 +473,10 @@ a:hover {
     margin: 0px 0;
     display: none;
     text-transform: uppercase;
+}
+
+[data-theme="cdc"] .collection-title {
+    color: #000;
 }
 
 .collection-title.visible {
@@ -612,6 +651,7 @@ a:hover {
 .nft-count {
     text-align: center;
     font-size: 1.1em;
+    color: var(--text-dark);
 }
 
 .nft-count .count {
@@ -619,70 +659,161 @@ a:hover {
     color: var(--color1);
 }
 
+[data-theme="cdc"] .nft-count {
+    color: #000;
+}
+
+[data-theme="cdc"] .nft-count .count {
+    color: var(--color1);
+}
+
+[data-theme="cdc"] .nft-count span[style*="color: var(--color1)"] {
+    color: var(--color1) !important;
+}
+
 .footer {
-    text-align: center;
-    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* Alignement en haut */
+    padding: 10px 20px;
     background-color: var(--collection-bg);
     box-shadow: var(--shadow);
     color: var(--text-dark);
-    z-index: 1000;
+    z-index: 999;
     margin-top: auto;
     width: 100%;
     box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    min-height: 100px;
     position: relative;
-    min-height: 150px;
-    padding-bottom: 60px;
 }
 
-.footer-bottom {
+.footer-left,
+.footer-center,
+.footer-right {
+    flex: 1;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    max-width: 1200px;
-    padding: 0 20px;
-    box-sizing: border-box;
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    align-items: flex-start; /* Alignement en haut pour cohérence */
 }
 
-.footer-text {
-    font-weight: normal;
-    margin: 0;
-    font-size: 1rem;
-    text-transform: uppercase;
-    color: var(--text-dark);
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+.footer-left {
+    justify-content: flex-start;
 }
 
-.footer p {
-    font-weight: normal;
-    margin: 10px 0 0 0;
-    order: 2;
+.footer-center {
+    justify-content: center;
+}
+
+.footer-right {
+    justify-content: flex-end;
+}
+
+.footer-logo-container {
+    display: flex;
+    flex-direction: column; /* Organisation verticale pour icônes, logo, texte */
+    align-items: flex-start;
+    gap: 8px;
 }
 
 .footer-logo {
-    max-width: 70px;
-    height: auto;
+    height: 40px; /* Aligné sur navbar-logo img */
+    width: auto;
     object-fit: contain;
-    margin-bottom: 0px;
+}
+
+.footer-text {
+    font-weight: 700;
+    margin: 0;
+    font-size: 1.2rem; /* Aligné sur navbar-logo-text */
+    text-transform: uppercase;
+    color: var(--text-dark);
+}
+
+.footer-socials {
+    display: flex;
+    gap: 10px; /* Espacement entre icônes */
+}
+
+.footer-socials a {
+    display: inline-block;
+    line-height: 0;
+}
+
+.footer-socials img {
+    width: 24px !important; /* Aligné sur social-icon */
+    height: 24px !important;
+    border-radius: 3px !important;
+    transition: var(--transition);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    background: transparent; /* Fond transparent */
+    filter: brightness(0) invert(1); /* Assure que l'icône est blanche */
+}
+
+.footer-socials img:hover {
+    transform: scale(1.1);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+}
+
+.donation-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-dark);
+    font-size: 0.9rem;
+    max-width: 300px;
+    width: 100%;
+}
+
+.donation-section h4 {
+    font-size: 0.85rem;
+    margin: 0;
+    text-transform: uppercase;
+    color: var(--color1);
+    text-align: center;
+}
+
+.donation-progress {
+    width: 100%;
+    max-width: 300px;
+    text-align: center;
+}
+
+.progress-label {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 0.8rem;
+    color: var(--text-dark);
+    font-family: 'Geomanist-Bold', sans-serif;
+    text-transform: uppercase;
+}
+
+[data-theme="cdc"] .progress-label {
+    color: #000;
+}
+
+.donation-progress .progress-bar {
+    width: 100%;
+    height: 10px;
+    background-color: #333;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+[data-theme="cdc"] .donation-progress .progress-bar {
+    background-color: #ccc;
+}
+
+.donation-progress .progress {
+    height: 100%;
+    background-color: #4caf50;
+    transition: width 0.3s ease;
 }
 
 .theme-toggle {
-    position: absolute;
-    right: 20px;
-    bottom: 20px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .theme-toggle label {
@@ -703,6 +834,19 @@ a:hover {
     transition: var(--transition);
     height: 36px;
     line-height: 1.5;
+    width: 80px;
+}
+
+[data-theme="cdc"] .theme-toggle button {
+    color: #fff;
+}
+
+.theme-toggle button:hover {
+    transform: scale(1.05);
+}
+
+.theme-toggle button:active {
+    transform: scale(0.95);
 }
 
 .download-buttons {
@@ -737,6 +881,16 @@ a:hover {
     transform: scale(1.05);
 }
 
+#downloadZipButton:active,
+#downloadCollageButton:active {
+    transform: scale(0.95);
+}
+
+[data-theme="cdc"] #downloadZipButton,
+[data-theme="cdc"] #downloadCollageButton {
+    color: #fff;
+}
+
 .modal {
     display: none;
     position: fixed;
@@ -750,6 +904,19 @@ a:hover {
     align-items: center;
 }
 
+.modal[style*="block"] {
+    display: flex;
+}
+
+.modal.visible,
+.modal.show {
+    display: flex;
+}
+
+[data-theme="dark"] .modal {
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
 .modal-content {
     background-color: var(--collection-bg);
     padding: 20px;
@@ -759,6 +926,12 @@ a:hover {
     text-align: center;
     box-shadow: var(--shadow);
     color: var(--text-dark);
+    position: relative;
+    z-index: 1001;
+}
+
+[data-theme="dark"] .modal-content {
+    background-color: #1a1a1a !important;
 }
 
 .progress-bar {
@@ -805,6 +978,14 @@ a:hover {
 
 .modal-buttons button:hover {
     transform: scale(1.05);
+}
+
+.modal-buttons button:active {
+    transform: scale(0.95);
+}
+
+[data-theme="cdc"] .modal-buttons button {
+    color: #fff;
 }
 
 .modal-buttons .cancel-button {
@@ -857,133 +1038,6 @@ a:hover {
     text-transform: uppercase;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    to { opacity: 0.5; }
-}
-
-@keyframes slideDown {
-    from { transform: translateY(-10px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-.donation-section {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    color: var(--text-dark);
-    font-size: 0.9rem;
-    max-width: 300px;
-    width: 100%;
-    z-index: 10;
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-}
-
-.donation-section h4 {
-    font-size: 0.85rem;
-    margin: 0;
-    text-transform: uppercase;
-    color: #4caf50;
-    text-align: center-align;
-    width: 100%;
-}
-
-.wallet-address {
-    display: flex;
-    flex-direction: row;
-    gap: 6px;
-    width: 100%;
-    max-width: 300px;
-    order: 2;
-    align-items: center;
-    justify-content: center;
-}
-
-.wallet-address-button {
-    background-color: #333;
-    color: var(--text-dark);
-    border: none;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-size: 0.7rem;
-    cursor: pointer;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    transition: var(--transition);
-    flex: 1;
-    min-width: 0;
-    font-family: 'Geomanist-Bold', sans-serif;
-    height: 36px;
-    line-height: 1.5;
-}
-
-[data-theme="light"] .wallet-address-button {
-    background-color: #e0e0e0;
-}
-
-.wallet-address-button:hover {
-    background-color: var(--color1);
-    color: #fff;
-}
-
-.donation-progress {
-    width: 100%;
-    max-width: 300px;
-    margin-top: 0px;
-    order: 1;
-    text-align: center-align;
-}
-
-.progress-label {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 0.8rem;
-    color: #fff;
-    z-index: 2;
-    font-family: 'Geomanist-Bold', sans-serif;
-    text-transform: uppercase;
-    white-space: nowrap;
-    text-shadow: 0 - 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.donation-progress .progress-bar {
-    width: 100%;
-    height: 36px;
-    background-color: #333;
-    border-radius: 6px;
-    overflow: hidden;
-    margin: 0 auto;
-    position: relative;
-}
-
-[data-theme="light"] .donation-progress .progress-bar {
-    background-color: #ccc;
-}
-
-[data-theme="light"] .progress-label {
-    color: #333;
-}
-
-.donation-progress .progress {
-    height: 100%;
-    background-color: #4caf50;
-    transition: width 0.3s ease;
-    position: relative;
-    z-index: 1;
-}
-
 #scrollToTopButton {
     display: none;
     position: fixed;
@@ -997,9 +1051,9 @@ a:hover {
     height: 40px;
     font-size: 1.2rem;
     cursor: pointer;
-    opacity: 0.6;
+    opacity: 0.75;
     transition: opacity 0.3s ease, transform 0.3s ease;
-    z-index: 1000;
+    z-index: 1001;
 }
 
 #scrollToTopButton.visible {
@@ -1007,6 +1061,33 @@ a:hover {
 }
 
 #scrollToTopButton:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+#scrollToBottomButton {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background-color: var(--color1);
+    color: var(--text-dark);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 1001;
+}
+
+#scrollToBottomButton.visible {
+    display: block;
+}
+
+#scrollToBottomButton:hover {
     opacity: 1;
     transform: scale(1.1);
 }
@@ -1048,35 +1129,23 @@ a:hover {
     fill: #000;
 }
 
-[data-theme="light"] .download-nft-btn {
+[data-theme="cdc"] .download-nft-btn {
     background-color: #98FB98;
 }
 
-#scrollToBottomButton {
-    display: none;
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    background-color: var(--color1);
-    color: var(--text-dark);
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 1.2rem;
-    cursor: pointer;
-    opacity: 0.6;
-    transition: opacity 0.3s ease, transform 0.3s ease;
-    z-index: 1000;
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
-#scrollToBottomButton.visible {
-    display: block;
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    to { opacity: 0.5; }
 }
 
-#scrollToBottomButton:hover {
-    opacity: 1;
-    transform: scale(1.1);
+@keyframes slideDown {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
 @media screen and (max-width: 768px) {
@@ -1102,7 +1171,6 @@ a:hover {
         display: flex;
         align-items: center;
         justify-content: flex-end;
-        gap: 2px;
         width: 100%;
         margin-bottom: 8px;
         margin-right: 15px;
@@ -1115,6 +1183,10 @@ a:hover {
         white-space: nowrap;
         margin-right: 2px;
         line-height: 32px;
+    }
+
+    [data-theme="cdc"] .controls label {
+        color: #000;
     }
 
     .controls select {
@@ -1197,41 +1269,64 @@ a:hover {
         text-align: left;
     }
 
+    [data-theme="cdc"] .display-name {
+        color: #000;
+    }
+
     .footer {
-        padding: 15px;
         flex-direction: column;
-        align-items: center;
+        align-items: flex-start; /* Maintenir alignement en haut */
         gap: 10px;
+        padding: 8px;
         padding-bottom: 15px;
+        min-height: 120px;
+    }
+
+    .footer-left,
+    .footer-center,
+    .footer-right {
+        flex: none;
+        width: 100%;
+        justify-content: center;
+        align-items: flex-start;
     }
 
     .footer-logo {
-        order: 200;
-        max-width: 80px;
+        height: 32px; /* Aligné sur navbar-logo img */
     }
 
-    .footer p {
-        order: 201;
-        margin: 0;
+    .footer-text {
+        font-size: 1rem; /* Proportionnel à navbar-logo-text */
+    }
+
+    .footer-socials img {
+        width: 18px !important; /* Aligné sur social-icon */
+        height: 18px !important;
+    }
+
+    .donation-section {
+        padding: 8px 15px;
+        margin-bottom: 10px;
+    }
+
+    .donation-section h4 {
+        font-size: 0.75rem;
+    }
+
+    .progress-label {
+        font-size: 0.75rem;
+        margin-bottom: 2px;
     }
 
     .theme-toggle {
-        position: static;
-        margin-top: 15px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-        order: 400;
-    }
-
-    .theme-toggle label {
-        font-size: 0.9rem;
+        margin-top: 10px;
     }
 
     .theme-toggle button {
         padding: 6px 12px;
         font-size: 12px;
+        width: 60px;
+        height: 32px;
     }
 
     .navbar {
@@ -1320,7 +1415,33 @@ a:hover {
     .navbar-menu.active {
         display: flex;
         animation: slideDown 0.3s ease;
-        z-index: 1000;
+    }
+
+    .navbar-menu a#loginLink {
+        padding: 8px 16px;
+        border-radius: 8px;
+        background-color: var(--color1);
+        color: var(--text-dark);
+        cursor: pointer;
+        font-family: 'Geomanist-Bold', sans-serif;
+        text-transform: uppercase;
+        font-weight: normal;
+        transition: var(--transition);
+        width: 80px;
+        text-align: center;
+    }
+
+    .navbar-menu a#loginLink:hover {
+        transform: scale(1.05);
+        text-decoration: none;
+    }
+
+    .navbar-menu a#loginLink:active {
+        transform: scale(0.95);
+    }
+
+    [data-theme="cdc"] .navbar-menu a#loginLink {
+        color: #fff;
     }
 
     .navbar-divider {
@@ -1344,8 +1465,7 @@ a:hover {
     }
 
     .navbar-menu a#myProfileLink,
-    .navbar-menu a#logoutLink,
-    .navbar-menu a#loginLink {
+    .navbar-menu a#logoutLink {
         font-size: 0.9rem;
     }
 
@@ -1358,6 +1478,10 @@ a:hover {
         font-size: 30px;
         margin: 5px 0;
         text-align: center;
+    }
+
+    [data-theme="cdc"] .collection-title {
+        color: #000;
     }
 
     .nft-container {
@@ -1439,6 +1563,11 @@ a:hover {
         max-width: 320px;
         padding: 12px;
         font-size: 14px;
+        background-color: var(--collection-bg);
+    }
+
+    [data-theme="dark"] .modal-content {
+        background-color: #1a1a1a !important;
     }
 
     .progress-text {
@@ -1447,27 +1576,6 @@ a:hover {
     }
 
     .modal-buttons button {
-        padding: 6px 12px;
-        font-size: 12px;
-    }
-
-    .footer {
-        padding: 15px;
-        box-shadow: var(--shadow);
-        position: relative;
-    }
-
-    .footer-logo {
-        max-width: 80px;
-    }
-
-    .theme-toggle {
-        right: 15px;
-        bottom: 15px;
-        margin-top: 0;
-    }
-
-    .theme-toggle button {
         padding: 6px 12px;
         font-size: 12px;
     }
@@ -1500,42 +1608,7 @@ a:hover {
         height: 32px;
     }
 
-    .donation-section {
-        order: 1;
-        position: static;
-        align-items: center;
-        max-width: none;
-        width: 100%;
-        padding: 0 15px;
-        margin-bottom: 10px;
-    }
-
-    .donation-section h4 {
-        font-size: 0.9rem;
-    }
-
-    .wallet-address {
-        flex-direction: column;
-        gap: 6px;
-        max-width: 90%;
-    }
-
-    .wallet-address-button {
-        font-size: 0.75rem;
-        padding: 4px 8px;
-    }
-
-    .donation-progress .progress-bar {
-        height: 36px;
-        border-radius: 6px;
-    }
-
-    .progress-label {
-        font-size: 0.75rem;
-    }
-
     #scrollToTopButton {
-        display: block;
         width: 36px;
         height: 36px;
         font-size: 1rem;
@@ -1552,19 +1625,6 @@ a:hover {
         height: 18px;
         bottom: 4px;
         right: 4px;
-        opacity: 0;
-        transition: opacity 0.2s ease, transform 0.2s ease;
-        z-index: 120;
-    }
-
-    .nft-card:hover .download-nft-btn {
-        display: flex;
-        opacity: 0.4;
-    }
-
-    .nft-card .download-nft-btn:hover {
-        opacity: 1 !important;
-        transform: scale(1.2);
     }
 
     .download-nft-btn svg {
@@ -1609,19 +1669,22 @@ a:hover {
     .user-profile-picture {
         width: 28px;
         height: 28px;
-        border-radius: 5px;
+        border-radius: 8px;
     }
 
     .navbar-menu a#myProfileLink,
-    .navbar-menu a#logoutLink,
-    .navbar-menu a#loginLink {
+    .navbar-menu a#logoutLink {
         font-size: 0.85rem;
+    }
+
+    .navbar-menu a#loginLink {
+        width: 80px;
     }
 
     .profile-picture img {
         width: 100px;
         height: 100px;
-        border-radius: 10px;
+        border-radius: 4px;
     }
 
     .username {
@@ -1633,6 +1696,10 @@ a:hover {
         position: static;
         margin-top: 6px;
         text-align: left;
+    }
+
+    [data-theme="cdc"] .display-name {
+        color: #000;
     }
 
     .verified-badge {
@@ -1653,7 +1720,7 @@ a:hover {
     .social-icon {
         width: 16px !important;
         height: 16px !important;
-        border-radius: 3px !important;
+        border-radius: 4px !important;
     }
 
     .controls {
@@ -1662,20 +1729,12 @@ a:hover {
     }
 
     .control-group {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 2px;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
         margin-right: 15px;
     }
 
     .controls label {
         font-size: 13px;
-        margin-bottom: 0;
-        text-align: right;
-        white-space: nowrap;
-        margin-right: 2px;
         line-height: 30px;
     }
 
@@ -1707,63 +1766,42 @@ a:hover {
         grid-template-columns: 1fr;
     }
 
-    .nft-card {
-        width: 100%;
-        aspect-ratio: 1 / 1;
-        position: relative;
-        overflow: visible;
-        padding: 0;
-        margin: 0;
-        background: var(--collection-bg);
-        box-shadow: none;
-        border: 1px solid transparent;
+    .footer {
+        padding: 6px;
+    }
+
+    .footer-logo {
+        height: 28px; /* Aligné sur navbar-logo img */
+    }
+
+    .footer-text {
+        font-size: 0.9rem; /* Proportionnel à navbar-logo-text */
+    }
+
+    .footer-socials img {
+        width: 16px !important; /* Aligné sur social-icon */
+        height: 16px !important;
+    }
+
+    .donation-section h4 {
+        font-size: 0.7rem;
+    }
+
+    .progress-label {
+        font-size: 0.7rem;
+        margin-bottom: 2px;
+    }
+
+    .donation-progress .progress-bar {
+        height: 8px;
         border-radius: 4px;
-        transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease, filter 0.3s ease;
     }
 
-    .nft-card:hover {
-        transform: translateY(-4px) scale(1.2);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        border: 1px solid var(--color1);
-        filter: brightness(1.1);
-        z-index: 100;
-    }
-
-    .nft-card img, .nft-card video {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transform: translate(-50%, -50%);
-        border-radius: 4px;
-        margin: 0;
-        padding: 0;
-        display: block;
-        transition: transform 0.3s ease;
-    }
-
-    .nft-card:hover img, .nft-card:hover video {
-        transform: translate(-50%, -50%) scale(1.15);
-    }
-
-    .nft-card .media-placeholder {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        border-radius: 4px;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #333;
-        color: var(--text-dark);
-        font-size: 0.8em;
-        text-align: center;
+    .theme-toggle button {
+        padding: 6px 10px;
+        width: 70px;
+        height: 32px;
+        font-size: 11px;
     }
 
     .modal-content {
@@ -1774,7 +1812,6 @@ a:hover {
     .download-buttons {
         gap: 10px;
         margin: 40px auto;
-        flex-direction: row;
     }
 
     #downloadZipButton,
@@ -1789,35 +1826,13 @@ a:hover {
         font-size: 0.9rem;
     }
 
-    .donation-section {
-        order: 1;
-        padding: 0 10px;
+    .modal-buttons button {
+        padding: 6px 12px;
+        font-size: 14px;
     }
 
-    .donation-section h4 {
-        font-size: 0.9rem;
-    }
-
-    .wallet-address {
-        padding: 4px 8px;
-    }
-
-    .wallet-address-button {
-        font-size: 0.7rem;
-    }
-
-    .donation-progress .progress-bar {
-        height: 36px;
-        border-radius: 6px;
-    }
-
-    .progress-label {
-        font-size: 0.7rem;
-    }
-
-    .modal-buttons .confirm-button:hover {
-        background-color: #218838;
-        transform: scale(1.05);
+    .modal-buttons button:active {
+        transform: scale(0.95);
     }
 
     #scrollToTopButton {
@@ -1835,21 +1850,6 @@ a:hover {
     .download-nft-btn {
         width: 16px;
         height: 16px;
-        bottom: 4px;
-        right: 4px;
-        opacity: 0;
-        transition: opacity 0.2s ease, transform 0.2s ease;
-        z-index: 120;
-    }
-
-    .nft-card:hover .download-nft-btn {
-        display: flex;
-        opacity: 0.4;
-    }
-
-    .nft-card .download-nft-btn:hover {
-        opacity: 1 !important;
-        transform: scale(1.2);
     }
 
     .download-nft-btn svg {
@@ -1861,7 +1861,6 @@ a:hover {
 @media screen and (min-width: 360px) and (max-width: 480px) {
     .nft-container {
         gap: 6px;
-        padding: 0;
         width: calc(100% - 20px);
         max-width: calc(100vw - 20px);
         margin-left: 10px;
@@ -1880,11 +1879,9 @@ a:hover {
         grid-template-columns: 1fr !important;
     }
 
-    .social-icon {
-        border-radius: 3px !important;
-    }
-
-    .social-container .social-icon {
-        border-radius: 3px !important;
+    .social-container {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px !important;
     }
 }
