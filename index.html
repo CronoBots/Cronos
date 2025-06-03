@@ -24,7 +24,7 @@
             <span class="navbar-logo-text">CRONOS.WTF</span>
         </div>
         <div class="navbar-search">
-            <input type="text" id="usernameInput" placeholder="🔎 Search a profile" aria-describedby="usernameHelp" autocomplete="on" />
+	    <input type="text" id="usernameInput" placeholder="🔎 Search a profile" aria-describedby="usernameHelp" autocomplete="on" onfocus="this.placeholder=''" onblur="if(!this.value) this.placeholder='🔎 Search a profile'" />
             <div class="suggestions" id="suggestions"></div>
         </div>
         <div class="navbar-menu" id="navbarMenu">
@@ -148,7 +148,7 @@
             <div class="modal-content">
                 <h3>Enter your Crypto.com/NFT Profile</h3>
                 <div class="navbar-search" id="loginSearchContainer">
-                    <input type="text" id="loginUsernameInput" placeholder="🔎 Search a profile" autocomplete="on" />
+                    <input type="text" id="loginUsernameInput" placeholder="🔎 Search a profile" autocomplete="on" onfocus="this.placeholder=''" onblur="if(!this.value) this.placeholder='🔎 Search a profile'" />
                     <div class="suggestions" id="loginSuggestions"></div>
                 </div>
                 <div class="selected-profile" id="selectedProfileContainer" style="display: none;">
@@ -264,6 +264,15 @@ function parseUrlHash() {
         username: parts[0] || null,
         collection: parts[1] || null
     };
+}
+
+function resetSearchBar() {
+    const searchInput = document.getElementById('usernameInput');
+    if (searchInput) {
+        searchInput.value = ''; // Vider le contenu
+        searchInput.blur(); // Retirer le focus
+        searchInput.placeholder = '🔎 Search a profile'; // Restaurer le placeholder
+    }
 }
 
 function resetViewport() {
@@ -639,6 +648,7 @@ function selectSuggestion(username) {
         usernameInput.value = username;
         clearSuggestions();
         fetchProfileAndNFTs();
+        resetSearchBar(); // Réinitialiser la barre après validation
     }
 }
 
@@ -925,7 +935,7 @@ async function fetchProfileAndNFTs() {
 
     if (!usernameInput || !errorDiv || !noResultsDiv || !controls || !collectionTitle ||
         !profileHeader || !nftContainer || !nftCountContainer || !collectionFilter || 
-        !chainFilter || !curatedFilter  || !cardSize || !sortBy || 
+        !chainFilter || !curatedFilter || !cardSize || !sortBy || 
         !downloadZipButton || !downloadCollageButton || !progressModal || 
         !progressBar || !progressText || !modalTitle || !cancelButton) {
         console.error('Required DOM elements not found');
@@ -966,6 +976,8 @@ async function fetchProfileAndNFTs() {
     errorDiv.textContent = '';
     downloadZipButton.style.display = 'none';
     downloadCollageButton.style.display = 'none';
+    usernameInput.value = ''; // Vider l'input
+    resetSearchBar(); // Réinitialiser la barre de recherche
 
     modalTitle.textContent = 'Loading Profile';
     progressText.textContent = `Loading profile for ${username}...`;
@@ -1171,6 +1183,7 @@ async function fetchProfileAndNFTsForLogin(username) {
     errorDiv.textContent = '';
     downloadZipButton.style.display = 'none';
     downloadCollageButton.style.display = 'none';
+    resetSearchBar(); // Réinitialiser la barre de recherche
 
     modalTitle.textContent = 'Loading Profile';
     progressText.textContent = `Loading profile for ${sanitizedUsername}...`;
@@ -2061,12 +2074,11 @@ function setupEventListeners() {
 
 function initialize() {
     const savedTheme = localStorage.getItem('theme') || 'dark';
-    // Si le thème sauvegardé est 'light', le remplacer par 'cdc'
     const initialTheme = savedTheme === 'light' ? 'cdc' : savedTheme;
     document.documentElement.setAttribute('data-theme', initialTheme);
     const themeButton = document.getElementById('themeButton');
     if (themeButton) {
-        themeButton.textContent = initialTheme === 'dark' ? 'CDC' : 'Dark'; // Mettre à jour le texte initial
+        themeButton.textContent = initialTheme === 'dark' ? 'CDC' : 'Dark';
     }
 
     const savedUser = localStorage.getItem('loggedInUser');
@@ -2080,6 +2092,8 @@ function initialize() {
         }
     }
 
+    resetSearchBar(); // Réinitialiser la barre de recherche au chargement
+
     const { username, collection } = parseUrlHash();
     if (username) {
         const usernameInput = document.getElementById('usernameInput');
@@ -2091,14 +2105,12 @@ function initialize() {
 
     setupEventListeners();
 
-    // Ajouter un listener pour le redimensionnement de la fenêtre
     let resizeTimeout;
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(updateDisplay, 100);
     });
 
-    // Appeler updateDisplay pour initialiser la grille dès le chargement
     updateDisplay();
 
     window.addEventListener('popstate', () => {
@@ -2112,6 +2124,7 @@ function initialize() {
         }
     });
 }
+
 document.addEventListener('DOMContentLoaded', initialize);
     </script></body>
 </html>
