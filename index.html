@@ -41,9 +41,50 @@
     </div>
     <button class="navbar-toggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
 </nav>
-
-    <div class="main-content">
-        <div class="profile-section">
+<div class="main-content">
+<div class="updates-container">
+    <div class="update-modal home-update-modal" id="availableFeaturesModal" role="region" aria-labelledby="availableFeaturesTitle">
+        <div class="update-modal-content">
+            <div class="update-header">
+                <h3 id="availableFeaturesTitle">✅ Available Features</h3>
+            </div>
+            <div class="update-content" id="availableFeaturesContent">
+                <ul>
+                    <li>Profile exploration</li>
+                    <li>Login</li>
+                    <li>Filtering (Collection / Blockchain / Curated)</li>
+                    <li>Display (Small / Medium / Large)</li>
+                    <li>Sorting (Newest / Oldest / Rank)</li>
+                    <li>Theme switching (Dark / CDC)</li>
+                    <li>Full assets download (With NFT name)</li>
+                    <li>Single asset download</li>
+                    <li>Collage download</li>
+                    <li>Scroll navigation buttons (Up / Down)</li>
+                    <li>Community support tracking</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="update-modal home-update-modal" id="inProgressModal" role="region" aria-labelledby="inProgressTitle">
+        <div class="update-modal-content">
+            <div class="update-header">
+                <h3 id="inProgressTitle">⚙️ In development</h3>
+            </div>
+            <div class="update-content" id="inProgressContent">
+                <ul>
+                    <li>Full collection viewer</li>
+                    <li>Collection statistics (Floor / Volume / Owners)</li>
+                    <li>Partner collections integration</li>
+                    <li>Sales bot (Notifications / Automated alerts)</li>
+                    <li>Leaderboards (Top holders / Top collections)</li>
+                    <li>...</li>
+                    <li>Send me your suggestions for improvements or bug reports on Discord or X.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+    <div class="profile-section">
             <div class="profile-header" id="profileHeader" style="display: none;">
                 <div class="profile-header-content">
                     <div class="profile-picture">
@@ -915,6 +956,8 @@ async function fetchProfileAndNFTs() {
     const progressText = document.getElementById('progressText');
     const modalTitle = document.getElementById('modalTitle');
     const cancelButton = document.getElementById('cancelDownloadButton');
+    const availableFeaturesModal = document.getElementById('availableFeaturesModal');
+    const inProgressModal = document.getElementById('inProgressModal');
 
     if (!usernameInput || !errorDiv || !noResultsDiv || !controls || !collectionTitle ||
         !profileHeader || !nftContainer || !nftCountContainer || !collectionFilter || 
@@ -949,6 +992,10 @@ async function fetchProfileAndNFTs() {
     lastSearchedUsername = currentUsername;
     clearSuggestions();
 
+    // Masquer les modales de mise à jour
+    if (availableFeaturesModal) availableFeaturesModal.style.display = 'none';
+    if (inProgressModal) inProgressModal.style.display = 'none';
+
     profileHeader.style.display = 'none';
     nftContainer.innerHTML = '';
     nftCountContainer.innerHTML = '';
@@ -959,8 +1006,7 @@ async function fetchProfileAndNFTs() {
     errorDiv.textContent = '';
     downloadZipButton.style.display = 'none';
     downloadCollageButton.style.display = 'none';
-    usernameInput.value = ''; // Vider l'input
-    resetSearchBar(); // Réinitialiser la barre de recherche
+    resetSearchBar();
 
     modalTitle.textContent = 'Loading Profile';
     progressText.textContent = `Loading profile for ${username}...`;
@@ -1121,6 +1167,8 @@ async function fetchProfileAndNFTsForLogin(username) {
     const progressText = document.getElementById('progressText');
     const modalTitle = document.getElementById('modalTitle');
     const cancelButton = document.getElementById('cancelDownloadButton');
+    const availableFeaturesModal = document.getElementById('availableFeaturesModal');
+    const inProgressModal = document.getElementById('inProgressModal');
 
     if (!errorDiv || !noResultsDiv || !controls || !collectionTitle ||
         !profileHeader || !nftContainer || !nftCountContainer || !collectionFilter || 
@@ -1156,6 +1204,10 @@ async function fetchProfileAndNFTsForLogin(username) {
     lastSearchedUsername = currentUsername;
     clearSuggestions();
 
+    // Masquer les modales de mise à jour
+    if (availableFeaturesModal) availableFeaturesModal.style.display = 'none';
+    if (inProgressModal) inProgressModal.style.display = 'none';
+
     profileHeader.style.display = 'none';
     nftContainer.innerHTML = '';
     nftCountContainer.innerHTML = '';
@@ -1166,7 +1218,6 @@ async function fetchProfileAndNFTsForLogin(username) {
     errorDiv.textContent = '';
     downloadZipButton.style.display = 'none';
     downloadCollageButton.style.display = 'none';
-    resetSearchBar(); // Réinitialiser la barre de recherche
 
     modalTitle.textContent = 'Loading Profile';
     progressText.textContent = `Loading profile for ${sanitizedUsername}...`;
@@ -2032,6 +2083,8 @@ function setupEventListeners() {
     document.addEventListener('click', (e) => {
         const suggestions = document.getElementById('suggestions');
         const loginSuggestions = document.getElementById('loginSuggestions');
+        const availableFeaturesModal = document.getElementById('availableFeaturesModal');
+        const inProgressModal = document.getElementById('inProgressModal');
 
         // Vérifier si le clic est sur une suggestion
         if (e.target.classList.contains('suggestion-item') || e.target.closest('.suggestion-item')) {
@@ -2048,17 +2101,21 @@ function setupEventListeners() {
             return;
         }
 
+        // Vérifier si le clic est dans une modale de mise à jour
+        const isUpdateModalClick = (availableFeaturesModal && availableFeaturesModal.contains(e.target)) ||
+                                  (inProgressModal && inProgressModal.contains(e.target));
+
         // Vérifier si le clic est en dehors de la barre de recherche et des suggestions
         const isMainSearchClick = usernameInput.contains(e.target);
         const isMainSuggestionsClick = suggestions && suggestions.contains(e.target);
         const isLoginSearchClick = loginUsernameInput.contains(e.target);
         const isLoginSuggestionsClick = loginSuggestions && loginSuggestions.contains(e.target);
 
-        if (!isMainSearchClick && !isMainSuggestionsClick) {
+        if (!isMainSearchClick && !isMainSuggestionsClick && !isUpdateModalClick) {
             clearSuggestions();
         }
 
-        if (!isLoginSearchClick && !isLoginSuggestionsClick) {
+        if (!isLoginSearchClick && !isLoginSuggestionsClick && !isUpdateModalClick) {
             clearLoginSuggestions();
         }
     });
@@ -2165,7 +2222,16 @@ function initialize() {
 
     resetSearchBar(); // Réinitialiser la barre de recherche au chargement
 
+    // Afficher les fenêtres des mises à jour sur la page d'accueil
+    const availableFeaturesModal = document.getElementById('availableFeaturesModal');
+    const inProgressModal = document.getElementById('inProgressModal');
     const { username, collection } = parseUrlHash();
+    if (availableFeaturesModal && inProgressModal && !username) {
+        availableFeaturesModal.style.display = 'block';
+        inProgressModal.style.display = 'block';
+        console.log('Update modals displayed on home page');
+    }
+
     if (username) {
         const usernameInput = document.getElementById('usernameInput');
         if (usernameInput) {
