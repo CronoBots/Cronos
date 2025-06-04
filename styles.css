@@ -44,7 +44,7 @@ body {
     flex-direction: column;
     -webkit-font-smoothing: antialiased;
     touch-action: manipulation;
-    overscroll-behavior: auto;
+    overscroll-behavior: none;
 }
 
 .navbar {
@@ -83,7 +83,7 @@ body {
     gap: 20px;
     margin-left: auto;
     margin-right: 20px;
-    z-index: 2;
+    z-index: 1000;
     align-items: center;
 }
 
@@ -175,14 +175,12 @@ body {
     position: relative;
     width: 100%;
     max-width: 250px;
-    z-index: 4;
 }
 
 .navbar-logo-search-container {
     display: flex;
     align-items: center;
     flex-wrap: nowrap;
-    z-index: 3;
 }
 
 .navbar-search input {
@@ -236,12 +234,12 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    background-color: var(--color1);
-    color: #fff;
+    background-color: var(--color1); /* Utiliser la couleur de survol par défaut */
+    color: #fff; /* Assurer un contraste lisible */
 }
 
 .suggestion-item:hover {
-    background-color: var(--color1);
+    background-color: var(--color1); /* Déjà défini, mais reste pour référence */
     color: #fff;
 }
 
@@ -260,8 +258,7 @@ body {
     font-size: 1.5rem;
     cursor: pointer;
     order: 3;
-    touch-action: auto;
-    z-index: 3;
+    touch-action: auto; /* Changement ici */
 }
 
 .main-content {
@@ -554,7 +551,7 @@ a:hover {
 
 .nft-container.large-size .nft-card:hover {
     transform: translateY(-4px) scale(1.1);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     border: 1px solid var(--color1);
     filter: brightness(1.05);
     z-index: 100;
@@ -1187,8 +1184,8 @@ a:hover {
 }
 
 @keyframes slideDown {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
 @media screen and (max-width: 768px) {
@@ -1333,11 +1330,11 @@ a:hover {
         display: flex;
         align-items: center;
         flex-wrap: nowrap;
-        justify-content: space-between;
+        justify-content: space-between; /* Maintient le toggle à droite */
     }
 
     .navbar-logo {
-        margin-left: 12px;
+        margin-left: 12px; /* Marge gauche du logo */
         flex: 0 0 auto;
         order: 1;
     }
@@ -1346,8 +1343,7 @@ a:hover {
         display: flex;
         align-items: center;
         flex-wrap: nowrap;
-        gap: 12px;
-        z-index: 3;
+        gap: 12px; /* Écart entre logo et barre de recherche, égal à la marge gauche */
     }
 
     .navbar-logo img {
@@ -1368,84 +1364,49 @@ a:hover {
         background-color: var(--collection-bg);
         flex-direction: column;
         align-items: center;
-        gap: 4px !important;
+        gap: 10px;
         padding: 10px 0;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        z-index: 2;
-        margin: 0;
-        border-top: none;
+        box-shadow: var(--shadow);
+        z-index: 1000;
+        margin-right: 0;
+        order: 4; /* Position après le toggle, mais masqué */
     }
 
     .navbar-menu.active {
         display: flex;
         animation: slideDown 0.3s ease;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        border-top: none;
-        margin-top: 0;
-        gap: 4px !important;
-    }
-
-    .navbar-menu a {
-        display: block;
-        width: 160px;
-        min-height: 40px;
-        padding: 10px 20px;
-        text-align: center;
-        margin: 0 !important;
-        font-size: 14px;
-        border-radius: 4px;
     }
 
     .navbar-menu a#loginLink {
-        width: 160px;
-        min-height: 40px;
-        padding: 10px 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        width: 80px;
         text-align: center;
-        margin: 0 !important;
-        border-radius: 4px;
     }
 
-    .navbar-menu .user-profile {
-        width: 160px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 10px 20px;
-        margin: 0 !important;
-        min-height: 40px;
-    }
-
-    .navbar-menu .navbar-divider {
-        width: 160px;
-        height: 1px;
-        background-color: #444;
-        margin: 4px 0 !important;
+    .navbar-divider {
+        margin: 5px 0;
+        font-size: 1rem;
         opacity: 0.4;
-        padding: 0;
+        height: 20px;
     }
 
     .navbar-search {
-        margin: 0;
-        flex: 1;
-        max-width: 240px;
+        margin: 0; /* Supprimer toutes les marges */
+        flex: 1; /* Prendre l'espace disponible */
+        max-width: 240px; /* Limiter la largeur maximale */
         display: flex;
         align-items: center;
         position: relative;
         box-sizing: border-box;
         padding: 0;
         order: 2;
-        z-index: 4;
     }
 
     .navbar-search input {
-        width: 100%;
+        width: 100%; /* S'étend à la largeur du conteneur */
         max-width: 240px;
         height: 36px;
         padding: 6px 12px;
-        font-size: 14px;
+        font-size: 16px;
         border-radius: 6px;
         box-shadow: none;
         box-sizing: border-box;
@@ -1459,31 +1420,33 @@ a:hover {
         top: calc(100% + 3px);
         border-radius: 6px;
         font-size: 13px;
-        z-index: 2;
+        z-index: 999;
     }
 
     .suggestions {
-        width: 100%;
+        width: 100%; /* S'aligne avec la largeur de l'input */
         max-width: 240px;
         box-sizing: border-box;
         top: calc(100% + 3px);
         left: 0;
         border-radius: 6px;
         font-size: 13px;
-        z-index: 2;
+        z-index: 999;
         margin: 0;
         padding: 0;
     }
 
-    .suggestion-item {
-        padding: 6px 10px;
-        font-size: 13px;
-        height: 36px;
-        box-sizing: border-box;
-        line-height: 24px;
-        display: flex;
-        align-items: center;
-    }
+.suggestion-item {
+    padding: 6px 10px;
+    font-size: 13px;
+    height: 36px;
+    box-sizing: border-box;
+    line-height: 24px;
+    display: flex;
+    align-items: center;
+    background-color: var(--color1); /* Utiliser la couleur de survol */
+    color: #fff;
+}
 
     .suggestion-item img {
         width: 18px;
@@ -1498,7 +1461,7 @@ a:hover {
         width: 40px;
         height: 40px;
         touch-action: auto;
-        z-index: 3;
+        z-index: 1001;
     }
 
     .footer {
@@ -1638,6 +1601,8 @@ a:hover {
         background: var(--collection-bg);
         box-shadow: none;
         border: 1px solid transparent;
+        border-radius: 4px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease, filter 0.3s ease;
     }
 
     .nft-card:hover {
@@ -1717,6 +1682,7 @@ a:hover {
 
     #downloadZipButton,
     #downloadCollageButton {
+        padding: 8px 16px;
         width: 180px;
         height: 36px;
         font-size: 12px;
@@ -1779,19 +1745,18 @@ a:hover {
         display: flex;
         align-items: center;
         flex-wrap: nowrap;
-        justify-content: space-between;
+        justify-content: space-between; /* Ajouter */
     }
 
     .navbar-logo {
-        margin-left: 10px;
+        margin-left: 10px; /* Augmenté de 6px à 10px */
     }
 
     .navbar-logo-search-container {
         display: flex;
         align-items: center;
         flex-wrap: nowrap;
-        gap: 10px;
-        z-index: 3;
+        gap: 10px; /* Écart entre logo et barre de recherche, égal à la marge gauche */
     }
 
     .navbar-logo img {
@@ -1799,140 +1764,97 @@ a:hover {
     }
 
     .navbar-search {
-        margin: 0 6px 0 10px;
+        margin: 0 6px 0 10px; /* Ajuster la marge gauche à 10px pour correspondre au logo */
         flex: 0 0 auto;
-        width: 180px;
+        width: 220px;
         display: flex;
         align-items: center;
         position: relative;
         box-sizing: border-box;
         padding: 0;
-        z-index: 4;
     }
 
     .navbar-search input {
-        width: 180px;
+        width: 220px;
         height: 32px;
         padding: 6px 10px;
-        font-size: 14px;
+        font-size: 16px;
         border-radius: 6px;
         box-sizing: border-box;
         margin: 0;
     }
 
-    .suggestions {
-        width: 180px;
-        max-width: none;
-        box-sizing: border-box;
-        top: calc(100% + 3px);
-        left: 0;
-        border-radius: 6px;
-        font-size: 12px;
-        z-index: 2;
-        margin: 0;
-        padding: 0;
-    }
+.suggestions {
+    width: 220px; /* Même largeur que l'input */
+    max-width: none;
+    box-sizing: border-box;
+    top: calc(100% + 3px);
+    left: 0; /* Aligner avec l'input */
+    border-radius: 6px;
+    font-size: 12px;
+    z-index: 999;
+    margin: 0;
+    padding: 0;
+}
 
-    .suggestion-item {
-        padding: 6px 10px;
-        font-size: 12px;
-        height: 32px;
-        box-sizing: border-box;
-        line-height: 20px;
-        display: flex;
-        align-items: center;
-    }
+.suggestion-item {
+    padding: 6px 10px;
+    font-size: 12px;
+    height: 32px;
+    box-sizing: border-box;
+    line-height: 20px;
+    display: flex;
+    align-items: center;
+    background-color: var(--color1); /* Utiliser la couleur de survol */
+    color: #fff;
+}
 
     .navbar-toggle {
-        margin-right: 10px;
+        margin-right: 10px; /* Même distance que la marge gauche du logo (10px) */
         width: 36px;
         height: 36px;
         font-size: 1.3rem;
-        display: flex !important;
-        z-index: 3;
+        display: flex !important; /* Ajouter pour renforcer */
     }
 
     .navbar-menu {
-        display: none;
-        position: absolute;
         top: 48px;
-        left: 0;
-        width: 100%;
-        background-color: var(--collection-bg);
-        flex-direction: column;
-        align-items: center;
-        gap: 4px !important; /* Réduit de 8px à 4px */
-        padding: 10px 0;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        z-index: 2;
-        margin: 0;
-        border-top: none;
     }
 
-    .navbar-menu.active {
-        display: flex;
-        animation: slideDown 0.3s ease;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        border-top: none;
-        margin-top: 0;
-        gap: 4px !important; /* Cohérence avec l'état fermé */
-    }
-
-    .navbar-menu a {
-        display: block;
-        width: 160px;
-        min-height: 40px;
-        padding: 10px 20px;
-        text-align: center;
-        margin: 0 !important; /* Supprime toute marge parasite */
-        font-size: 14px;
-        border-radius: 4px;
-    }
-
-    .navbar-menu a#loginLink {
-        width: 160px;
-        min-height: 40px;
-        padding: 10px 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        margin: 0 !important; /* Supprime toute marge parasite */
-        border-radius: 4px;
-    }
-
-    .navbar-menu .user-profile {
-        width: 160px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 10px 20px;
-        margin: 0 !important; /* Supprime toute marge parasite */
-        min-height: 40px;
-    }
-
-    .navbar-menu .navbar-divider {
-        width: 160px;
-        height: 1px;
-        background-color: #444;
-        margin: 4px 0 !important; /* Réduit de 8px à 4px pour cohérence avec gap */
-        opacity: 0.4;
-        padding: 0;
-    }
-
-    .profile-picture img {
-        width: 100px;
-        height: 100px;
+    .user-profile-picture {
+        width: 28px;
+        height: 28px;
         border-radius: 8px;
     }
 
+    .navbar-menu a#myProfileLink,
+    .navbar-menu a#logoutLink {
+        font-size: 0.85rem;
+    }
+
+    .navbar-menu a#loginLink {
+        width: 80px;
+    }
+
+    .profile-picture img {
+        width: 120px;
+        height: 120px;
+        border-radius: 4px;
+    }
+
     .username {
-        font-size: 20px;
+        font-size: 21px;
     }
 
     .display-name {
         font-size: 16px;
-        margin-top: 4px;
+        position: static;
+        margin-top: 6px;
+        text-align: left;
+    }
+
+    [data-theme="cdc"] .display-name {
+        color: #000;
     }
 
     .verified-badge {
@@ -1941,42 +1863,63 @@ a:hover {
     }
 
     .social-container {
-        left: calc(100px + 10px);
-        gap: 6px;
+        position: absolute;
+        bottom: 0;
+        left: calc(120px + 15px);
+        display: flex;
+        gap: 8px;
+        align-items: flex-end;
+        transform: translateY(0);
     }
 
     .social-icon {
         width: 20px !important;
         height: 20px !important;
+        border-radius: 4px !important;
+        vertical-align: bottom;
     }
 
     .controls {
-        margin: 10px 10px 10px 0;
-        padding: 0 5px;
+        gap: 8px;
+        margin: 15px 30px 15px 0;
     }
 
     .control-group {
-        margin-bottom: 6px;
+        margin-bottom: 10px;
+        margin-right: 30px;
     }
 
     .controls label {
-        font-size: 12px;
-        line-height: 28px;
+        font-size: 13px;
+        line-height: 30px;
     }
 
     .controls select {
         max-width: 180px;
-        font-size: 12px;
-        height: 28px;
-        padding: 4px;
+        font-size: 13px;
+        height: 30px;
+        padding: 5px;
     }
 
     .nft-container {
-        gap: 8px;
+        gap: 10px;
+        padding: 0;
         width: calc(100% - 20px);
         max-width: calc(100vw - 20px);
         margin-left: 10px;
         margin-right: 10px;
+    }
+
+    .nft-container.small-size {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .nft-container.medium-size {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .nft-container.large-size {
+        grid-template-columns: 1fr;
     }
 
     .footer {
@@ -1988,11 +1931,11 @@ a:hover {
     }
 
     .footer-logo {
-        height: 28px;
+        height: 30px;
     }
 
     .footer-text {
-        font-size: 0.9rem;
+        font-size: 1rem;
     }
 
     .footer-socials img {
@@ -2001,18 +1944,19 @@ a:hover {
     }
 
     .donation-section h4 {
-        font-size: 1rem;
-        margin-top: -8px;
+        font-size: 0.85rem;
+        margin-top: -2px;
     }
 
     .progress-label {
         font-size: 0.7rem;
+        color: #fff;
     }
 
     .donation-progress .progress-bar {
-        max-width: 80%;
+        max-width: 95%;
         height: 12px;
-        margin: 2px auto 8px;
+        margin: 6px auto 12px;
         border-radius: 5px;
     }
 
@@ -2021,27 +1965,31 @@ a:hover {
     }
 
     .theme-toggle button {
-        padding: 5px 10px;
-        width: 55px;
-        height: 28px;
-        font-size: 12px;
+        padding: 6px 10px;
+        width: 70px;
+        height: 32px;
+        font-size: 11px;
     }
 
     .modal-content {
-        max-width: 280px;
-        padding: 10px;
+        max-width: 100%;
+        padding: 12px;
     }
 
     .download-buttons {
-        gap: 8px;
-        margin: 30px auto 15px;
+        gap: 10px;
+        margin: 40px auto;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
     }
 
     #downloadZipButton,
     #downloadCollageButton {
-        width: 160px;
+        padding: 6px 8px;
+        width: 180px;
         height: 32px;
-        font-size: 11px;
+        font-size: 12px;
     }
 
     .selected-username {
@@ -2049,8 +1997,12 @@ a:hover {
     }
 
     .modal-buttons button {
-        padding: 5px 10px;
-        font-size: 11px;
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+
+    .modal-buttons button:active {
+        transform: scale(0.95);
     }
 
     #scrollToTopButton {
@@ -2075,40 +2027,40 @@ a:hover {
         height: 10px;
     }
 
-    .wallet-address {
-        font-size: 0.7rem;
+    .donation-section h4 {
+        font-size: 1.1rem;
+        margin-top: -2px;
     }
 }
 
-@media screen and (min-width: 360px) {
+@media screen and (min-width: 360px) and (max-width: 480px) {
     .nft-container {
         gap: 6px;
-        padding: 0;
-        width: calc(100vw - 20px);
+        width: calc(100% - 20px);
         max-width: calc(100vw - 20px);
         margin-left: 10px;
         margin-right: 10px;
     }
 
-    .nft-container .small-size {
+    .nft-container.small-size {
         grid-template-columns: repeat(3, 1fr) !important;
     }
 
-    .nft-container .medium-size {
+    .nft-container.medium-size {
         grid-template-columns: repeat(2, 1fr) !important;
     }
 
-    .nft-container .large-size {
+    .nft-container.large-size {
         grid-template-columns: 1fr !important;
     }
 
     .social-container {
         position: absolute;
         bottom: 0;
-        left: calc(50% + 15px);
+        left: calc(120px + 15px);
         display: flex;
         gap: 8px;
-        align-items: flex-end !important;
+        align-items: flex-end;
         transform: translateY(0);
     }
 
@@ -2116,11 +2068,11 @@ a:hover {
         width: 20px !important;
         height: 20px !important;
         border-radius: 4px !important;
-        vertical-align: bottom !important;
+        vertical-align: bottom;
     }
 
     .navbar-search {
-        margin: 0 !important;
+        margin: 0;
         max-width: 180px !important;
     }
 
