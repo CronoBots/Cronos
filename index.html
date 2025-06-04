@@ -288,16 +288,16 @@ function debounce(func, wait) {
     };
 }
 
-function toggleMenu() {
-    console.log('toggleMenu called');
+function toggleMenu(event) {
+    console.log('toggleMenu called', { eventType: event?.type || 'unknown' });
     const menu = document.getElementById('navbarMenu');
     const toggle = document.querySelector('.navbar-toggle');
     if (menu && toggle) {
         const isExpanded = menu.classList.toggle('active');
         toggle.setAttribute('aria-expanded', isExpanded);
-        console.log('Menu toggled:', isExpanded ? 'visible' : 'hidden');
+        console.log('Menu toggled:', isExpanded ? 'visible' : 'hidden', { menuDisplay: getComputedStyle(menu).display });
     } else {
-        console.error('Navbar menu or toggle not found');
+        console.error('Navbar menu or toggle not found', { menu: !!menu, toggle: !!toggle });
     }
 }
 
@@ -1935,12 +1935,29 @@ function setupEventListeners() {
     const downloadZipButton = document.getElementById('downloadZipButton');
     const downloadCollageButton = document.getElementById('downloadCollageButton');
 
-    // Vérification des éléments DOM
+    // Vérification des éléments DOM critiques
     if (!usernameInput || !loginUsernameInput || !themeButton || !collectionFilter || 
         !chainFilter || !curatedFilter || !cardSize || !sortBy || !navbarMenu || 
         !cancelLoginButton || !myProfileLink || !logoutLink || !loginLink || !navbarToggle || 
         !downloadZipButton || !downloadCollageButton) {
-        console.error('One or more DOM elements not found');
+        console.error('One or more DOM elements not found', {
+            usernameInput: !!usernameInput,
+            loginUsernameInput: !!loginUsernameInput,
+            themeButton: !!themeButton,
+            collectionFilter: !!collectionFilter,
+            chainFilter: !!chainFilter,
+            curatedFilter: !!curatedFilter,
+            cardSize: !!cardSize,
+            sortBy: !!sortBy,
+            navbarMenu: !!navbarMenu,
+            cancelLoginButton: !!cancelLoginButton,
+            myProfileLink: !!myProfileLink,
+            logoutLink: !!logoutLink,
+            loginLink: !!loginLink,
+            navbarToggle: !!navbarToggle,
+            downloadZipButton: !!downloadZipButton,
+            downloadCollageButton: !!downloadCollageButton
+        });
         const errorDiv = document.getElementById('error');
         if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
         return;
@@ -1948,15 +1965,27 @@ function setupEventListeners() {
 
     // Vérification spécifique pour les boutons de défilement
     if (!scrollToTopButton || !scrollToBottomButton) {
-        console.warn('Scroll buttons not found in DOM');
-        return;
+        console.warn('Scroll buttons not found in DOM', {
+            scrollToTopButton: !!scrollToTopButton,
+            scrollToBottomButton: !!scrollToBottomButton
+        });
     }
 
     // Gestion du basculement du thème
     themeButton.addEventListener('click', toggleTheme);
+    console.log('Theme button listener attached');
 
-    // Gestion du menu mobile
-    navbarToggle.addEventListener('click', toggleMenu);
+    // Gestion du menu mobile (bouton hamburger)
+    console.log('Attaching listeners to navbar toggle');
+    navbarToggle.addEventListener('click', (e) => {
+        console.log('Click event on navbar toggle');
+        toggleMenu(e);
+    });
+    navbarToggle.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Empêcher le double déclenchement ou le zoom
+        console.log('Touchstart event on navbar toggle');
+        toggleMenu(e);
+    }, { passive: false });
 
     // Gestion de la recherche principale
     usernameInput.addEventListener('input', debounce(async (e) => {
@@ -1967,11 +1996,13 @@ function setupEventListeners() {
             clearSuggestions();
         }
     }, 300));
+    console.log('Main search input listener attached');
 
     // Réactiver les suggestions sur focus si texte présent
     usernameInput.addEventListener('focus', async () => {
         const query = sanitizeInput(usernameInput.value);
         if (query.length > 2) {
+            console.log('Search input focused, querying:', query);
             await searchProfiles(query);
         }
     });
@@ -1980,16 +2011,19 @@ function setupEventListeners() {
     loginUsernameInput.addEventListener('input', debounce(async (e) => {
         const query = sanitizeInput(e.target.value);
         if (query.length > 2) {
+            console.log('Login input event:', query);
             await searchLoginProfiles(query);
         } else {
             clearLoginSuggestions();
         }
     }, 300));
+    console.log('Login search input listener attached');
 
     // Réactiver les suggestions sur focus si texte présent dans le modal
     loginUsernameInput.addEventListener('focus', async () => {
         const query = sanitizeInput(loginUsernameInput.value);
         if (query.length > 2) {
+            console.log('Login input focused, querying:', query);
             await searchLoginProfiles(query);
         }
     });
@@ -2005,6 +2039,7 @@ function setupEventListeners() {
             const username = suggestionItem.dataset.username;
             const avatar = suggestionItem.dataset.avatar;
             const isLoginModal = suggestionItem.closest('#loginModal');
+            console.log('Suggestion clicked:', { username, isLoginModal });
             if (isLoginModal) {
                 selectLoginSuggestion(username, avatar);
             } else {
@@ -2027,6 +2062,7 @@ function setupEventListeners() {
             clearLoginSuggestions();
         }
     });
+    console.log('Document click listener for suggestions attached');
 
     // Gestion des filtres
     collectionFilter.addEventListener('change', filterNFTs);
@@ -2034,45 +2070,49 @@ function setupEventListeners() {
     curatedFilter.addEventListener('change', filterNFTs);
     cardSize.addEventListener('change', updateDisplay);
     sortBy.addEventListener('change', filterNFTs);
+    console.log('Filter listeners attached');
 
     // Gestion du modal de connexion
     loginLink.addEventListener('click', showLoginModal);
+    console.log('Login link listener attached');
 
     cancelLoginButton.addEventListener('click', resetLoginForm);
+    console.log('Cancel login button listener attached');
 
     // Gestion du profil et déconnexion
     myProfileLink.addEventListener('click', (e) => {
         e.preventDefault();
         if (loggedInUser?.username) {
+            console.log('My Profile clicked, fetching for:', loggedInUser.username);
             fetchProfileAndNFTsForLogin(loggedInUser.username);
         }
     });
+    console.log('My profile link listener attached');
 
     logoutLink.addEventListener('click', logout);
+    console.log('Logout link listener attached');
 
     // Gestion des boutons de téléchargement
     downloadZipButton.addEventListener('click', downloadNFTsAsZip);
     downloadCollageButton.addEventListener('click', downloadCollage);
+    console.log('Download buttons listeners attached');
 
     // Gestion des boutons de défilement
     const toggleScrollButtons = () => {
         const scrollY = window.scrollY;
         const windowHeight = window.innerHeight;
         const documentHeight = document.documentElement.scrollHeight;
-        const isScrollable = documentHeight > windowHeight + 100; // Page doit être assez longue
+        const isScrollable = documentHeight > windowHeight + 100;
 
-        // Afficher le bouton "Scroll to Top" si défilé vers le bas et page défilable
         const showTopButton = isScrollable && scrollY > 200;
         scrollToTopButton.style.display = showTopButton ? 'block' : 'none';
         scrollToTopButton.classList.toggle('visible', showTopButton);
 
-        // Afficher le bouton "Scroll to Bottom" si pas à la fin et page défilable
         const isAtBottom = scrollY + windowHeight >= documentHeight - 10;
         const showBottomButton = isScrollable && !isAtBottom;
         scrollToBottomButton.style.display = showBottomButton ? 'block' : 'none';
         scrollToBottomButton.classList.toggle('visible', showBottomButton);
 
-        // Débogage
         console.log('toggleScrollButtons:', {
             scrollY,
             windowHeight,
@@ -2083,25 +2123,24 @@ function setupEventListeners() {
         });
     };
 
-    // Écouteurs pour le défilement et le redimensionnement
     window.addEventListener('scroll', toggleScrollButtons);
     window.addEventListener('resize', toggleScrollButtons);
 
-    // Observer les changements dans le DOM (ex. ajout de NFTs)
     const observer = new MutationObserver(toggleScrollButtons);
     observer.observe(document.body, { childList: true, subtree: true });
 
-    // Gestion des clics sur les boutons
     scrollToTopButton.addEventListener('click', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        console.log('Scroll to top clicked');
     });
 
     scrollToBottomButton.addEventListener('click', () => {
         window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+        console.log('Scroll to bottom clicked');
     });
 
-    // Appeler au chargement
     toggleScrollButtons();
+    console.log('Scroll buttons listeners and observer attached');
 }
 
 function initialize() {
