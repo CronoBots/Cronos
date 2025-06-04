@@ -18,27 +18,29 @@
             JavaScript is required to view this content. Please enable JavaScript in your browser settings.
         </div>
     </noscript>
-    <nav class="navbar">
+<nav class="navbar">
+    <div class="navbar-logo-search-container">
         <div class="navbar-logo">
             <img src="CRONOBOTS.png" alt="Cronobots Logo">
             <span class="navbar-logo-text">CRONOS.WTF</span>
         </div>
         <div class="navbar-search">
-	    <input type="text" id="usernameInput" placeholder="🔎 Search a profile" aria-describedby="usernameHelp" autocomplete="on" onfocus="this.placeholder=''" onblur="if(!this.value) this.placeholder='🔎 Search a profile'" />
+            <input type="text" id="usernameInput" placeholder="🔎 Search a profile" aria-describedby="usernameHelp" autocomplete="on" onfocus="this.placeholder=''" onblur="if(!this.value) this.placeholder='🔎 Search a profile'" />
             <div class="suggestions" id="suggestions"></div>
         </div>
-        <div class="navbar-menu" id="navbarMenu">
-            <a href="https://cronobots.github.io/Cronos" aria-label="Home">Home</a>
-            <span class="navbar-divider"> | </span>
-            <a href="#" id="myProfileLink" style="display: none;" aria-label="My Profile">My Profile</a>
-            <a href="#" id="logoutLink" style="display: none;" aria-label="Logout">Logout</a>
-            <a href="#" id="loginLink" aria-label="Login">Login</a>
-            <div class="user-profile" id="userProfile" style="display: none;">
-                <img id="userProfilePicture" src="" alt="User Profile" class="user-profile-picture" />
-            </div>
+    </div>
+    <div class="navbar-menu" id="navbarMenu">
+        <a href="https://cronobots.github.io/Cronos" aria-label="Home">Home</a>
+        <span class="navbar-divider"> | </span>
+        <a href="#" id="myProfileLink" style="display: none;" aria-label="My Profile">My Profile</a>
+        <a href="#" id="logoutLink" style="display: none;" aria-label="Logout">Logout</a>
+        <a href="#" id="loginLink" aria-label="Login">Login</a>
+        <div class="user-profile" id="userProfile" style="display: none;">
+            <img id="userProfilePicture" src="" alt="User Profile" class="user-profile-picture" />
         </div>
-        <button class="navbar-toggle" aria-label="Toggle menu" aria-expanded="false" onclick="toggleMenu()">☰</button>
-    </nav>
+    </div>
+    <button class="navbar-toggle" aria-label="Toggle menu" aria-expanded="false" onclick="toggleMenu()">☰</button>
+</nav>
 
     <div class="main-content">
         <div class="profile-section">
@@ -143,24 +145,18 @@
                 </div>
             </div>
         </div>
-
-        <div class="modal" id="loginModal">
-            <div class="modal-content">
-                <h3>Enter your Crypto.com/NFT Profile</h3>
-                <div class="navbar-search" id="loginSearchContainer">
-                    <input type="text" id="loginUsernameInput" placeholder="🔎 Search a profile" autocomplete="on" onfocus="this.placeholder=''" onblur="if(!this.value) this.placeholder='🔎 Search a profile'" />
-                    <div class="suggestions" id="loginSuggestions"></div>
-                </div>
-                <div class="selected-profile" id="selectedProfileContainer" style="display: none;">
-                    <img id="selectedProfilePicture" src="" alt="Selected Profile" class="user-profile-picture" />
-                    <span id="selectedUsername" class="selected-username"></span>
-                </div>
-                <div class="modal-buttons">
-                    <button id="cancelLoginButton" class="cancel-button">Cancel</button>
-                    <button id="confirmLoginButton" class="confirm-button" style="display: none;">Confirm</button>
-                </div>
-            </div>
+<div class="modal" id="loginModal">
+    <div class="modal-content">
+        <h3>Enter your Crypto.com/NFT Profile</h3>
+        <div class="navbar-search" id="loginSearchContainer">
+            <input type="text" id="loginUsernameInput" placeholder="🔎 Search a profile" autocomplete="on" onfocus="this.placeholder=''" onblur="if(!this.value) this.placeholder='🔎 Search a profile'" />
+            <div class="suggestions" id="loginSuggestions"></div>
         </div>
+        <div class="modal-buttons">
+            <button id="cancelLoginButton" class="cancel-button">Cancel</button>
+        </div>
+    </div>
+</div>
     </div>
 
 <footer class="footer">
@@ -204,6 +200,7 @@ let isDownloadCancelled = false;
 let isProfileLoadingCancelled = false;
 let loggedInUser = null;
 let activeSearch = null;
+let hasSelectedSpecificCollection = false;
 
 const profileQuery = `
     query User($id: ID!, $cacheId: ID) {
@@ -368,15 +365,11 @@ function showLoginModal(event) {
     const loginModal = document.getElementById('loginModal');
     const loginUsernameInput = document.getElementById('loginUsernameInput');
     const loginSearchContainer = document.getElementById('loginSearchContainer');
-    const selectedProfileContainer = document.getElementById('selectedProfileContainer');
-    const confirmLoginButton = document.getElementById('confirmLoginButton');
-    if (loginModal && loginUsernameInput && loginSearchContainer && selectedProfileContainer && confirmLoginButton) {
+    if (loginModal && loginUsernameInput && loginSearchContainer) {
         loginModal.style.display = 'flex';
         loginUsernameInput.value = '';
         loginUsernameInput.focus();
         loginSearchContainer.style.display = 'flex';
-        selectedProfileContainer.style.display = 'none';
-        confirmLoginButton.style.display = 'none';
         clearLoginSuggestions();
         const navbarMenu = document.getElementById('navbarMenu');
         if (navbarMenu) {
@@ -386,6 +379,7 @@ function showLoginModal(event) {
         }
     }
 }
+
 
 function clearLoginSuggestions() {
     const suggestions = document.getElementById('loginSuggestions');
@@ -399,14 +393,10 @@ function resetLoginForm() {
     const loginModal = document.getElementById('loginModal');
     const loginUsernameInput = document.getElementById('loginUsernameInput');
     const loginSearchContainer = document.getElementById('loginSearchContainer');
-    const selectedProfileContainer = document.getElementById('selectedProfileContainer');
-    const confirmLoginButton = document.getElementById('confirmLoginButton');
-    if (loginModal && loginUsernameInput && loginSearchContainer && selectedProfileContainer && confirmLoginButton) {
+    if (loginModal && loginUsernameInput && loginSearchContainer) {
         loginModal.style.display = 'none';
         loginUsernameInput.value = '';
         loginSearchContainer.style.display = 'flex';
-        selectedProfileContainer.style.display = 'none';
-        confirmLoginButton.style.display = 'none';
         clearLoginSuggestions();
     }
 }
@@ -756,39 +746,18 @@ async function searchLoginProfiles(query) {
     }
 }
 
-function selectLoginSuggestion(username, avatarUrl) {
-    const loginUsernameInput = document.getElementById('loginUsernameInput');
-    const loginSearchContainer = document.getElementById('loginSearchContainer');
-    const selectedProfileContainer = document.getElementById('selectedProfileContainer');
-    const selectedProfilePicture = document.getElementById('selectedProfilePicture');
-    const selectedUsername = document.getElementById('selectedUsername');
-    const confirmLoginButton = document.getElementById('confirmLoginButton');
-
-    if (loginUsernameInput && loginSearchContainer && selectedProfileContainer && selectedProfilePicture && selectedUsername && confirmLoginButton) {
-        loginUsernameInput.value = username;
-        loginSearchContainer.style.display = 'none';
-        selectedProfileContainer.style.display = 'flex';
-        selectedUsername.textContent = username;
-        selectedProfilePicture.src = avatarUrl || '/assets/fallback-icon.png';
-        selectedProfilePicture.style.display = avatarUrl ? 'block' : 'none';
-        confirmLoginButton.style.display = 'inline-block';
-        clearLoginSuggestions();
-    }
-}
-
-async function handleLogin() {
+async function selectLoginSuggestion(username, avatarUrl) {
     const loginUsernameInput = document.getElementById('loginUsernameInput');
     const loginModal = document.getElementById('loginModal');
     const errorDiv = document.getElementById('error');
-    if (!loginUsernameInput || !loginModal || !errorDiv) return;
 
-    const username = sanitizeInput(loginUsernameInput.value.trim());
-    if (!username) {
-        errorDiv.textContent = 'Please enter a username.';
+    if (!loginUsernameInput || !loginModal || !errorDiv) {
+        console.error('Required DOM elements not found');
         return;
     }
 
     try {
+        // Récupérer les données du profil via l'API
         const profileData = await fetchWithCache(`profile_${username}`, async (signal) => {
             const response = await fetch(graphqlEndpoint, {
                 method: 'POST',
@@ -813,21 +782,34 @@ async function handleLogin() {
         });
 
         if (profileData && profileData.username) {
+            // Stocker les informations de l'utilisateur connecté
             loggedInUser = {
                 username: profileData.username,
                 displayName: profileData.displayName || profileData.username,
-                avatar: profileData.avatar?.url || ''
+                avatar: profileData.avatar?.url || '',
+                twitterUsername: profileData.twitterUsername || '',
+                facebookUsername: profileData.facebookUsername || '',
+                instagramUsername: profileData.instagramUsername || '',
+                verified: profileData.verified || false
             };
             localStorage.setItem('loggedInUser', JSON.stringify(loggedInUser));
+
+            // Mettre à jour l'interface de connexion (navbar)
             updateLoginLink();
+
+            // Fermer le modal
             loginModal.style.display = 'none';
             errorDiv.textContent = '';
+            loginUsernameInput.value = '';
+
+            // Charger et afficher le profil complet
+            updateProfileUI(profileData);
             fetchProfileAndNFTsForLogin(profileData.username);
         } else {
             errorDiv.textContent = 'No profile found';
         }
     } catch (error) {
-        console.error(`Login error: ${error.message}`);
+        console.error(`Error in selectLoginSuggestion: ${error.message}`);
         errorDiv.textContent = error.message.includes('user[id=') && error.message.includes('not found')
             ? 'No profile found'
             : `Error: ${error.message}`;
@@ -1403,8 +1385,24 @@ function filterNFTs() {
         curatedFilter.disabled = true;
         chainFilter.value = allCronos ? 'CRONOS' : allCronosPos ? 'CRONOS_POS' : '';
         chainFilter.disabled = true;
+        hasSelectedSpecificCollection = true; // Indiquer qu'une collection spécifique a été sélectionnée
         console.log('CURATION filter: value=', curatedFilter.value, 'disabled=', curatedFilter.disabled);
         console.log('CHAINS filter: value=', chainFilter.value, 'disabled=', chainFilter.disabled);
+    } else {
+        // Lorsque "ALL Collections" est sélectionné
+        chainFilter.disabled = false;
+        curatedFilter.disabled = false;
+        if (hasSelectedSpecificCollection) {
+            // Réinitialiser les filtres à "ALL" une seule fois après une collection spécifique
+            chainFilter.value = '';
+            curatedFilter.value = '';
+            hasSelectedSpecificCollection = false; // Réinitialiser pour éviter une nouvelle réinitialisation
+            console.log('ALL Collections selected after specific collection: CURATION reset to value=', curatedFilter.value, 'disabled=', curatedFilter.disabled);
+            console.log('ALL Collections selected after specific collection: CHAINS reset to value=', chainFilter.value, 'disabled=', curatedFilter.disabled);
+        } else {
+            console.log('ALL Collections selected: CURATION value=', curatedFilter.value, 'disabled=', curatedFilter.disabled);
+            console.log('ALL Collections selected: CHAINS value=', chainFilter.value, 'disabled=', chainFilter.disabled);
+        }
     }
 
     // Apply CHAINS filter if a value is selected
@@ -1926,7 +1924,6 @@ function setupEventListeners() {
     const cardSize = document.getElementById('cardSize');
     const sortBy = document.getElementById('sortBy');
     const navbarMenu = document.getElementById('navbarMenu');
-    const confirmLoginButton = document.getElementById('confirmLoginButton');
     const cancelLoginButton = document.getElementById('cancelLoginButton');
     const myProfileLink = document.getElementById('myProfileLink');
     const logoutLink = document.getElementById('logoutLink');
@@ -1940,8 +1937,8 @@ function setupEventListeners() {
     // Vérification des éléments DOM
     if (!usernameInput || !loginUsernameInput || !themeButton || !collectionFilter || 
         !chainFilter || !curatedFilter || !cardSize || !sortBy || !navbarMenu || 
-        !confirmLoginButton || !cancelLoginButton || !myProfileLink || !logoutLink || 
-        !loginLink || !navbarToggle || !downloadZipButton || !downloadCollageButton) {
+        !cancelLoginButton || !myProfileLink || !logoutLink || !loginLink || !navbarToggle || 
+        !downloadZipButton || !downloadCollageButton) {
         console.error('One or more DOM elements not found');
         const errorDiv = document.getElementById('error');
         if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
@@ -1960,7 +1957,7 @@ function setupEventListeners() {
     // Gestion du menu mobile
     navbarToggle.addEventListener('click', toggleMenu);
 
-    // Gestion de la recherche
+    // Gestion de la recherche principale
     usernameInput.addEventListener('input', debounce(async (e) => {
         const query = sanitizeInput(e.target.value);
         if (query.length > 2) {
@@ -1969,6 +1966,14 @@ function setupEventListeners() {
             clearSuggestions();
         }
     }, 300));
+
+    // Réactiver les suggestions sur focus si texte présent
+    usernameInput.addEventListener('focus', async () => {
+        const query = sanitizeInput(usernameInput.value);
+        if (query.length > 2) {
+            await searchProfiles(query);
+        }
+    });
 
     // Gestion de la recherche dans le modal de connexion
     loginUsernameInput.addEventListener('input', debounce(async (e) => {
@@ -1980,17 +1985,45 @@ function setupEventListeners() {
         }
     }, 300));
 
-    // Gestion de la sélection des suggestions
+    // Réactiver les suggestions sur focus si texte présent dans le modal
+    loginUsernameInput.addEventListener('focus', async () => {
+        const query = sanitizeInput(loginUsernameInput.value);
+        if (query.length > 2) {
+            await searchLoginProfiles(query);
+        }
+    });
+
+    // Gestion des clics pour les suggestions et les clics en dehors
     document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('suggestion-item')) {
-            const username = e.target.dataset.username;
-            const input = e.target.closest('#loginModal') ? loginUsernameInput : usernameInput;
-            input.value = username;
-            if (e.target.closest('#loginModal')) {
-                selectLoginSuggestion(username, e.target.dataset.avatar);
+        const suggestions = document.getElementById('suggestions');
+        const loginSuggestions = document.getElementById('loginSuggestions');
+
+        // Vérifier si le clic est sur une suggestion
+        if (e.target.classList.contains('suggestion-item') || e.target.closest('.suggestion-item')) {
+            const suggestionItem = e.target.closest('.suggestion-item');
+            const username = suggestionItem.dataset.username;
+            const avatar = suggestionItem.dataset.avatar;
+            const isLoginModal = suggestionItem.closest('#loginModal');
+            if (isLoginModal) {
+                selectLoginSuggestion(username, avatar);
             } else {
                 selectSuggestion(username);
             }
+            return;
+        }
+
+        // Vérifier si le clic est en dehors de la barre de recherche et des suggestions
+        const isMainSearchClick = usernameInput.contains(e.target);
+        const isMainSuggestionsClick = suggestions && suggestions.contains(e.target);
+        const isLoginSearchClick = loginUsernameInput.contains(e.target);
+        const isLoginSuggestionsClick = loginSuggestions && loginSuggestions.contains(e.target);
+
+        if (!isMainSearchClick && !isMainSuggestionsClick) {
+            clearSuggestions();
+        }
+
+        if (!isLoginSearchClick && !isLoginSuggestionsClick) {
+            clearLoginSuggestions();
         }
     });
 
@@ -2005,8 +2038,6 @@ function setupEventListeners() {
     loginLink.addEventListener('click', showLoginModal);
 
     cancelLoginButton.addEventListener('click', resetLoginForm);
-
-    confirmLoginButton.addEventListener('click', handleLogin);
 
     // Gestion du profil et déconnexion
     myProfileLink.addEventListener('click', (e) => {
