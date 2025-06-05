@@ -350,9 +350,10 @@ function sanitizeFileNameForZip(name, index = 0) {
     if (!name || name.trim() === '') {
         return `unnamed_nft_${index}`;
     }
-    // Supprimer les caractères non valides et limiter la longueur
-    let sanitized = name.replace(/[\/\\:*?"<>|]/g, '_').trim();
-    sanitized = sanitized.replace(/\s+/g, '_').substring(0, 100); // Limiter à 100 caractères
+    // Supprimer les caractères non valides pour les noms de fichiers
+    let sanitized = name.replace(/[\/\\:*?"<>|]/g, '').trim();
+    // Limiter la longueur à 100 caractères
+    sanitized = sanitized.substring(0, 100);
     return sanitized || `unnamed_nft_${index}`;
 }
 
@@ -2079,7 +2080,7 @@ function setupEventListeners() {
         }
     });
 
-    // Gestion des clics pour les suggestions et les clics en dehors
+    // Gestion des clics pour les suggestions, les clics en dehors et la fermeture du menu
     document.addEventListener('click', (e) => {
         const suggestions = document.getElementById('suggestions');
         const loginSuggestions = document.getElementById('loginSuggestions');
@@ -2118,8 +2119,16 @@ function setupEventListeners() {
         if (!isLoginSearchClick && !isLoginSuggestionsClick && !isUpdateModalClick) {
             clearLoginSuggestions();
         }
+
+        // Fermer le menu si le clic est en dehors du menu et du bouton de bascule
+        const isMenuClick = navbarMenu.contains(e.target);
+        const isToggleClick = navbarToggle.contains(e.target);
+        if (!isMenuClick && !isToggleClick && navbarMenu.classList.contains('active')) {
+            console.log('Click outside menu, closing navbar');
+            toggleMenu(e);
+        }
     });
-    console.log('Document click listener for suggestions attached');
+    console.log('Document click listener for suggestions and menu close attached');
 
     // Gestion des filtres
     collectionFilter.addEventListener('change', filterNFTs);
@@ -2130,7 +2139,14 @@ function setupEventListeners() {
     console.log('Filter listeners attached');
 
     // Gestion du modal de connexion
-    loginLink.addEventListener('click', showLoginModal);
+    loginLink.addEventListener('click', (e) => {
+        showLoginModal(e);
+        // Fermer le menu après avoir cliqué sur "Login"
+        if (navbarMenu.classList.contains('active')) {
+            console.log('Login clicked, closing navbar');
+            toggleMenu(e);
+        }
+    });
     console.log('Login link listener attached');
 
     cancelLoginButton.addEventListener('click', resetLoginForm);
@@ -2142,11 +2158,23 @@ function setupEventListeners() {
         if (loggedInUser?.username) {
             console.log('My Profile clicked, fetching for:', loggedInUser.username);
             fetchProfileAndNFTsForLogin(loggedInUser.username);
+            // Fermer le menu après avoir cliqué sur "My Profile"
+            if (navbarMenu.classList.contains('active')) {
+                console.log('My Profile clicked, closing navbar');
+                toggleMenu(e);
+            }
         }
     });
     console.log('My profile link listener attached');
 
-    logoutLink.addEventListener('click', logout);
+    logoutLink.addEventListener('click', (e) => {
+        logout(e);
+        // Fermer le menu après avoir cliqué sur "Logout"
+        if (navbarMenu.classList.contains('active')) {
+            console.log('Logout clicked, closing navbar');
+            toggleMenu(e);
+        }
+    });
     console.log('Logout link listener attached');
 
     // Gestion des boutons de téléchargement
