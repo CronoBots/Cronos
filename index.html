@@ -1894,21 +1894,26 @@ function updateDisplay() {
 
     nftContainer.className = `nft-container thumbnail-mode ${cardSize}-size`;
 
-    // Définir les tailles de base des cartes et l'écart (gap)
+    // Ignorer les ajustements dynamiques sur mobile (≤ 768px)
+    if (window.innerWidth <= 768) {
+        nftContainer.style.gridTemplateColumns = ''; // Supprimer tout style inline
+        console.log('Mobile view: Using CSS grid-template-columns for', cardSize);
+        return;
+    }
+
+    // Calculs pour écrans > 768px (PC)
     const baseCardWidth = cardSize === 'small' ? 110 : cardSize === 'medium' ? 180 : 280;
-    const isMobile = window.innerWidth <= 768;
-    const isVerySmallScreen = window.innerWidth <= 480;
-    const gap = isVerySmallScreen ? 6 : isMobile ? 10 : 4;
+    const gap = 4; // Écart fixe de 4px
 
     // Marges fixes de nftContainer (50px à gauche, 50px à droite)
     const marginLeft = 50;
     const marginRight = 50;
     const totalMargin = marginLeft + marginRight;
 
-    // Calculer la largeur disponible : largeur de la fenêtre - marges
+    // Calculer la largeur disponible
     const availableWidth = document.documentElement.clientWidth - totalMargin;
 
-    // Calculer le nombre de colonnes initial
+    // Calculer le nombre de colonnes
     const columnWidthWithGap = baseCardWidth + gap;
     let numColumns = Math.floor((availableWidth + gap) / columnWidthWithGap);
     numColumns = Math.max(1, numColumns); // Minimum 1 colonne
@@ -1919,13 +1924,13 @@ function updateDisplay() {
 
     // Appliquer des contraintes de taille minimale/maximale
     const minWidth = baseCardWidth * 0.8; // 80% de la taille de base
-    let maxWidth = baseCardWidth * 1.2; // 120% de la taille de base par défaut
+    let maxWidth = baseCardWidth * 1.2; // 120% de la taille de base
     if (cardSize === 'large') {
-        maxWidth = baseCardWidth * 1.5; // Assouplir la contrainte pour mode large (150%)
+        maxWidth = baseCardWidth * 1.5; // Assouplir pour mode large
     }
     adjustedColumnWidth = Math.min(Math.max(adjustedColumnWidth, minWidth), maxWidth);
 
-    // Réajuster le nombre de colonnes si la largeur totale dépasse availableWidth
+    // Réajuster si la largeur totale dépasse availableWidth
     let totalWidthWithAdjusted = numColumns * adjustedColumnWidth + totalGaps;
     if (totalWidthWithAdjusted > availableWidth) {
         numColumns = Math.max(1, numColumns - 1);
@@ -1935,18 +1940,16 @@ function updateDisplay() {
         totalWidthWithAdjusted = numColumns * adjustedColumnWidth + newTotalGaps;
     }
 
-    // Maximiser l'espace en mode "large" si l'espace est sous-utilisé
+    // Maximiser l'espace en mode "large"
     if (cardSize === 'large' && totalWidthWithAdjusted < availableWidth * 0.95) {
-        // Si l'espace utilisé est inférieur à 95% de la largeur disponible, augmenter la largeur des colonnes
         adjustedColumnWidth = (availableWidth - totalGaps) / numColumns;
         adjustedColumnWidth = Math.min(Math.max(adjustedColumnWidth, minWidth), maxWidth);
-        totalWidthWithAdjusted = numColumns * adjustedColumnWidth + totalGaps;
     }
 
     // Appliquer la grille
     nftContainer.style.gridTemplateColumns = `repeat(${numColumns}, ${adjustedColumnWidth}px)`;
 
-    // Vérifier si la grille dépasse la marge droite
+    // Vérifier les débordements
     const containerRect = nftContainer.getBoundingClientRect();
     const windowRightEdge = document.documentElement.clientWidth - marginRight;
     if (containerRect.right > windowRightEdge + 1) {
@@ -1963,8 +1966,7 @@ function updateDisplay() {
     nftContainer.offsetHeight; // Forcer un reflow
     nftContainer.style.display = 'grid';
 
-    // Débogage visuel
-    console.log(`updateDisplay: clientWidth=${document.documentElement.clientWidth}px, marginLeft=${marginLeft}px, marginRight=${marginRight}px, availableWidth=${availableWidth}px, numColumns=${numColumns}, adjustedColumnWidth=${adjustedColumnWidth}px, totalWidth=${totalWidthWithAdjusted}px, container.right=${nftContainer.getBoundingClientRect().right}px, expectedRightEdge=${windowRightEdge}px`);
+    console.log(`updateDisplay (PC): clientWidth=${document.documentElement.clientWidth}px, marginLeft=${marginLeft}px, marginRight=${marginRight}px, availableWidth=${availableWidth}px, numColumns=${numColumns}, adjustedColumnWidth=${adjustedColumnWidth}px, container.right=${nftContainer.getBoundingClientRect().right}px, expectedRightEdge=${windowRightEdge}px`);
 }
 
 function setupEventListeners() {
