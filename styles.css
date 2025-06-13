@@ -1621,6 +1621,7 @@ a:hover {
     .donation-progress {
         max-width: 300px;
     }
+
     .progress-label {
         font-size: 0.9rem; /* Augmenté de 0.75rem à 0.9rem */
         color: #fff;
@@ -1649,7 +1650,7 @@ a:hover {
         width: 100%;
         max-width: 100%;
         margin: 0;
-        padding: 15px 0; /* Padding réduit pour mobile */
+        padding: 15px 0 140px; /* Augmenter padding-bottom pour éviter chevauchement footer (120px + marge) */
         min-height: calc(100vh - 56px - 120px); /* Ajusté pour navbar mobile */
     }
 
@@ -1704,11 +1705,12 @@ a:hover {
     }
 
     .nft-container {
-        gap: 6px; /* Écart de 4px sur mobile */
-        width: calc(100% - 20px); /* Marges de 10px de chaque côté */
-        max-width: calc(100vw - 20px);
-        margin-left: 10px;
-        margin-right: 10px;
+        width: 100%; /* Utiliser toute la largeur disponible */
+        max-width: 100%; /* Pas de restriction au viewport */
+        margin: 0 auto; /* Centrer horizontalement */
+        padding: 0 10px; /* Marges internes symétriques */
+        box-sizing: border-box; /* Inclure padding dans la largeur */
+        gap: 6px; /* Écart uniforme entre les éléments */
     }
 
     .nft-container.small-size {
@@ -1780,6 +1782,38 @@ a:hover {
         color: var(--text-dark);
         font-size: 0.8em;
         text-align: center;
+    }
+
+    .nft-card .download-nft-btn {
+        display: none !important; /* Caché par défaut */
+        position: absolute;
+        bottom: 4px;
+        right: 4px;
+        background-color: #90EE90;
+        color: #000;
+        border: none;
+        border-radius: 50%;
+        width: 22px;
+        height: 22px;
+        cursor: pointer;
+        opacity: 0.3;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        z-index: 150; /* Augmenter z-index pour être au-dessus des images/vidéos */
+        box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .nft-card:hover .download-nft-btn {
+        display: flex !important; /* Visible au survol */
+        opacity: 0.3;
+    }
+
+    .nft-card .download-nft-btn:hover {
+        opacity: 1 !important;
+        transform: scale(1.1);
     }
 
     .modal-content {
@@ -2056,8 +2090,8 @@ a:hover {
     .main-content {
         width: 100%;
         max-width: 100%;
-        margin: 0px;
-        padding: 10px 0;
+        margin: 0;
+        padding: 10px 0 140px; /* Maintenir padding-bottom suffisant */
         min-height: calc(100vh - 48px - 120px); /* Ajusté pour navbar mobile */
     }
 
@@ -2074,7 +2108,7 @@ a:hover {
         padding: 0 5px;
     }
 
-    .update-nft {
+    .update-modal {
         max-height: none; /* Pas de hauteur maximale */
         overflow-y: auto; /* Pas de scrollbar, tout le contenu visible */
         padding: 10px;
@@ -2093,11 +2127,12 @@ a:hover {
     }
 
     .nft-container {
-        gap: 6px; /* Maintenir l'écart de 4px */
-        width: calc(100% - 20px);
-        max-width: calc(100vw - 20px);
-        margin-left: 10px;
-        margin-right: 10px;
+        width: 100%; /* Utiliser toute la largeur disponible */
+        max-width: 100%; /* Pas de restriction au viewport */
+        margin: 0 auto; /* Centrer horizontalement */
+        padding: 0 10px; /* Marges internes symétriques */
+        box-sizing: border-box;
+        gap: 6px; /* Écart uniforme */
     }
 
     .nft-container.small-size {
@@ -2182,13 +2217,16 @@ a:hover {
         height: 32px;
     }
 
-    .download-nft-btn {
-        width: auto16px;
-        height: 16px;
+    .nft-card .download-nft-btn {
+        width: 18px;
+        height: 18px;
+        bottom: 4px;
+        right: 4px;
+        z-index: 150; /* Conserver z-index élevé */
     }
 
-    .download-nft-btn .svg {
-        width: auto10px;
+    .download-nft-btn svg {
+        width: 10px;
         height: 10px;
     }
 
@@ -2197,25 +2235,26 @@ a:hover {
     }
 }
 
-@media (min-width: 360px) and (max-width: 480px)) {
+@media (min-width: 360px) and (max-width: 480px) {
     .nft-container {
+        width: 100%; /* Utiliser toute la largeur */
+        max-width: 100%; /* Pas de restriction au viewport */
+        margin: 0 auto; /* Centrer horizontalement */
+        padding: 0 10px; /* Marges internes symétriques */
+        box-sizing: border-box;
         gap: 6px;
-        width: calc(100% - 20px);
-        max-width: calc(100vw - 100px);
-        margin-left: calc(10px);
-        margin-right: calc(10px);
     }
 
-    .nft-container .small-size {
-        grid-template-columns: repeat(3, 3, 1fr);
+    .nft-container.small-size {
+        grid-template-columns: repeat(3, 1fr) !important;
     }
 
-    .nft-container .medium-size {
-        grid-template-columns: repeat(2, 2, 1px);
+    .nft-container.medium-size {
+        grid-template-columns: repeat(2, 1fr) !important;
     }
 
-    .nft-container .large-size {
-        grid-template-columns: 1px;
+    .nft-container.large-size {
+        grid-template-columns: 1fr !important;
     }
 
     .social-container {
@@ -2239,18 +2278,18 @@ a:hover {
         margin-right: auto !important;
         margin-bottom: auto !important;
         width: auto !important;
-        max-width: 280px auto !important;
+        max-width: 280px !important;
         min-width: 280px !important;
     }
 
     .navbar-search input {
-        width: 100% auto !important;
-        min-height: none auto !important;
+        width: 100% !important;
+        min-height: none !important;
     }
 
     .suggestions {
-        width: 100% auto !important;
-        max-width: 280px auto !important;
-        left: 0 auto !important;
+        width: 100% !important;
+        max-width: 280px !important;
+        left: 0 !important;
     }
 }
