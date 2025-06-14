@@ -1786,21 +1786,41 @@ async function downloadCollage() {
     const progressText = document.getElementById('progressText');
     const modalTitle = document.getElementById('modalTitle');
     const cancelButton = document.getElementById('cancelDownloadButton');
+    const profilePicture = document.getElementById('profilePicture');
+    const collectionFilter = document.getElementById('collectionFilter');
+    const collectionTitle = document.getElementById('collectionTitle');
 
-    if (!nftContainer || !errorDiv || !progressModal || !progressBar || !progressText || !modalTitle || !cancelButton) {
+    if (!nftContainer || !errorDiv || !progressModal || !progressBar || !progressText || !modalTitle || !cancelButton || !profilePicture || !collectionFilter || !collectionTitle) {
         console.error('Required DOM elements for collage download not found');
         if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
         return;
     }
 
-    const cards = nftContainer.querySelectorAll('.nft-card:not(.empty)');
+    const cards = Array.from(nftContainer.querySelectorAll('.nft-card:not(.empty)'));
     if (cards.length === 0) {
         errorDiv.textContent = 'No assets to include in the collage.';
         return;
     }
 
+    // Filtrer les cartes avec des URLs valides
+    const validCards = cards
+        .map((card, index) => {
+            const img = card.querySelector('img');
+            const video = card.querySelector('video');
+            const mediaUrl = img ? img.src : video ? video.currentSrc : null;
+            const titleElement = card.querySelector('.tooltip');
+            const title = titleElement ? titleElement.textContent : `NFT_${index + 1}`;
+            return { mediaUrl, title, index };
+        })
+        .filter(({ mediaUrl }) => mediaUrl && mediaUrl !== 'https://via.placeholder.com/150' && !mediaUrl.endsWith('.mp4'));
+
+    if (validCards.length === 0) {
+        errorDiv.textContent = 'No valid image assets to include in the collage.';
+        return;
+    }
+
     modalTitle.textContent = 'Creating Collage';
-    progressText.textContent = `Preparing collage with ${cards.length} assets`;
+    progressText.textContent = `Preparing collage with ${validCards.length} assets`;
     progressBar.style.width = '0%';
     progressModal.style.display = 'flex';
     cancelButton.style.display = 'block';
@@ -1815,58 +1835,210 @@ async function downloadCollage() {
         }, 1000);
     };
 
+    // Verrou pour éviter les téléchargements multiples
+    let isDownloading = false;
+
     try {
-        const gridSize = Math.ceil(Math.sqrt(cards.length));
-        const imageSize = 300;
+        // Optimiser la grille pour éviter les lignes vides
+        const numCards = validCards.length;
+        let cols = Math.ceil(Math.sqrt(numCards));
+        let rows = Math.ceil(numCards / cols);
+        if (numCards > 1) {
+            while (rows * (cols - 1) >= numCards && cols > 1) {
+                cols--;
+                rows = Math.ceil(numCards / cols);
+            }
+        }
+        const gridWidth = cols * 300;
+        const gridHeight = rows * 300;
+
+        const headerHeight = 140; // Hauteur fixe
+        const footerHeight = 140; // Hauteur fixe
         const canvas = document.createElement('canvas');
-        canvas.width = gridSize * imageSize;
-        canvas.height = gridSize * imageSize;
+        canvas.width = gridWidth;
+        canvas.height = gridHeight + headerHeight + footerHeight;
         const ctx = canvas.getContext('2d');
 
-        ctx.fillStyle = '#333';
+        // Fond noir
+        ctx.fillStyle = '#000';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+        // --- Ajouter l'en-tête ---
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(0, 0, canvas.width, headerHeight);
+
+        // Récupérer l'image de profil
+        let profileImage = null;
+        const profileImageUrl = profilePicture.src || loggedInUser?.avatar || '';
+        if (profileImageUrl) {
+            try {
+                const response = await fetch(profileImageUrl, { cache: 'force-cache', mode: 'cors' });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    profileImage = await createImageBitmap(blob);
+                } else {
+                    console.warn(`Failed to load profile image: HTTP ${response.status}`);
+                }
+            } catch (error) {
+                console.warn(`Failed to load profile image: ${error.message}`);
+            }
+        }
+
+        // Dessiner l'image de profil ou un placeholder
+        const profileImageSize = 80; // Taille fixe
+        const margin = 30; // Écart fixe
+        const profileImageX = margin;
+        const profileImageY = (headerHeight - profileImageSize) / 2; // Centrer verticalement (30px haut/bas)
+        if (profileImage) {
+            ctx.drawImage(profileImage, profileImageX, profileImageY, profileImageSize, profileImageSize);
+            profileImage.close();
+        } else {
+            ctx.fillStyle = '#555';
+            ctx.fillRect(profileImageX, profileImageY, profileImageSize, profileImageSize);
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px Geomanist-Bold';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('No Image', profileImageX + profileImageSize / 2, profileImageY + profileImageSize / 2);
+        }
+
+        // Récupérer le thème pour la couleur
+        const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const color1 = theme === 'cdc' ? '#11bafa' : '#FF5733';
+
+        // Dessiner le nom d'utilisateur
+        const usernameText = currentUsername.toUpperCase() || 'UNKNOWN';
+        ctx.font = '32px Geomanist-Bold'; // Police fixe
+        ctx.fillStyle = color1;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        const usernameX = profileImageX + profileImageSize + margin; // Écart de 30px
+        const usernameY = profileImageY + profileImageSize / 2; // Centré verticalement
+        ctx.fillText(usernameText, usernameX, usernameY);
+
+        // Dessiner la collection
+        const collectionText = collectionTitle.textContent || collectionFilter.value || 'ALL COLLECTIONS';
+        ctx.font = '32px Geomanist-Bold'; // Police fixe
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        const collectionX = canvas.width - margin; // Marge droite de 30px
+        const collectionY = usernameY; // Aligné verticalement
+        ctx.fillText(collectionText.toUpperCase(), collectionX, collectionY);
+
+        // --- Ajouter le pied de page ---
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(0, canvas.height - footerHeight, canvas.width, footerHeight);
+
+        // Charger le logo
+        let logoImage = null;
+        const logoUrl = 'https://cronos.wtf/CRONOBOTS.png'; // URL fournie
+        // Alternative : const logoUrl = 'https://CronoBots.github.io/CronoBots/CRONOBOTS.png';
+        console.log('Attempting to load logo from:', logoUrl);
+        try {
+            const response = await fetch(logoUrl, { cache: 'force-cache', mode: 'cors' });
+            if (response.ok) {
+                const blob = await response.blob();
+                logoImage = await createImageBitmap(blob);
+                console.log('Logo loaded successfully');
+            } else {
+                console.error(`Failed to load logo: HTTP ${response.status} - ${response.statusText}`);
+            }
+        } catch (error) {
+            console.error(`Failed to load logo: ${error.message}`);
+        }
+
+        // Dessiner le logo ou un placeholder
+        const logoSize = 80; // Même taille que la photo de profil
+        const logoX = margin; // Même marge que la photo (30px)
+        const logoY = canvas.height - footerHeight + (footerHeight - logoSize) / 2; // Centrer verticalement (30px haut/bas)
+        if (logoImage) {
+            ctx.drawImage(logoImage, logoX, logoY, logoSize, logoSize);
+            logoImage.close();
+        } else {
+            ctx.fillStyle = '#555';
+            ctx.fillRect(logoX, logoY, logoSize, logoSize);
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px Geomanist-Bold';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('No Logo', logoX + logoSize / 2, logoY + logoSize / 2);
+            console.warn('Logo placeholder displayed');
+        }
+
+        // Dessiner le texte "CRONOS.WTF | DEVELOPED BY UNSCOOP"
+        const footerText = 'CRONOS.WTF | DEVELOPED BY';
+        const unscoopText = 'UNSCOOP';
+        ctx.font = '32px Geomanist-Bold'; // Police fixe
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        const textX = logoX + logoSize + 20; // Écart fixe
+        const textY = canvas.height - footerHeight / 2; // Centrer verticalement
+        ctx.fillStyle = '#fff';
+        ctx.fillText(footerText, textX, textY);
+        const footerTextWidth = ctx.measureText(footerText).width;
+        ctx.fillStyle = color1;
+        ctx.fillText(unscoopText, textX + footerTextWidth + 5, textY);
+
+        // --- Dessiner les images du collage ---
         let processed = 0;
-        for (let i = 0; i < cards.length; i++) {
+        const failedImages = [];
+
+        for (let i = 0; i < validCards.length; i++) {
             if (isDownloadCancelled) {
                 console.log('Collage creation cancelled');
                 return;
             }
 
-            const card = cards[i];
-            const img = card.querySelector('img');
-            const video = card.querySelector('video');
-            let mediaUrl = img ? img.src : video ? video.currentSrc : null;
-
-            if (!mediaUrl || mediaUrl === 'https://via.placeholder.com/150') {
-                console.warn(`Invalid media for card ${i + 1}`);
-                processed++;
-                continue;
-            }
+            const { mediaUrl, title, index } = validCards[i];
+            const row = Math.floor(i / cols);
+            const col = i % cols;
+            const x = col * 300;
+            const y = row * 300 + headerHeight;
 
             try {
-                const response = await fetch(mediaUrl + (mediaUrl.includes('?') ? '&' : '?') + 'quality=high');
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                const response = await fetch(mediaUrl + (mediaUrl.includes('?') ? '&' : '?') + 'quality=high', {
+                    signal: controller.signal,
+                    mode: 'cors'
+                });
+                clearTimeout(timeoutId);
+
                 if (!response.ok) {
-                    console.error(`Failed to fetch media for card ${i + 1}: ${response.statusText}`);
-                    processed++;
-                    continue;
+                    throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
                 }
+
                 const blob = await response.blob();
+                if (!blob || blob.size === 0) {
+                    throw new Error('Received empty or invalid blob');
+                }
+
+                const contentType = response.headers.get('content-type');
+                if (!contentType.includes('image/')) {
+                    throw new Error(`Unsupported content type: ${contentType}`);
+                }
+
                 const imageBitmap = await createImageBitmap(blob);
-
-                const row = Math.floor(i / gridSize);
-                const col = i % gridSize;
-                ctx.drawImage(imageBitmap, col * imageSize, row * imageSize, imageSize, imageSize);
+                ctx.drawImage(imageBitmap, x, y, 300, 300);
                 imageBitmap.close();
-
-                processed++;
-                const progressPercent = (processed / cards.length) * 100;
-                progressBar.style.width = `${progressPercent}%`;
-                progressText.textContent = `Processing: ${processed}/${cards.length}`;
             } catch (error) {
-                console.error(`Error processing media for card ${i + 1}: ${error.message}`);
-                processed++;
+                console.error(`Failed to load image ${title} (index ${index}): ${error.message}`);
+                failedImages.push({ title, error: error.message });
+
+                ctx.fillStyle = '#555';
+                ctx.fillRect(x, y, 300, 300);
+                ctx.fillStyle = '#fff';
+                ctx.font = '16px Geomanist-Bold';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('Image Failed', x + 150, y + 150);
             }
+
+            processed++;
+            const progressPercent = (processed / validCards.length) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+            progressText.textContent = `Processing: ${processed}/${validCards.length}`;
         }
 
         if (isDownloadCancelled) {
@@ -1876,23 +2048,61 @@ async function downloadCollage() {
 
         if (processed === 0) {
             progressModal.style.display = 'none';
-            errorDiv.textContent = 'No valid assets could be included in the collage';
+            errorDiv.textContent = 'No valid assets could be included in the collage.';
             return;
         }
 
+        if (failedImages.length > 0) {
+            console.warn(`${failedImages.length} images failed to load:`, failedImages);
+            errorDiv.textContent = `${failedImages.length} image(s) failed to load. Placeholders have been added.`;
+            setTimeout(() => (errorDiv.textContent = ''), 5000);
+        }
+
+        // Générer et télécharger le collage une seule fois
+        if (isDownloading) {
+            console.warn('Download already in progress, skipping duplicate.');
+            return;
+        }
+        isDownloading = true;
+
         progressText.textContent = 'Generating collage image';
-        canvas.toBlob((blob) => {
-            saveAs(blob, `${currentUsername}_collage.png`);
-            progressText.textContent = 'Collage download complete!';
-            progressBar.style.width = '100%';
-            setTimeout(() => {
-                progressModal.style.display = 'none';
-            }, 1000);
-        }, 'image/png', 1.0);
+        canvas.toBlob(
+            (blob) => {
+                if (blob && !isDownloadCancelled) {
+                    // Utiliser une méthode native pour le téléchargement
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${currentUsername}_collage.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    progressText.textContent = 'Collage download complete!';
+                    progressBar.style.width = '100%';
+                    setTimeout(() => {
+                        progressModal.style.display = 'none';
+                        isDownloading = false;
+                    }, 1000);
+                } else {
+                    console.error('Failed to generate blob for collage or download cancelled');
+                    errorDiv.textContent = 'Failed to generate collage image.';
+                    setTimeout(() => {
+                        errorDiv.textContent = '';
+                        isDownloading = false;
+                    }, 5000);
+                }
+            },
+            'image/png',
+            1.0
+        );
     } catch (error) {
         console.error(`Error generating collage: ${error.message}`);
         progressModal.style.display = 'none';
-        errorDiv.textContent = 'Failed to generate collage image';
+        errorDiv.textContent = `Failed to generate collage: ${error.message}`;
+        setTimeout(() => (errorDiv.textContent = ''), 5000);
+        isDownloading = false;
     }
 }
 
@@ -2193,8 +2403,10 @@ function setupEventListeners() {
     console.log('Logout link listener attached');
 
     // Gestion des boutons de téléchargement
-    downloadZipButton.addEventListener('click', downloadNFTsAsZip);
-    downloadCollageButton.addEventListener('click', downloadCollage);
+downloadZipButton.removeEventListener('click', downloadNFTsAsZip);
+downloadZipButton.addEventListener('click', downloadNFTsAsZip);
+downloadCollageButton.removeEventListener('click', downloadCollage);
+downloadCollageButton.addEventListener('click', downloadCollage);
     console.log('Download buttons listeners attached');
 
     // Gestion des boutons de défilement
