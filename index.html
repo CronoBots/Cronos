@@ -1798,8 +1798,6 @@ async function downloadCollage() {
 
     if (window.isDownloading) {
         console.warn('Download already in progress, please wait.');
-        errorDiv.textContent = 'A download is already in progress. Please wait.';
-        setTimeout(() => (errorDiv.textContent = ''), 5000);
         return;
     }
 
@@ -1863,12 +1861,12 @@ async function downloadCollage() {
         const gridWidth = cols * cardSize;
         const gridHeight = rows * cardSize;
 
-        const headerHeight = 120;
-        const footerHeight = 120;
-        const profileImageSize = 80;
-        const logoSize = 80;
-        const margin = 20;
-        const fontSize = 36;
+        // Ajuster dynamiquement les tailles
+        const headerHeight = Math.min(Math.max(Math.round(gridWidth * 0.1), 80), 150);
+        const footerHeight = headerHeight;
+        const fontSize = Math.min(Math.max(Math.round(gridWidth / 20), 20), 40);
+        const imageSize = Math.min(Math.max(Math.round(headerHeight * 0.7), 50), 100);
+        const margin = Math.min(Math.max(Math.round(gridWidth / 50), 10), 30);
 
         const canvas = document.createElement('canvas');
         canvas.width = gridWidth;
@@ -1884,46 +1882,47 @@ async function downloadCollage() {
 
         let profileImage = null;
         const profileImageUrl = profilePicture.src || loggedInUser?.avatar || '';
-        if (profileImageUrl) {
+        if (profileImageUrl && profileImageUrl !== 'https://via.placeholder.com/150') {
             try {
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                img.src = profileImageUrl;
-                await new Promise((resolve, reject) => {
-                    img.onload = resolve;
-                    img.onerror = () => reject(new Error(`Failed to load profile image: ${profileImageUrl}`));
-                });
-                profileImage = await createImageBitmap(img);
+                const response = await fetch(profileImageUrl, { cache: 'force-cache', mode: 'cors' });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const blob = await response.blob();
+                profileImage = await createImageBitmap(blob);
             } catch (error) {
                 console.warn(`Failed to load profile image: ${error.message}`);
             }
         }
 
         const profileImageX = margin;
-        const profileImageY = (headerHeight - profileImageSize) / 2;
+        const profileImageY = (headerHeight - imageSize) / 2;
         if (profileImage) {
-            ctx.drawImage(profileImage, profileImageX, profileImageY, profileImageSize, profileImageSize);
+            ctx.drawImage(profileImage, profileImageX, profileImageY, imageSize, imageSize);
             profileImage.close();
         } else {
             ctx.fillStyle = '#555';
-            ctx.fillRect(profileImageX, profileImageY, profileImageSize, profileImageSize);
+            ctx.fillRect(profileImageX, profileImageY, imageSize, imageSize);
             ctx.fillStyle = '#fff';
             ctx.font = '12px Geomanist-Bold';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('No Image', profileImageX + profileImageSize / 2, profileImageY + profileImageSize / 2);
+            ctx.fillText('No Image', profileImageX + imageSize / 2, profileImageY + imageSize / 2);
         }
 
         const usernameText = currentUsername.toUpperCase() || 'UNKNOWN';
         let collectionText = collectionTitle.textContent || collectionFilter.value || 'ALL_COLLECTIONS';
-        ctx.font = `${fontSize}px Geomanist-Bold`;
+        let adjustedFontSize = fontSize;
+        ctx.font = `${adjustedFontSize}px Geomanist-Bold`;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        const usernameX = profileImageX + profileImageSize + margin;
-        const usernameY = profileImageY + profileImageSize / 2;
+        const usernameX = profileImageX + imageSize + margin;
+        const usernameY = profileImageY + imageSize / 2;
 
-        const maxTextWidth = canvas.width - (profileImageX + profileImageSize + margin * 2) - 100;
+        const maxTextWidth = canvas.width - (profileImageX + imageSize + margin * 2) - 100;
         let combinedText = `${usernameText} / ${collectionText.toUpperCase()}`;
+        while (ctx.measureText(combinedText).width > maxTextWidth && adjustedFontSize > 16) {
+            adjustedFontSize -= 2;
+            ctx.font = `${adjustedFontSize}px Geomanist-Bold`;
+        }
         if (ctx.measureText(combinedText).width > maxTextWidth) {
             let truncatedCollection = collectionText.toUpperCase();
             while (ctx.measureText(`${usernameText} / ${truncatedCollection}...`).width > maxTextWidth && truncatedCollection.length > 0) {
@@ -1948,7 +1947,7 @@ async function downloadCollage() {
         ctx.fillText(collectionText.toUpperCase(), collectionX, usernameY);
 
         const nftCountText = `${validCards.length} NFTS`;
-        ctx.font = `${fontSize}px Geomanist-Bold`;
+        ctx.font = `${adjustedFontSize}px Geomanist-Bold`;
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
@@ -1961,7 +1960,7 @@ async function downloadCollage() {
         ctx.fillRect(0, canvas.height - footerHeight, canvas.width, footerHeight);
 
         let logoImage = null;
-        const logoUrl = 'https://media.nft.crypto.com/ce3f81ea-f770-40e1-bab7-2362c3b6d83a/original.jpg?d=lg-logo';
+        const logoUrl = 'https://media.nft.crypto.com/b58c11ef-9874-4157-afff-0bf6b059dce1/original.jpg?d=lg-logo';
         try {
             const img = new Image();
             img.crossOrigin = 'anonymous';
@@ -1975,33 +1974,42 @@ async function downloadCollage() {
             console.error(`Failed to load logo: ${error.message}`);
         }
 
+        // Logo et "CRONOS.WTF" à gauche
         const logoX = margin;
-        const logoY = canvas.height - footerHeight + (footerHeight - logoSize) / 2;
+        const logoY = canvas.height - footerHeight + (footerHeight - imageSize) / 2;
         if (logoImage) {
-            ctx.drawImage(logoImage, logoX, logoY, logoSize, logoSize);
+            ctx.drawImage(logoImage, logoX, logoY, imageSize, imageSize);
             logoImage.close();
         } else {
             ctx.fillStyle = '#555';
-            ctx.fillRect(logoX, logoY, logoSize, logoSize);
+            ctx.fillRect(logoX, logoY, imageSize, imageSize);
             ctx.fillStyle = '#fff';
             ctx.font = '12px Geomanist-Bold';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('No Logo', logoX + logoSize / 2, logoY + logoSize / 2);
+            ctx.fillText('No Logo', logoX + imageSize / 2, logoY + imageSize / 2);
         }
 
-        const footerText = 'CRONOS.WTF | DEVELOPED BY ';
-        const unscoopText = 'UNSCOOP';
-        ctx.font = `${fontSize}px Geomanist-Bold`;
+        const cronosText = 'CRONOS.WTF';
+        ctx.font = `${adjustedFontSize}px Geomanist-Bold`;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        const textX = logoX + logoSize + margin;
+        const cronosTextX = logoX + imageSize + margin;
         const textY = canvas.height - footerHeight / 2;
         ctx.fillStyle = '#fff';
-        ctx.fillText(footerText, textX, textY);
-        const footerTextWidth = ctx.measureText(footerText).width;
+        ctx.fillText(cronosText, cronosTextX, textY);
+
+        // "DEVELOPED BY UNSCOOP" à droite
+        const devText = 'DEVELOPED BY ';
+        const unscoopText = 'UNSCOOP';
+        const devTextWidth = ctx.measureText(devText).width;
+        const unscoopTextWidth = ctx.measureText(unscoopText).width;
+        const totalDevTextWidth = devTextWidth + unscoopTextWidth;
+        const devTextX = canvas.width - margin - totalDevTextWidth;
+        ctx.fillStyle = '#fff';
+        ctx.fillText(devText, devTextX, textY);
         ctx.fillStyle = color1;
-        ctx.fillText(unscoopText, textX + footerTextWidth, textY);
+        ctx.fillText(unscoopText, devTextX + devTextWidth, textY);
 
         // --- Dessiner les images du collage ---
         let processed = 0;
