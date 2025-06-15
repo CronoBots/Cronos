@@ -1796,7 +1796,6 @@ async function downloadCollage() {
         return;
     }
 
-    // Vérifier si un téléchargement est déjà en cours
     if (window.isDownloading) {
         console.warn('Download already in progress, please wait.');
         errorDiv.textContent = 'A download is already in progress. Please wait.';
@@ -1813,15 +1812,15 @@ async function downloadCollage() {
         return;
     }
 
-    // Filtrer les cartes avec des URLs valides
     const validCards = cards
         .map((card, index) => {
             const img = card.querySelector('img');
             const video = card.querySelector('video');
             const mediaUrl = img ? img.src : video ? video.currentSrc : null;
+            const mediaElement = img || video;
             const titleElement = card.querySelector('.tooltip');
             const title = titleElement ? titleElement.textContent : `NFT_${index + 1}`;
-            return { mediaUrl, title, index };
+            return { mediaUrl, mediaElement, title, index };
         })
         .filter(({ mediaUrl }) => mediaUrl && mediaUrl !== 'https://via.placeholder.com/150' && !mediaUrl.endsWith('.mp4'));
 
@@ -1851,7 +1850,6 @@ async function downloadCollage() {
     try {
         console.log('Starting collage creation with', validCards.length, 'assets');
 
-        // Optimiser la grille pour éviter les lignes vides
         const numCards = validCards.length;
         let cols = Math.ceil(Math.sqrt(numCards));
         let rows = Math.ceil(numCards / cols);
@@ -1861,24 +1859,22 @@ async function downloadCollage() {
                 rows = Math.ceil(numCards / cols);
             }
         }
-        const cardSize = 300; // Taille fixe des cartes
+        const cardSize = 300;
         const gridWidth = cols * cardSize;
         const gridHeight = rows * cardSize;
 
-        const headerHeight = 120; // Hauteur fixe pour l'en-tête
-        const footerHeight = 120; // Hauteur fixe pour le pied de page
-        const profileImageSize = 80; // Taille fixe de la photo de profil
-        const logoSize = 80; // Taille fixe du logo
-        const margin = 20; // Marge fixe
-        const fontSize = 36; // Taille de police fixe
+        const headerHeight = 120;
+        const footerHeight = 120;
+        const profileImageSize = 80;
+        const logoSize = 80;
+        const margin = 20;
+        const fontSize = 36;
 
-        // Créer un nouveau canvas
         const canvas = document.createElement('canvas');
         canvas.width = gridWidth;
         canvas.height = gridHeight + headerHeight + footerHeight;
         const ctx = canvas.getContext('2d');
 
-        // Fond noir
         ctx.fillStyle = '#000';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -1886,26 +1882,25 @@ async function downloadCollage() {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
         ctx.fillRect(0, 0, canvas.width, headerHeight);
 
-        // Récupérer l'image de profil
         let profileImage = null;
         const profileImageUrl = profilePicture.src || loggedInUser?.avatar || '';
         if (profileImageUrl) {
             try {
-                const response = await fetch(profileImageUrl, { cache: 'force-cache', mode: 'cors' });
-                if (response.ok) {
-                    const blob = await response.blob();
-                    profileImage = await createImageBitmap(blob);
-                } else {
-                    console.warn(`Failed to load profile image: HTTP ${response.status}`);
-                }
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.src = profileImageUrl;
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = () => reject(new Error(`Failed to load profile image: ${profileImageUrl}`));
+                });
+                profileImage = await createImageBitmap(img);
             } catch (error) {
                 console.warn(`Failed to load profile image: ${error.message}`);
             }
         }
 
-        // Dessiner l'image de profil ou un placeholder
         const profileImageX = margin;
-        const profileImageY = (headerHeight - profileImageSize) / 2; // Centrer verticalement
+        const profileImageY = (headerHeight - profileImageSize) / 2;
         if (profileImage) {
             ctx.drawImage(profileImage, profileImageX, profileImageY, profileImageSize, profileImageSize);
             profileImage.close();
@@ -1919,17 +1914,15 @@ async function downloadCollage() {
             ctx.fillText('No Image', profileImageX + profileImageSize / 2, profileImageY + profileImageSize / 2);
         }
 
-        // Dessiner le nom d'utilisateur et la collection (USERNAME / COLLECTION)
         const usernameText = currentUsername.toUpperCase() || 'UNKNOWN';
         let collectionText = collectionTitle.textContent || collectionFilter.value || 'ALL_COLLECTIONS';
         ctx.font = `${fontSize}px Geomanist-Bold`;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
         const usernameX = profileImageX + profileImageSize + margin;
-        const usernameY = profileImageY + profileImageSize / 2; // Centré verticalement
+        const usernameY = profileImageY + profileImageSize / 2;
 
-        // Vérifier et tronquer le texte de l'en-tête si nécessaire
-        const maxTextWidth = canvas.width - (profileImageX + profileImageSize + margin * 2) - 100; // Réserver espace pour "X NFTS"
+        const maxTextWidth = canvas.width - (profileImageX + profileImageSize + margin * 2) - 100;
         let combinedText = `${usernameText} / ${collectionText.toUpperCase()}`;
         if (ctx.measureText(combinedText).width > maxTextWidth) {
             let truncatedCollection = collectionText.toUpperCase();
@@ -1939,16 +1932,12 @@ async function downloadCollage() {
             collectionText = truncatedCollection + (truncatedCollection.length < collectionText.length ? '...' : '');
         }
 
-        // Dessiner le nom d'utilisateur en couleur principale
         const theme = document.documentElement.getAttribute('data-theme') || 'dark';
         const color1 = theme === 'cdc' ? '#11bafa' : '#FF5733';
         ctx.fillStyle = color1;
         ctx.fillText(usernameText, usernameX, usernameY);
 
-        // Mesurer la largeur du nom d'utilisateur
         const usernameWidth = ctx.measureText(usernameText).width;
-
-        // Dessiner le séparateur "/" et le nom de la collection en blanc
         ctx.fillStyle = '#fff';
         const separator = ' / ';
         const separatorX = usernameX + usernameWidth;
@@ -1958,38 +1947,36 @@ async function downloadCollage() {
         const collectionX = separatorX + separatorWidth;
         ctx.fillText(collectionText.toUpperCase(), collectionX, usernameY);
 
-        // Dessiner "X NFTS" sur la même ligne à droite
         const nftCountText = `${validCards.length} NFTS`;
         ctx.font = `${fontSize}px Geomanist-Bold`;
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
-        const nftCountX = canvas.width - margin; // 20px du bord droit
-        const nftCountY = usernameY; // Même ligne que USERNAME / COLLECTION
+        const nftCountX = canvas.width - margin;
+        const nftCountY = usernameY;
         ctx.fillText(nftCountText, nftCountX, nftCountY);
 
         // --- Ajouter le pied de page ---
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
         ctx.fillRect(0, canvas.height - footerHeight, canvas.width, footerHeight);
 
-        // Charger le logo
         let logoImage = null;
         const logoUrl = 'https://media.nft.crypto.com/ce3f81ea-f770-40e1-bab7-2362c3b6d83a/original.jpg?d=lg-logo';
         try {
-            const response = await fetch(logoUrl, { cache: 'force-cache', mode: 'cors' });
-            if (response.ok) {
-                const blob = await response.blob();
-                logoImage = await createImageBitmap(blob);
-            } else {
-                console.error(`Failed to load logo: HTTP ${response.status}`);
-            }
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.src = logoUrl;
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = () => reject(new Error(`Failed to load logo: ${logoUrl}`));
+            });
+            logoImage = await createImageBitmap(img);
         } catch (error) {
             console.error(`Failed to load logo: ${error.message}`);
         }
 
-        // Dessiner le logo ou un placeholder en bas à gauche
-        const logoX = margin; // 20px du bord gauche
-        const logoY = canvas.height - footerHeight + (footerHeight - logoSize) / 2; // Centrer verticalement
+        const logoX = margin;
+        const logoY = canvas.height - footerHeight + (footerHeight - logoSize) / 2;
         if (logoImage) {
             ctx.drawImage(logoImage, logoX, logoY, logoSize, logoSize);
             logoImage.close();
@@ -2003,42 +1990,40 @@ async function downloadCollage() {
             ctx.fillText('No Logo', logoX + logoSize / 2, logoY + logoSize / 2);
         }
 
-        // Dessiner le texte "CRONOS.WTF | DEVELOPED BY UNSCOOP" à droite du logo
         const footerText = 'CRONOS.WTF | DEVELOPED BY ';
         const unscoopText = 'UNSCOOP';
         ctx.font = `${fontSize}px Geomanist-Bold`;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        const textX = logoX + logoSize + margin; // 20px à droite du logo
-        const textY = canvas.height - footerHeight / 2; // Centrer verticalement
+        const textX = logoX + logoSize + margin;
+        const textY = canvas.height - footerHeight / 2;
         ctx.fillStyle = '#fff';
         ctx.fillText(footerText, textX, textY);
         const footerTextWidth = ctx.measureText(footerText).width;
         ctx.fillStyle = color1;
-        ctx.fillText(unscoopText, textX + footerTextWidth, textY); // À droite de "BY"
+        ctx.fillText(unscoopText, textX + footerTextWidth, textY);
 
         // --- Dessiner les images du collage ---
         let processed = 0;
         const failedImages = [];
 
-        for (let i = 0; i < validCards.length; i++) {
-            if (window.isDownloadCancelled) {
-                console.log('Collage creation cancelled');
-                return;
-            }
-
-            const { mediaUrl, title, index } = validCards[i];
-            const row = Math.floor(i / cols);
-            const col = i % cols;
-            const x = col * cardSize;
-            const y = row * cardSize + headerHeight;
-
+        const loadImageFromUrl = async (mediaUrl, title, index) => {
             try {
+                const headResponse = await fetch(mediaUrl, { method: 'HEAD', mode: 'cors' });
+                if (!headResponse.ok) {
+                    throw new Error(`HEAD request failed: HTTP ${headResponse.status}`);
+                }
+                const contentType = headResponse.headers.get('content-type');
+                if (!contentType?.includes('image/')) {
+                    throw new Error(`Invalid content type: ${contentType}`);
+                }
+
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
                 const response = await fetch(mediaUrl + (mediaUrl.includes('?') ? '&' : '?') + 'quality=high', {
                     signal: controller.signal,
-                    mode: 'cors'
+                    mode: 'cors',
+                    cache: 'no-cache'
                 });
                 clearTimeout(timeoutId);
 
@@ -2051,18 +2036,56 @@ async function downloadCollage() {
                     throw new Error('Received empty or invalid blob');
                 }
 
-                const contentType = response.headers.get('content-type');
-                if (!contentType.includes('image/')) {
-                    throw new Error(`Unsupported content type: ${contentType}`);
+                const blobContentType = blob.type;
+                if (!blobContentType.includes('image/')) {
+                    throw new Error(`Unsupported blob content type: ${blobContentType}`);
                 }
 
-                const imageBitmap = await createImageBitmap(blob);
+                return await createImageBitmap(blob);
+            } catch (error) {
+                console.error(`Failed to load image ${title} (index ${index}, URL: ${mediaUrl}): ${error.message}`);
+                failedImages.push({ title, index, url: mediaUrl, error: error.message });
+                return null;
+            }
+        };
+
+        const loadImageFromDOM = async (mediaElement, title, index) => {
+            try {
+                if (mediaElement.tagName.toLowerCase() !== 'img') {
+                    throw new Error('Media element is not an image');
+                }
+                if (!mediaElement.complete || mediaElement.naturalWidth === 0) {
+                    throw new Error('Image not fully loaded or invalid');
+                }
+                return await createImageBitmap(mediaElement);
+            } catch (error) {
+                console.error(`Failed to load DOM image ${title} (index ${index}, src: ${mediaElement.src}): ${error.message}`);
+                return null;
+            }
+        };
+
+        for (let i = 0; i < validCards.length; i++) {
+            if (window.isDownloadCancelled) {
+                console.log('Collage creation cancelled');
+                return;
+            }
+
+            const { mediaUrl, mediaElement, title, index } = validCards[i];
+            const row = Math.floor(i / cols);
+            const col = i % cols;
+            const x = col * cardSize;
+            const y = row * cardSize + headerHeight;
+
+            let imageBitmap = await loadImageFromUrl(mediaUrl, title, index);
+            if (!imageBitmap) {
+                console.log(`Falling back to DOM for ${title} (index ${index})`);
+                imageBitmap = await loadImageFromDOM(mediaElement, title, index);
+            }
+
+            if (imageBitmap) {
                 ctx.drawImage(imageBitmap, x, y, cardSize, cardSize);
                 imageBitmap.close();
-            } catch (error) {
-                console.error(`Failed to load image ${title} (index ${index}): ${error.message}`);
-                failedImages.push({ title, error: error.message });
-
+            } else {
                 ctx.fillStyle = '#555';
                 ctx.fillRect(x, y, cardSize, cardSize);
                 ctx.fillStyle = '#fff';
@@ -2090,60 +2113,63 @@ async function downloadCollage() {
         }
 
         if (failedImages.length > 0) {
-            console.warn(`${failedImages.length} images failed to load:`, failedImages);
-            errorDiv.textContent = `${failedImages.length} image(s) failed to load. Placeholders have been added.`;
+            console.warn(`${failedImages.length} images failed to load via URL, ${validCards.length - failedImages.length} loaded successfully:`, failedImages);
+            errorDiv.textContent = `${failedImages.length} image(s) failed to load via URL. ${validCards.length - failedImages.length} loaded successfully.`;
             setTimeout(() => (errorDiv.textContent = ''), 5000);
         }
 
         progressText.textContent = 'Generating collage image';
         console.log('Generating blob for download');
-        canvas.toBlob(
-            (blob) => {
-                try {
-                    if (!blob) {
-                        throw new Error('Failed to generate blob');
+        try {
+            canvas.toBlob(
+                (blob) => {
+                    try {
+                        if (!blob) {
+                            throw new Error('Failed to generate blob');
+                        }
+                        if (window.isDownloadCancelled) {
+                            console.log('Download cancelled before blob generation');
+                            return;
+                        }
+
+                        console.log('Blob generated, initiating download');
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+
+                        const cleanUsername = (currentUsername || 'unknown').replace(/[^a-zA-Z0-9-_]/g, '');
+                        const capitalizedUsername = cleanUsername.charAt(0).toUpperCase() + cleanUsername.slice(1);
+                        const cleanCollectionText = (collectionText || 'all_collections').replace(/[^a-zA-Z0-9-_]/g, '');
+                        a.download = `${capitalizedUsername}_${cleanCollectionText}.png`;
+
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+
+                        progressText.textContent = 'Collage download complete!';
+                        progressBar.style.width = '100%';
+                        setTimeout(() => {
+                            progressModal.style.display = 'none';
+                        }, 1500);
+                    } catch (error) {
+                        console.error(`Error during download: ${error.message}`);
+                        errorDiv.textContent = `Failed to initiate download: ${error.message}`;
+                        setTimeout(() => (errorDiv.textContent = ''), 5000);
                     }
-                    if (window.isDownloadCancelled) {
-                        console.log('Download cancelled before blob generation');
-                        return;
-                    }
-
-                    console.log('Blob generated, initiating download');
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-
-                    // Nettoyer le nom de l'utilisateur et de la collection pour le nom de fichier
-                    const cleanUsername = (currentUsername || 'unknown').replace(/[^a-zA-Z0-9-_]/g, '');
-                    // Mettre une majuscule à la première lettre de l'username
-                    const capitalizedUsername = cleanUsername.charAt(0).toUpperCase() + cleanUsername.slice(1);
-                    const cleanCollectionText = (collectionText || 'all_collections').replace(/[^a-zA-Z0-9-_]/g, '');
-                    a.download = `${capitalizedUsername}_${cleanCollectionText}.png`;
-
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-
-                    progressText.textContent = 'Collage download complete!';
-                    progressBar.style.width = '100%';
-                    setTimeout(() => {
-                        progressModal.style.display = 'none';
-                    }, 1500); // Délai augmenté pour garantir la visibilité
-                } catch (error) {
-                    console.error(`Error during download: ${error.message}`);
-                    errorDiv.textContent = `Failed to initiate download: ${error.message}`;
-                    setTimeout(() => (errorDiv.textContent = ''), 5000);
-                }
-            },
-            'image/png',
-            1.0,
-            (error) => {
-                console.error(`toBlob error: ${error ? error.message : 'Unknown error'}`);
-                errorDiv.textContent = 'Failed to generate collage image.';
-                setTimeout(() => (errorDiv.textContent = ''), 5000);
+                },
+                'image/png',
+                1.0
+            );
+        } catch (error) {
+            console.error(`toBlob error: ${error.message}`);
+            if (error.message.includes('Tainted canvases may not be exported')) {
+                errorDiv.textContent = 'Failed to generate collage: Images from external sources cannot be exported due to security restrictions. Try downloading individual assets.';
+            } else {
+                errorDiv.textContent = `Failed to generate collage image: ${error.message}`;
             }
-        );
+            setTimeout(() => (errorDiv.textContent = ''), 5000);
+        }
     } catch (error) {
         console.error(`Error generating collage: ${error.message}`);
         progressModal.style.display = 'none';
