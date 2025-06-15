@@ -90,7 +90,9 @@
                     </div>
                     <div class="update-content" id="inProgressContent">
                         <ul>
-                            <li>Full collection viewer</li>
+                            <li>Display name on hover</li>
+	                    <li>Link to NFTs</li>
+		            <li>Full collection viewer</li>
                             <li>Collection statistics (Floor / Volume / Owners)</li>
                             <li>Partner collections integration</li>
                             <li>Sales bot (Notifications / Automated alerts)</li>
@@ -560,6 +562,14 @@ async function fetchAllNFTs(ownerId, progressCallback) {
             }
 
             const assets = result.data?.public?.profileAssets || [];
+            // Débogage : Journaliser les noms des assets
+            assets.forEach((asset, index) => {
+                console.log(`Asset ${skip + index + 1}:`, {
+                    name: asset.name || 'No name',
+                    id: asset.id,
+                    collection: asset.collection?.name || 'No collection'
+                });
+            });
             allAssets = [...allAssets, ...assets];
             skip += first;
             hasMore = assets.length === first;
@@ -1568,7 +1578,7 @@ function displayNFTs(assets, selectedCollection) {
         }
 
         mediaElement.onerror = () => {
-            console.error('Media failed to load for asset:', asset.name || 'Unnamed');
+            console.error('Media failed to load for asset:', asset.name || 'Unnamed', { index, imageUrl });
             card.innerHTML = '';
             const placeholder = document.createElement('div');
             placeholder.className = 'media-placeholder';
@@ -1576,9 +1586,21 @@ function displayNFTs(assets, selectedCollection) {
             card.appendChild(placeholder);
         };
 
+        // Définir le texte du tooltip avec une vérification robuste
+        const tooltipText = (asset.name && asset.name.trim() !== '') 
+            ? asset.name 
+            : (asset.id ? `NFT #${asset.id}` : `Unnamed NFT #${index + 1}`);
+        console.log(`Tooltip for asset ${index + 1}:`, {
+            name: asset.name,
+            id: asset.id,
+            tooltipText,
+            collection: asset.collection?.name || 'No collection'
+        });
+
         const tooltip = document.createElement('span');
         tooltip.className = 'tooltip';
-        tooltip.textContent = asset.name && asset.name.trim() !== '' ? asset.name : 'Unnamed NFT';
+        tooltip.textContent = tooltipText;
+        tooltip.style.zIndex = '300'; // S'assurer que le tooltip est au-dessus des autres éléments
         card.appendChild(tooltip);
 
         // Ajout du bouton de téléchargement avec icône SVG
@@ -1586,12 +1608,13 @@ function displayNFTs(assets, selectedCollection) {
             const downloadButton = document.createElement('button');
             downloadButton.className = 'download-nft-btn';
             downloadButton.title = 'Download NFT';
+            downloadButton.style.zIndex = '100'; // Réduit pour éviter de recouvrir le tooltip
             downloadButton.innerHTML = `
                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
                 </svg>
             `;
-            downloadButton.onclick = () => downloadSingleNFT(imageUrl, asset.name || `NFT_${index + 1}`);
+            downloadButton.onclick = () => downloadSingleNFT(imageUrl, asset.name || `NFT_${index + 1}`, index);
             card.appendChild(downloadButton);
         }
 
