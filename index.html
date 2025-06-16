@@ -43,7 +43,7 @@
                 <span class="navbar-logo-text">CRONOS.WTF</span>
             </div>
             <div class="navbar-search">
-                <input type="text" id="usernameInput" placeholder="🔎 Search a Crypto.com/NFT profile" aria-describedby="usernameHelp" autocomplete="on" onfocus="this.placeholder=''" onblur="if(!this.value) this.placeholder='🔎 Search a Crypto.com/NFT profil'" />
+                <input type="text" id="usernameInput" placeholder="🔎 Search a profile" aria-describedby="usernameHelp" autocomplete="on" onfocus="this.placeholder=''" onblur="if(!this.value) this.placeholder='🔎 Search a profile'" />
                 <div class="suggestions" id="suggestions"></div>
             </div>
         </div>
@@ -233,7 +233,7 @@
                 <h4>Together, we make this possible</h4>
                 <span class="wallet-address">0x9829e44fd04f3788F27096875Df0D2772173Ab3d</span>
                 <div class="donation-progress">
-                    <span class="progress-label">Community Supports: <span id="progressPercent">50 </span>CRO</span>
+                    <span class="progress-label">Community Supports: <span id="progressPercent">1</span>%</span>
                     <div class="progress-bar">
                         <div class="progress" id="donationProgressBar" style="width: 1%;"></div>
                     </div>
@@ -1830,9 +1830,6 @@ async function downloadCollage() {
 
     window.isDownloading = true;
 
-    const isMobile = window.innerWidth <= 768;
-    const maxImagesMobile = 25; // Limite stricte pour mobile
-
     const cards = Array.from(nftContainer.querySelectorAll('.nft-card:not(.empty)'));
     if (cards.length === 0) {
         errorDiv.textContent = 'No assets to include in the collage.';
@@ -1844,22 +1841,16 @@ async function downloadCollage() {
         .map((card, index) => {
             const img = card.querySelector('img');
             const video = card.querySelector('video');
+            const mediaUrl = img ? img.src : video ? video.currentSrc : null;
             const mediaElement = img || video;
             const titleElement = card.querySelector('.tooltip');
             const title = titleElement ? titleElement.textContent : `NFT_${index + 1}`;
-            const mediaUrl = img ? img.src : video ? video.currentSrc : null;
             return { mediaUrl, mediaElement, title, index };
         })
-        .filter(({ mediaUrl, mediaElement }) => mediaUrl && mediaUrl !== 'https://via.placeholder.com/150' && !mediaUrl.endsWith('.mp4') && mediaElement.tagName.toLowerCase() === 'img' && mediaElement.complete && mediaElement.naturalWidth > 0);
+        .filter(({ mediaUrl }) => mediaUrl && mediaUrl !== 'https://via.placeholder.com/150' && !mediaUrl.endsWith('.mp4'));
 
     if (validCards.length === 0) {
         errorDiv.textContent = 'No valid image assets to include in the collage.';
-        window.isDownloading = false;
-        return;
-    }
-
-    if (isMobile && validCards.length > maxImagesMobile) {
-        errorDiv.textContent = `Too many assets (${validCards.length}) for collage on mobile. Please select a collection with ${maxImagesMobile} or fewer assets.`;
         window.isDownloading = false;
         return;
     }
@@ -1882,12 +1873,7 @@ async function downloadCollage() {
     };
 
     try {
-        console.log('Starting collage creation', {
-            isMobile,
-            numImages: validCards.length,
-            windowWidth: window.innerWidth,
-            windowHeight: window.innerHeight
-        });
+        console.log('Starting collage creation with', validCards.length, 'assets');
 
         const numCards = validCards.length;
         let cols = Math.ceil(Math.sqrt(numCards));
@@ -1898,28 +1884,21 @@ async function downloadCollage() {
                 rows = Math.ceil(numCards / cols);
             }
         }
-        const cardSize = isMobile ? 100 : 300; // Réduire à 100px sur mobile
+        const cardSize = 300;
         const gridWidth = cols * cardSize;
         const gridHeight = rows * cardSize;
 
-        const headerHeight = Math.min(Math.max(Math.round(gridWidth * 0.1), 40), 80);
+        // Ajuster dynamiquement les tailles
+        const headerHeight = Math.min(Math.max(Math.round(gridWidth * 0.1), 80), 150);
         const footerHeight = headerHeight;
-        const fontSize = Math.min(Math.max(Math.round(gridWidth / 20), 14), 28);
-        const imageSize = Math.min(Math.max(Math.round(headerHeight * 0.7), 30), 60);
-        const margin = Math.min(Math.max(Math.round(gridWidth / 50), 5), 15);
+        const fontSize = Math.min(Math.max(Math.round(gridWidth / 20), 20), 40);
+        const imageSize = Math.min(Math.max(Math.round(headerHeight * 0.7), 50), 100);
+        const margin = Math.min(Math.max(Math.round(gridWidth / 50), 10), 30);
 
         const canvas = document.createElement('canvas');
         canvas.width = gridWidth;
         canvas.height = gridHeight + headerHeight + footerHeight;
-        const ctx = canvas.getContext('2d', { willReadFrequently: false, alpha: true });
-
-        console.log('Canvas initialized', {
-            width: canvas.width,
-            height: canvas.height,
-            cardSize,
-            cols,
-            rows
-        });
+        const ctx = canvas.getContext('2d');
 
         ctx.fillStyle = '#000';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1932,14 +1911,10 @@ async function downloadCollage() {
         const profileImageUrl = profilePicture.src || loggedInUser?.avatar || '';
         if (profileImageUrl && profileImageUrl !== 'https://via.placeholder.com/150') {
             try {
-                if (isMobile && profilePicture.complete && profilePicture.naturalWidth > 0) {
-                    profileImage = await createImageBitmap(profilePicture);
-                } else {
-                    const response = await fetch(profileImageUrl, { cache: 'force-cache', mode: 'cors' });
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const blob = await response.blob();
-                    profileImage = await createImageBitmap(blob);
-                }
+                const response = await fetch(profileImageUrl, { cache: 'force-cache', mode: 'cors' });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const blob = await response.blob();
+                profileImage = await createImageBitmap(blob);
             } catch (error) {
                 console.warn(`Failed to load profile image: ${error.message}`);
             }
@@ -1954,7 +1929,7 @@ async function downloadCollage() {
             ctx.fillStyle = '#555';
             ctx.fillRect(profileImageX, profileImageY, imageSize, imageSize);
             ctx.fillStyle = '#fff';
-            ctx.font = '10px Geomanist-Bold';
+            ctx.font = '12px Geomanist-Bold';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('No Image', profileImageX + imageSize / 2, profileImageY + imageSize / 2);
@@ -1969,9 +1944,9 @@ async function downloadCollage() {
         const usernameX = profileImageX + imageSize + margin;
         const usernameY = profileImageY + imageSize / 2;
 
-        const maxTextWidth = canvas.width - (profileImageX + imageSize + margin * 2) - 60;
+        const maxTextWidth = canvas.width - (profileImageX + imageSize + margin * 2) - 100;
         let combinedText = `${usernameText} / ${collectionText.toUpperCase()}`;
-        while (ctx.measureText(combinedText).width > maxTextWidth && adjustedFontSize > 10) {
+        while (ctx.measureText(combinedText).width > maxTextWidth && adjustedFontSize > 16) {
             adjustedFontSize -= 2;
             ctx.font = `${adjustedFontSize}px Geomanist-Bold`;
         }
@@ -2026,6 +2001,7 @@ async function downloadCollage() {
             console.error(`Failed to load logo: ${error.message}`);
         }
 
+        // Logo et "CRONOS.WTF" à gauche
         const logoX = margin;
         const logoY = canvas.height - footerHeight + (footerHeight - imageSize) / 2;
         if (logoImage) {
@@ -2035,7 +2011,7 @@ async function downloadCollage() {
             ctx.fillStyle = '#555';
             ctx.fillRect(logoX, logoY, imageSize, imageSize);
             ctx.fillStyle = '#fff';
-            ctx.font = '10px Geomanist-Bold';
+            ctx.font = '12px Geomanist-Bold';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('No Logo', logoX + imageSize / 2, logoY + imageSize / 2);
@@ -2050,6 +2026,7 @@ async function downloadCollage() {
         ctx.fillStyle = '#fff';
         ctx.fillText(cronosText, cronosTextX, textY);
 
+        // "DEVELOPED BY UNSCOOP" à droite
         const devText = 'DEVELOPED BY ';
         const unscoopText = 'UNSCOOP';
         const devTextWidth = ctx.measureText(devText).width;
@@ -2064,22 +2041,6 @@ async function downloadCollage() {
         // --- Dessiner les images du collage ---
         let processed = 0;
         const failedImages = [];
-
-        const loadImageFromDOM = async (mediaElement, title, index) => {
-            try {
-                if (mediaElement.tagName.toLowerCase() !== 'img') {
-                    throw new Error('Media element is not an image');
-                }
-                if (!mediaElement.complete || mediaElement.naturalWidth === 0) {
-                    throw new Error('Image not fully loaded or invalid');
-                }
-                console.log(`Loading DOM image: ${title} (index ${index}, src: ${mediaElement.src})`);
-                return await createImageBitmap(mediaElement);
-            } catch (error) {
-                console.error(`Failed to load DOM image ${title} (index ${index}, src: ${mediaElement.src}): ${error.message}`);
-                return null;
-            }
-        };
 
         const loadImageFromUrl = async (mediaUrl, title, index) => {
             try {
@@ -2115,10 +2076,25 @@ async function downloadCollage() {
                     throw new Error(`Unsupported blob content type: ${blobContentType}`);
                 }
 
-                console.log(`Loading URL image: ${title} (index ${index}, url: ${mediaUrl})`);
                 return await createImageBitmap(blob);
             } catch (error) {
                 console.error(`Failed to load image ${title} (index ${index}, URL: ${mediaUrl}): ${error.message}`);
+                failedImages.push({ title, index, url: mediaUrl, error: error.message });
+                return null;
+            }
+        };
+
+        const loadImageFromDOM = async (mediaElement, title, index) => {
+            try {
+                if (mediaElement.tagName.toLowerCase() !== 'img') {
+                    throw new Error('Media element is not an image');
+                }
+                if (!mediaElement.complete || mediaElement.naturalWidth === 0) {
+                    throw new Error('Image not fully loaded or invalid');
+                }
+                return await createImageBitmap(mediaElement);
+            } catch (error) {
+                console.error(`Failed to load DOM image ${title} (index ${index}, src: ${mediaElement.src}): ${error.message}`);
                 return null;
             }
         };
@@ -2126,7 +2102,6 @@ async function downloadCollage() {
         for (let i = 0; i < validCards.length; i++) {
             if (window.isDownloadCancelled) {
                 console.log('Collage creation cancelled');
-                window.isDownloading = false;
                 return;
             }
 
@@ -2136,26 +2111,20 @@ async function downloadCollage() {
             const x = col * cardSize;
             const y = row * cardSize + headerHeight;
 
-            let imageBitmap = null;
-            if (isMobile) {
+            let imageBitmap = await loadImageFromUrl(mediaUrl, title, index);
+            if (!imageBitmap) {
+                console.log(`Falling back to DOM for ${title} (index ${index})`);
                 imageBitmap = await loadImageFromDOM(mediaElement, title, index);
-            } else {
-                imageBitmap = await loadImageFromUrl(mediaUrl, title, index);
-                if (!imageBitmap) {
-                    console.log(`Falling back to DOM for ${title} (index ${index}) on PC`);
-                    imageBitmap = await loadImageFromDOM(mediaElement, title, index);
-                }
             }
 
             if (imageBitmap) {
                 ctx.drawImage(imageBitmap, x, y, cardSize, cardSize);
                 imageBitmap.close();
             } else {
-                failedImages.push({ title, index, url: mediaUrl, error: 'Failed to load image' });
                 ctx.fillStyle = '#555';
                 ctx.fillRect(x, y, cardSize, cardSize);
                 ctx.fillStyle = '#fff';
-                ctx.font = '14px Geomanist-Bold';
+                ctx.font = '16px Geomanist-Bold';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText('Image Failed', x + cardSize / 2, y + cardSize / 2);
@@ -2169,100 +2138,84 @@ async function downloadCollage() {
 
         if (window.isDownloadCancelled) {
             console.log('Collage creation aborted');
-            window.isDownloading = false;
             return;
         }
 
         if (processed === 0) {
             progressModal.style.display = 'none';
             errorDiv.textContent = 'No valid assets could be included in the collage.';
-            window.isDownloading = false;
             return;
         }
 
         if (failedImages.length > 0) {
-            console.warn(`${failedImages.length} images failed to load, ${validCards.length - failedImages.length} loaded successfully:`, failedImages);
-            errorDiv.textContent = `${failedImages.length} image(s) failed to load. ${validCards.length - failedImages.length} loaded successfully.`;
+            console.warn(`${failedImages.length} images failed to load via URL, ${validCards.length - failedImages.length} loaded successfully:`, failedImages);
+            errorDiv.textContent = `${failedImages.length} image(s) failed to load via URL. ${validCards.length - failedImages.length} loaded successfully.`;
             setTimeout(() => (errorDiv.textContent = ''), 5000);
         }
 
         progressText.textContent = 'Generating collage image';
-        console.log('Attempting to generate blob for download');
-
-        // Vérifier si le canvas est tainted
+        console.log('Generating blob for download');
         try {
-            ctx.getImageData(0, 0, 1, 1);
-        } catch (error) {
-            console.error('Canvas is tainted:', error.message);
-            progressModal.style.display = 'none';
-            errorDiv.textContent = 'Failed to generate collage: Images from external sources cannot be exported due to security restrictions. Try downloading individual assets.';
-            window.isDownloading = false;
-            return;
-        }
-
-        // Ajouter un timeout pour toBlob
-        const toBlobPromise = new Promise((resolve, reject) => {
-            const timeoutId = setTimeout(() => {
-                reject(new Error('toBlob timed out after 30 seconds'));
-            }, 30000);
-
             canvas.toBlob(
                 (blob) => {
-                    clearTimeout(timeoutId);
-                    resolve(blob);
+                    try {
+                        if (!blob) {
+                            throw new Error('Failed to generate blob');
+                        }
+                        if (window.isDownloadCancelled) {
+                            console.log('Download cancelled before blob generation');
+                            return;
+                        }
+
+                        console.log('Blob generated, initiating download');
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+
+                        const cleanUsername = (currentUsername || 'unknown').replace(/[^a-zA-Z0-9-_]/g, '');
+                        const capitalizedUsername = cleanUsername.charAt(0).toUpperCase() + cleanUsername.slice(1);
+                        const cleanCollectionText = (collectionText || 'all_collections').replace(/[^a-zA-Z0-9-_]/g, '');
+                        a.download = `${capitalizedUsername}_${cleanCollectionText}.png`;
+
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+
+                        progressText.textContent = 'Collage download complete!';
+                        progressBar.style.width = '100%';
+                        setTimeout(() => {
+                            progressModal.style.display = 'none';
+                        }, 1500);
+                    } catch (error) {
+                        console.error(`Error during download: ${error.message}`);
+                        errorDiv.textContent = `Failed to initiate download: ${error.message}`;
+                        setTimeout(() => (errorDiv.textContent = ''), 5000);
+                    }
                 },
                 'image/png',
-                0.8 // Réduire la qualité pour moins de mémoire
+                1.0
             );
-        });
-
-        try {
-            const blob = await toBlobPromise;
-            if (!blob) {
-                throw new Error('Failed to generate blob');
-            }
-            if (window.isDownloadCancelled) {
-                console.log('Download cancelled before blob generation');
-                window.isDownloading = false;
-                return;
-            }
-
-            console.log('Blob generated successfully, size:', blob.size);
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-
-            const cleanUsername = (currentUsername || 'unknown').replace(/[^a-zA-Z0-9-_]/g, '');
-            const capitalizedUsername = cleanUsername.charAt(0).toUpperCase() + cleanUsername.slice(1);
-            const cleanCollectionText = (collectionText || 'all_collections').replace(/[^a-zA-Z0-9-_]/g, '');
-            a.download = `${capitalizedUsername}_${cleanCollectionText}.png`;
-
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            progressText.textContent = 'Collage download complete!';
-            progressBar.style.width = '100%';
-            setTimeout(() => {
-                progressModal.style.display = 'none';
-                window.isDownloading = false;
-            }, 1500);
         } catch (error) {
-            console.error(`Error during blob generation or download: ${error.message}`);
-            progressModal.style.display = 'none';
-            errorDiv.textContent = `Failed to generate collage image: ${error.message}`;
+            console.error(`toBlob error: ${error.message}`);
+            if (error.message.includes('Tainted canvases may not be exported')) {
+                errorDiv.textContent = 'Failed to generate collage: Images from external sources cannot be exported due to security restrictions. Try downloading individual assets.';
+            } else {
+                errorDiv.textContent = `Failed to generate collage image: ${error.message}`;
+            }
             setTimeout(() => (errorDiv.textContent = ''), 5000);
-            window.isDownloading = false;
         }
     } catch (error) {
         console.error(`Error generating collage: ${error.message}`);
         progressModal.style.display = 'none';
-        errorDiv.textContent = `Error generating collage: ${error.message}`;
+        errorDiv.textContent = `Failed to generate collage: ${error.message}`;
         setTimeout(() => (errorDiv.textContent = ''), 5000);
+    } finally {
+        console.log('Collage creation completed, resetting download state');
         window.isDownloading = false;
     }
 }
+
 function updateDisplay() {
     const cardSize = document.getElementById('cardSize')?.value || 'small';
     const nftContainer = document.getElementById('nftContainer');
