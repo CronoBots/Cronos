@@ -1837,17 +1837,19 @@ async function downloadCollage() {
         return;
     }
 
+    const isMobile = window.innerWidth <= 768;
+
     const validCards = cards
         .map((card, index) => {
             const img = card.querySelector('img');
             const video = card.querySelector('video');
-            const mediaUrl = img ? img.src : video ? video.currentSrc : null;
             const mediaElement = img || video;
             const titleElement = card.querySelector('.tooltip');
             const title = titleElement ? titleElement.textContent : `NFT_${index + 1}`;
+            const mediaUrl = img ? img.src : video ? video.currentSrc : null;
             return { mediaUrl, mediaElement, title, index };
         })
-        .filter(({ mediaUrl }) => mediaUrl && mediaUrl !== 'https://via.placeholder.com/150' && !mediaUrl.endsWith('.mp4'));
+        .filter(({ mediaUrl, mediaElement }) => mediaUrl && mediaUrl !== 'https://via.placeholder.com/150' && !mediaUrl.endsWith('.mp4') && mediaElement.tagName.toLowerCase() === 'img');
 
     if (validCards.length === 0) {
         errorDiv.textContent = 'No valid image assets to include in the collage.';
@@ -1884,16 +1886,16 @@ async function downloadCollage() {
                 rows = Math.ceil(numCards / cols);
             }
         }
-        const cardSize = 300;
+        const cardSize = isMobile ? 150 : 300; // Réduire la taille sur mobile pour moins de mémoire
         const gridWidth = cols * cardSize;
         const gridHeight = rows * cardSize;
 
         // Ajuster dynamiquement les tailles
-        const headerHeight = Math.min(Math.max(Math.round(gridWidth * 0.1), 80), 150);
+        const headerHeight = Math.min(Math.max(Math.round(gridWidth * 0.1), 50), 100);
         const footerHeight = headerHeight;
-        const fontSize = Math.min(Math.max(Math.round(gridWidth / 20), 20), 40);
-        const imageSize = Math.min(Math.max(Math.round(headerHeight * 0.7), 50), 100);
-        const margin = Math.min(Math.max(Math.round(gridWidth / 50), 10), 30);
+        const fontSize = Math.min(Math.max(Math.round(gridWidth / 20), 16), 30);
+        const imageSize = Math.min(Math.max(Math.round(headerHeight * 0.7), 40), 80);
+        const margin = Math.min(Math.max(Math.round(gridWidth / 50), 5), 20);
 
         const canvas = document.createElement('canvas');
         canvas.width = gridWidth;
@@ -1911,10 +1913,14 @@ async function downloadCollage() {
         const profileImageUrl = profilePicture.src || loggedInUser?.avatar || '';
         if (profileImageUrl && profileImageUrl !== 'https://via.placeholder.com/150') {
             try {
-                const response = await fetch(profileImageUrl, { cache: 'force-cache', mode: 'cors' });
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const blob = await response.blob();
-                profileImage = await createImageBitmap(blob);
+                if (isMobile && profilePicture.complete && profilePicture.naturalWidth > 0) {
+                    profileImage = await createImageBitmap(profilePicture);
+                } else {
+                    const response = await fetch(profileImageUrl, { cache: 'force-cache', mode: 'cors' });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const blob = await response.blob();
+                    profileImage = await createImageBitmap(blob);
+                }
             } catch (error) {
                 console.warn(`Failed to load profile image: ${error.message}`);
             }
@@ -1944,9 +1950,9 @@ async function downloadCollage() {
         const usernameX = profileImageX + imageSize + margin;
         const usernameY = profileImageY + imageSize / 2;
 
-        const maxTextWidth = canvas.width - (profileImageX + imageSize + margin * 2) - 100;
+        const maxTextWidth = canvas.width - (profileImageX + imageSize + margin * 2) - 80;
         let combinedText = `${usernameText} / ${collectionText.toUpperCase()}`;
-        while (ctx.measureText(combinedText).width > maxTextWidth && adjustedFontSize > 16) {
+        while (ctx.measureText(combinedText).width > maxTextWidth && adjustedFontSize > 12) {
             adjustedFontSize -= 2;
             ctx.font = `${adjustedFontSize}px Geomanist-Bold`;
         }
@@ -2001,7 +2007,6 @@ async function downloadCollage() {
             console.error(`Failed to load logo: ${error.message}`);
         }
 
-        // Logo et "CRONOS.WTF" à gauche
         const logoX = margin;
         const logoY = canvas.height - footerHeight + (footerHeight - imageSize) / 2;
         if (logoImage) {
@@ -2026,7 +2031,6 @@ async function downloadCollage() {
         ctx.fillStyle = '#fff';
         ctx.fillText(cronosText, cronosTextX, textY);
 
-        // "DEVELOPED BY UNSCOOP" à droite
         const devText = 'DEVELOPED BY ';
         const unscoopText = 'UNSCOOP';
         const devTextWidth = ctx.measureText(devText).width;
@@ -2041,6 +2045,21 @@ async function downloadCollage() {
         // --- Dessiner les images du collage ---
         let processed = 0;
         const failedImages = [];
+
+        const loadImageFromDOM = async (mediaElement, title, index) => {
+            try {
+                if (mediaElement.tagName.toLowerCase() !== 'img') {
+                    throw new Error('Media element is not an image');
+                }
+                if (!mediaElement.complete || mediaElement.naturalWidth === 0) {
+                    throw new Error('Image not fully loaded or invalid');
+                }
+                return await createImageBitmap(mediaElement);
+            } catch (error) {
+                console.error(`Failed to load DOM image ${title} (index ${index}, src: ${mediaElement.src}): ${error.message}`);
+                return null;
+            }
+        };
 
         const loadImageFromUrl = async (mediaUrl, title, index) => {
             try {
@@ -2079,22 +2098,6 @@ async function downloadCollage() {
                 return await createImageBitmap(blob);
             } catch (error) {
                 console.error(`Failed to load image ${title} (index ${index}, URL: ${mediaUrl}): ${error.message}`);
-                failedImages.push({ title, index, url: mediaUrl, error: error.message });
-                return null;
-            }
-        };
-
-        const loadImageFromDOM = async (mediaElement, title, index) => {
-            try {
-                if (mediaElement.tagName.toLowerCase() !== 'img') {
-                    throw new Error('Media element is not an image');
-                }
-                if (!mediaElement.complete || mediaElement.naturalWidth === 0) {
-                    throw new Error('Image not fully loaded or invalid');
-                }
-                return await createImageBitmap(mediaElement);
-            } catch (error) {
-                console.error(`Failed to load DOM image ${title} (index ${index}, src: ${mediaElement.src}): ${error.message}`);
                 return null;
             }
         };
@@ -2102,6 +2105,7 @@ async function downloadCollage() {
         for (let i = 0; i < validCards.length; i++) {
             if (window.isDownloadCancelled) {
                 console.log('Collage creation cancelled');
+                window.isDownloading = false;
                 return;
             }
 
@@ -2111,16 +2115,24 @@ async function downloadCollage() {
             const x = col * cardSize;
             const y = row * cardSize + headerHeight;
 
-            let imageBitmap = await loadImageFromUrl(mediaUrl, title, index);
-            if (!imageBitmap) {
-                console.log(`Falling back to DOM for ${title} (index ${index})`);
+            let imageBitmap = null;
+            if (isMobile) {
+                // Sur mobile, utiliser l'image du DOM
                 imageBitmap = await loadImageFromDOM(mediaElement, title, index);
+            } else {
+                // Sur PC, tenter d'utiliser l'URL pour une meilleure qualité
+                imageBitmap = await loadImageFromUrl(mediaUrl, title, index);
+                if (!imageBitmap) {
+                    console.log(`Falling back to DOM for ${title} (index ${index}) on PC`);
+                    imageBitmap = await loadImageFromDOM(mediaElement, title, index);
+                }
             }
 
             if (imageBitmap) {
                 ctx.drawImage(imageBitmap, x, y, cardSize, cardSize);
                 imageBitmap.close();
             } else {
+                failedImages.push({ title, index, url: mediaUrl, error: 'Failed to load image' });
                 ctx.fillStyle = '#555';
                 ctx.fillRect(x, y, cardSize, cardSize);
                 ctx.fillStyle = '#fff';
@@ -2138,18 +2150,20 @@ async function downloadCollage() {
 
         if (window.isDownloadCancelled) {
             console.log('Collage creation aborted');
+            window.isDownloading = false;
             return;
         }
 
         if (processed === 0) {
             progressModal.style.display = 'none';
             errorDiv.textContent = 'No valid assets could be included in the collage.';
+            window.isDownloading = false;
             return;
         }
 
         if (failedImages.length > 0) {
-            console.warn(`${failedImages.length} images failed to load via URL, ${validCards.length - failedImages.length} loaded successfully:`, failedImages);
-            errorDiv.textContent = `${failedImages.length} image(s) failed to load via URL. ${validCards.length - failedImages.length} loaded successfully.`;
+            console.warn(`${failedImages.length} images failed to load, ${validCards.length - failedImages.length} loaded successfully:`, failedImages);
+            errorDiv.textContent = `${failedImages.length} image(s) failed to load. ${validCards.length - failedImages.length} loaded successfully.`;
             setTimeout(() => (errorDiv.textContent = ''), 5000);
         }
 
@@ -2164,6 +2178,7 @@ async function downloadCollage() {
                         }
                         if (window.isDownloadCancelled) {
                             console.log('Download cancelled before blob generation');
+                            window.isDownloading = false;
                             return;
                         }
 
@@ -2186,11 +2201,13 @@ async function downloadCollage() {
                         progressBar.style.width = '100%';
                         setTimeout(() => {
                             progressModal.style.display = 'none';
+                            window.isDownloading = false;
                         }, 1500);
                     } catch (error) {
                         console.error(`Error during download: ${error.message}`);
                         errorDiv.textContent = `Failed to initiate download: ${error.message}`;
                         setTimeout(() => (errorDiv.textContent = ''), 5000);
+                        window.isDownloading = false;
                     }
                 },
                 'image/png',
@@ -2204,14 +2221,13 @@ async function downloadCollage() {
                 errorDiv.textContent = `Failed to generate collage image: ${error.message}`;
             }
             setTimeout(() => (errorDiv.textContent = ''), 5000);
+            window.isDownloading = false;
         }
     } catch (error) {
         console.error(`Error generating collage: ${error.message}`);
         progressModal.style.display = 'none';
         errorDiv.textContent = `Failed to generate collage: ${error.message}`;
         setTimeout(() => (errorDiv.textContent = ''), 5000);
-    } finally {
-        console.log('Collage creation completed, resetting download state');
         window.isDownloading = false;
     }
 }
