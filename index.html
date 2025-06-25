@@ -1529,27 +1529,25 @@ function filterNFTs() {
     displayNFTs(filteredNFTs, collectionValue);
 }
 
-function displayNFTs(assets, selectedCollection) {
+async function displayNFTs(assets, selectedCollection) {
     const container = document.getElementById('nftContainer');
     const countContainer = document.getElementById('nftCountContainer');
     const downloadZipButton = document.getElementById('downloadZipButton');
     const downloadCollageButton = document.getElementById('downloadCollageButton');
     const cardSize = document.getElementById('cardSize')?.value || 'small';
+    const errorDiv = document.getElementById('error');
 
-    // Vérification des éléments DOM pour éviter les erreurs
-    if (!container || !countContainer || !downloadZipButton || !downloadCollageButton) {
-        console.error('NFT container, count container, or download buttons not found');
+    if (!container || !countContainer || !downloadZipButton || !downloadCollageButton || !errorDiv) {
+        console.error('NFT container, count container, download buttons, or error div not found');
         return;
     }
 
     console.log('Displaying NFTs:', assets.length, 'assets for collection:', selectedCollection || 'All');
 
-    // Réinitialiser les conteneurs
     countContainer.innerHTML = '';
     container.innerHTML = '';
     container.className = `nft-container thumbnail-mode ${cardSize}-size`;
 
-    // Afficher le compteur d'assets
     const countElement = document.createElement('p');
     countElement.className = 'nft-count';
     countElement.innerHTML = selectedCollection
@@ -1557,11 +1555,30 @@ function displayNFTs(assets, selectedCollection) {
         : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets.`;
     countContainer.appendChild(countElement);
 
-    // Gérer la visibilité des boutons de téléchargement global
     downloadZipButton.style.display = assets.length > 0 && currentUsername ? 'inline-block' : 'none';
     downloadCollageButton.style.display = assets.length > 0 && currentUsername ? 'inline-block' : 'none';
     if (assets.length > 0) {
         downloadZipButton.textContent = `DOWNLOAD ${assets.length} ASSETS`;
+    }
+
+    // Test CORS pour la première image
+    if (assets.length > 0 && assets[0].cover?.url && assets[0].cover.url !== 'https://via.placeholder.com/150') {
+        try {
+            const testFetch = await fetch(assets[0].cover.url, { method: 'HEAD', mode: 'cors' });
+            if (!testFetch.ok) {
+                console.warn('CORS restriction detected, disabling collage and ZIP buttons');
+                downloadCollageButton.style.display = 'none';
+                downloadZipButton.style.display = 'none';
+                errorDiv.textContent = 'Collage and ZIP downloads are disabled due to CORS restrictions. Use individual download buttons.';
+                setTimeout(() => errorDiv.textContent = '', 5000);
+            }
+        } catch (error) {
+            console.error('CORS test failed:', error.message);
+            downloadCollageButton.style.display = 'none';
+            downloadZipButton.style.display = 'none';
+            errorDiv.textContent = 'Collage and ZIP downloads are disabled due to CORS restrictions. Use individual download buttons.';
+            setTimeout(() => errorDiv.textContent = '', 5000);
+        }
     }
 
     assets.forEach((asset, index) => {
@@ -1569,7 +1586,6 @@ function displayNFTs(assets, selectedCollection) {
         const card = document.createElement('div');
         card.className = 'nft-card';
 
-        // Créer l'élément média (image ou vidéo)
         let mediaElement;
         if (imageUrl.endsWith('.mp4')) {
             mediaElement = document.createElement('video');
@@ -1587,7 +1603,6 @@ function displayNFTs(assets, selectedCollection) {
             mediaElement.sizes = '(max-width: 768px) 80px, 200px';
         }
 
-        // Gestion des erreurs de chargement du média
         mediaElement.onerror = () => {
             console.error('Media failed to load for asset:', asset.name || 'Unnamed', { index, imageUrl });
             card.innerHTML = '';
@@ -1597,26 +1612,23 @@ function displayNFTs(assets, selectedCollection) {
             card.appendChild(placeholder);
         };
 
-        // Définir le texte du tooltip
         const tooltipText = (asset.name && asset.name.trim() !== '') 
             ? asset.name 
             : (asset.id ? `NFT #${asset.id}` : `Unnamed NFT #${index + 1}`);
         console.log(`Tooltip for asset ${index + 1}:`, {
             name: asset.name,
             id: asset.id,
-            collectionId: asset.collection?.id,
-            collectionName: asset.collection?.name || 'No collection',
-            tooltipText
+            tooltipText,
+            collection: asset.collection?.name || 'No collection',
+            imageUrl
         });
 
-        // Ajouter le tooltip
         const tooltip = document.createElement('span');
         tooltip.className = 'tooltip';
         tooltip.textContent = tooltipText;
         tooltip.style.zIndex = '300';
         card.appendChild(tooltip);
 
-        // Ajouter le bouton de téléchargement
         if (imageUrl !== 'https://via.placeholder.com/150') {
             const downloadButton = document.createElement('button');
             downloadButton.className = 'download-nft-btn';
@@ -1631,7 +1643,7 @@ function displayNFTs(assets, selectedCollection) {
             card.appendChild(downloadButton);
         }
 
-        // Ajouter le bouton Crypto.com avec le nouveau logo
+        // Ajouter le bouton Crypto.com avec un SVG intégré
         if (asset.id && asset.collection?.id) {
             const cryptoButton = document.createElement('a');
             cryptoButton.className = 'crypto-nft-btn';
@@ -1641,8 +1653,13 @@ function displayNFTs(assets, selectedCollection) {
             cryptoButton.setAttribute('aria-label', 'View NFT on Crypto.com');
             cryptoButton.style.zIndex = '100';
             cryptoButton.innerHTML = `
-                <img src="https://www.svgrepo.com/download/345746/external-link.svg" alt="Crypto.com Link" class="crypto-nft-icon" />
+                <svg viewBox="0 0 24 24" fill="currentColor" class="crypto-nft-icon" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 2l-2 2-2-2-8 8 8 8 2-2 2 2 8-8-8-8zm0 12l-2-2-2 2-4-4 4-4 2 2 2-2 4 4-4 4z"/>
+                </svg>
             `;
+            cryptoButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent click from bubbling up
+            });
             card.appendChild(cryptoButton);
         } else {
             console.warn(`Cannot add Crypto.com button: missing asset ID or collection ID`, {
@@ -1656,7 +1673,6 @@ function displayNFTs(assets, selectedCollection) {
         container.appendChild(card);
     });
 
-    // Mettre à jour la grille
     updateDisplay();
 }
 
@@ -1752,7 +1768,7 @@ async function downloadNFTsAsZip() {
     const filteredNFTs = Array.from(nftContainer.querySelectorAll('.nft-card')).map((card, index) => {
         const img = card.querySelector('img');
         const video = card.querySelector('video');
-        const titleElement = card.querySelector('h3') || card.querySelector('.tooltip');
+        const titleElement = card.querySelector('.tooltip');
         const title = titleElement ? titleElement.textContent : `NFT_${index + 1}`;
         return {
             url: img ? img.src : video ? video.src : null,
@@ -1782,6 +1798,8 @@ async function downloadNFTsAsZip() {
     };
 
     let processed = 0;
+    const errors = [];
+
     for (const [index, nft] of filteredNFTs.entries()) {
         if (isDownloadCancelled) {
             console.log('Download cancelled by user');
@@ -1789,23 +1807,31 @@ async function downloadNFTsAsZip() {
         }
 
         try {
-            const response = await fetch(nft.url);
+            const response = await fetch(nft.url, { mode: 'cors' });
             if (!response.ok) {
-                console.error(`Failed to fetch asset ${nft.name}: ${response.statusText}`);
-                continue;
+                throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
             }
+            const contentType = response.headers.get('content-type');
+            let extension = contentType.includes('video/mp4') ? 'mp4' :
+                           contentType.includes('image/jpeg') ? 'jpg' :
+                           contentType.includes('image/gif') ? 'gif' : 'png';
             const blob = await response.blob();
-            const extension = nft.url.endsWith('.mp4') ? 'mp4' : 'png';
-            const sanitizedName = sanitizeFileNameForZip(nft.name);
+            if (!blob || blob.size === 0) {
+                throw new Error('Received empty or invalid blob');
+            }
+            console.log(`Downloading ${nft.name}: URL=${nft.url}, Content-Type=${contentType}, Status=${response.status}`);
+            const sanitizedName = sanitizeFileNameForZip(nft.name, index);
             const fileName = `${sanitizedName}.${extension}`;
             zip.file(fileName, blob);
             processed++;
-            const progressPercent = (processed / filteredNFTs.length) * 100;
-            progressBar.style.width = `${progressPercent}%`;
-            progressText.textContent = `Downloading: ${processed}/${filteredNFTs.length}`;
         } catch (error) {
             console.error(`Error downloading ${nft.name}: ${error.message}`);
+            errors.push(`Failed to download ${nft.name}: ${error.message}`);
         }
+
+        const progressPercent = (processed / filteredNFTs.length) * 100;
+        progressBar.style.width = `${progressPercent}%`;
+        progressText.textContent = `Downloading: ${processed}/${filteredNFTs.length}`;
     }
 
     if (isDownloadCancelled) {
@@ -1815,8 +1841,17 @@ async function downloadNFTsAsZip() {
 
     if (processed === 0) {
         progressModal.style.display = 'none';
-        errorDiv.textContent = 'No assets could be downloaded';
+        errorDiv.textContent = 'No assets could be downloaded.';
+        if (errors.length > 0) {
+            errorDiv.textContent += ` Errors: ${errors.join('; ')}`;
+        }
+        setTimeout(() => errorDiv.textContent = '', 5000);
         return;
+    }
+
+    if (errors.length > 0) {
+        errorDiv.textContent = `${errors.length} asset(s) failed to download. ${processed} downloaded successfully.`;
+        setTimeout(() => errorDiv.textContent = '', 5000);
     }
 
     progressText.textContent = 'Generating ZIP file';
@@ -1831,7 +1866,8 @@ async function downloadNFTsAsZip() {
     } catch (error) {
         console.error(`Error generating ZIP: ${error.message}`);
         progressModal.style.display = 'none';
-        errorDiv.textContent = 'Failed to generate ZIP file';
+        errorDiv.textContent = `Failed to generate ZIP file: ${error.message}`;
+        setTimeout(() => errorDiv.textContent = '', 5000);
     }
 }
 
@@ -1906,7 +1942,7 @@ async function downloadCollage() {
         console.log('Starting collage creation with', validCards.length, 'assets');
 
         const numCards = validCards.length;
-        let cols = Math.ceil(Math.sqrt(numCards));
+        let cols = Math.round(Math.sqrt(numCards));
         let rows = Math.ceil(numCards / cols);
         if (numCards > 1) {
             while (rows * (cols - 1) >= numCards && cols > 1) {
@@ -1918,7 +1954,6 @@ async function downloadCollage() {
         const gridWidth = cols * cardSize;
         const gridHeight = rows * cardSize;
 
-        // Ajuster dynamiquement les tailles
         const headerHeight = Math.min(Math.max(Math.round(gridWidth * 0.1), 80), 150);
         const footerHeight = headerHeight;
         const fontSize = Math.min(Math.max(Math.round(gridWidth / 20), 20), 40);
@@ -2031,7 +2066,6 @@ async function downloadCollage() {
             console.error(`Failed to load logo: ${error.message}`);
         }
 
-        // Logo et "CRONOS.WTF" à gauche
         const logoX = margin;
         const logoY = canvas.height - footerHeight + (footerHeight - imageSize) / 2;
         if (logoImage) {
@@ -2056,7 +2090,6 @@ async function downloadCollage() {
         ctx.fillStyle = '#fff';
         ctx.fillText(cronosText, cronosTextX, textY);
 
-        // "DEVELOPED BY UNSCOOP" à droite
         const devText = 'DEVELOPED BY ';
         const unscoopText = 'UNSCOOP';
         const devTextWidth = ctx.measureText(devText).width;
@@ -2125,6 +2158,7 @@ async function downloadCollage() {
                 return await createImageBitmap(mediaElement);
             } catch (error) {
                 console.error(`Failed to load DOM image ${title} (index ${index}, src: ${mediaElement.src}): ${error.message}`);
+                failedImages.push({ title, index, url: mediaElement.src, error: error.message });
                 return null;
             }
         };
@@ -2174,12 +2208,13 @@ async function downloadCollage() {
         if (processed === 0) {
             progressModal.style.display = 'none';
             errorDiv.textContent = 'No valid assets could be included in the collage.';
+            window.isDownloading = false;
             return;
         }
 
         if (failedImages.length > 0) {
-            console.warn(`${failedImages.length} images failed to load via URL, ${validCards.length - failedImages.length} loaded successfully:`, failedImages);
-            errorDiv.textContent = `${failedImages.length} image(s) failed to load via URL. ${validCards.length - failedImages.length} loaded successfully.`;
+            console.warn(`${failedImages.length} images failed to load:`, failedImages);
+            errorDiv.textContent = `${failedImages.length} image(s) failed to load. ${validCards.length - failedImages.length} loaded successfully.`;
             setTimeout(() => (errorDiv.textContent = ''), 5000);
         }
 
@@ -2231,7 +2266,7 @@ async function downloadCollage() {
             if (error.message.includes('Tainted canvases may not be exported')) {
                 errorDiv.textContent = 'Failed to generate collage: Images from external sources cannot be exported due to security restrictions. Try downloading individual assets.';
             } else {
-                errorDiv.textContent = `Failed to generate collage image: ${error.message}`;
+                errorDiv.textContent = `Failed to generate collage: ${error.message}`;
             }
             setTimeout(() => (errorDiv.textContent = ''), 5000);
         }
