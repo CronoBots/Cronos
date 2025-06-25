@@ -225,7 +225,7 @@
         <div class="footer-left">
             <div class="footer-logo-container">
                 <img src="CRONOBOTS.png" alt="Cronobots Logo" class="footer-logo">
-                <p class="footer-text">DEVELOPED BY <a href="https://x.com/Cronos_WTF" target="_blank" rel="noopener noreferrer" class="footer-link">UNSCOOP</a></p>
+                <p class="footer-text">DEVELOPED BY <a href="https://x.com/LoadedPixel_CDC" target="_blank" rel="noopener noreferrer" class="footer-link">UNSCOOP</a></p>
             </div>
         </div>
         <div class="footer-center">
@@ -233,9 +233,9 @@
                 <h4>Together, we make this possible</h4>
                 <span class="wallet-address">0x9829e44fd04f3788F27096875Df0D2772173Ab3d</span>
                 <div class="donation-progress">
-                    <span class="progress-label">Community Supports: <span id="progressPercent">1043</span> CRO</span>
+                    <span class="progress-label">Community Supports: <span id="progressPercent">1143</span>CRO</span>
                     <div class="progress-bar">
-                        <div class="progress" id="donationProgressBar" style="width: 7%;"></div>
+                        <div class="progress" id="donationProgressBar" style="width: 8%;"></div>
                     </div>
                 </div>
             </div>
@@ -290,6 +290,7 @@ const nftQuery = `
                     url
                 }
                 collection {
+                    id
                     name
                 }
                 isExternalNft
@@ -1535,6 +1536,7 @@ function displayNFTs(assets, selectedCollection) {
     const downloadCollageButton = document.getElementById('downloadCollageButton');
     const cardSize = document.getElementById('cardSize')?.value || 'small';
 
+    // Vérification des éléments DOM pour éviter les erreurs
     if (!container || !countContainer || !downloadZipButton || !downloadCollageButton) {
         console.error('NFT container, count container, or download buttons not found');
         return;
@@ -1542,10 +1544,12 @@ function displayNFTs(assets, selectedCollection) {
 
     console.log('Displaying NFTs:', assets.length, 'assets for collection:', selectedCollection || 'All');
 
+    // Réinitialiser les conteneurs
     countContainer.innerHTML = '';
     container.innerHTML = '';
     container.className = `nft-container thumbnail-mode ${cardSize}-size`;
 
+    // Afficher le compteur d'assets
     const countElement = document.createElement('p');
     countElement.className = 'nft-count';
     countElement.innerHTML = selectedCollection
@@ -1553,6 +1557,7 @@ function displayNFTs(assets, selectedCollection) {
         : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets.`;
     countContainer.appendChild(countElement);
 
+    // Gérer la visibilité des boutons de téléchargement global
     downloadZipButton.style.display = assets.length > 0 && currentUsername ? 'inline-block' : 'none';
     downloadCollageButton.style.display = assets.length > 0 && currentUsername ? 'inline-block' : 'none';
     if (assets.length > 0) {
@@ -1564,6 +1569,7 @@ function displayNFTs(assets, selectedCollection) {
         const card = document.createElement('div');
         card.className = 'nft-card';
 
+        // Créer l'élément média (image ou vidéo)
         let mediaElement;
         if (imageUrl.endsWith('.mp4')) {
             mediaElement = document.createElement('video');
@@ -1581,6 +1587,7 @@ function displayNFTs(assets, selectedCollection) {
             mediaElement.sizes = '(max-width: 768px) 80px, 200px';
         }
 
+        // Gestion des erreurs de chargement du média
         mediaElement.onerror = () => {
             console.error('Media failed to load for asset:', asset.name || 'Unnamed', { index, imageUrl });
             card.innerHTML = '';
@@ -1590,31 +1597,33 @@ function displayNFTs(assets, selectedCollection) {
             card.appendChild(placeholder);
         };
 
-        // Définir le texte du tooltip avec une vérification robuste
+        // Définir le texte du tooltip
         const tooltipText = (asset.name && asset.name.trim() !== '') 
             ? asset.name 
             : (asset.id ? `NFT #${asset.id}` : `Unnamed NFT #${index + 1}`);
         console.log(`Tooltip for asset ${index + 1}:`, {
             name: asset.name,
             id: asset.id,
-            tooltipText,
-            collection: asset.collection?.name || 'No collection'
+            collectionId: asset.collection?.id,
+            collectionName: asset.collection?.name || 'No collection',
+            tooltipText
         });
 
+        // Ajouter le tooltip
         const tooltip = document.createElement('span');
         tooltip.className = 'tooltip';
         tooltip.textContent = tooltipText;
-        tooltip.style.zIndex = '300'; // S'assurer que le tooltip est au-dessus des autres éléments
+        tooltip.style.zIndex = '300';
         card.appendChild(tooltip);
 
-        // Ajout du bouton de téléchargement avec icône SVG
+        // Ajouter le bouton de téléchargement
         if (imageUrl !== 'https://via.placeholder.com/150') {
             const downloadButton = document.createElement('button');
             downloadButton.className = 'download-nft-btn';
             downloadButton.title = 'Download NFT';
-            downloadButton.style.zIndex = '100'; // Réduit pour éviter de recouvrir le tooltip
+            downloadButton.style.zIndex = '100';
             downloadButton.innerHTML = `
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                     <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
                 </svg>
             `;
@@ -1622,11 +1631,32 @@ function displayNFTs(assets, selectedCollection) {
             card.appendChild(downloadButton);
         }
 
+        // Ajouter le bouton Crypto.com avec le nouveau logo
+        if (asset.id && asset.collection?.id) {
+            const cryptoButton = document.createElement('a');
+            cryptoButton.className = 'crypto-nft-btn';
+            cryptoButton.title = 'View on Crypto.com';
+            cryptoButton.href = `https://crypto.com/nft/collection/${asset.collection.id}?tab=items&asset=${asset.id}`;
+            cryptoButton.target = '_blank';
+            cryptoButton.setAttribute('aria-label', 'View NFT on Crypto.com');
+            cryptoButton.style.zIndex = '100';
+            cryptoButton.innerHTML = `
+                <img src="https://www.svgrepo.com/download/345746/external-link.svg" alt="Crypto.com Link" class="crypto-nft-icon" />
+            `;
+            card.appendChild(cryptoButton);
+        } else {
+            console.warn(`Cannot add Crypto.com button: missing asset ID or collection ID`, {
+                assetId: asset.id,
+                collectionId: asset.collection?.id,
+                collectionName: asset.collection?.name
+            });
+        }
+
         card.appendChild(mediaElement);
         container.appendChild(card);
     });
 
-    // Appeler updateDisplay après avoir créé les cartes pour recalculer la grille
+    // Mettre à jour la grille
     updateDisplay();
 }
 
