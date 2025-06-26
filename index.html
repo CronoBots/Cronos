@@ -1561,7 +1561,6 @@ async function displayNFTs(assets, selectedCollection) {
         downloadZipButton.textContent = `DOWNLOAD ${assets.length} ASSETS`;
     }
 
-    // Test CORS pour la première image
     if (assets.length > 0 && assets[0].cover?.url && assets[0].cover.url !== 'https://via.placeholder.com/150') {
         try {
             const testFetch = await fetch(assets[0].cover.url, { method: 'HEAD', mode: 'cors' });
@@ -1635,16 +1634,15 @@ async function displayNFTs(assets, selectedCollection) {
             downloadButton.title = 'Download NFT';
             downloadButton.style.zIndex = '100';
             downloadButton.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
-                    <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />
-                    <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="#000000" class="size-4">
+                    <path d="M8.75 2.75a.75.75 0 0 0-1.5 0v5.69L5.03 6.22a.75.75 0 0 0-1.06 1.06l3.5 3.5a.75.75 0 0 0 1.06 0l3.5-3.5a.75.75 0 0 0-1.06-1.06L8.75 8.44V2.75Z" />
+                    <path d="M3.5 9.75a.75.75 0 0 0-1.5 0v1.5A2.75 2.75 0 0 0 4.75 14h6.5A2.75 2.75 0 0 0 14 11.25v-1.5a.75.75 0 0 0-1.5 0v1.5c0 .69-.56 1.25-1.25 1.25h-6.5c-.69 0-1.25-.56-1.25-1.25v-1.5Z" />
                 </svg>
             `;
             downloadButton.onclick = () => downloadSingleNFT(imageUrl, asset.name || `NFT_${index + 1}`, index);
             card.appendChild(downloadButton);
         }
 
-        // Ajouter le bouton Crypto.com avec le nouveau SVG
         if (asset.id && asset.collection?.id) {
             const cryptoButton = document.createElement('a');
             cryptoButton.className = 'crypto-nft-btn';
@@ -1654,13 +1652,13 @@ async function displayNFTs(assets, selectedCollection) {
             cryptoButton.setAttribute('aria-label', 'View NFT on Crypto.com');
             cryptoButton.style.zIndex = '100';
             cryptoButton.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
-                    <path d="M12.232 4.232a2.5 2.5 0 0 1 3.536 3.536l-1.225 1.224a.75.75 0 0 0 1.061 1.06l1.224-1.224a4 4 0 0 0-5.656-5.656l-3 3a4 4 0 0 0 .225 5.865.75.75 0 0 0 .977-1.138 2.5 2.5 0 0 1-.142-3.667l3-3Z" />
-                    <path d="M11.603 7.963a.75.75 0 0 0-.977 1.138 2.5 2.5 0 0 1 .142 3.667l-3 3a2.5 2.5 0 0 1-3.536-3.536l1.225-1.224a.75.75 0 0 0-1.061-1.06l-1.224 1.224a4 4 0 1 0 5.656 5.656l3-3a4 4 0 0 0-.225-5.865Z" />
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="#000000" class="size-3">
+                    <path fill-rule="evenodd" d="M8.914 6.025a.75.75 0 0 1 1.06 0 3.5 3.5 0 0 1 0 4.95l-2 2a3.5 3.5 0 0 1-5.396-4.402.75.75 0 0 1 1.251.827 2 2 0 0 0 3.085 2.514l2-2a2 2 0 0 0 0-2.828.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                    <path fill-rule="evenodd" d="M7.086 9.975a.75.75 0 0 1-1.06 0 3.5 3.5 0 0 1 0-4.95l2-2a3.5 3.5 0 0 1 5.396 4.402.75.75 0 0 1-1.251-.827 2 2 0 0 0-3.085-2.514l-2 2a2 2 0 0 0 0 2.828.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
                 </svg>
             `;
             cryptoButton.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent click from bubbling up
+                e.stopPropagation();
             });
             card.appendChild(cryptoButton);
         } else {
