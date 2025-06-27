@@ -1530,6 +1530,9 @@ function filterNFTs() {
 }
 
 async function displayNFTs(assets, selectedCollection) {
+    const callId = Math.random().toString(36).substring(2, 10); // Unique call ID for debugging
+    console.log(`displayNFTs [${callId}] called with ${assets.length} assets for collection: ${selectedCollection || 'All'}`);
+
     const container = document.getElementById('nftContainer');
     const countContainer = document.getElementById('nftCountContainer');
     const downloadZipButton = document.getElementById('downloadZipButton');
@@ -1542,12 +1545,21 @@ async function displayNFTs(assets, selectedCollection) {
         return;
     }
 
-    console.log('Displaying NFTs:', assets.length, 'assets for collection:', selectedCollection || 'All');
+    // Check for duplicate asset IDs
+    const uniqueIds = new Set(assets.map(a => a.id));
+    if (uniqueIds.size < assets.length) {
+        console.warn(`Duplicate assets detected: ${assets.length - uniqueIds.size} duplicates`);
+        // Remove duplicates by ID
+        assets = Array.from(new Map(assets.map(asset => [asset.id, asset])).values());
+        console.log(`Deduplicated assets: ${assets.length} remaining`);
+    }
 
+    // Clear containers
     countContainer.innerHTML = '';
     container.innerHTML = '';
     container.className = `nft-container thumbnail-mode ${cardSize}-size`;
 
+    // Update count display
     const countElement = document.createElement('p');
     countElement.className = 'nft-count';
     countElement.innerHTML = selectedCollection
@@ -1555,12 +1567,14 @@ async function displayNFTs(assets, selectedCollection) {
         : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets.`;
     countContainer.appendChild(countElement);
 
+    // Update download buttons
     downloadZipButton.style.display = assets.length > 0 && currentUsername ? 'inline-block' : 'none';
     downloadCollageButton.style.display = assets.length > 0 && currentUsername ? 'inline-block' : 'none';
     if (assets.length > 0) {
         downloadZipButton.textContent = `DOWNLOAD ${assets.length} ASSETS`;
     }
 
+    // CORS check for first asset
     if (assets.length > 0 && assets[0].cover?.url && assets[0].cover.url !== 'https://via.placeholder.com/150') {
         try {
             const testFetch = await fetch(assets[0].cover.url, { method: 'HEAD', mode: 'cors' });
@@ -1580,10 +1594,12 @@ async function displayNFTs(assets, selectedCollection) {
         }
     }
 
+    // Create and append NFT cards
     assets.forEach((asset, index) => {
         const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
         const card = document.createElement('div');
         card.className = 'nft-card';
+        card.dataset.id = asset.id; // Add ID for debugging duplicates
 
         let mediaElement;
         if (imageUrl.endsWith('.mp4')) {
@@ -1614,9 +1630,9 @@ async function displayNFTs(assets, selectedCollection) {
         const tooltipText = (asset.name && asset.name.trim() !== '') 
             ? asset.name 
             : (asset.id ? `NFT #${asset.id}` : `Unnamed NFT #${index + 1}`);
-        console.log(`Tooltip for asset ${index + 1}:`, {
-            name: asset.name,
+        console.log(`Creating card [${callId}] for asset ${index + 1}:`, {
             id: asset.id,
+            name: asset.name,
             tooltipText,
             collection: asset.collection?.name || 'No collection',
             imageUrl
@@ -1672,6 +1688,14 @@ async function displayNFTs(assets, selectedCollection) {
         card.appendChild(mediaElement);
         container.appendChild(card);
     });
+
+    // Verify no duplicate cards in DOM
+    const cards = container.querySelectorAll('.nft-card');
+    const cardIds = Array.from(cards).map(card => card.dataset.id);
+    const uniqueCardIds = new Set(cardIds);
+    if (uniqueCardIds.size < cardIds.length) {
+        console.error(`Duplicate cards in DOM: ${cardIds.length - uniqueCardIds.size} duplicates`);
+    }
 
     updateDisplay();
 }
