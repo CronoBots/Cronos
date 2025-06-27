@@ -1411,6 +1411,21 @@ function populateCollectionFilter(nfts) {
     });
 }
 
+// Debounce function to limit rapid calls
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+const debouncedFilterNFTs = debounce(filterNFTs, 100);
+
 function filterNFTs() {
     const collectionFilter = document.getElementById('collectionFilter');
     const chainFilter = document.getElementById('chainFilter');
@@ -1424,7 +1439,7 @@ function filterNFTs() {
         return;
     }
 
-    console.log('Filtering NFTs with', allNFTs.length, 'assets', {
+    console.log('filterNFTs called with', allNFTs.length, 'assets', {
         collection: collectionFilter.value,
         chain: chainFilter.value,
         curated: curatedFilter.value
@@ -1441,6 +1456,11 @@ function filterNFTs() {
     let filteredNFTs = [...allNFTs];
 
     const collectionValue = collectionFilter.value;
+
+    // Block change events during programmatic updates
+    let isProgrammaticUpdate = false;
+    const blockEvents = () => { isProgrammaticUpdate = true; };
+    const unblockEvents = () => { isProgrammaticUpdate = false; };
 
     if (collectionValue) {
         filteredNFTs = filteredNFTs.filter(nft => nft.collection?.name === collectionValue);
@@ -1462,28 +1482,31 @@ function filterNFTs() {
             if (isExternalNft !== false) allCronosPos = false;
         });
 
+        blockEvents();
         curatedFilter.value = allCurated ? 'true' : allNonCurated ? 'false' : '';
         curatedFilter.disabled = true;
         chainFilter.value = allCronos ? 'CRONOS' : allCronosPos ? 'CRONOS_POS' : '';
         chainFilter.disabled = true;
-        hasSelectedSpecificCollection = true; // Indiquer qu'une collection spécifique a été sélectionnée
+        unblockEvents();
+
+        hasSelectedSpecificCollection = true;
         console.log('CURATION filter: value=', curatedFilter.value, 'disabled=', curatedFilter.disabled);
         console.log('CHAINS filter: value=', chainFilter.value, 'disabled=', chainFilter.disabled);
     } else {
-        // Lorsque "ALL Collections" est sélectionné
+        blockEvents();
         chainFilter.disabled = false;
         curatedFilter.disabled = false;
         if (hasSelectedSpecificCollection) {
-            // Réinitialiser les filtres à "ALL" une seule fois après une collection spécifique
             chainFilter.value = '';
             curatedFilter.value = '';
-            hasSelectedSpecificCollection = false; // Réinitialiser pour éviter une nouvelle réinitialisation
+            hasSelectedSpecificCollection = false;
             console.log('ALL Collections selected after specific collection: CURATION reset to value=', curatedFilter.value, 'disabled=', curatedFilter.disabled);
             console.log('ALL Collections selected after specific collection: CHAINS reset to value=', chainFilter.value, 'disabled=', curatedFilter.disabled);
         } else {
             console.log('ALL Collections selected: CURATION value=', curatedFilter.value, 'disabled=', curatedFilter.disabled);
             console.log('ALL Collections selected: CHAINS value=', chainFilter.value, 'disabled=', chainFilter.disabled);
         }
+        unblockEvents();
     }
 
     // Apply CHAINS filter if a value is selected
@@ -1521,14 +1544,19 @@ function filterNFTs() {
         filteredNFTs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
 
-    console.log('Final filtered NFTs:', filteredNFTs.length, 'for collection:', collectionValue || 'All', 'chain:', chainFilter.value || 'All', 'curated:', curatedFilter.value || 'All');
+    // Remove duplicates from filteredNFTs
+    const uniqueNFTs = Array.from(new Map(filteredNFTs.map(nft => [nft.id, nft])).values());
+    if (uniqueNFTs.length < filteredNFTs.length) {
+        console.warn(`Removed ${filteredNFTs.length - uniqueNFTs.length} duplicate NFTs`);
+    }
+
+    console.log('Final filtered NFTs:', uniqueNFTs.length, 'for collection:', collectionValue || 'All', 'chain:', chainFilter.value || 'All', 'curated:', curatedFilter.value || 'All');
 
     collectionTitle.textContent = collectionValue || 'All Collections';
     collectionTitle.classList.add('visible');
 
-    displayNFTs(filteredNFTs, collectionValue);
+    displayNFTs(uniqueNFTs, collectionValue);
 }
-
 async function displayNFTs(assets, selectedCollection) {
     const callId = Math.random().toString(36).substring(2, 10); // Unique call ID for debugging
     console.log(`displayNFTs [${callId}] called with ${assets.length} assets for collection: ${selectedCollection || 'All'}`);
