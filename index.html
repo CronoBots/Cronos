@@ -546,6 +546,7 @@ async function fetchAllNFTs(ownerId, progressCallback) {
     const first = 60;
     let skip = 0;
     let allAssets = [];
+    const seenIds = new Set(); // Ensemble pour suivre les IDs des NFTs
     let hasMore = true;
 
     while (hasMore && !isProfileLoadingCancelled) {
@@ -567,15 +568,25 @@ async function fetchAllNFTs(ownerId, progressCallback) {
             }
 
             const assets = result.data?.public?.profileAssets || [];
-            // Débogage : Journaliser les noms des assets
-            assets.forEach((asset, index) => {
+            // Filtrer les doublons en fonction de l'ID
+            const uniqueAssets = assets.filter(asset => {
+                if (!asset.id || seenIds.has(asset.id)) {
+                    console.log(`Doublon détecté pour l'ID ${asset.id}, ignoré`);
+                    return false;
+                }
+                seenIds.add(asset.id);
+                return true;
+            });
+
+            uniqueAssets.forEach((asset, index) => {
                 console.log(`Asset ${skip + index + 1}:`, {
                     name: asset.name || 'No name',
                     id: asset.id,
                     collection: asset.collection?.name || 'No collection'
                 });
             });
-            allAssets = [...allAssets, ...assets];
+
+            allAssets = [...allAssets, ...uniqueAssets];
             skip += first;
             hasMore = assets.length === first;
 
@@ -588,9 +599,10 @@ async function fetchAllNFTs(ownerId, progressCallback) {
         }
     }
 
+    console.log(`Total NFTs récupérés (après suppression des doublons) : ${allAssets.length}`);
     return allAssets;
 }
-
+	    
 async function searchProfiles(query) {
     const suggestions = document.getElementById('suggestions');
     if (!suggestions) {
