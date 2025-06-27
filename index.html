@@ -1530,6 +1530,8 @@ function filterNFTs() {
 }
 
 async function displayNFTs(assets, selectedCollection) {
+    console.log(`displayNFTs called with ${assets?.length || 0} assets for collection: ${selectedCollection || 'All'} at ${new Date().toISOString()}`);
+    
     const container = document.getElementById('nftContainer');
     const countContainer = document.getElementById('nftCountContainer');
     const downloadZipButton = document.getElementById('downloadZipButton');
@@ -1537,17 +1539,43 @@ async function displayNFTs(assets, selectedCollection) {
     const cardSize = document.getElementById('cardSize')?.value || 'small';
     const errorDiv = document.getElementById('error');
 
+    // Vérifier que tous les éléments DOM nécessaires existent
     if (!container || !countContainer || !downloadZipButton || !downloadCollageButton || !errorDiv) {
-        console.error('NFT container, count container, download buttons, or error div not found');
+        console.error('Required DOM elements not found');
+        errorDiv.textContent = 'Internal error: UI elements missing.';
         return;
     }
 
-    console.log('Displaying NFTs:', assets.length, 'assets for collection:', selectedCollection || 'All');
-
-    countContainer.innerHTML = '';
+    // Vider explicitement le conteneur
     container.innerHTML = '';
+    if (container.children.length > 0) {
+        console.warn('Container was not properly cleared:', container.children.length);
+    }
+
+    // Réinitialiser le conteneur de comptage
+    countContainer.innerHTML = '';
+
+    // Mettre à jour la classe du conteneur pour la taille des cartes
     container.className = `nft-container thumbnail-mode ${cardSize}-size`;
 
+    // Vérifier que les assets sont valides
+    if (!assets || !Array.isArray(assets)) {
+        console.warn('Invalid or empty assets array:', assets);
+        countContainer.innerHTML = `<p class="nft-count"><span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">0</span> assets.</p>`;
+        downloadZipButton.style.display = 'none';
+        downloadCollageButton.style.display = 'none';
+        updateDisplay();
+        return;
+    }
+
+    // Supprimer les doublons dans les assets (par sécurité)
+    const uniqueAssets = Array.from(new Map(assets.map(asset => [asset.id, asset])).values());
+    if (uniqueAssets.length !== assets.length) {
+        console.warn(`Removed ${assets.length - uniqueAssets.length} duplicate NFTs in displayNFTs`);
+        assets = uniqueAssets;
+    }
+
+    // Mettre à jour le compteur d'actifs
     const countElement = document.createElement('p');
     countElement.className = 'nft-count';
     countElement.innerHTML = selectedCollection
@@ -1555,12 +1583,14 @@ async function displayNFTs(assets, selectedCollection) {
         : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets.`;
     countContainer.appendChild(countElement);
 
+    // Afficher ou masquer les boutons de téléchargement
     downloadZipButton.style.display = assets.length > 0 && currentUsername ? 'inline-block' : 'none';
     downloadCollageButton.style.display = assets.length > 0 && currentUsername ? 'inline-block' : 'none';
     if (assets.length > 0) {
         downloadZipButton.textContent = `DOWNLOAD ${assets.length} ASSETS`;
     }
 
+    // Vérifier les restrictions CORS pour le premier asset (si disponible)
     if (assets.length > 0 && assets[0].cover?.url && assets[0].cover.url !== 'https://via.placeholder.com/150') {
         try {
             const testFetch = await fetch(assets[0].cover.url, { method: 'HEAD', mode: 'cors' });
@@ -1580,6 +1610,7 @@ async function displayNFTs(assets, selectedCollection) {
         }
     }
 
+    // Ajouter les cartes NFT
     assets.forEach((asset, index) => {
         const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
         const card = document.createElement('div');
@@ -1673,9 +1704,9 @@ async function displayNFTs(assets, selectedCollection) {
         container.appendChild(card);
     });
 
+    // Mettre à jour l'affichage (grille, etc.)
     updateDisplay();
 }
-
 async function fetchWithRetry(url, retries = 3, delay = 1000) {
     for (let i = 0; i < retries; i++) {
         try {
