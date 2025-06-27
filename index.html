@@ -1557,6 +1557,7 @@ function filterNFTs() {
 
     displayNFTs(uniqueNFTs, collectionValue);
 }
+	    
 async function displayNFTs(assets, selectedCollection) {
     const callId = Math.random().toString(36).substring(2, 10); // Unique call ID for debugging
     console.log(`displayNFTs [${callId}] called with ${assets.length} assets for collection: ${selectedCollection || 'All'}`);
@@ -1571,15 +1572,6 @@ async function displayNFTs(assets, selectedCollection) {
     if (!container || !countContainer || !downloadZipButton || !downloadCollageButton || !errorDiv) {
         console.error('NFT container, count container, download buttons, or error div not found');
         return;
-    }
-
-    // Check for duplicate asset IDs
-    const uniqueIds = new Set(assets.map(a => a.id));
-    if (uniqueIds.size < assets.length) {
-        console.warn(`Duplicate assets detected: ${assets.length - uniqueIds.size} duplicates`);
-        // Remove duplicates by ID
-        assets = Array.from(new Map(assets.map(asset => [asset.id, asset])).values());
-        console.log(`Deduplicated assets: ${assets.length} remaining`);
     }
 
     // Clear containers
@@ -1668,7 +1660,7 @@ async function displayNFTs(assets, selectedCollection) {
 
         const tooltip = document.createElement('span');
         tooltip.className = 'tooltip';
-        tooltip.textContent = tooltipText;
+       ，为tooltip.textContent = tooltipText;
         tooltip.style.zIndex = '300';
         card.appendChild(tooltip);
 
@@ -1723,6 +1715,15 @@ async function displayNFTs(assets, selectedCollection) {
     const uniqueCardIds = new Set(cardIds);
     if (uniqueCardIds.size < cardIds.length) {
         console.error(`Duplicate cards in DOM: ${cardIds.length - uniqueCardIds.size} duplicates`);
+        // Remove duplicate cards
+        const seenIds = new Set();
+        cards.forEach(card => {
+            if (seenIds.has(card.dataset.id)) {
+                card.remove();
+            } else {
+                seenIds.add(card.dataset.id);
+            }
+        });
     }
 
     updateDisplay();
