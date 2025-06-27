@@ -2454,16 +2454,22 @@ function setupEventListeners() {
         });
     }
 
+    // Débouncer pour filterNFTs
+    const debounceFilterNFTs = debounce(filterNFTs, 100);
+
     // Gestion du basculement du thème
+    themeButton.removeEventListener('click', toggleTheme);
     themeButton.addEventListener('click', toggleTheme);
     console.log('Theme button listener attached');
 
     // Gestion du menu mobile (bouton hamburger)
     console.log('Attaching listeners to navbar toggle');
+    navbarToggle.removeEventListener('click', toggleMenu);
     navbarToggle.addEventListener('click', (e) => {
         console.log('Click event on navbar toggle');
         toggleMenu(e);
     });
+    navbarToggle.removeEventListener('touchstart', toggleMenu);
     navbarToggle.addEventListener('touchstart', (e) => {
         e.preventDefault(); // Empêcher le double déclenchement ou le zoom
         console.log('Touchstart event on navbar toggle');
@@ -2471,6 +2477,7 @@ function setupEventListeners() {
     }, { passive: false });
 
     // Gestion de la recherche principale
+    usernameInput.removeEventListener('input', debounce);
     usernameInput.addEventListener('input', debounce(async (e) => {
         const query = sanitizeInput(e.target.value);
         if (query.length > 2) {
@@ -2482,6 +2489,7 @@ function setupEventListeners() {
     console.log('Main search input listener attached');
 
     // Réactiver les suggestions sur focus si texte présent
+    usernameInput.removeEventListener('focus', searchProfiles);
     usernameInput.addEventListener('focus', async () => {
         const query = sanitizeInput(usernameInput.value);
         if (query.length > 2) {
@@ -2491,6 +2499,7 @@ function setupEventListeners() {
     });
 
     // Gestion de la recherche dans le modal de connexion
+    loginUsernameInput.removeEventListener('input', debounce);
     loginUsernameInput.addEventListener('input', debounce(async (e) => {
         const query = sanitizeInput(e.target.value);
         if (query.length > 2) {
@@ -2503,6 +2512,7 @@ function setupEventListeners() {
     console.log('Login search input listener attached');
 
     // Réactiver les suggestions sur focus si texte présent dans le modal
+    loginUsernameInput.removeEventListener('focus', searchLoginProfiles);
     loginUsernameInput.addEventListener('focus', async () => {
         const query = sanitizeInput(loginUsernameInput.value);
         if (query.length > 2) {
@@ -2512,67 +2522,46 @@ function setupEventListeners() {
     });
 
     // Gestion des clics pour les suggestions, les clics en dehors et la fermeture du menu
-    document.addEventListener('click', (e) => {
-        const suggestions = document.getElementById('suggestions');
-        const loginSuggestions = document.getElementById('loginSuggestions');
-        const availableFeaturesModal = document.getElementById('availableFeaturesModal');
-        const inProgressModal = document.getElementById('inProgressModal');
-
-        // Vérifier si le clic est sur une suggestion
-        if (e.target.classList.contains('suggestion-item') || e.target.closest('.suggestion-item')) {
-            const suggestionItem = e.target.closest('.suggestion-item');
-            const username = suggestionItem.dataset.username;
-            const avatar = suggestionItem.dataset.avatar;
-            const isLoginModal = suggestionItem.closest('#loginModal');
-            console.log('Suggestion clicked:', { username, isLoginModal });
-            if (isLoginModal) {
-                selectLoginSuggestion(username, avatar);
-            } else {
-                selectSuggestion(username);
-            }
-            return;
-        }
-
-        // Vérifier si le clic est dans une modale de mise à jour
-        const isUpdateModalClick = (availableFeaturesModal && availableFeaturesModal.contains(e.target)) ||
-                                  (inProgressModal && inProgressModal.contains(e.target));
-
-        // Vérifier si le clic est en dehors de la barre de recherche et des suggestions
-        const isMainSearchClick = usernameInput.contains(e.target);
-        const isMainSuggestionsClick = suggestions && suggestions.contains(e.target);
-        const isLoginSearchClick = loginUsernameInput.contains(e.target);
-        const isLoginSuggestionsClick = loginSuggestions && loginSuggestions.contains(e.target);
-
-        if (!isMainSearchClick && !isMainSuggestionsClick && !isUpdateModalClick) {
-            clearSuggestions();
-        }
-
-        if (!isLoginSearchClick && !isLoginSuggestionsClick && !isUpdateModalClick) {
-            clearLoginSuggestions();
-        }
-
-        // Fermer le menu si le clic est en dehors du menu et du bouton de bascule
-        const isMenuClick = navbarMenu.contains(e.target);
-        const isToggleClick = navbarToggle.contains(e.target);
-        if (!isMenuClick && !isToggleClick && navbarMenu.classList.contains('active')) {
-            console.log('Click outside menu, closing navbar');
-            toggleMenu(e);
-        }
-    });
+    document.removeEventListener('click', documentClickHandler);
+    document.addEventListener('click', documentClickHandler);
     console.log('Document click listener for suggestions and menu close attached');
 
-    // Gestion des filtres
-    collectionFilter.addEventListener('change', filterNFTs);
-    chainFilter.addEventListener('change', filterNFTs);
-    curatedFilter.addEventListener('change', filterNFTs);
-    cardSize.addEventListener('change', updateDisplay);
-    sortBy.addEventListener('change', filterNFTs);
+    // Gestion des filtres avec débouncing
+    collectionFilter.removeEventListener('change', filterNFTs);
+    collectionFilter.addEventListener('change', () => {
+        console.log(`collectionFilter changed to: ${collectionFilter.value} at ${new Date().toISOString()}`);
+        debounceFilterNFTs();
+    });
+
+    chainFilter.removeEventListener('change', filterNFTs);
+    chainFilter.addEventListener('change', () => {
+        console.log(`chainFilter changed to: ${chainFilter.value}`);
+        debounceFilterNFTs();
+    });
+
+    curatedFilter.removeEventListener('change', filterNFTs);
+    curatedFilter.addEventListener('change', () => {
+        console.log(`curatedFilter changed to: ${curatedFilter.value}`);
+        debounceFilterNFTs();
+    });
+
+    sortBy.removeEventListener('change', filterNFTs);
+    sortBy.addEventListener('change', () => {
+        console.log(`sortBy changed to: ${sortBy.value}`);
+        debounceFilterNFTs();
+    });
+
+    cardSize.removeEventListener('change', updateDisplay);
+    cardSize.addEventListener('change', () => {
+        console.log(`cardSize changed to: ${cardSize.value}`);
+        updateDisplay();
+    });
     console.log('Filter listeners attached');
 
     // Gestion du modal de connexion
+    loginLink.removeEventListener('click', showLoginModal);
     loginLink.addEventListener('click', (e) => {
         showLoginModal(e);
-        // Fermer le menu après avoir cliqué sur "Login"
         if (navbarMenu.classList.contains('active')) {
             console.log('Login clicked, closing navbar');
             toggleMenu(e);
@@ -2580,16 +2569,17 @@ function setupEventListeners() {
     });
     console.log('Login link listener attached');
 
+    cancelLoginButton.removeEventListener('click', resetLoginForm);
     cancelLoginButton.addEventListener('click', resetLoginForm);
     console.log('Cancel login button listener attached');
 
     // Gestion du profil et déconnexion
+    myProfileLink.removeEventListener('click', fetchProfileAndNFTsForLogin);
     myProfileLink.addEventListener('click', (e) => {
         e.preventDefault();
         if (loggedInUser?.username) {
             console.log('My Profile clicked, fetching for:', loggedInUser.username);
             fetchProfileAndNFTsForLogin(loggedInUser.username);
-            // Fermer le menu après avoir cliqué sur "My Profile"
             if (navbarMenu.classList.contains('active')) {
                 console.log('My Profile clicked, closing navbar');
                 toggleMenu(e);
@@ -2598,9 +2588,9 @@ function setupEventListeners() {
     });
     console.log('My profile link listener attached');
 
+    logoutLink.removeEventListener('click', logout);
     logoutLink.addEventListener('click', (e) => {
         logout(e);
-        // Fermer le menu après avoir cliqué sur "Logout"
         if (navbarMenu.classList.contains('active')) {
             console.log('Logout clicked, closing navbar');
             toggleMenu(e);
@@ -2609,10 +2599,10 @@ function setupEventListeners() {
     console.log('Logout link listener attached');
 
     // Gestion des boutons de téléchargement
-downloadZipButton.removeEventListener('click', downloadNFTsAsZip);
-downloadZipButton.addEventListener('click', downloadNFTsAsZip);
-downloadCollageButton.removeEventListener('click', downloadCollage);
-downloadCollageButton.addEventListener('click', downloadCollage);
+    downloadZipButton.removeEventListener('click', downloadNFTsAsZip);
+    downloadZipButton.addEventListener('click', downloadNFTsAsZip);
+    downloadCollageButton.removeEventListener('click', downloadCollage);
+    downloadCollageButton.addEventListener('click', downloadCollage);
     console.log('Download buttons listeners attached');
 
     // Gestion des boutons de défilement
@@ -2641,17 +2631,21 @@ downloadCollageButton.addEventListener('click', downloadCollage);
         });
     };
 
+    window.removeEventListener('scroll', toggleScrollButtons);
     window.addEventListener('scroll', toggleScrollButtons);
+    window.removeEventListener('resize', toggleScrollButtons);
     window.addEventListener('resize', toggleScrollButtons);
 
     const observer = new MutationObserver(toggleScrollButtons);
     observer.observe(document.body, { childList: true, subtree: true });
 
+    scrollToTopButton.removeEventListener('click', scrollToTop);
     scrollToTopButton.addEventListener('click', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         console.log('Scroll to top clicked');
     });
 
+    scrollToBottomButton.removeEventListener('click', scrollToBottom);
     scrollToBottomButton.addEventListener('click', () => {
         window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
         console.log('Scroll to bottom clicked');
@@ -2659,6 +2653,59 @@ downloadCollageButton.addEventListener('click', downloadCollage);
 
     toggleScrollButtons();
     console.log('Scroll buttons listeners and observer attached');
+}
+
+// Gestionnaire de clics global pour les suggestions et le menu
+function documentClickHandler(e) {
+    const suggestions = document.getElementById('suggestions');
+    const loginSuggestions = document.getElementById('loginSuggestions');
+    const availableFeaturesModal = document.getElementById('availableFeaturesModal');
+    const inProgressModal = document.getElementById('inProgressModal');
+    const navbarMenu = document.getElementById('navbarMenu');
+    const navbarToggle = document.querySelector('.navbar-toggle');
+    const usernameInput = document.getElementById('usernameInput');
+    const loginUsernameInput = document.getElementById('loginUsernameInput');
+
+    // Vérifier si le clic est sur une suggestion
+    if (e.target.classList.contains('suggestion-item') || e.target.closest('.suggestion-item')) {
+        const suggestionItem = e.target.closest('.suggestion-item');
+        const username = suggestionItem.dataset.username;
+        const avatar = suggestionItem.dataset.avatar;
+        const isLoginModal = suggestionItem.closest('#loginModal');
+        console.log('Suggestion clicked:', { username, isLoginModal });
+        if (isLoginModal) {
+            selectLoginSuggestion(username, avatar);
+        } else {
+            selectSuggestion(username);
+        }
+        return;
+    }
+
+    // Vérifier si le clic est dans une modale de mise à jour
+    const isUpdateModalClick = (availableFeaturesModal && availableFeaturesModal.contains(e.target)) ||
+                              (inProgressModal && inProgressModal.contains(e.target));
+
+    // Vérifier si le clic est en dehors de la barre de recherche et des suggestions
+    const isMainSearchClick = usernameInput.contains(e.target);
+    const isMainSuggestionsClick = suggestions && suggestions.contains(e.target);
+    const isLoginSearchClick = loginUsernameInput.contains(e.target);
+    const isLoginSuggestionsClick = loginSuggestions && loginSuggestions.contains(e.target);
+
+    if (!isMainSearchClick && !isMainSuggestionsClick && !isUpdateModalClick) {
+        clearSuggestions();
+    }
+
+    if (!isLoginSearchClick && !isLoginSuggestionsClick && !isUpdateModalClick) {
+        clearLoginSuggestions();
+    }
+
+    // Fermer le menu si le clic est en dehors du menu et du bouton de bascule
+    const isMenuClick = navbarMenu.contains(e.target);
+    const isToggleClick = navbarToggle.contains(e.target);
+    if (!isMenuClick && !isToggleClick && navbarMenu.classList.contains('active')) {
+        console.log('Click outside menu, closing navbar');
+        toggleMenu(e);
+    }
 }
 
 function initialize() {
