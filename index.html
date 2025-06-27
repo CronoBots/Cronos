@@ -1186,8 +1186,8 @@ async function fetchProfileAndNFTs() {
     }
 }
 
-async function fetchProfileAndNFTsForLogin(username) {
-    console.log('fetchProfileAndNFTsForLogin called for username:', username);
+async function fetchProfileAndNFTs() {
+    const usernameInput = document.getElementById('usernameInput');
     const errorDiv = document.getElementById('error');
     const noResultsDiv = document.getElementById('noResults');
     const controls = document.getElementById('controls');
@@ -1210,7 +1210,7 @@ async function fetchProfileAndNFTsForLogin(username) {
     const availableFeaturesModal = document.getElementById('availableFeaturesModal');
     const inProgressModal = document.getElementById('inProgressModal');
 
-    if (!errorDiv || !noResultsDiv || !controls || !collectionTitle ||
+    if (!usernameInput || !errorDiv || !noResultsDiv || !controls || !collectionTitle ||
         !profileHeader || !nftContainer || !nftCountContainer || !collectionFilter || 
         !chainFilter || !curatedFilter || !cardSize || !sortBy || 
         !downloadZipButton || !downloadCollageButton || !progressModal || 
@@ -1220,14 +1220,13 @@ async function fetchProfileAndNFTsForLogin(username) {
         return;
     }
 
-    const sanitizedUsername = sanitizeInput(username.trim());
-    if (!sanitizedUsername) {
-        console.log('No username provided');
-        errorDiv.textContent = 'No username provided';
+    const username = sanitizeInput(usernameInput.value.trim());
+    if (!username || username.toLowerCase() === currentUsername.toLowerCase()) {
+        console.log('fetchProfileAndNFTs skipped:', { username, currentUsername });
         return;
     }
 
-    console.log('Starting fetchProfileAndNFTsForLogin for:', sanitizedUsername);
+    console.log('Starting fetchProfileAndNFTs for:', username);
 
     currentUsername = '';
     allNFTs = [];
@@ -1240,7 +1239,7 @@ async function fetchProfileAndNFTsForLogin(username) {
     chainFilter.disabled = false;
     curatedFilter.disabled = false;
 
-    currentUsername = sanitizedUsername;
+    currentUsername = username;
     lastSearchedUsername = currentUsername;
     clearSuggestions();
 
@@ -1258,9 +1257,10 @@ async function fetchProfileAndNFTsForLogin(username) {
     errorDiv.textContent = '';
     downloadZipButton.style.display = 'none';
     downloadCollageButton.style.display = 'none';
+    resetSearchBar();
 
     modalTitle.textContent = 'Loading Profile';
-    progressText.textContent = `Loading profile for ${sanitizedUsername}...`;
+    progressText.textContent = `Loading profile for ${username}...`;
     progressBar.style.width = '0%';
     progressModal.style.display = 'flex';
     cancelButton.style.display = 'block';
@@ -1287,6 +1287,11 @@ async function fetchProfileAndNFTsForLogin(username) {
     }, 500);
 
     try {
+        // Vider le cache pour ce username
+        cache.delete(`profile_${currentUsername}`);
+        cache.delete(`nfts_${currentUsername}`);
+        console.log(`Cache cleared for profile_${currentUsername} and nfts_${currentUsername}`);
+
         const profileData = await fetchWithCache(`profile_${currentUsername}`, async (signal) => {
             const response = await fetch(graphqlEndpoint, {
                 method: 'POST',
@@ -1368,7 +1373,6 @@ async function fetchProfileAndNFTsForLogin(username) {
                 console.log('No collection in URL: CHAINS enabled=', !chainFilter.disabled, 'value=', chainFilter.value);
             }
 
-            // Garde-fou : s'assurer que les filtres sont activés après le chargement
             if (!collectionFilter.value) {
                 chainFilter.value = '';
                 curatedFilter.value = '';
@@ -1386,7 +1390,7 @@ async function fetchProfileAndNFTsForLogin(username) {
         }
     } catch (error) {
         if (!isProfileLoadingCancelled) {
-            console.error(`Error in fetchProfileAndNFTsForLogin: ${error.message}`);
+            console.error(`Error in fetchProfileAndNFTs: ${error.message}`);
             clearInterval(progressInterval);
             progressModal.style.display = 'none';
             errorDiv.textContent = error.message.includes('user[id=') && error.message.includes('not found')
@@ -2393,7 +2397,6 @@ function setupEventListeners() {
     const downloadZipButton = document.getElementById('downloadZipButton');
     const downloadCollageButton = document.getElementById('downloadCollageButton');
 
-    // Vérification des éléments DOM critiques
     if (!usernameInput || !loginUsernameInput || !themeButton || !collectionFilter || 
         !chainFilter || !curatedFilter || !cardSize || !sortBy || !navbarMenu || 
         !cancelLoginButton || !myProfileLink || !logoutLink || !loginLink || !navbarToggle || 
@@ -2421,43 +2424,40 @@ function setupEventListeners() {
         return;
     }
 
-    // Vérification spécifique pour les boutons de défilement
-    if (!scrollToTopButton || !scrollToBottomButton) {
-        console.warn('Scroll buttons not found in DOM', {
-            scrollToTopButton: !!scrollToTopButton,
-            scrollToBottomButton: !!scrollToBottomButton
-        });
-    }
+    // Supprimer les anciens écouteurs pour éviter les duplications
+    const removeExistingListeners = (element, event, handler) => {
+        element.removeEventListener(event, handler);
+        element.addEventListener(event, handler);
+    };
 
     // Gestion du basculement du thème
-    themeButton.addEventListener('click', toggleTheme);
+    removeExistingListeners(themeButton, 'click', toggleTheme);
     console.log('Theme button listener attached');
 
-    // Gestion du menu mobile (bouton hamburger)
-    console.log('Attaching listeners to navbar toggle');
-    navbarToggle.addEventListener('click', (e) => {
-        console.log('Click event on navbar toggle');
+    // Gestion du menu mobile
+    const toggleHandler = (e) => {
+        console.log('Click/touch event on navbar toggle');
         toggleMenu(e);
-    });
-    navbarToggle.addEventListener('touchstart', (e) => {
-        e.preventDefault(); // Empêcher le double déclenchement ou le zoom
-        console.log('Touchstart event on navbar toggle');
-        toggleMenu(e);
+    };
+    removeExistingListeners(navbarToggle, 'click', toggleHandler);
+    removeExistingListeners(navbarToggle, 'touchstart', (e) => {
+        e.preventDefault();
+        toggleHandler(e);
     }, { passive: false });
 
     // Gestion de la recherche principale
-    usernameInput.addEventListener('input', debounce(async (e) => {
+    const searchHandler = debounce(async (e) => {
         const query = sanitizeInput(e.target.value);
         if (query.length > 2) {
             await searchProfiles(query);
         } else {
             clearSuggestions();
         }
-    }, 300));
+    }, 300);
+    removeExistingListeners(usernameInput, 'input', searchHandler);
     console.log('Main search input listener attached');
 
-    // Réactiver les suggestions sur focus si texte présent
-    usernameInput.addEventListener('focus', async () => {
+    removeExistingListeners(usernameInput, 'focus', async () => {
         const query = sanitizeInput(usernameInput.value);
         if (query.length > 2) {
             console.log('Search input focused, querying:', query);
@@ -2466,7 +2466,7 @@ function setupEventListeners() {
     });
 
     // Gestion de la recherche dans le modal de connexion
-    loginUsernameInput.addEventListener('input', debounce(async (e) => {
+    const loginSearchHandler = debounce(async (e) => {
         const query = sanitizeInput(e.target.value);
         if (query.length > 2) {
             console.log('Login input event:', query);
@@ -2474,11 +2474,11 @@ function setupEventListeners() {
         } else {
             clearLoginSuggestions();
         }
-    }, 300));
+    }, 300);
+    removeExistingListeners(loginUsernameInput, 'input', loginSearchHandler);
     console.log('Login search input listener attached');
 
-    // Réactiver les suggestions sur focus si texte présent dans le modal
-    loginUsernameInput.addEventListener('focus', async () => {
+    removeExistingListeners(loginUsernameInput, 'focus', async () => {
         const query = sanitizeInput(loginUsernameInput.value);
         if (query.length > 2) {
             console.log('Login input focused, querying:', query);
@@ -2486,14 +2486,13 @@ function setupEventListeners() {
         }
     });
 
-    // Gestion des clics pour les suggestions, les clics en dehors et la fermeture du menu
-    document.addEventListener('click', (e) => {
+    // Gestion des clics pour les suggestions et fermeture du menu
+    const documentClickHandler = (e) => {
         const suggestions = document.getElementById('suggestions');
         const loginSuggestions = document.getElementById('loginSuggestions');
         const availableFeaturesModal = document.getElementById('availableFeaturesModal');
         const inProgressModal = document.getElementById('inProgressModal');
 
-        // Vérifier si le clic est sur une suggestion
         if (e.target.classList.contains('suggestion-item') || e.target.closest('.suggestion-item')) {
             const suggestionItem = e.target.closest('.suggestion-item');
             const username = suggestionItem.dataset.username;
@@ -2508,11 +2507,8 @@ function setupEventListeners() {
             return;
         }
 
-        // Vérifier si le clic est dans une modale de mise à jour
         const isUpdateModalClick = (availableFeaturesModal && availableFeaturesModal.contains(e.target)) ||
                                   (inProgressModal && inProgressModal.contains(e.target));
-
-        // Vérifier si le clic est en dehors de la barre de recherche et des suggestions
         const isMainSearchClick = usernameInput.contains(e.target);
         const isMainSuggestionsClick = suggestions && suggestions.contains(e.target);
         const isLoginSearchClick = loginUsernameInput.contains(e.target);
@@ -2526,28 +2522,32 @@ function setupEventListeners() {
             clearLoginSuggestions();
         }
 
-        // Fermer le menu si le clic est en dehors du menu et du bouton de bascule
         const isMenuClick = navbarMenu.contains(e.target);
         const isToggleClick = navbarToggle.contains(e.target);
         if (!isMenuClick && !isToggleClick && navbarMenu.classList.contains('active')) {
             console.log('Click outside menu, closing navbar');
             toggleMenu(e);
         }
-    });
+    };
+    document.removeEventListener('click', documentClickHandler);
+    document.addEventListener('click', documentClickHandler);
     console.log('Document click listener for suggestions and menu close attached');
 
     // Gestion des filtres
-    collectionFilter.addEventListener('change', filterNFTs);
-    chainFilter.addEventListener('change', filterNFTs);
-    curatedFilter.addEventListener('change', filterNFTs);
-    cardSize.addEventListener('change', updateDisplay);
-    sortBy.addEventListener('change', filterNFTs);
+    const filterHandler = () => {
+        console.log('Filter change event triggered at:', new Date().toISOString());
+        filterNFTs();
+    };
+    removeExistingListeners(collectionFilter, 'change', filterHandler);
+    removeExistingListeners(chainFilter, 'change', filterHandler);
+    removeExistingListeners(curatedFilter, 'change', filterHandler);
+    removeExistingListeners(cardSize, 'change', updateDisplay);
+    removeExistingListeners(sortBy, 'change', filterHandler);
     console.log('Filter listeners attached');
 
     // Gestion du modal de connexion
-    loginLink.addEventListener('click', (e) => {
+    removeExistingListeners(loginLink, 'click', (e) => {
         showLoginModal(e);
-        // Fermer le menu après avoir cliqué sur "Login"
         if (navbarMenu.classList.contains('active')) {
             console.log('Login clicked, closing navbar');
             toggleMenu(e);
@@ -2555,16 +2555,15 @@ function setupEventListeners() {
     });
     console.log('Login link listener attached');
 
-    cancelLoginButton.addEventListener('click', resetLoginForm);
+    removeExistingListeners(cancelLoginButton, 'click', resetLoginForm);
     console.log('Cancel login button listener attached');
 
     // Gestion du profil et déconnexion
-    myProfileLink.addEventListener('click', (e) => {
+    removeExistingListeners(myProfileLink, 'click', (e) => {
         e.preventDefault();
         if (loggedInUser?.username) {
             console.log('My Profile clicked, fetching for:', loggedInUser.username);
             fetchProfileAndNFTsForLogin(loggedInUser.username);
-            // Fermer le menu après avoir cliqué sur "My Profile"
             if (navbarMenu.classList.contains('active')) {
                 console.log('My Profile clicked, closing navbar');
                 toggleMenu(e);
@@ -2573,9 +2572,8 @@ function setupEventListeners() {
     });
     console.log('My profile link listener attached');
 
-    logoutLink.addEventListener('click', (e) => {
+    removeExistingListeners(logoutLink, 'click', (e) => {
         logout(e);
-        // Fermer le menu après avoir cliqué sur "Logout"
         if (navbarMenu.classList.contains('active')) {
             console.log('Logout clicked, closing navbar');
             toggleMenu(e);
@@ -2584,10 +2582,8 @@ function setupEventListeners() {
     console.log('Logout link listener attached');
 
     // Gestion des boutons de téléchargement
-downloadZipButton.removeEventListener('click', downloadNFTsAsZip);
-downloadZipButton.addEventListener('click', downloadNFTsAsZip);
-downloadCollageButton.removeEventListener('click', downloadCollage);
-downloadCollageButton.addEventListener('click', downloadCollage);
+    removeExistingListeners(downloadZipButton, 'click', downloadNFTsAsZip);
+    removeExistingListeners(downloadCollageButton, 'click', downloadCollage);
     console.log('Download buttons listeners attached');
 
     // Gestion des boutons de défilement
@@ -2616,18 +2612,20 @@ downloadCollageButton.addEventListener('click', downloadCollage);
         });
     };
 
+    window.removeEventListener('scroll', toggleScrollButtons);
     window.addEventListener('scroll', toggleScrollButtons);
+    window.removeEventListener('resize', toggleScrollButtons);
     window.addEventListener('resize', toggleScrollButtons);
 
     const observer = new MutationObserver(toggleScrollButtons);
     observer.observe(document.body, { childList: true, subtree: true });
 
-    scrollToTopButton.addEventListener('click', () => {
+    removeExistingListeners(scrollToTopButton, 'click', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         console.log('Scroll to top clicked');
     });
 
-    scrollToBottomButton.addEventListener('click', () => {
+    removeExistingListeners(scrollToBottomButton, 'click', () => {
         window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
         console.log('Scroll to bottom clicked');
     });
