@@ -78,9 +78,7 @@
                             <li>Single asset download</li>
                             <li>Collage download</li>
                             <li>Scroll navigation buttons (Up / Down)</li>
-                            <li>Community support tracking</li>                            
-                            <li>Display name on hover 🆕</li>
-	                    <li>Link to NFTs 🆕</li>
+                            <li>Community support tracking</li>
                         </ul>
                     </div>
                 </div>
@@ -92,6 +90,8 @@
                     </div>
                     <div class="update-content" id="inProgressContent">
                         <ul>
+                            <li>Display name on hover</li>
+	                    <li>Link to NFTs</li>
 		            <li>Full collection viewer</li>
                             <li>Collection statistics (Floor / Volume / Owners)</li>
                             <li>Partner collections integration</li>
@@ -233,9 +233,9 @@
                 <h4>Together, we make this possible</h4>
                 <span class="wallet-address">0x9829e44fd04f3788F27096875Df0D2772173Ab3d</span>
                 <div class="donation-progress">
-                    <span class="progress-label">Community Supports: <span id="progressPercent">1143</span> CRO</span>
+                    <span class="progress-label">Community Supports: <span id="progressPercent">1</span>%</span>
                     <div class="progress-bar">
-                        <div class="progress" id="donationProgressBar" style="width: 8%;"></div>
+                        <div class="progress" id="donationProgressBar" style="width: 1%;"></div>
                     </div>
                 </div>
             </div>
@@ -546,7 +546,6 @@ async function fetchAllNFTs(ownerId, progressCallback) {
     const first = 60;
     let skip = 0;
     let allAssets = [];
-    const seenIds = new Set(); // Ensemble pour suivre les IDs des NFTs
     let hasMore = true;
 
     while (hasMore && !isProfileLoadingCancelled) {
@@ -568,25 +567,15 @@ async function fetchAllNFTs(ownerId, progressCallback) {
             }
 
             const assets = result.data?.public?.profileAssets || [];
-            // Filtrer les doublons en fonction de l'ID
-            const uniqueAssets = assets.filter(asset => {
-                if (!asset.id || seenIds.has(asset.id)) {
-                    console.log(`Doublon détecté pour l'ID ${asset.id}, ignoré`);
-                    return false;
-                }
-                seenIds.add(asset.id);
-                return true;
-            });
-
-            uniqueAssets.forEach((asset, index) => {
+            // Débogage : Journaliser les noms des assets
+            assets.forEach((asset, index) => {
                 console.log(`Asset ${skip + index + 1}:`, {
                     name: asset.name || 'No name',
                     id: asset.id,
                     collection: asset.collection?.name || 'No collection'
                 });
             });
-
-            allAssets = [...allAssets, ...uniqueAssets];
+            allAssets = [...allAssets, ...assets];
             skip += first;
             hasMore = assets.length === first;
 
@@ -599,10 +588,9 @@ async function fetchAllNFTs(ownerId, progressCallback) {
         }
     }
 
-    console.log(`Total NFTs récupérés (après suppression des doublons) : ${allAssets.length}`);
     return allAssets;
 }
-	    
+
 async function searchProfiles(query) {
     const suggestions = document.getElementById('suggestions');
     if (!suggestions) {
@@ -1541,20 +1529,42 @@ function filterNFTs() {
     displayNFTs(filteredNFTs, collectionValue);
 }
 
-async function displayNFTs(assets, selectedCollection) {
+function displayNFTs(assets, selectedCollection) {
     const container = document.getElementById('nftContainer');
     const countContainer = document.getElementById('nftCountContainer');
     const downloadZipButton = document.getElementById('downloadZipButton');
     const downloadCollageButton = document.getElementById('downloadCollageButton');
     const cardSize = document.getElementById('cardSize')?.value || 'small';
-    const errorDiv = document.getElementById('error');
 
-    if (!container || !countContainer || !downloadZipButton || !downloadCollageButton || !errorDiv) {
-        console.error('NFT container, count container, download buttons, or error div not found');
+    if (!container || !countContainer || !downloadZipButton || !downloadCollageButton) {
+        console.error('NFT container, count container, or download buttons not found');
         return;
     }
 
-    console.log('Displaying NFTs:', assets.length, 'assets for collection:', selectedCollection || 'All');
+    console.log(`displayNFTs called at ${new Date().toISOString()}:`, {
+        assetCount: assets.length,
+        selectedCollection: selectedCollection || 'All'
+    });
+
+    const seenIds = new Set();
+    const uniqueAssets = assets.filter((asset, index) => {
+        const key = asset.id || `index-${index}`;
+        if (seenIds.has(key)) {
+            console.warn(`Duplicate asset detected and skipped:`, {
+                assetId: asset.id,
+                name: asset.name,
+                collectionId: asset.collection?.id
+            });
+            return false;
+        }
+        seenIds.add(key);
+        return true;
+    });
+    console.log('Unique assets after deduplication:', uniqueAssets.map(a => ({
+        id: a.id,
+        name: a.name,
+        collectionId: a.collection?.id
+    })));
 
     countContainer.innerHTML = '';
     container.innerHTML = '';
@@ -1563,36 +1573,17 @@ async function displayNFTs(assets, selectedCollection) {
     const countElement = document.createElement('p');
     countElement.className = 'nft-count';
     countElement.innerHTML = selectedCollection
-        ? `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets on this collection.`
-        : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets.`;
+        ? `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${uniqueAssets.length}</span> assets on this collection.`
+        : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${uniqueAssets.length}</span> assets.`;
     countContainer.appendChild(countElement);
 
-    downloadZipButton.style.display = assets.length > 0 && currentUsername ? 'inline-block' : 'none';
-    downloadCollageButton.style.display = assets.length > 0 && currentUsername ? 'inline-block' : 'none';
-    if (assets.length > 0) {
-        downloadZipButton.textContent = `DOWNLOAD ${assets.length} ASSETS`;
+    downloadZipButton.style.display = uniqueAssets.length > 0 && currentUsername ? 'inline-block' : 'none';
+    downloadCollageButton.style.display = uniqueAssets.length > 0 && currentUsername ? 'inline-block' : 'none';
+    if (uniqueAssets.length > 0) {
+        downloadZipButton.textContent = `DOWNLOAD ${uniqueAssets.length} ASSETS`;
     }
 
-    if (assets.length > 0 && assets[0].cover?.url && assets[0].cover.url !== 'https://via.placeholder.com/150') {
-        try {
-            const testFetch = await fetch(assets[0].cover.url, { method: 'HEAD', mode: 'cors' });
-            if (!testFetch.ok) {
-                console.warn('CORS restriction detected, disabling collage and ZIP buttons');
-                downloadCollageButton.style.display = 'none';
-                downloadZipButton.style.display = 'none';
-                errorDiv.textContent = 'Collage and ZIP downloads are disabled due to CORS restrictions. Use individual download buttons.';
-                setTimeout(() => errorDiv.textContent = '', 5000);
-            }
-        } catch (error) {
-            console.error('CORS test failed:', error.message);
-            downloadCollageButton.style.display = 'none';
-            downloadZipButton.style.display = 'none';
-            errorDiv.textContent = 'Collage and ZIP downloads are disabled due to CORS restrictions. Use individual download buttons.';
-            setTimeout(() => errorDiv.textContent = '', 5000);
-        }
-    }
-
-    assets.forEach((asset, index) => {
+    uniqueAssets.forEach((asset, index) => {
         const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
         const card = document.createElement('div');
         card.className = 'nft-card';
@@ -1630,8 +1621,7 @@ async function displayNFTs(assets, selectedCollection) {
             name: asset.name,
             id: asset.id,
             tooltipText,
-            collection: asset.collection?.name || 'No collection',
-            imageUrl
+            collection: asset.collection?.name || 'No collection'
         });
 
         const tooltip = document.createElement('span');
@@ -1655,29 +1645,50 @@ async function displayNFTs(assets, selectedCollection) {
             card.appendChild(downloadButton);
         }
 
-        if (asset.id && asset.collection?.id) {
+        // Log détaillé pour diagnostiquer pourquoi le bouton Crypto.com n'apparaît pas
+        console.log(`Attempting to create Crypto.com button for asset ${index + 1}:`, {
+            assetId: asset.id,
+            collectionId: asset.collection?.id,
+            collectionName: asset.collection?.name,
+            assetName: asset.name
+        });
+
+        // Ajout du bouton Crypto.com avec URL au format demandé
+        if (asset.id) {
             const cryptoButton = document.createElement('a');
             cryptoButton.className = 'crypto-nft-btn';
             cryptoButton.title = 'View on Crypto.com';
-            cryptoButton.href = `https://crypto.com/nft/collection/${asset.collection.id}?tab=items&asset=${asset.id}`;
+            let searchParam = '';
+            if (asset.name && asset.name.trim() !== '') {
+                searchParam = `&search=${encodeURIComponent(asset.name.trim())}`;
+            }
+            // Utiliser l'URL complète si collection.id est disponible, sinon une URL de secours
+            cryptoButton.href = asset.collection?.id
+                ? `https://crypto.com/nft/collection/${asset.collection.id}?tab=items${searchParam}&asset=${asset.id}`
+                : `https://crypto.com/nft/profile/${currentUsername || 'unknown'}`;
             cryptoButton.target = '_blank';
             cryptoButton.setAttribute('aria-label', 'View NFT on Crypto.com');
             cryptoButton.style.zIndex = '100';
             cryptoButton.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="#000000" class="size-3">
-                    <path fill-rule="evenodd" d="M8.914 6.025a.75.75 0 0 1 1.06 0 3.5 3.5 0 0 1 0 4.95l-2 2a3.5 3.5 0 0 1-5.396-4.402.75.75 0 0 1 1.251.827 2 2 0 0 0 3.085 2.514l2-2a2 2 0 0 0 0-2.828.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
-                    <path fill-rule="evenodd" d="M7.086 9.975a.75.75 0 0 1-1.06 0 3.5 3.5 0 0 1 0-4.95l2-2a3.5 3.5 0 0 1 5.396 4.402.75.75 0 0 1-1.251-.827 2 2 0 0 0-3.085-2.514l-2 2a2 2 0 0 0 0 2.828.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
-                </svg>
-            `;
+    	    	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="#000000">
+        		<path fill-rule="evenodd" d="M8.914 6.025a.75.75 0 0 1 1.06 0 3.5 3.5 0 0 1 0 4.95l-2 2a3.5 3.5 0 0 1-5.396-4.402.75.75 0 0 1 1.251.827 2 2 0 0 0 3.085 2.514l2-2a2 2 0 0 0 0-2.828.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+        		<path fill-rule="evenodd" d="M7.086 9.975a.75.75 0 0 1-1.06 0 3.5 3.5 0 0 1 0-4.95l2-2a3.5 3.5 0 0 1 5.396 4.402.75.75 0 0 1-1.251-.827 2 2 0 0 0-3.085-2.514l-2 2a2 2 0 0 0 0 2.828.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
+   		</svg>
+	    `;
             cryptoButton.addEventListener('click', (e) => {
                 e.stopPropagation();
+                console.log(`Crypto.com button clicked for asset ${index + 1}:`, { href: cryptoButton.href });
             });
             card.appendChild(cryptoButton);
+            console.log(`Crypto.com button created successfully for asset ${index + 1}:`, {
+                href: cryptoButton.href
+            });
         } else {
-            console.warn(`Cannot add Crypto.com button: missing asset ID or collection ID`, {
+            console.warn(`Cannot add Crypto.com button: missing asset ID`, {
                 assetId: asset.id,
                 collectionId: asset.collection?.id,
-                collectionName: asset.collection?.name
+                collectionName: asset.collection?.name,
+                assetName: asset.name
             });
         }
 
@@ -1780,7 +1791,7 @@ async function downloadNFTsAsZip() {
     const filteredNFTs = Array.from(nftContainer.querySelectorAll('.nft-card')).map((card, index) => {
         const img = card.querySelector('img');
         const video = card.querySelector('video');
-        const titleElement = card.querySelector('.tooltip');
+        const titleElement = card.querySelector('h3') || card.querySelector('.tooltip');
         const title = titleElement ? titleElement.textContent : `NFT_${index + 1}`;
         return {
             url: img ? img.src : video ? video.src : null,
@@ -1810,8 +1821,6 @@ async function downloadNFTsAsZip() {
     };
 
     let processed = 0;
-    const errors = [];
-
     for (const [index, nft] of filteredNFTs.entries()) {
         if (isDownloadCancelled) {
             console.log('Download cancelled by user');
@@ -1819,31 +1828,23 @@ async function downloadNFTsAsZip() {
         }
 
         try {
-            const response = await fetch(nft.url, { mode: 'cors' });
+            const response = await fetch(nft.url);
             if (!response.ok) {
-                throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+                console.error(`Failed to fetch asset ${nft.name}: ${response.statusText}`);
+                continue;
             }
-            const contentType = response.headers.get('content-type');
-            let extension = contentType.includes('video/mp4') ? 'mp4' :
-                           contentType.includes('image/jpeg') ? 'jpg' :
-                           contentType.includes('image/gif') ? 'gif' : 'png';
             const blob = await response.blob();
-            if (!blob || blob.size === 0) {
-                throw new Error('Received empty or invalid blob');
-            }
-            console.log(`Downloading ${nft.name}: URL=${nft.url}, Content-Type=${contentType}, Status=${response.status}`);
-            const sanitizedName = sanitizeFileNameForZip(nft.name, index);
+            const extension = nft.url.endsWith('.mp4') ? 'mp4' : 'png';
+            const sanitizedName = sanitizeFileNameForZip(nft.name);
             const fileName = `${sanitizedName}.${extension}`;
             zip.file(fileName, blob);
             processed++;
+            const progressPercent = (processed / filteredNFTs.length) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+            progressText.textContent = `Downloading: ${processed}/${filteredNFTs.length}`;
         } catch (error) {
             console.error(`Error downloading ${nft.name}: ${error.message}`);
-            errors.push(`Failed to download ${nft.name}: ${error.message}`);
         }
-
-        const progressPercent = (processed / filteredNFTs.length) * 100;
-        progressBar.style.width = `${progressPercent}%`;
-        progressText.textContent = `Downloading: ${processed}/${filteredNFTs.length}`;
     }
 
     if (isDownloadCancelled) {
@@ -1853,17 +1854,8 @@ async function downloadNFTsAsZip() {
 
     if (processed === 0) {
         progressModal.style.display = 'none';
-        errorDiv.textContent = 'No assets could be downloaded.';
-        if (errors.length > 0) {
-            errorDiv.textContent += ` Errors: ${errors.join('; ')}`;
-        }
-        setTimeout(() => errorDiv.textContent = '', 5000);
+        errorDiv.textContent = 'No assets could be downloaded';
         return;
-    }
-
-    if (errors.length > 0) {
-        errorDiv.textContent = `${errors.length} asset(s) failed to download. ${processed} downloaded successfully.`;
-        setTimeout(() => errorDiv.textContent = '', 5000);
     }
 
     progressText.textContent = 'Generating ZIP file';
@@ -1878,8 +1870,7 @@ async function downloadNFTsAsZip() {
     } catch (error) {
         console.error(`Error generating ZIP: ${error.message}`);
         progressModal.style.display = 'none';
-        errorDiv.textContent = `Failed to generate ZIP file: ${error.message}`;
-        setTimeout(() => errorDiv.textContent = '', 5000);
+        errorDiv.textContent = 'Failed to generate ZIP file';
     }
 }
 
@@ -1954,7 +1945,7 @@ async function downloadCollage() {
         console.log('Starting collage creation with', validCards.length, 'assets');
 
         const numCards = validCards.length;
-        let cols = Math.round(Math.sqrt(numCards));
+        let cols = Math.ceil(Math.sqrt(numCards));
         let rows = Math.ceil(numCards / cols);
         if (numCards > 1) {
             while (rows * (cols - 1) >= numCards && cols > 1) {
@@ -1966,6 +1957,7 @@ async function downloadCollage() {
         const gridWidth = cols * cardSize;
         const gridHeight = rows * cardSize;
 
+        // Ajuster dynamiquement les tailles
         const headerHeight = Math.min(Math.max(Math.round(gridWidth * 0.1), 80), 150);
         const footerHeight = headerHeight;
         const fontSize = Math.min(Math.max(Math.round(gridWidth / 20), 20), 40);
@@ -2078,6 +2070,7 @@ async function downloadCollage() {
             console.error(`Failed to load logo: ${error.message}`);
         }
 
+        // Logo et "CRONOS.WTF" à gauche
         const logoX = margin;
         const logoY = canvas.height - footerHeight + (footerHeight - imageSize) / 2;
         if (logoImage) {
@@ -2102,6 +2095,7 @@ async function downloadCollage() {
         ctx.fillStyle = '#fff';
         ctx.fillText(cronosText, cronosTextX, textY);
 
+        // "DEVELOPED BY UNSCOOP" à droite
         const devText = 'DEVELOPED BY ';
         const unscoopText = 'UNSCOOP';
         const devTextWidth = ctx.measureText(devText).width;
@@ -2170,7 +2164,6 @@ async function downloadCollage() {
                 return await createImageBitmap(mediaElement);
             } catch (error) {
                 console.error(`Failed to load DOM image ${title} (index ${index}, src: ${mediaElement.src}): ${error.message}`);
-                failedImages.push({ title, index, url: mediaElement.src, error: error.message });
                 return null;
             }
         };
@@ -2220,13 +2213,12 @@ async function downloadCollage() {
         if (processed === 0) {
             progressModal.style.display = 'none';
             errorDiv.textContent = 'No valid assets could be included in the collage.';
-            window.isDownloading = false;
             return;
         }
 
         if (failedImages.length > 0) {
-            console.warn(`${failedImages.length} images failed to load:`, failedImages);
-            errorDiv.textContent = `${failedImages.length} image(s) failed to load. ${validCards.length - failedImages.length} loaded successfully.`;
+            console.warn(`${failedImages.length} images failed to load via URL, ${validCards.length - failedImages.length} loaded successfully:`, failedImages);
+            errorDiv.textContent = `${failedImages.length} image(s) failed to load via URL. ${validCards.length - failedImages.length} loaded successfully.`;
             setTimeout(() => (errorDiv.textContent = ''), 5000);
         }
 
@@ -2278,7 +2270,7 @@ async function downloadCollage() {
             if (error.message.includes('Tainted canvases may not be exported')) {
                 errorDiv.textContent = 'Failed to generate collage: Images from external sources cannot be exported due to security restrictions. Try downloading individual assets.';
             } else {
-                errorDiv.textContent = `Failed to generate collage: ${error.message}`;
+                errorDiv.textContent = `Failed to generate collage image: ${error.message}`;
             }
             setTimeout(() => (errorDiv.textContent = ''), 5000);
         }
