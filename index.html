@@ -1592,7 +1592,17 @@ async function displayNFTs(assets, selectedCollection) {
         }
     }
 
+    // Ensemble pour suivre les IDs des NFTs déjà affichés
+    const displayedIds = new Set();
+
     assets.forEach((asset, index) => {
+        // Vérifier si l'ID de l'asset est déjà affiché
+        if (!asset.id || displayedIds.has(asset.id)) {
+            console.log(`Doublon détecté pour l'ID ${asset.id || 'inconnu'}, ignoré lors de l'affichage`);
+            return;
+        }
+        displayedIds.add(asset.id);
+
         const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
         const card = document.createElement('div');
         card.className = 'nft-card';
@@ -1684,6 +1694,13 @@ async function displayNFTs(assets, selectedCollection) {
         card.appendChild(mediaElement);
         container.appendChild(card);
     });
+
+    // Mettre à jour le nombre d'assets affiché pour refléter les NFTs uniques
+    countElement.innerHTML = selectedCollection
+        ? `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${displayedIds.size}</span> assets on this collection.`
+        : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${displayedIds.size}</span> assets.`;
+
+    console.log(`Displayed ${displayedIds.size} unique NFTs`);
 
     updateDisplay();
 }
