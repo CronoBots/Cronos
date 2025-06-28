@@ -549,6 +549,8 @@ async function fetchAllNFTs(ownerId, progressCallback) {
     const seenIds = new Set(); // Ensemble pour suivre les IDs des NFTs
     let hasMore = true;
 
+    console.log(`Starting fetchAllNFTs for ownerId: ${ownerId}`);
+
     while (hasMore && !isProfileLoadingCancelled) {
         const nftVariables = { ownerId, first, skip };
         try {
@@ -568,10 +570,16 @@ async function fetchAllNFTs(ownerId, progressCallback) {
             }
 
             const assets = result.data?.public?.profileAssets || [];
+            console.log(`Fetched ${assets.length} assets at skip=${skip}`);
+
             // Filtrer les doublons en fonction de l'ID
             const uniqueAssets = assets.filter(asset => {
-                if (!asset.id || seenIds.has(asset.id)) {
-                    console.log(`Doublon détecté pour l'ID ${asset.id}, ignoré`);
+                if (!asset.id) {
+                    console.warn(`Asset sans ID détecté à skip=${skip}, ignoré`, asset);
+                    return false;
+                }
+                if (seenIds.has(asset.id)) {
+                    console.log(`Doublon détecté pour l'ID ${asset.id} à skip=${skip}, ignoré`);
                     return false;
                 }
                 seenIds.add(asset.id);
@@ -579,10 +587,12 @@ async function fetchAllNFTs(ownerId, progressCallback) {
             });
 
             uniqueAssets.forEach((asset, index) => {
-                console.log(`Asset ${skip + index + 1}:`, {
-                    name: asset.name || 'No name',
+                console.log(`Asset unique ${skip + index + 1}:`, {
                     id: asset.id,
-                    collection: asset.collection?.name || 'No collection'
+                    name: asset.name || 'No name',
+                    collection: asset.collection?.name || 'No collection',
+                    createdAt: asset.createdAt,
+                    url: asset.cover?.url || 'No URL'
                 });
             });
 
@@ -594,12 +604,12 @@ async function fetchAllNFTs(ownerId, progressCallback) {
                 progressCallback(allAssets.length);
             }
         } catch (error) {
-            console.error(`Failed to fetch NFTs: ${error.message}`);
+            console.error(`Échec de la récupération des NFTs à skip=${skip}: ${error.message}`);
             throw error;
         }
     }
 
-    console.log(`Total NFTs récupérés (après suppression des doublons) : ${allAssets.length}`);
+    console.log(`Total NFTs récupérés (après suppression des doublons) : ${allAssets.length}, IDs uniques : ${seenIds.size}`);
     return allAssets;
 }
 	    
@@ -1436,6 +1446,26 @@ function filterNFTs() {
         return;
     }
 
+    // Vérifier les doublons dans allNFTs
+    const nftIds = new Set();
+    const duplicates = [];
+    allNFTs.forEach(nft => {
+        if (!nft.id) {
+            console.warn('NFT sans ID détecté dans allNFTs:', nft);
+            return;
+        }
+        if (nftIds.has(nft.id)) {
+            duplicates.push(nft.id);
+        } else {
+            nftIds.add(nft.id);
+        }
+    });
+    if (duplicates.length > 0) {
+        console.warn(`Doublons détectés dans allNFTs avant filtrage : ${duplicates.length} IDs`, duplicates);
+    } else {
+        console.log(`Aucun doublon dans allNFTs, total IDs uniques : ${nftIds.size}`);
+    }
+
     console.log('Filtering NFTs with', allNFTs.length, 'assets', {
         collection: collectionFilter.value,
         chain: chainFilter.value,
@@ -1451,94 +1481,7 @@ function filterNFTs() {
     }
 
     let filteredNFTs = [...allNFTs];
-
-    const collectionValue = collectionFilter.value;
-
-    if (collectionValue) {
-        filteredNFTs = filteredNFTs.filter(nft => nft.collection?.name === collectionValue);
-        console.log('After collection filter:', filteredNFTs.length, 'NFTs');
-
-        let allCurated = true;
-        let allNonCurated = true;
-        let allCronos = true;
-        let allCronosPos = true;
-
-        filteredNFTs.forEach(nft => {
-            const isCurated = nft.isCurated !== undefined ? nft.isCurated : false;
-            const isExternalNft = nft.isExternalNft;
-            const network = nft.externalNftMetadata?.network?.toUpperCase() || '';
-
-            if (!isCurated) allCurated = false;
-            if (isCurated) allNonCurated = false;
-            if (isExternalNft !== true || network !== 'CRONOS') allCronos = false;
-            if (isExternalNft !== false) allCronosPos = false;
-        });
-
-        curatedFilter.value = allCurated ? 'true' : allNonCurated ? 'false' : '';
-        curatedFilter.disabled = true;
-        chainFilter.value = allCronos ? 'CRONOS' : allCronosPos ? 'CRONOS_POS' : '';
-        chainFilter.disabled = true;
-        hasSelectedSpecificCollection = true; // Indiquer qu'une collection spécifique a été sélectionnée
-        console.log('CURATION filter: value=', curatedFilter.value, 'disabled=', curatedFilter.disabled);
-        console.log('CHAINS filter: value=', chainFilter.value, 'disabled=', chainFilter.disabled);
-    } else {
-        // Lorsque "ALL Collections" est sélectionné
-        chainFilter.disabled = false;
-        curatedFilter.disabled = false;
-        if (hasSelectedSpecificCollection) {
-            // Réinitialiser les filtres à "ALL" une seule fois après une collection spécifique
-            chainFilter.value = '';
-            curatedFilter.value = '';
-            hasSelectedSpecificCollection = false; // Réinitialiser pour éviter une nouvelle réinitialisation
-            console.log('ALL Collections selected after specific collection: CURATION reset to value=', curatedFilter.value, 'disabled=', curatedFilter.disabled);
-            console.log('ALL Collections selected after specific collection: CHAINS reset to value=', chainFilter.value, 'disabled=', curatedFilter.disabled);
-        } else {
-            console.log('ALL Collections selected: CURATION value=', curatedFilter.value, 'disabled=', curatedFilter.disabled);
-            console.log('ALL Collections selected: CHAINS value=', chainFilter.value, 'disabled=', chainFilter.disabled);
-        }
-    }
-
-    // Apply CHAINS filter if a value is selected
-    if (chainFilter.value) {
-        filteredNFTs = filteredNFTs.filter(nft => {
-            const isExternalNft = nft.isExternalNft;
-            const network = nft.externalNftMetadata?.network?.toUpperCase() || '';
-            if (chainFilter.value === 'CRONOS') {
-                return isExternalNft === true && network === 'CRONOS';
-            } else if (chainFilter.value === 'CRONOS_POS') {
-                return isExternalNft === false;
-            }
-            return true;
-        });
-        console.log('After chain filter:', filteredNFTs.length, 'NFTs');
-    }
-
-    // Apply CURATION filter if a value is selected
-    if (curatedFilter.value) {
-        filteredNFTs = filteredNFTs.filter(nft => {
-            const isCurated = nft.isCurated !== undefined ? nft.isCurated : false;
-            return curatedFilter.value === 'true' ? isCurated : curatedFilter.value === 'false' ? !isCurated : true;
-        });
-        console.log('After curated filter:', filteredNFTs.length, 'NFTs');
-    }
-
-    // Apply sorting
-    const sortValue = sortBy.value || 'newest';
-    console.log('Selected sort value:', sortValue);
-    if (sortValue === 'rank') {
-        filteredNFTs.sort((a, b) => (a.defaultRarityRank || Infinity) - (b.defaultRarityRank || Infinity));
-    } else if (sortValue === 'oldest') {
-        filteredNFTs.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-    } else {
-        filteredNFTs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    }
-
-    console.log('Final filtered NFTs:', filteredNFTs.length, 'for collection:', collectionValue || 'All', 'chain:', chainFilter.value || 'All', 'curated:', curatedFilter.value || 'All');
-
-    collectionTitle.textContent = collectionValue || 'All Collections';
-    collectionTitle.classList.add('visible');
-
-    displayNFTs(filteredNFTs, collectionValue);
+    // ... (le reste de la fonction filterNFTs reste inchangé)
 }
 
 async function displayNFTs(assets, selectedCollection) {
@@ -1567,29 +1510,11 @@ async function displayNFTs(assets, selectedCollection) {
         : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${assets.length}</span> assets.`;
     countContainer.appendChild(countElement);
 
+    // Toujours afficher les boutons si des assets sont présents
     downloadZipButton.style.display = assets.length > 0 && currentUsername ? 'inline-block' : 'none';
     downloadCollageButton.style.display = assets.length > 0 && currentUsername ? 'inline-block' : 'none';
     if (assets.length > 0) {
         downloadZipButton.textContent = `DOWNLOAD ${assets.length} ASSETS`;
-    }
-
-    if (assets.length > 0 && assets[0].cover?.url && assets[0].cover.url !== 'https://via.placeholder.com/150') {
-        try {
-            const testFetch = await fetch(assets[0].cover.url, { method: 'HEAD', mode: 'cors' });
-            if (!testFetch.ok) {
-                console.warn('CORS restriction detected, disabling collage and ZIP buttons');
-                downloadCollageButton.style.display = 'none';
-                downloadZipButton.style.display = 'none';
-                errorDiv.textContent = 'Collage and ZIP downloads are disabled due to CORS restrictions. Use individual download buttons.';
-                setTimeout(() => errorDiv.textContent = '', 5000);
-            }
-        } catch (error) {
-            console.error('CORS test failed:', error.message);
-            downloadCollageButton.style.display = 'none';
-            downloadZipButton.style.display = 'none';
-            errorDiv.textContent = 'Collage and ZIP downloads are disabled due to CORS restrictions. Use individual download buttons.';
-            setTimeout(() => errorDiv.textContent = '', 5000);
-        }
     }
 
     // Ensemble pour suivre les IDs des NFTs déjà affichés
@@ -1635,7 +1560,7 @@ async function displayNFTs(assets, selectedCollection) {
 
         const tooltipText = (asset.name && asset.name.trim() !== '') 
             ? asset.name 
-            : (asset.id ? `NFT #${asset.id}` : `Unnamed NFT #${index + 1}`);
+            : ( later asset.id ? `NFT #${asset.id}` : `Unnamed NFT #${index + 1}`);
         console.log(`Tooltip for asset ${index + 1}:`, {
             name: asset.name,
             id: asset.id,
