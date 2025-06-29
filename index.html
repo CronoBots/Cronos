@@ -992,118 +992,70 @@ function updateProfileUI(profileData) {
 
 function populateCreatorFilter(nfts) {
     const creatorFilter = document.getElementById('creatorFilter');
-    if (!creatorFilter) {
-        console.error('Creator filter element not found');
-        return;
-    }
+    if (!creatorFilter) return;
 
-    // Créer un objet pour stocker les comptes de NFTs par créateur
-    const creatorCounts = {};
-    nfts.forEach(nft => {
-        const creatorId = nft.collection?.creator?.id;
-        const creatorDisplayName = nft.collection?.creator?.displayName || creatorId || 'Unknown';
-        if (creatorId) {
-            if (!creatorCounts[creatorId]) {
-                creatorCounts[creatorId] = {
-                    displayName: creatorDisplayName,
-                    count: 0
-                };
-            }
-            creatorCounts[creatorId].count += 1;
-        }
-    });
+    // Sauvegarder la valeur sélectionnée
+    const selectedValue = creatorFilter.value;
 
-    // Trier les créateurs par nombre de NFTs (décroissant), puis par displayName
-    const sortedCreators = Object.keys(creatorCounts).sort((a, b) => {
-        const countDiff = creatorCounts[b].count - creatorCounts[a].count;
-        if (countDiff !== 0) return countDiff;
-        return creatorCounts[a].displayName.localeCompare(creatorCounts[b].displayName);
-    });
+    // Vider le filtre
+    creatorFilter.innerHTML = '<option value="">All Creators</option>';
 
-    // Vérifier les displayNames dupliqués
-    const displayNameCounts = {};
-    sortedCreators.forEach(creatorId => {
-        const displayName = creatorCounts[creatorId].displayName;
-        displayNameCounts[displayName] = (displayNameCounts[displayName] || 0) + 1;
-    });
+    // Obtenir les créateurs uniques
+    const creators = [...new Set(nfts.map(nft => ({
+        id: nft.collection?.creator?.id,
+        name: nft.collection?.creator?.displayName || nft.collection?.creator?.id || 'Unknown Creator'
+    })))]
+        .filter(creator => creator.id)
+        .sort((a, b) => a.name.localeCompare(b.name));
 
-    // Peupler le menu déroulant
-    creatorFilter.innerHTML = '<option value="">ALL CREATORS</option>';
-    sortedCreators.forEach(creatorId => {
+    // Détecter si l'écran est mobile (≤ 768px)
+    const isMobile = window.innerWidth <= 768;
+
+    // Ajouter les options
+    creators.forEach(creator => {
         const option = document.createElement('option');
-        option.value = creatorId;
-        const displayName = creatorCounts[creatorId].displayName;
-        const count = creatorCounts[creatorId].count;
-        option.textContent = displayNameCounts[displayName] > 1
-            ? `${displayName} (${creatorId}) (${count})`
-            : `${displayName} (${count})`;
+        option.value = creator.id;
+        // Nettoyer le displayName (supprimer compteur et ID entre parenthèses)
+        let displayName = creator.name.replace(/\s*\(\d+\)$/, '').replace(/\s*\([^)]+\)$/, '').trim();
+        option.textContent = isMobile ? displayName.toUpperCase() : displayName;
         creatorFilter.appendChild(option);
     });
 
-    console.log('Creator filter populated with:', sortedCreators.map(id => ({
-        id,
-        displayName: creatorCounts[id].displayName,
-        count: creatorCounts[id].count
-    })));
+    // Restaurer la valeur sélectionnée si elle existe
+    if (selectedValue && creators.some(creator => creator.id === selectedValue)) {
+        creatorFilter.value = selectedValue;
+    }
 }
 
 function populateCollectionFilter(nfts) {
     const collectionFilter = document.getElementById('collectionFilter');
-    const creatorFilter = document.getElementById('creatorFilter');
-    if (!collectionFilter || !creatorFilter) {
-        console.error('Collection or creator filter element not found');
-        return;
-    }
+    if (!collectionFilter) return;
 
-    const selectedCreator = creatorFilter.value;
-    const collectionCounts = {};
+    // Sauvegarder la valeur sélectionnée
+    const selectedValue = collectionFilter.value;
 
-    nfts.forEach((nft, index) => {
-        const collectionName = nft.collection?.name || 'Unknown Collection';
-        const creatorId = nft.collection?.creator?.id;
-        if (!creatorId) {
-            console.warn(`NFT ${index} missing creator data:`, {
-                collectionName,
-                nftId: nft.id,
-                nftName: nft.name
-            });
-        }
-        if (!selectedCreator || creatorId === selectedCreator) {
-            collectionCounts[collectionName] = (collectionCounts[collectionName] || 0) + 1;
-        }
-    });
-
-    const sortedCollections = Object.keys(collectionCounts).sort((a, b) => {
-        const countDiff = collectionCounts[b] - collectionCounts[a];
-        return countDiff !== 0 ? countDiff : a.localeCompare(b);
-    });
-
-    const currentValue = collectionFilter.value;
+    // Vider le filtre
     collectionFilter.innerHTML = '<option value="">All Collections</option>';
-    sortedCollections.forEach(collection => {
+
+    // Obtenir les collections uniques
+    const collections = [...new Set(nfts.map(nft => nft.collection?.name || 'Unknown Collection'))]
+        .sort((a, b) => a.localeCompare(b));
+
+    // Détecter si l'écran est mobile (≤ 768px)
+    const isMobile = window.innerWidth <= 768;
+
+    // Ajouter les options
+    collections.forEach(collection => {
         const option = document.createElement('option');
         option.value = collection;
-        option.textContent = `${collection} (${collectionCounts[collection]})`;
+        option.textContent = isMobile ? collection.toUpperCase() : collection;
         collectionFilter.appendChild(option);
     });
 
-    // Restaurer la valeur actuelle si elle existe toujours, sinon garder la sélection
-    if (currentValue && sortedCollections.includes(currentValue)) {
-        collectionFilter.value = currentValue;
-    } else {
-        collectionFilter.value = '';
+    // Restaurer la valeur sélectionnée si elle existe
+    if (selectedValue && collections.includes(selectedValue)) {
+        collectionFilter.value = selectedValue;
     }
-
-    // Activer le filtre si des NFTs existent, même sans collections nommées
-    collectionFilter.disabled = nfts.length === 0;
-    console.log('Collection filter populated:', {
-        selectedCreator,
-        totalNFTs: nfts.length,
-        collections: sortedCollections,
-        collectionCounts,
-        selectedValue: collectionFilter.value,
-        disabled: collectionFilter.disabled
-    });
 }
 
 async function fetchProfileAndNFTs() {
@@ -1594,7 +1546,10 @@ function filterNFTs() {
         console.log('After collection filter:', filteredNFTs.length, 'NFTs');
     }
 
-    // Populate the collection filter based on the current creator filter
+    // Populate creator filter
+    populateCreatorFilter(allNFTs);
+
+    // Populate collection filter based on the current creator filter
     populateCollectionFilter(creatorValue ? allNFTs.filter(nft => nft.collection?.creator?.id === creatorValue) : allNFTs);
 
     // Update chain and curated filters based on the filtered NFTs
