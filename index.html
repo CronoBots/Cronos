@@ -1027,6 +1027,9 @@ function populateCreatorFilter(nfts) {
         displayNameCounts[displayName] = (displayNameCounts[displayName] || 0) + 1;
     });
 
+    // Déterminer si l'appareil est mobile
+    const isMobile = window.innerWidth <= 768;
+
     // Peupler le menu déroulant
     creatorFilter.innerHTML = '<option value="">ALL CREATORS</option>';
     sortedCreators.forEach(creatorId => {
@@ -1034,9 +1037,11 @@ function populateCreatorFilter(nfts) {
         option.value = creatorId;
         const displayName = creatorCounts[creatorId].displayName;
         const count = creatorCounts[creatorId].count;
+        // Appliquer majuscules pour mobile, sinon garder le texte original
+        const displayText = isMobile ? displayName.toUpperCase() : displayName;
         option.textContent = displayNameCounts[displayName] > 1
-            ? `${displayName} (${creatorId}) (${count})`
-            : `${displayName} (${count})`;
+            ? `${displayText} (${creatorId}) (${count})`
+            : `${displayText} (${count})`;
         creatorFilter.appendChild(option);
     });
 
@@ -1079,22 +1084,26 @@ function populateCollectionFilter(nfts) {
     });
 
     const currentValue = collectionFilter.value;
+    // Déterminer si l'appareil est mobile
+    const isMobile = window.innerWidth <= 768;
     collectionFilter.innerHTML = '<option value="">All Collections</option>';
     sortedCollections.forEach(collection => {
         const option = document.createElement('option');
         option.value = collection;
-        option.textContent = `${collection} (${collectionCounts[collection]})`;
+        // Appliquer majuscules pour mobile, sinon garder le texte original
+        const displayText = isMobile ? collection.toUpperCase() : collection;
+        option.textContent = `${displayText} (${collectionCounts[collection]})`;
         collectionFilter.appendChild(option);
     });
 
-    // Restaurer la valeur actuelle si elle existe toujours, sinon garder la sélection
+    // Restaurer la valeur actuelle si elle existe toujours
     if (currentValue && sortedCollections.includes(currentValue)) {
         collectionFilter.value = currentValue;
     } else {
         collectionFilter.value = '';
     }
 
-    // Activer le filtre si des NFTs existent, même sans collections nommées
+    // Activer le filtre si des NFTs existent
     collectionFilter.disabled = nfts.length === 0;
     console.log('Collection filter populated:', {
         selectedCreator,
