@@ -2194,7 +2194,7 @@ async function downloadCollage() {
         const borderWidth = Math.min(Math.max(Math.round(gridWidth / 20), 30), 60);
         const headerHeight = Math.min(Math.max(Math.round(gridWidth * 0.1), 80), 150);
         const margin = Math.min(Math.max(Math.round(gridWidth / 50), 10), 30);
-        // Ajuster la taille de la police pour CRONOS.WTF en fonction du nombre de colonnes
+        // Ajuster la taille de la police pour CRONOS.WTF | DEVELOPED BY UNSCOOP
         const baseCronosFontSize = Math.min(Math.max(Math.round(gridWidth / 25), 16), 32) * 0.75;
         const cronosFontSize = numCards <= 4 ? baseCronosFontSize * 0.7 : baseCronosFontSize; // Réduire la taille pour peu de NFTs
 
@@ -2204,6 +2204,10 @@ async function downloadCollage() {
         const headerText = `${currentUsername.toUpperCase() || 'UNKNOWN'} / ${collectionTitle.textContent || collectionFilter.value || 'ALL_COLLECTIONS'}`;
         const estimatedTextLength = headerText.length;
         let fontSize = Math.round(availableTextWidth / (estimatedTextLength * estimatedCharWidthRatio));
+        // Ajuster la taille de la police si moins de 9 NFTs
+        if (numCards < 9) {
+            fontSize = Math.round(fontSize * 0.7); // Réduire de 30% pour éviter le troncage
+        }
         fontSize = Math.min(Math.max(fontSize, 16), 50); // Limit font size between 16px and 50px
 
         // Create a temporary container for the collage
@@ -2221,23 +2225,22 @@ async function downloadCollage() {
         header.style.height = `${headerHeight}px`;
         header.style.display = 'flex';
         header.style.alignItems = 'center';
-        header.style.justifyContent = 'center';
-        header.style.padding = `0 ${borderWidth}px`;
+        header.style.justifyContent = 'space-between'; // Alignement gauche/droite
+        header.style.padding = `0 ${borderWidth}px`; // Respecter la bordure à gauche et à droite
         header.style.boxSizing = 'border-box';
         collageContainer.appendChild(header);
 
-        // Prepare header text
+        // Prepare header text (aligned left)
         const usernameText = currentUsername.toUpperCase() || 'UNKNOWN';
         const collectionText = collectionTitle.textContent || collectionFilter.value || 'ALL_COLLECTIONS';
         const theme = document.documentElement.getAttribute('data-theme') || 'dark';
         const color1 = theme === 'cdc' ? '#11bafa' : '#FF5733';
 
-        // Create single header text container with centered text
+        // Create header text container (aligned left)
         const headerTextContainer = document.createElement('div');
-        headerTextContainer.style.width = `${availableTextWidth}px`; // Use available width
-        headerTextContainer.style.textAlign = 'center';
+        headerTextContainer.style.textAlign = 'left';
         headerTextContainer.style.fontFamily = 'Geomanist-Bold, Arial, sans-serif';
-        headerTextContainer.style.fontSize = `${fontSize}px`;
+        headerTextContainer.style.fontSize = `${fontSize}px`; // Même taille pour tout l'en-tête
         headerTextContainer.style.lineHeight = '1.2';
         headerTextContainer.style.color = '#fff';
         headerTextContainer.style.overflow = 'hidden';
@@ -2245,10 +2248,22 @@ async function downloadCollage() {
         headerTextContainer.style.whiteSpace = 'nowrap';
         headerTextContainer.style.margin = '0';
         headerTextContainer.style.padding = '0';
-
-        // Build header text with colored username
         headerTextContainer.innerHTML = `<span style="color: ${color1}">${usernameText}</span> / ${collectionText.toUpperCase()}`;
         header.appendChild(headerTextContainer);
+
+        // Create NFT count text (aligned right)
+        const nftCountText = document.createElement('div');
+        nftCountText.style.textAlign = 'right';
+        nftCountText.style.fontFamily = 'Geomanist-Bold, Arial, sans-serif';
+        nftCountText.style.fontSize = `${fontSize}px`; // Même taille que l'en-tête
+        nftCountText.style.lineHeight = '1.2';
+        nftCountText.style.color = '#fff';
+        nftCountText.style.overflow = 'hidden';
+        nftCountText.style.whiteSpace = 'nowrap';
+        nftCountText.style.margin = '0';
+        nftCountText.style.padding = '0';
+        nftCountText.textContent = `${loadedCards.length} NFT`; // Afficher "x NFT"
+        header.appendChild(nftCountText);
 
         // Add grid with lateral borders
         const grid = document.createElement('div');
@@ -2303,18 +2318,17 @@ async function downloadCollage() {
             progressText.textContent = `Processing: ${processed}/${loadedCards.length}`;
         }
 
-        // Add CRONOS.WTF text in bottom-right corner
-        const cronosText = document.createElement('span');
+        // Add CRONOS.WTF | DEVELOPED BY UNSCOOP text in bottom-right corner
+        const cronosText = document.createElement('div');
         cronosText.style.position = 'absolute';
-        // Center vertically in bottom border
         cronosText.style.bottom = `${borderWidth / 2 - cronosFontSize / 2}px`;
-        cronosText.style.right = `${margin}px`; // Margin from right edge
-        cronosText.style.color = '#fff';
+        cronosText.style.right = `${borderWidth}px`; // Utiliser borderWidth pour respecter la bordure droite
         cronosText.style.fontFamily = 'Geomanist-Bold, Arial, sans-serif';
         cronosText.style.fontSize = `${cronosFontSize}px`;
         cronosText.style.lineHeight = '1';
         cronosText.style.whiteSpace = 'nowrap';
-        cronosText.textContent = 'CRONOS.WTF';
+        // Construire le texte avec CRONOS.WTF en blanc et UNSCOOP en couleur du thème
+        cronosText.innerHTML = `CRONOS.WTF | DEVELOPPED BY <span style="color: ${color1}">UNSCOOP</span>`;
         collageContainer.appendChild(cronosText);
 
         // Wait for all images to load with timeout
