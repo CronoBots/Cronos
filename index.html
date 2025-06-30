@@ -82,7 +82,7 @@
                             <li>Community support tracking</li>
                             <li>Display name on hover 🆕</li>
 	                    <li>Link to NFTs 🆕</li>
-			    <li>Filter by artist 🆕</li>
+		            <li>Filter by artist 🆕</li>
                         </ul>
                     </div>
                 </div>
@@ -2408,11 +2408,18 @@ async function downloadCollage() {
                         const a = document.createElement('a');
                         a.href = url;
 
-			const cleanUsername = (currentUsername || 'UNKNOWN').replace(/[^a-zA-Z0-9-_]/g, '').toUpperCase();
-			const creatorFilter = document.getElementById('creatorFilter');
-			const cleanCreator = (creatorFilter?.value || 'UNKNOWN').replace(/[^a-zA-Z0-9-_]/g, '').toUpperCase();
-			const cleanCollectionText = (collectionFilter.value || 'ALL_COLLECTIONS').replace(/[^a-zA-Z0-9-_]/g, '').toUpperCase();
-			a.download = `${cleanUsername}_${cleanCreator}_${cleanCollectionText}.png`;
+// Générer les parties du nom de fichier
+const cleanUsername = currentUsername ? currentUsername.replace(/[^a-zA-Z0-9-_]/g, '').toUpperCase() : '';
+const creatorFilter = document.getElementById('creatorFilter');
+const cleanCreator = (creatorFilter?.value || 'UNKNOWN').replace(/[^a-zA-Z0-9-_]/g, '').toUpperCase();
+const cleanCollectionText = (collectionFilter.value || 'ALL_COLLECTIONS').replace(/[^a-zA-Z0-9-_]/g, '').toUpperCase();
+
+// Construire le nom du fichier en omettant cleanUsername si vide
+const fileNameParts = [];
+if (cleanUsername) fileNameParts.push(cleanUsername);
+if (cleanCreator !== 'UNKNOWN') fileNameParts.push(cleanCreator); // Éviter d'inclure UNKNOWN pour le créateur si non défini
+fileNameParts.push(cleanCollectionText);
+a.download = fileNameParts.join('_') + '.png';
 
                         document.body.appendChild(a);
                         a.click();
