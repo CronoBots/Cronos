@@ -1,18 +1,24 @@
 :root {
-    --color1: #FF5733;
+
+    
+    --navbar-height: 60px;
+    --footer-height: 95px;
+--color1: #FF5733;
     --color2: #2C2C2C;
     --text-dark: #fff;
     --text-light: #333;
     --collection-bg: #1a1a1a;
+    --page-bg: #222222;
     --shadow: 0 2px 4px rgba(255,255,255,0.1);
     --bg-light: #f4f4f4;
     --transition: all 0.3s ease;
 }
 
 [data-theme="cdc"] {
-    --color2: var(--bg-light);
+    --color2: #2C2C2C;
     --text-dark: #fff;
     --collection-bg: #0b1426;
+    --page-bg: #0f1a30;
     --shadow: 0 2px 4px rgba(0,0,0,0.1);
     --color1: #11bafa;
 }
@@ -25,15 +31,38 @@
     font-display: swap;
 }
 
+
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
 html, body {
     overflow-x: hidden;
     width: 100%;
     max-width: 100vw;
+
+    height: 100%;
+
+    overflow: hidden;
 }
+
+
 
 body {
     font-family: 'Geomanist-Bold', sans-serif;
-    background-color: var(--color2);
+    background-color: var(--page-bg);
     color: var(--text-dark);
     padding: 0;
     margin: 0;
@@ -51,23 +80,25 @@ body {
     background-color: var(--collection-bg);
     padding: 10px 0;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
     box-shadow: var(--shadow);
-    position: sticky;
+    position: fixed;
     top: 0;
-    z-index: 1000;
-    flex-wrap: nowrap;
-    min-height: 60px;
-    justify-content: space-between;
-    width: 100%;
+    left: var(--sidebar-width);
+    right: 0;
+    z-index: 1002;
+    width: calc(100% - var(--sidebar-width));
     box-sizing: border-box;
+    padding-top: calc(10px + env(safe-area-inset-top));
 }
 
 .navbar-logo {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-left: 20px;
+    margin-left: 0;
     flex-shrink: 0;
 }
 
@@ -87,9 +118,13 @@ body {
     display: flex;
     align-items: center;
     flex-wrap: nowrap;
-    gap: 5px;
-    flex-grow: 1;
-    max-width: 70%;
+    gap: 12px;
+
+    flex-grow: 0;
+    max-width: none;
+    margin-left: auto;
+    margin-right: 20px;
+    justify-content: flex-end;
 }
 
 .navbar-menu {
@@ -186,11 +221,11 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-left: 20px;
+    margin-left: 0;
     position: relative;
     width: 100%;
-    max-width: 300px !important;
-    min-width: 300px !important;
+    max-width: 300px;
+    min-width: 300px;
 }
 
 .navbar-search input {
@@ -198,9 +233,9 @@ body {
     border-radius: 8px;
     border: 1px solid #444;
     font-size: 16px;
-    width: 100% !important;
-    max-width: 300px !important;
-    min-width: 300px !important;
+    width: 100%;
+    max-width: 300px;
+    min-width: 300px;
     font-family: 'Geomanist-Bold', sans-serif;
     box-sizing: border-box;
     background-color: #fff;
@@ -224,8 +259,8 @@ body {
     position: absolute;
     top: calc(100% + 5px);
     left: 0;
-    width: 100% !important;
-    max-width: 300px !important;
+    width: 100%;
+    max-width: 300px;
     background-color: var(--collection-bg);
     border-radius: 8px;
     box-shadow: var(--shadow);
@@ -239,7 +274,7 @@ body {
 
 .suggestion-item {
     padding: 8px 12px;
-    font-size: 14px;
+    font-size: 15px;
     cursor: pointer;
     transition: var(--transition);
     display: flex;
@@ -273,15 +308,17 @@ body {
 }
 
 .main-content {
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-    padding: 20px 0 20px;
-    box-sizing: border-box;
     position: relative;
-    flex-grow: 1;
-    min-height: calc(100vh - 56px - 95px);
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    margin-top: calc(var(--navbar-height) + env(safe-area-inset-top));
+    height: calc(100vh - var(--navbar-height) - env(safe-area-inset-top));
+    overflow: hidden; /* scroll uniquement dans .app-main */
 }
+
+
 
 h1, h2, h3 {
     color: var(--text-dark);
@@ -416,11 +453,6 @@ a:hover {
     top: 54px;
     left: 0;
 }
-
-[data-theme="cdc"] .display-name {
-    color: #000;
-}
-
 .controls {
     display: none;
     flex-direction: column;
@@ -457,11 +489,6 @@ a:hover {
     line-height: 32px;
     font-family: 'Geomanist-Bold', sans-serif;
 }
-
-[data-theme="cdc"] .controls label {
-    color: #000;
-}
-
 .controls select {
     padding: 5px;
     border-radius: 8px;
@@ -497,13 +524,8 @@ a:hover {
     display: none;
     text-transform: uppercase;
 }
-
-[data-theme="cdc"] .collection-title {
-    color: #000;
-}
-
 .collection-title.visible {
-    display: block;
+    display: none !important;
 }
 
 .nft-container {
@@ -681,11 +703,6 @@ a:hover {
     font-weight: bold;
     color: var(--color1);
 }
-
-[data-theme="cdc"] .nft-count {
-    color: #000;
-}
-
 [data-theme="cdc"] .nft-count .count {
     color: var(--color1);
 }
@@ -696,18 +713,20 @@ a:hover {
 
 .footer {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    padding: 0px 0 20px;
+    justify-content: center;
+    align-items: center;
+    padding: 0 20px calc(20px + env(safe-area-inset-bottom));
     background-color: var(--collection-bg);
     box-shadow: var(--shadow);
     color: var(--text-dark);
-    z-index: 999;
-    margin-top: auto;
+    z-index: 1002;
     width: 100%;
     box-sizing: border-box;
-    min-height: 95px;
-    position: relative;
+    min-height: var(--footer-height);
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 .footer-left,
@@ -719,12 +738,13 @@ a:hover {
 }
 
 .footer-left {
-    justify-content: flex-start;
-    margin-left: 20px;
+    justify-self: start;
+    margin-left: 0;
 }
 
 .footer-center {
-    justify-content: center;
+    justify-self: center;
+    grid-column: 2;
 }
 
 .footer-right {
@@ -853,49 +873,6 @@ a:hover {
     margin-top: -6px;
     max-width: 500px;
 }
-
-.theme-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    justify-content: flex-end;
-    margin-bottom: 10px;
-}
-
-.theme-toggle label {
-    color: var(--text-dark);
-    font-size: 1rem;
-    line-height: 1;
-}
-
-.theme-toggle button {
-    padding: 8px 16px;
-    border-radius: 8px;
-    border: none;
-    background-color: var(--color1);
-    color: var(--text-dark);
-    cursor: pointer;
-    font-family: 'Geomanist-Bold', sans-serif;
-    text-transform: uppercase;
-    font-weight: normal;
-    transition: var(--transition);
-    height: 36px;
-    line-height: 1.5;
-    width: 80px;
-}
-
-[data-theme="cdc"] .theme-toggle button {
-    color: #fff;
-}
-
-.theme-toggle button:hover {
-    transform: scale(1.05);
-}
-
-.theme-toggle button:active {
-    transform: scale(0.95);
-}
-
 .download-buttons {
     display: flex;
     justify-content: center;
@@ -1059,17 +1036,17 @@ a:hover {
     margin-top: 10px;
     margin-bottom: 10px;
     width: 100%;
-    max-width: none !important;
+    max-width: none;
 }
 
 #loginModal .navbar-search input {
-    width: 100% !important;
-    max-width: none !important;
+    width: 100%;
+    max-width: none;
 }
 
 #loginModal .suggestions {
-    width: 100% !important;
-    max-width: none !important;
+    width: 100%;
+    max-width: none;
 }
 
 #loginModal .modal-buttons {
@@ -1094,8 +1071,8 @@ a:hover {
 #scrollToTopButton {
     display: none;
     position: fixed;
-    bottom: 70px;
-    right: 3px;
+    right: 8px;
+    bottom: calc(var(--footer-height) + 60px + env(safe-area-inset-bottom));
     background-color: var(--color1);
     color: var(--text-dark);
     border: none;
@@ -1106,7 +1083,7 @@ a:hover {
     cursor: pointer;
     opacity: 0.75;
     transition: opacity 0.3s ease, transform 0.3s ease;
-    z-index: 1001;
+    z-index: 1003;
 }
 
 #scrollToTopButton.visible {
@@ -1121,8 +1098,8 @@ a:hover {
 #scrollToBottomButton {
     display: none;
     position: fixed;
-    bottom: 70px;
-    left: 4px;
+    right: 8px;
+    bottom: calc(var(--footer-height) + 10px + env(safe-area-inset-bottom));
     background-color: var(--color1);
     color: var(--text-dark);
     border: none;
@@ -1133,7 +1110,7 @@ a:hover {
     cursor: pointer;
     opacity: 0.75;
     transition: opacity 0.3s ease, transform 0.3s ease;
-    z-index: 1001;
+    z-index: 1003;
 }
 
 #scrollToBottomButton.visible {
@@ -1387,12 +1364,7 @@ a:hover {
         margin-right: 10px;
         line-height: 32px;
     }
-
-    [data-theme="cdc"] .controls label {
-        color: #000;
-    }
-
-    .controls select {
+.controls select {
         flex: 1;
         max-width: 200px;
         height: 32px;
@@ -1476,12 +1448,7 @@ a:hover {
         margin-top: 6px;
         text-align: left;
     }
-
-    [data-theme="cdc"] .display-name {
-        color: #000;
-    }
-
-    .navbar {
+.navbar {
         padding: 8px 0;
         height: 56px;
         box-sizing: border-box;
@@ -1570,8 +1537,8 @@ a:hover {
     .navbar-search {
         margin: 0;
         flex: 1;
-        max-width: 300px !important;
-        min-width: 300px !important;
+        max-width: 300px;
+        min-width: 300px;
         display: flex;
         align-items: center;
         position: relative;
@@ -1581,9 +1548,9 @@ a:hover {
     }
 
     .navbar-search input {
-        width: 100% !important;
-        max-width: 300px !important;
-        min-width: 300px !important;
+        width: 100%;
+        max-width: 300px;
+        min-width: 300px;
         height: 36px;
         padding: 6px 12px;
         font-size: 16px;
@@ -1595,7 +1562,7 @@ a:hover {
 
     .suggestions, #loginSuggestions {
         width: 100%;
-        max-width: 300px !important;
+        max-width: 300px;
         box-sizing: border-box;
         top: calc(100% + 3px);
         font-size: 13px;
@@ -1714,26 +1681,20 @@ a:hover {
         margin: 2px auto 10px;
         border-radius: 6px;
     }
+.main-content {
+    position: fixed;
+    top: calc(var(--navbar-height) + env(safe-area-inset-top));
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+}
 
-    .theme-toggle {
-        margin-bottom: 8px;
-        justify-content: center;
-    }
 
-    .theme-toggle button {
-        padding: 6px 12px;
-        font-size: 13px;
-        width: 60px;
-        height: 32px;
-    }
-
-    .main-content {
-        width: 100%;
-        max-width: 100%;
-        margin: 0;
-        padding: 10px 0 40px;
-        min-height: calc(100vh - 56px - 120px);
-    }
 
     .updates-container {
         flex-direction: column;
@@ -1780,12 +1741,7 @@ a:hover {
         margin: 5px 0;
         text-align: center;
     }
-
-    [data-theme="cdc"] .collection-title {
-        color: #000;
-    }
-
-    .nft-container {
+.nft-container {
         width: 100%;
         max-width: 100%;
         margin: 0 auto 30px;
@@ -2112,9 +2068,9 @@ a:hover {
     .navbar-search {
         margin: 0 6px 0 10px;
         flex: 0 0 auto;
-        width: 100% !important;
-        max-width: 280px !important;
-        min-width: 0 !important;
+        width: 100%;
+        max-width: 280px;
+        min-width: 0;
         display: flex;
         align-items: center;
         position: relative;
@@ -2123,9 +2079,9 @@ a:hover {
     }
 
     .navbar-search input {
-        width: 100% !important;
-        max-width: 280px !important;
-        min-width: 0 !important;
+        width: 100%;
+        max-width: 280px;
+        min-width: 0;
         height: 32px;
         padding: 6px 10px;
         font-size: 16px;
@@ -2135,8 +2091,8 @@ a:hover {
     }
 
     .suggestions {
-        width: 100% !important;
-        max-width: 280px !important;
+        width: 100%;
+        max-width: 280px;
         box-sizing: border-box;
         top: calc(100% + 3px);
         left: 0;
@@ -2271,12 +2227,18 @@ a:hover {
     }
 
     .main-content {
-        width: 100%;
-        max-width: 100%;
-        margin: 0;
-        padding: 10px 0 40px; /* Ajusté pour éviter coupures */
-        min-height: calc(100vh - 48px - 120px);
-    }
+    position: fixed;
+    top: calc(var(--navbar-height) + env(safe-area-inset-top));
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px 0 20px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
 
     .updates-container {
         flex-direction: column;
@@ -2393,11 +2355,6 @@ a:hover {
         text-align: center;
         z-index: 100;
     }
-
-    .selected-profile {
-        font-size: 0.9px;
-    }
-
     .modal-buttons button {
         padding: 6px;
         font-size: 12px;
@@ -2420,11 +2377,6 @@ a:hover {
         height: 10px;
         fill: #000;
     }
-
-    .donation-section h4 {
-        font-size: 28px;
-    }
-
     .nft-card .crypto-nft-btn {
         width: 20px;
         height: 20px;
@@ -2460,81 +2412,1523 @@ a:hover {
     }
 }
 
-@media (min-width: 360px) and (max-width: 480px) {
-    .nft-container {
+
+
+/* =========================================================
+   Profile header: smaller avatar + username
+   ========================================================= */
+.profile-picture--round img,
+.profile-header--navbar .profile-picture--round img {
+    width: 104px;
+    height: 104px;
+    border-width: 3px;
+}
+
+.profile-header-content--center .username,
+.profile-header--navbar .username {
+    font-size: 28px;
+}
+
+.profile-header-content--center .verified-badge,
+.profile-header--navbar .verified-badge {
+    width: 18px;
+    height: 18px;
+}
+
+@media (max-width: 520px) {
+    .profile-picture--round img,
+    .profile-header--navbar .profile-picture--round img {
+        width: 92px;
+        height: 92px;
+    }
+
+    .profile-header-content--center .username,
+    .profile-header--navbar .username {
+        font-size: 24px;
+    }
+}
+
+/* =========================================================
+   Filters toolbar: download buttons next to card size (pill shape)
+   ========================================================= */
+.controls.filters-toolbar .filters-right {
+    flex-wrap: wrap;
+}
+
+.download-pills {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#downloadZipButton.select-pill,
+#downloadCollageButton.select-pill {
+    height: 38px;
+    padding: 0 12px;
+    border-radius: 9999px;
+    width: auto;
+    max-width: none;
+
+    background: var(--pill-bg);
+    color: var(--pill-fg);
+    border: 1px solid var(--pill-border);
+    box-shadow: var(--pill-shadow);
+
+    font-size: 14px;
+    line-height: 1;
+    text-align: left;
+}
+
+#downloadZipButton.select-pill:hover,
+#downloadCollageButton.select-pill:hover {
+    transform: none;
+    border-color: rgba(0, 0, 0, 0.18);
+}
+
+#downloadZipButton.select-pill:active,
+#downloadCollageButton.select-pill:active {
+    transform: none;
+}
+
+.select-pill--download .select-pill-text {
+    max-width: none;
+}
+
+/* Download pills: emoji-only */
+.select-pill--download .select-pill-emoji {
+    font-size: 18px;
+    line-height: 1;
+}
+
+/* Top toolbar: keep download buttons compact (emoji only) */
+.download-pills--top #downloadZipButton.select-pill,
+.download-pills--top #downloadCollageButton.select-pill {
+    width: 38px;
+    padding: 0;
+    justify-content: center;
+    text-align: center;
+}
+
+@media (max-width: 700px) {
+    .download-pills {
         width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+
+/* === UX fixes: enable scroll + disable text selection (except form fields) === */
+html, body {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Safer touch scrolling on mobile browsers */
+body {
+    touch-action: pan-y;
+    overscroll-behavior: auto;
+}
+
+/* Prevent selecting/click-highlighting text across the page */
+body, body * {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    caret-color: transparent;
+}
+
+/* Allow text interaction where it matters */
+input, textarea, select, option, [contenteditable="true"], [contenteditable=""], .allow-select {
+    -webkit-user-select: text;
+    user-select: text;
+    caret-color: auto;
+}
+
+
+/* === Compact profile header + filters (less height, better width usage) === */
+.profile-section {
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.profile-header-content {
+    margin-top: 12px;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: nowrap;
+}
+
+@media (max-width: 900px) {
+    .profile-header-content {
+        flex-wrap: wrap;
+    }
+}
+
+.profile-picture img {
+    width: 140px;
+    height: 140px;
+    border-radius: 10px;
+}
+
+.profile-picture {
+    position: relative;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    max-width: none;
+    height: auto;
+    position: static;
+}
+
+.username-container {
+    position: static;
+    height: auto;
+}
+
+.username {
+    font-size: 34px;
+    line-height: 1.1;
+}
+
+.display-name {
+    position: static;
+    font-size: 18px;
+    line-height: 1.2;
+    margin-top: 2px;
+}
+
+.social-container {
+    left: auto;
+    right: 8px;
+    bottom: 8px;
+    gap: 10px;
+}
+
+.social-icon {
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 4px !important;
+}
+
+/* CRO icon: keep the same monochrome vibe as the X icon */
+#croLink .social-icon {
+    filter: none;
+}
+
+.controls {
+    width: min(720px, 100%);
+    margin-top: 12px;
+}
+
+.controls.visible {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+    gap: 10px 12px;
+    align-items: end;
+}
+
+@media (max-width: 1024px) {
+    .controls.visible {
+        grid-template-columns: repeat(2, minmax(160px, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .controls.visible {
+        grid-template-columns: 1fr;
+    }
+}
+
+.control-group {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    margin-bottom: 0;
+}
+
+.controls label {
+    margin: 0 0 4px;
+    line-height: 1.1;
+    font-size: 12px;
+}
+
+.controls select {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    height: 34px;
+}
+
+
+@media (min-width: 1101px) {
+    .profile-section {
+        flex-wrap: nowrap;
+    }
+}
+
+@media (max-width: 1100px) {
+    .profile-section {
+        flex-wrap: wrap;
+    }
+}
+
+
+/* =========================================================
+   Filters toolbar (pill style + horizontal layout)
+   ========================================================= */
+
+:root {
+    --accent: #00b7ff;
+    --pill-bg: #ffffff;
+    --pill-fg: #111111;
+    --pill-border: rgba(0, 0, 0, 0.10);
+    --pill-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+}
+
+.controls.filters-toolbar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: calc(100% - 100px);
+    max-width: calc(100vw - 100px);
+    margin: 8px 50px 14px;
+}
+
+.controls.filters-toolbar.visible {
+    display: flex;
+}
+
+.controls.filters-toolbar .filters-left {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    min-width: 0;
+}
+
+.controls.filters-toolbar .filters-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+}
+
+.select-pill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 12px;
+    border-radius: 9999px;
+    background: var(--pill-bg);
+    color: var(--pill-fg);
+    border: 1px solid var(--pill-border);
+    box-shadow: var(--pill-shadow);
+    max-width: 260px;
+}
+
+.select-pill .select-pill-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.select-pill .select-pill-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.select-pill .select-pill-text {
+    font-size: 14px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 190px;
+}
+
+.select-pill .select-pill-caret {
+    opacity: 0.7;
+    font-size: 14px;
+}
+
+.select-pill select {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.view-toggle {
+    display: inline-flex;
+    height: 38px;
+    border-radius: 9999px;
+    overflow: hidden;
+    background: var(--pill-bg);
+    border: 1px solid var(--pill-border);
+    box-shadow: var(--pill-shadow);
+}
+
+.view-toggle .view-btn {
+    width: 44px;
+    border: 0;
+    background: transparent;
+    color: var(--pill-fg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.view-toggle .view-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+}
+
+.view-toggle .view-btn.is-active {
+    background: var(--accent);
+    color: #ffffff;
+}
+
+@media (max-width: 700px) {
+    .controls.filters-toolbar {
+        width: calc(100% - 40px);
+        max-width: calc(100vw - 40px);
+        margin: 8px 20px 14px;
+    }
+
+    .select-pill {
         max-width: 100%;
-        margin: 0 auto 30px;
-        padding: 10px 15px; /* Ajouté padding vertical */
-        box-sizing: border-box;
-        gap: 6px;
-        z-index: 10;
-        /* overflow: hidden retiré */
     }
 
-    .nft-container.small-size {
-        grid-template-columns: repeat(3, 1fr) !important;
+    .select-pill .select-pill-text {
+        max-width: 150px;
+    }
+}
+
+
+/* === UI: Reset filters button (pill style) === */
+button.select-pill {
+    appearance: none;
+    -webkit-appearance: none;
+    border: 1px solid var(--pill-border);
+    background: var(--pill-bg);
+    color: var(--pill-fg);
+    cursor: pointer;
+    padding: 0 12px;
+}
+
+button.select-pill:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.35);
+    outline-offset: 2px;
+}
+
+button.select-pill--reset .select-pill-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* === Profile header: centered avatar + username below === */
+.profile-header-content--center {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 16px auto 10px;
+    padding: 0 16px;
+    width: min(900px, 100%);
+}
+
+.profile-picture--round {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.profile-picture--round img {
+    width: 132px;
+    height: 132px;
+    border-radius: 9999px;
+    border: 2px solid rgba(255, 255, 255, 0.22);
+    object-fit: cover;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.profile-info--center,
+.profile-header-content--center .profile-info {
+    width: 100%;
+    max-width: 900px;
+    height: auto;
+    position: static;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.profile-header-content--center .username-container {
+    position: static;
+    height: auto;
+    justify-content: center;
+    width: 100%;
+}
+
+.profile-header-content--center .username {
+    font-size: 34px;
+    line-height: 1.1;
+    margin: 0;
+}
+
+.profile-header-content--center .display-name {
+    position: static;
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.2;
+}
+
+.profile-header-content--center #socialContainer {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.profile-header-content--center .social-icon {
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 4px !important;
+}
+
+@media (max-width: 520px) {
+    .profile-picture--round img {
+        width: 116px;
+        height: 116px;
     }
 
-    .nft-container.medium-size {
-        grid-template-columns: repeat(2, 1fr) !important;
+    .profile-header-content--center .username {
+        font-size: 30px;
+    }
+}
+
+/* === Navbar profile: single bar, centered avatar + username, keep existing nav spacing === */
+.navbar {
+    display: block;
+}
+
+.navbar-top-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.profile-header--navbar {
+    /* Make it feel like one single navbar (no "second bar" divider). */
+    border-top: none;
+    padding: 0 0 8px;
+    margin-top: -6px;
+}
+
+.profile-header--navbar .profile-header-content {
+    /* Override the legacy left-aligned profile layout. */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    /* Tighter so it integrates into the same bar. */
+    margin: 0 auto;
+    padding: 0 16px;
+    gap: 8px;
+
+    width: min(900px, 100%);
+}
+
+.profile-header--navbar .profile-picture--round {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.profile-header--navbar .profile-picture--round img {
+    /* Same size as before the "compact navbar" change. */
+    width: 132px;
+    height: 132px;
+
+    border-radius: 9999px;
+    border: 5px solid rgba(255, 255, 255, 0.85);
+    object-fit: cover;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.profile-header--navbar .profile-info {
+    /* Neutralize legacy absolute positioning. */
+    flex: 0 0 auto;
+    max-width: none;
+    height: auto;
+    position: static;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    gap: 4px;
+    text-align: center;
+}
+
+.profile-header--navbar .username-container {
+    position: static;
+    height: auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.profile-header--navbar .username {
+    font-size: 34px;
+    line-height: 1.1;
+    margin: 0;
+    color: var(--color1);
+}
+
+.profile-header--navbar .display-name {
+    /* Keep navbar compact; remove if you want it visible. */
+    display: none;
+}
+
+.profile-header--navbar .verified-badge {
+    width: 22px;
+    height: 22px;
+}
+
+.profile-header--navbar .social-container {
+    position: static;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 2px;
+}
+
+@media (max-width: 520px) {
+    .profile-header--navbar .profile-picture--round img {
+        width: 116px;
+        height: 116px;
+    }
+    .profile-header--navbar .username {
+        font-size: 30px;
+    }
+}
+
+/* Filter caret: same small arrow everywhere, always visible */
+.select-pill {
+    max-width: 260px;
+}
+
+.select-pill-icon,
+.select-pill-caret {
+    flex: 0 0 auto;
+    pointer-events: none;
+}
+
+.select-pill-text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.select-pill-caret {
+    margin-left: 8px;
+    opacity: 0.7;
+    font-size: 14px;
+    line-height: 1;
+}
+
+/* Keep fixed bars spacing accurate */
+.main-content {
+    position: fixed;
+    top: calc(var(--navbar-height) + env(safe-area-inset-top));
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px 0 20px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+
+
+/* === Footer: assets count + download buttons only === */
+.footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 20px calc(10px + env(safe-area-inset-bottom));
+}
+
+.footer-content {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+#nftCountContainer.footer-nft-count {
+  flex: 1 1 220px;
+  display: flex;
+  align-items: center;
+}
+
+#nftCountContainer.footer-nft-count .nft-count {
+  margin: 0;
+  text-align: left;
+}
+
+.download-buttons.footer-download-buttons {
+  width: auto;
+  max-width: none;
+  margin: 0;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .footer-content {
+    justify-content: center;
+  }
+  #nftCountContainer.footer-nft-count {
+    flex-basis: 100%;
+    justify-content: center;
+  }
+  #nftCountContainer.footer-nft-count .nft-count {
+    text-align: center;
+  }
+  .download-buttons.footer-download-buttons {
+    justify-content: center;
+  }
+}
+
+/* =========================================================
+   Layout: navbar is fixed; content offset is handled by body
+   ========================================================= */
+body {
+    padding-top: calc(var(--navbar-height) + 20px);
+}
+
+.main-content {
+    position: fixed;
+    top: calc(var(--navbar-height) + env(safe-area-inset-top));
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px 0 20px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+
+/* Remove profile/photo/pseudo/social from the top navbar (kept below). */
+.navbar .user-profile {
+    display: none !important;
+}
+
+/* =========================================================
+   Profile header (below navbar): smaller avatar/username/social
+   ========================================================= */
+.profile-header--page .profile-header-content--center {
+    margin-top: 10px;
+}
+
+.profile-header--page .profile-picture--round img {
+    width: 88px;
+    height: 88px;
+    border-width: 2px;
+}
+
+.profile-header--page .username {
+    font-size: 22px;
+}
+
+.profile-header--page .verified-badge {
+    width: 16px;
+    height: 16px;
+}
+
+.profile-header--page .display-name {
+    font-size: 14px;
+}
+
+.profile-header--page .social-icon {
+    width: 20px !important;
+    height: 20px !important;
+    box-shadow: none;
+}
+
+@media (max-width: 520px) {
+    .profile-header--page .profile-picture--round img {
+        width: 76px;
+        height: 76px;
     }
 
-    .nft-container.large-size {
-        grid-template-columns: 1fr !important;
+    .profile-header--page .username {
+        font-size: 20px;
     }
 
-    .social-container {
-        position: absolute;
-        bottom: 0;
-        left: calc(120px + 15px);
-        display: flex;
-        gap: 8px;
-        align-items: flex-end;
+    .profile-header--page .display-name {
+        font-size: 13px;
     }
 
-    .social-icon {
-        width: 20px !important;
-        height: 20px !important;
-        border-radius: 4px !important;
-        vertical-align: middle;
+    .profile-header--page .social-icon {
+        width: 18px !important;
+        height: 18px !important;
     }
+}
 
-    .navbar-search {
-        margin-left: auto !important;
-        margin-right: auto !important;
-        margin-bottom: auto !important;
-        width: 100% !important;
-        max-width: 280px !important;
-        min-width: 0 !important;
-    }
 
-    .navbar-search input {
-        width: 100% !important;
-        max-width: 280px !important;
-        min-width: 0 !important;
-    }
+/* =========================================================
+   Top asset count bar (replaces filters at the top)
+   ========================================================= */
+.asset-count-bar {
+    width: calc(100% - 100px);
+    max-width: calc(100vw - 100px);
+    margin: 8px 50px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
-    .suggestions {
-        width: 100% !important;
-        max-width: 280px !important;
-        left: 0 !important;
-    }
+.asset-count-text {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
-    .download-buttons {
-        margin: 20px auto 20px;
-        max-width: 280px; /* Restauré */
-        z-index: 200;
-        clear: both;
-    }
+.asset-count-text .nft-count {
+    margin: 0;
+}
 
-    #downloadZipButton,
-    #downloadCollageButton {
-        width: 200px; /* Restauré */
-        max-width: 200px; /* Restauré */
-    }
+/* =========================================================
+   Footer: all filters live here now
+   ========================================================= */
+.footer .controls {
+    display: flex;
+    margin: 0;
+}
 
-   .footer {
-        padding: 20px 0; /* Ajusté pour correspondre à l'écart des boutons */
+.footer .controls.filters-toolbar {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0;
+    padding: 10px 0;
+}
+
+@media (max-width: 640px) {
+    .asset-count-bar {
+        width: calc(100% - 30px);
+        max-width: calc(100vw - 30px);
+        margin: 8px 15px 14px;
     }
+    .footer .controls.filters-toolbar {
+        padding: 12px 0;
+    }
+}
+
+/* =========================================================
+   Sidebar (left): profile + stacked filters
+   Top (right): size + sort (and downloads)
+   ========================================================= */
+
+:root {
+    --sidebar-width: 320px;
+    --layout-gap: 18px;
+}
+
+:root {
+    --sidebar-width: 320px;
+    --layout-gap: 0px;
+}
+
+/* Desktop layout: fixed sidebar flush to viewport edge + navbar */
+.app-layout {
+    position: relative;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+
+    height: 100%;
+}
+
+.left-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--sidebar-width);
+    background: var(--collection-bg);
+    border-right: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 0;
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.left-sidebar .sidebar-main {
+    flex: 1;
+    overflow: auto;
+    padding: calc(30px + env(safe-area-inset-top)) 12px 18px;
+}
+
+.left-sidebar .sidebar-downloads {
+    padding: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.10);
+    background: var(--collection-bg);
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.download-pills--sidebar {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.download-pills--sidebar .select-pill--download {
+    width: 100%;
+    justify-content: center;
+}
+
+.sidebar-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.10);
+    margin: 14px 0;
+}
+
+.left-sidebar #profileHeader {
+    width: 100%;
+}
+
+.left-sidebar #profileHeader .profile-header-content--center {
+    margin: 0;
+    padding: 0;
+    gap: 10px;
+}
+
+.left-sidebar #profileHeader .profile-picture--round img {
+    width: 136px;
+    height: 136px;
+}
+
+.left-sidebar #profileHeader .username {
+    font-size: 28px;
+}
+
+.left-sidebar #profileHeader .display-name {
+    font-size: 14px;
+}
+
+.left-sidebar #profileHeader .username-container {
+    justify-content: center;
+}
+
+.left-sidebar #profileHeader .social-container {
+    position: static !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.left-sidebar #profileHeader .social-icon {
+    box-shadow: none;
+}
+
+.controls.controls--sidebar {
+    width: 100%;
+    margin: 0;
+}
+
+.controls.controls--sidebar.visible {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+}
+
+.controls.controls--sidebar .filters-left {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 10px;
+    align-items: stretch;
+}
+
+.controls.controls--sidebar .select-pill,
+.controls.controls--sidebar button.select-pill {
+    width: 100%;
+    max-width: none;
+    justify-content: space-between;
+}
+
+.app-main {
+    margin-left: var(--sidebar-width);
+    padding: 20px 20px 20px;
+    min-width: 0;
+    box-sizing: border-box;
+
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+
+
+
+.top-toolbar {
+    display: none;
+    width: 100%;
+    margin: 0 0 12px;
+}
+
+.top-toolbar.visible {
+    display: flex;
+    justify-content: flex-end;
+}
+
+
+.top-toolbar-inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+    width: 100%;
+    margin-left: auto;
+}
+
+.app-main .asset-count-bar {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 0 14px !important;
+}
+
+.app-main .nft-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding: 0 !important;
+}
+
+/* Custom dropdown menu (always under pill) */
+.pill-native-select {
+    pointer-events: none;
+}
+
+.pill-dropdown-menu {
+    position: fixed;
+    z-index: 2005;
+    overflow: auto;
+    background: var(--collection-bg);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 6px;
+    box-sizing: border-box;
+}
+
+.pill-dropdown-option {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.pill-dropdown-option:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.pill-dropdown-option[aria-selected="true"] {
+    background: rgba(255, 255, 255, 0.10);
+}
+
+@media (max-width: 980px) {
+    :root { --sidebar-width: 280px; }
+}
+
+/* Force right alignment for sort/size controls */
+.top-toolbar .top-toolbar-inner { justify-content: flex-end; }
+
+/* Reset button: distinct + centered text */
+#resetFiltersButton.select-pill--reset {
+    background: transparent;
+    border: 1px dashed rgba(255, 255, 255, 0.28);
+    box-shadow: none;
+    justify-content: center;
+    text-align: center;
+
+    color: #ffffff;
+}
+#resetFiltersButton.select-pill--reset .select-pill-text {
+    width: 100%;
+    text-align: center;
+}
+
+/* Collage download: text-only */
+#downloadCollageButton .select-pill-icon { display: none !important; }
+
+#downloadCollageButton::before,
+#downloadCollageButton::after {
+    content: none !important;
+}
+
+
+/* v5: Ensure top toolbar aligned to the right */
+.top-toolbar, .top-toolbar.visible { justify-content: flex-end !important; }
+.top-toolbar .top-toolbar-inner { justify-content: flex-end !important; margin-left: auto !important; }
+
+/* v5: Reset button disabled when no active filters */
+#resetFiltersButton.is-disabled,
+#resetFiltersButton:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+#resetFiltersButton.is-disabled:hover,
+#resetFiltersButton:disabled:hover {
+    transform: none;
+}
+
+
+#downloadZipButton.is-disabled,
+#downloadZipButton:disabled,
+#downloadCollageButton.is-disabled,
+#downloadCollageButton:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* v5: Collage download text-onlyno emoji/icon) */
+#downloadCollageButton,
+#downloadCollageButton.select-pill {
+    background-image: none !important;
+    gap: 0 !important;
+}
+#downloadCollageButton::before,
+#downloadCollageButton::after {
+    content: none !important;
+    display: none !important;
+}
+#downloadCollageButton .select-pill-icon,
+#downloadCollageButton svg,
+#downloadCollageButton img {
+    display: none !important;
+}
+
+
+/* Hide right-side navbar links (Home / My Profile / Login) */
+.navbar-menu,
+.navbar-toggle {
+    display: none !important;
+}
+
+/* Prevent horizontal scroll in right pane */
+.app-main,
+.nft-container,
+.updates-container,
+.asset-count-bar {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+/* Force collage download button to be text-only (no emoji/icon/pseudo). */
+#downloadCollageButton::before,
+#downloadCollageButton::after {
+    content: none !important;
+    display: none !important;
+}
+#downloadCollageButton .select-pill-icon {
+    display: none !important;
+}
+
+
+/* --- Layout: navbar begins after sidebar; right pane no horizontal scroll --- */
+.app-main {
+    overflow-x: hidden !important;
+}
+
+.nft-container,
+.nft-grid,
+.nfts-grid {
+    overflow-x: hidden !important;
+    max-width: 100% !important;
+}
+
+html, body {
+    overflow-x: hidden !important;
+}
+
+
+/* Hide right-side navbar links module */
+.navbar-menu,
+.navbar-toggle {
+    display: none !important;
+}
+
+/* Move logo+search to top-right */
+.navbar-top-row {
+    justify-content: flex-end !important;
+}
+
+.navbar-logo-search-container {
+    margin-left: auto !important;
+    margin-right: 20px;
+}
+
+
+/* Sort-by cycles on click (no dropdown) */
+.select-pill--sort {
+    width: 160px; /* constant width (prevents shrink on RANK) */
+    cursor: pointer;
+}
+
+.select-pill--sort .select-pill-caret {
+    display: none !important;
+}
+
+#sortBy {
+    display: none !important;
+}
+
+
+.sidebar-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding-top: 8px;
+    width: 100%;
+}
+
+.sidebar-brand-logo {
+    height: 36px;
+    width: auto;
+}
+
+.sidebar-brand-text {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    opacity: 0.9;
+    text-align: center;
+    width: 100%;
+}
+
+
+/* Sidebar stats block */
+.sidebar-stats {
+    padding: 12px 6px 14px;
+}
+
+.sidebar-stats-title {
+    text-align: center;
+    letter-spacing: 0.08em;
+    font-size: 12px;
+    opacity: 0.85;
+    margin: 4px 0 10px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+
+.stats-grid .stat-card:first-child {
+    grid-column: 1 / -1;
+}
+.stat-card {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 10px 8px;
+    text-align: center;
+}
+
+
+.stat-card[data-stat-action] {
+    cursor: pointer;
+    user-select: none;
+}
+
+.stat-card[data-stat-action]:hover {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+.stat-card[data-stat-action]:active {
+    transform: translateY(1px);
+}
+
+.stat-card[data-stat-action]:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.35);
+    outline-offset: 2px;
+}
+
+.stat-value {
+    font-size: 18px;
+    line-height: 1.1;
+    color: var(--text-dark);
+}
+
+.stat-label {
+    margin-top: 4px;
+    font-size: 10px;
+    opacity: 0.75;
+    letter-spacing: 0.08em;
+}
+
+#scrollToTopButton,
+#scrollToBottomButton {
+    left: auto !important;
+    right: 18px;
+}
+
+#resetFiltersButton.select-pill--reset .select-pill-text { color: #ffffff; }
+
+/* v10: Top toolbar downloads to the right of card size */
+.download-pills--top {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: flex-end;
+}
+.download-pills--top .select-pill--download {
+    width: auto;
+    justify-content: center;
+}
+
+/* Sidebar footer now only brand */
+.left-sidebar .sidebar-downloads {
+    gap: 10px;
+}
+
+/* v13: move filters from left sidebar to top-toolbar (left side) */
+.top-toolbar.visible {
+    display: block;
+}
+
+.top-toolbar-inner {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 12px;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+    margin-left: 0;
+}
+
+.top-toolbar-left {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.top-toolbar-right {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-left: auto;
+    align-items: center;
+}
+
+.controls.controls--top {
+    display: none;
+    width: auto;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0;
+}
+
+.controls.controls--top.visible {
+    display: flex;
+}
+
+.controls.controls--top .filters-left {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.controls.controls--top .select-pill,
+.controls.controls--top button.select-pill {
+    width: auto;
+    max-width: 260px;
+}
+
+@media (max-width: 980px) {
+    .top-toolbar-inner {
+        flex-wrap: wrap;
+    }
+    .top-toolbar-left,
+    .top-toolbar-right {
+        width: 100%;
+    }
+    .top-toolbar-right {
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+}
+
+/* === vNext: Sidebar profile search === */
+.sidebar-search {
+    position: relative;
+    width: 100%;
+}
+
+.navbar-search.navbar-search--sidebar {
+    max-width: none;
+    min-width: 0;
+    width: 100%;
+}
+
+.navbar-search.navbar-search--sidebar input {
+    max-width: none;
+    min-width: 0;
+    width: 100%;
+}
+
+.sidebar-search .suggestions {
+    max-width: none;
+    width: 100%;
+}
+
+.sidebar-separator {
+    height: 1px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.10);
+    margin: 14px 0;
+}
+
+/* === vNext: Navbar controls (sort + size + download) === */
+.navbar-top-row {
+    justify-content: flex-start;
+    gap: 12px;
+}
+
+.navbar-top-row .navbar-menu {
+    margin-left: 20px;
+    margin-right: 0;
+}
+
+.navbar-controls {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+    margin-left: auto;
+    margin-right: 20px;
+}
+
+.navbar-controls.visible {
+    display: flex;
+}
+
+/* === vNext: Dropdown width + no wrapping in options === */
+.pill-dropdown-option {
+    white-space: nowrap;
+}
+
+/* === vNext: Downloads (icon + short label + badge) === */
+.download-pills--top #downloadZipButton.select-pill,
+.download-pills--top #downloadCollageButton.select-pill {
+    width: auto;
+    padding: 0 12px;
+    justify-content: center;
+    text-align: left;
+}
+
+.select-pill--download {
+    gap: 8px;
+}
+
+.select-pill-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 18px;
+    min-width: 18px;
+    padding: 0 6px;
+    border-radius: 9999px;
+    font-size: 12px;
+    line-height: 18px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Override legacy rule that hid the collage icon */
+#downloadCollageButton .select-pill-icon {
+    display: inline-flex !important;
+}
+
+/* Allow pill labels to fully display (width is auto-sized via JS) */
+.select-pill-text {
+    max-width: none !important;
+}
+
+/* Top toolbar: only the main filters stay here */
+.top-toolbar.visible {
+    justify-content: flex-start !important;
+}
+
+.top-toolbar .top-toolbar-inner {
+    justify-content: flex-start !important;
+    margin-left: 0 !important;
 }
