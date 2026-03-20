@@ -1,265 +1,363 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+
+<html data-theme="cdc" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Browse smarter. Collect better – Developed by Unscoop">
-    <title>CRONOS.WTF | Developed by Unscoop</title>
+<meta charset="utf-8"/><link crossorigin="anonymous" href="https://upload.wikimedia.org" rel="preconnect"/><link href="https://upload.wikimedia.org" rel="dns-prefetch"/><link crossorigin="anonymous" href="https://crypto.com" rel="preconnect"/><link href="https://crypto.com" rel="dns-prefetch"/><link crossorigin="anonymous" href="https://cdnjs.cloudflare.com" rel="preconnect"/><link href="https://cdnjs.cloudflare.com" rel="dns-prefetch"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="#1a1a1a" name="theme-color"/>
+<meta content="Browse smarter. Collect better – Developed by Unscoop" name="description"/>
+<title>CRONOS.WTF | Developed by Unscoop</title>
+<!-- Favicon et ressources -->
+<link href="icon.png" rel="icon" type="image/png"/>
+<link as="image" href="icon.png" rel="preload"/>
+<link as="font" crossorigin="" href="Geomanist-Bold.otf" rel="preload" type="font/otf"/>
+<link href="styles.css" rel="stylesheet"/>
+<!-- Librairies JS -->
 
-    <!-- Favicon et ressources -->
-    <link rel="icon" type="image/png" href="icon.png">
-    <link rel="preload" href="icon.png" as="image">
-    <link rel="preload" href="Geomanist-Bold.otf" as="font" type="font/otf" crossorigin>
-    <link rel="stylesheet" href="styles.css">
 
-    <!-- Librairies JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-    <!-- Open Graph (aperçu lien) -->
-    <meta property="og:title" content="CRONOS.WTF | Developed by Unscoop">
-    <meta property="og:description" content="Browse smarter. Collect better">
-    <meta property="og:image" content="https://CronoBots.github.io/CronoBots/link.png">
-    <meta property="og:url" content="https://CronoBots.github.io/CronoBots/">
-    <meta property="og:type" content="website">
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="CRONOS.WTF | Developed by Unscoop">
-    <meta name="twitter:description" content="Browse smarter. Collect better">
-    <meta name="twitter:image" content="https://www.cronos.wtf/link.png">
+<!-- Open Graph (aperçu lien) -->
+<meta content="CRONOS.WTF | Developed by Unscoop" property="og:title"/>
+<meta content="Browse smarter. Collect better" property="og:description"/>
+<meta content="https://CronoBots.github.io/CronoBots/link.png" property="og:image"/>
+<meta content="https://CronoBots.github.io/CronoBots/" property="og:url"/>
+<meta content="website" property="og:type"/>
+<!-- Twitter Card -->
+<meta content="summary_large_image" name="twitter:card"/>
+<meta content="CRONOS.WTF | Developed by Unscoop" name="twitter:title"/>
+<meta content="Browse smarter. Collect better" name="twitter:description"/>
+<meta content="https://www.cronos.wtf/link.png" name="twitter:image"/>
 </head>
-
 <body>
-    <noscript>
-        <div style="text-align: center; padding: 20px; color: var(--text-dark);">
+<noscript>
+<div style="text-align: center; padding: 20px; color: var(--text-dark);">
             JavaScript is required to view this content. Please enable JavaScript in your browser settings.
         </div>
-    </noscript>
-    <nav class="navbar">
-        <div class="navbar-logo-search-container">
-            <div class="navbar-logo">
-                <img src="CRONOBOTS.png" alt="Cronobots Logo">
-                <span class="navbar-logo-text">CRONOS.WTF</span>
-            </div>
-            <div class="navbar-search">
-                <input type="text" id="usernameInput" placeholder="🔎 Search a profile" aria-describedby="usernameHelp" autocomplete="on" onfocus="this.placeholder=''" onblur="if(!this.value) this.placeholder='🔎 Search a profile'" />
-                <div class="suggestions" id="suggestions"></div>
-            </div>
-        </div>
-        <div class="navbar-menu" id="navbarMenu">
-            <a href="https://cronobots.github.io/Cronos" aria-label="Home">Home</a>
-            <span class="navbar-divider"> | </span>
-            <a href="#" id="myProfileLink" style="display: none;" aria-label="My Profile">My Profile</a>
-            <a href="#" id="logoutLink" style="display: none;" aria-label="Logout">Logout</a>
-            <a href="#" id="loginLink" aria-label="Login">Login</a>
-            <div class="user-profile" id="userProfile" style="display: none;">
-                <img id="userProfilePicture" src="" alt="User Profile" class="user-profile-picture" />
-            </div>
-        </div>
-        <button class="navbar-toggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
-    </nav>
-    <div class="main-content">
-        <div class="updates-container">
-            <div class="update-modal home-update-modal" id="availableFeaturesModal" role="region" aria-labelledby="availableFeaturesTitle">
-                <div class="update-modal-content">
-                    <div class="update-header">
-                        <h3 id="availableFeaturesTitle">✅ Available Features</h3>
-                    </div>
-                    <div class="update-content" id="availableFeaturesContent">
-                        <ul>
-                            <li>Profile exploration</li>
-                            <li>Login</li>
-                            <li>Filtering (Collection / Blockchain / Curated)</li>
-                            <li>Display (Small / Medium / Large)</li>
-                            <li>Sorting (Newest / Oldest / Rank)</li>
-                            <li>Theme switching (Dark / CDC)</li>
-                            <li>Full assets download (With NFT name)</li>
-                            <li>Single asset download</li>
-                            <li>Collage download</li>
-                            <li>Scroll navigation buttons (Up / Down)</li>
-                            <li>Community support tracking</li>
-                            <li>Display name on hover 🆕</li>
-	                    <li>Link to NFTs 🆕</li>
-		            <li>Filter by artist 🆕</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="update-modal home-update-modal" id="inProgressModal" role="region" aria-labelledby="inProgressTitle">
-                <div class="update-modal-content">
-                    <div class="update-header">
-                        <h3 id="inProgressTitle">⚙️ In development</h3>
-                    </div>
-                    <div class="update-content" id="inProgressContent">
-                        <ul>
-		            <li>Filter by bundle (Manecity)</li>
-		            <li>Collection viewer</li>
-                            <li>Collection statistics (Floor / Volume / Owners)</li>
-                            <li>Partner collections integration</li>
-                            <li>Sales bot (Notifications / Automated alerts)</li>
-                            <li>Leaderboards (Top holders / Top collections)</li>
-                            <li>...</li>
-                            <li>Send me your suggestions for improvements or bug reports on X.</li>
-			    <ul>
-                            	<li><a href="https://x.com/LoadedPixel_CDC" target="_blank">Twitter/X</a></li>
-			    </ul>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="profile-section">
-            <div class="profile-header" id="profileHeader" style="display: none;">
-                <div class="profile-header-content">
-                    <div class="profile-picture">
-                        <img id="profilePicture" src="" alt="Profile Picture" />
-                        <div class="social-container" style="display: none;" id="socialContainer">
-                            <p id="croLink" style="display: none;">
-                                <a href="#" target="_blank" id="croUrl" title="Visit Crypto.com/NFT Profile">
-                                    <img src="CRO.png" alt="CRO Profile" class="social-icon" onerror="console.error('Failed to load CRO.png'); this.src='/assets/fallback-icon.png'" />
-                                </a>
-                            </p>
-                            <p id="twitterLink" style="display: none;">
-                                <a href="#" target="_blank" id="twitterUrl" title="Visit X Profile">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png" alt="X Profile" class="social-icon" onerror="this.src='/assets/fallback-icon.png'" />
-                                </a>
-                            </p>
-                            <p id="facebookLink" style="display: none;">
-                                <a href="#" target="_blank" id="facebookUrl" title="Visit Facebook Profile">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Facebook_f_logo_%282019%29.svg/512px-Facebook_f_logo_%282019%29.svg.png" alt="Facebook Profile" class="social-icon" onerror="this.src='/assets/fallback-icon.png'" />
-                                </a>
-                            </p>
-                            <p id="instagramLink" style="display: none;">
-                                <a href="#" target="_blank" id="instagramUrl" title="Visit Instagram Profile">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/512px-Instagram_icon.png" alt="Instagram Profile" class="social-icon" onerror="this.src='/assets/fallback-icon.png'" />
-                                </a>
-                            </p>
-                        </div>
-                    </div>
-                    <div class="profile-info">
-                        <div class="username-container">
-                            <h2 id="username" class="username"></h2>
-                            <img id="verifiedBadge" class="verified-badge" src="https://parspng.com/wp-content/uploads/2022/07/tickpng.parspng.com-4-1024x1024.png" style="display: none;" alt="Verified" onerror="this.src='/assets/fallback-verified.png'" />
-                        </div>
-                        <p id="displayName" class="display-name"></p>
-                    </div>
-                </div>
-            </div>
-            <div class="controls" id="controls">
-    <div class="control-group">
-        <label>ARTISTS:</label>
-        <select id="creatorFilter" onchange="filterNFTs()">
-            <option value="">ALL ARTISTS</option>
-        </select>
-    </div>
-<div class="control-group">
-    <label>COLLECTIONS:</label>
-    <select id="collectionFilter" onchange="filterNFTs()">
-        <option value="">ALL COLLECTIONS</option>
-    </select>
+</noscript>
+<nav class="navbar">
+<div class="navbar-top-row">
+<div class="navbar-menu" id="navbarMenu">
+<a aria-label="Home" href="https://cronobots.github.io/Cronos">Home</a>
+<span class="navbar-divider"> | </span>
+<a aria-label="My Profile" href="#" id="myProfileLink" style="display: none;">My Profile</a>
+<a aria-label="Logout" href="#" id="logoutLink" style="display: none;">Logout</a>
+<a aria-label="Login" href="#" id="loginLink">Login</a>
+<div class="user-profile" id="userProfile" style="display: none;">
+<img alt="User Profile" class="user-profile-picture" decoding="async" id="userProfilePicture" loading="lazy" src="">
+</img></div>
 </div>
-    <div class="control-group">
-        <label>CHAINS:</label>
-        <select id="chainFilter" onchange="filterNFTs()">
-            <option value="">ALL</option>
-            <option value="CRONOS">CRONOS</option>
-            <option value="CRONOS_POS">CRONOS POS CHAIN</option>
-        </select>
-    </div>
-    <div class="control-group">
-        <label>CURATIONS:</label>
-        <select id="curatedFilter" onchange="filterNFTs()">
-            <option value="">ALL</option>
-            <option value="true">CURATED</option>
-            <option value="false">NON CURATED</option>
-        </select>
-    </div>
-    <div class="control-group">
-        <label for="cardSize">CARD SIZE:</label>
-        <select id="cardSize" onchange="updateDisplay()">
-            <option value="small" selected>SMALL</option>
-            <option value="medium">MEDIUM</option>
-            <option value="large">LARGE</option>
-        </select>
-    </div>
-    <div class="control-group">
-        <label>SORT BY:</label>
-        <select id="sortBy" onchange="filterNFTs()">
-            <option value="newest" selected>NEWEST</option>
-            <option value="oldest">OLDEST</option>
-            <option value="rank">RANK</option>
-        </select>
-    </div>
+<div class="navbar-controls" id="navbarControls" aria-label="Controls">
+<div class="select-pill select-pill--sort" data-pill-for="sortBy" title="Sort by" role="button" tabindex="0">
+<span aria-hidden="true" class="select-pill-icon">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M3 6h10"></path>
+<path d="M3 12h7"></path>
+<path d="M3 18h4"></path>
+<path d="M17 6v12"></path>
+<path d="M14 15l3 3 3-3"></path>
+</svg>
+</span>
+<span class="select-pill-text" id="pillTextSort">NEWEST</span>
+<span aria-hidden="true" class="select-pill-caret">▾</span>
+<select aria-label="Sort by" id="sortBy">
+<option selected="" value="newest">NEWEST</option>
+<option value="oldest">OLDEST</option>
+<option value="rank">RANK</option>
+</select>
 </div>
-            <h2 id="collectionTitle" class="collection-title"></h2>
-        </div>
-        <div class="timestamp" id="timestamp"></div>
-        <div class="error" id="error" role="alert"></div>
-        <div class="no-results" id="noResults" style="display: none;">No results found</div>
-        <div id="nftCountContainer"></div>
-        <div class="nft-container" id="nftContainer"></div>
-        <div class="download-buttons">
-            <button id="downloadZipButton" style="display: none;" onclick="downloadNFTsAsZip()">DOWNLOAD ASSETS</button>
-            <button id="downloadCollageButton" style="display: none;" onclick="downloadCollage()">DOWNLOAD COLLAGE</button>
-        </div>
-        <div class="modal" id="progressModal">
-            <div class="modal-content">
-                <h3 id="modalTitle">Creating ZIP File</h3>
-                <div class="progress-bar">
-                    <div class="progress" id="progressBar"></div>
-                </div>
-                <p class="progress-text" id="progressText">Preparing</p>
-                <div class="modal-buttons">
-                    <button id="cancelDownloadButton" class="cancel-button">Cancel</button>
-                </div>
-            </div>
-        </div>
-        <div class="modal" id="loginModal">
-            <div class="modal-content">
-                <h3>Enter your Crypto.com/NFT Profile</h3>
-                <div class="navbar-search" id="loginSearchContainer">
-                    <input type="text" id="loginUsernameInput" placeholder="🔎 Search a profile" autocomplete="on" onfocus="this.placeholder=''" onblur="if(!this.value) this.placeholder='🔎 Search a profile'" />
-                    <div class="suggestions" id="loginSuggestions"></div>
-                </div>
-                <div class="modal-buttons">
-                    <button id="cancelLoginButton" class="cancel-button">Cancel</button>
-                </div>
-            </div>
-        </div>
+    <div aria-label="Card size" class="view-toggle" role="group">
+<button aria-pressed="false" class="view-btn" id="viewSmall" title="Small cards" type="button">
+<svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<rect height="5" rx="1" width="5" x="3" y="3"></rect>
+<rect height="5" rx="1" width="5" x="9.5" y="3"></rect>
+<rect height="5" rx="1" width="5" x="16" y="3"></rect>
+<rect height="5" rx="1" width="5" x="3" y="9.5"></rect>
+<rect height="5" rx="1" width="5" x="9.5" y="9.5"></rect>
+<rect height="5" rx="1" width="5" x="16" y="9.5"></rect>
+<rect height="5" rx="1" width="5" x="3" y="16"></rect>
+<rect height="5" rx="1" width="5" x="9.5" y="16"></rect>
+<rect height="5" rx="1" width="5" x="16" y="16"></rect>
+</svg>
+</button>
+<button aria-pressed="false" class="view-btn" id="viewMedium" title="Medium cards" type="button">
+<svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<rect height="8.5" rx="1.5" width="8.5" x="3" y="3"></rect>
+<rect height="8.5" rx="1.5" width="8.5" x="12.5" y="3"></rect>
+<rect height="8.5" rx="1.5" width="8.5" x="3" y="12.5"></rect>
+<rect height="8.5" rx="1.5" width="8.5" x="12.5" y="12.5"></rect>
+</svg>
+</button>
+<button aria-pressed="false" class="view-btn" id="viewLarge" title="Large cards" type="button">
+<svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<rect height="16" rx="2" width="16" x="4" y="4"></rect>
+</svg>
+</button>
+</div>
+<div class="download-pills download-pills--top" aria-label="Downloads">
+<button class="select-pill select-pill--download" id="downloadZipButton" onclick="downloadNFTsAsZip()" style="display: none;" title="Download pack (ZIP)" type="button">
+<span aria-hidden="true" class="select-pill-icon">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+<polyline points="7 10 12 15 17 10"></polyline>
+<line x1="12" x2="12" y1="15" y2="3"></line>
+</svg>
+</span>
+<span class="select-pill-text">PACK</span>
+<span class="select-pill-badge" id="downloadZipBadge" aria-hidden="true" style="display: none;">0</span>
+</button>
+<button class="select-pill select-pill--download" id="downloadCollageButton" onclick="downloadCollage()" style="display: none;" title="Download image (PNG)" type="button">
+<span aria-hidden="true" class="select-pill-icon">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<rect x="3" y="3" width="18" height="18" rx="2"></rect>
+<circle cx="9" cy="9" r="2"></circle>
+<path d="M21 15l-5-5L5 21"></path>
+</svg>
+</span>
+<span class="select-pill-text">IMAGE</span>
+</button>
+</div>
+<select aria-label="Card size" class="sr-only" id="cardSize">
+<option value="small">SMALL</option>
+<option value="medium">MEDIUM</option>
+<option value="large">LARGE</option>
+</select>
+</div>
+<button aria-expanded="false" aria-label="Toggle menu" class="navbar-toggle" type="button">☰</button>
+
+</div>
+</nav>
+<div class="main-content">
+  <div class="app-layout">
+    <aside class="left-sidebar" id="leftSidebar">
+  <div class="sidebar-main">
+<div class="sidebar-search" id="sidebarProfileSearch">
+<div class="navbar-search navbar-search--sidebar">
+<input aria-describedby="usernameHelp" autocomplete="on" id="usernameInput" onblur="if(!this.value) this.placeholder='🔎 Search a profile'" onfocus="this.placeholder=''" placeholder="🔎 Search a profile" type="text"/><span class="sr-only" id="usernameHelp">Type at least 3 characters to search a profile.</span>
+<div class="suggestions" id="suggestions"></div>
+</div>
+</div>
+<div class="sidebar-separator" aria-hidden="true"></div>
+
+<div class="profile-header profile-header--page" id="profileHeader" style="display: none;">
+<div class="profile-header-content profile-header-content--center">
+<div class="profile-picture profile-picture--round">
+<img alt="Profile Picture" decoding="async" id="profilePicture" loading="lazy" src=""/>
+</div>
+<div class="profile-info profile-info--center">
+<div class="username-container">
+<h2 class="username" id="username"></h2>
+<img alt="Verified" class="verified-badge" decoding="async" id="verifiedBadge" loading="lazy" onerror="this.src='/assets/fallback-verified.png'" src="https://parspng.com/wp-content/uploads/2022/07/tickpng.parspng.com-4-1024x1024.png" style="display: none;"/>
+</div>
+<p class="display-name" id="displayName"></p>
+<div class="social-container" id="socialContainer" style="display: none;">
+<p id="croLink" style="display: none;">
+<a href="#" id="croUrl" rel="noopener noreferrer" target="_blank" title="Visit Crypto.com/NFT Profile">
+<img alt="Crypto.com Profile" class="social-icon" decoding="async" loading="lazy" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+CiAgPHBhdGggZD0iTTEyIDIuNiAxOS40IDYuOXYxMC4yTDEyIDIxLjQgNC42IDE3LjFWNi45TDEyIDIuNloiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CiAgPHBhdGggZD0iTTE0LjggOC4zYTQuNSA0LjUgMCAxIDAgMCA3LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+"/>
+</a>
+</p>
+<p id="twitterLink" style="display: none;">
+<a href="#" id="twitterUrl" rel="noopener noreferrer" target="_blank" title="Visit X Profile">
+<img alt="X Profile" class="social-icon" decoding="async" loading="lazy" onerror="this.src='/assets/fallback-icon.png'" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+CiAgPHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTE4LjkwMSAxLjE1M2gzLjY4bC04LjAzOCA5LjE5IDkuNDUgMTIuNTA0aC03LjRsLTUuOC03LjU4Ni02LjY0IDcuNTg2SC40N2w4LjYtOS44M0wwIDEuMTUzaDcuNTlsNS4yNCA2LjkzTDE4LjkwMSAxLjE1M1ptLTEuMjkgMTkuNWgyLjA0TDYuNDkgMy4yMkg0LjN6Ii8+Cjwvc3ZnPg=="/>
+</a>
+</p>
+<p id="facebookLink" style="display: none;">
+<a href="#" id="facebookUrl" rel="noopener noreferrer" target="_blank" title="Visit Facebook Profile">
+<img alt="Facebook Profile" class="social-icon" decoding="async" loading="lazy" onerror="this.src='/assets/fallback-icon.png'" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Facebook_f_logo_%282019%29.svg/512px-Facebook_f_logo_%282019%29.svg.png"/>
+</a>
+</p>
+<p id="instagramLink" style="display: none;">
+<a href="#" id="instagramUrl" rel="noopener noreferrer" target="_blank" title="Visit Instagram Profile">
+<img alt="Instagram Profile" class="social-icon" decoding="async" loading="lazy" onerror="this.src='/assets/fallback-icon.png'" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/512px-Instagram_icon.png"/>
+</a>
+</p>
+</div>
+
+</div>
+</div>
+</div>
+<div class="sidebar-divider" aria-hidden="true"></div>
+<section class="sidebar-stats" id="sidebarStats" aria-label="Owner statistics" style="display: none;">
+  <div class="sidebar-stats-title">OWNER STATS</div>
+  <div class="stats-grid">
+    <div class="stat-card" data-stat-action="reset" role="button" tabindex="0" aria-label="Show all NFTs">
+      <div class="stat-value" id="statTotalNfts">0</div>
+      <div class="stat-label">NFTS</div>
     </div>
-    <footer class="footer">
-        <div class="footer-left">
-            <div class="footer-logo-container">
-                <img src="CRONOBOTS.png" alt="Cronobots Logo" class="footer-logo">
-                <p class="footer-text">DEVELOPED BY <a href="https://x.com/LoadedPixel_CDC" target="_blank" rel="noopener noreferrer" class="footer-link">UNSCOOP</a></p>
-            </div>
-        </div>
-        <div class="footer-center">
-            <div class="donation-section">
-                <h4>Together, we make this possible</h4>
-                <span class="wallet-address">0x9829e44fd04f3788F27096875Df0D2772173Ab3d</span>
-                <div class="donation-progress">
-                    <span class="progress-label">Community Supports: <span id="progressPercent">1143</span> CRO</span>
-                    <div class="progress-bar">
-                        <div class="progress" id="donationProgressBar" style="width: 8%;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="footer-right">
-            <div class="theme-toggle">
-                <label>Theme:</label>
-                <button id="themeButton">CDC</button>
-            </div>
-        </div>
-    </footer>
-    <button id="scrollToTopButton" aria-label="Scroll to top">↑</button>
-    <button id="scrollToBottomButton" aria-label="Scroll to bottom">↓</button>
-    <script>
+    <div class="stat-card" data-stat-action="open-creator" role="button" tabindex="0" aria-label="Open artist filter">
+      <div class="stat-value" id="statArtists">0</div>
+      <div class="stat-label">ARTISTS</div>
+    </div>
+    <div class="stat-card" data-stat-action="open-collection" role="button" tabindex="0" aria-label="Open collection filter">
+      <div class="stat-value" id="statCollections">0</div>
+      <div class="stat-label">COLLECTIONS</div>
+    </div>
+    <div class="stat-card" data-stat-action="curated:true" role="button" tabindex="0" aria-label="Filter curated">
+      <div class="stat-value" id="statCurated">0</div>
+      <div class="stat-label">CURATED</div>
+    </div>
+    <div class="stat-card" data-stat-action="curated:false" role="button" tabindex="0" aria-label="Filter non curated">
+      <div class="stat-value" id="statNonCurated">0</div>
+      <div class="stat-label">NON CURATED</div>
+    </div>
+    <div class="stat-card" data-stat-action="chain:CRONOS" role="button" tabindex="0" aria-label="Filter Cronos">
+      <div class="stat-value" id="statCronos">0</div>
+      <div class="stat-label">CRONOS</div>
+    </div>
+    <div class="stat-card" data-stat-action="chain:CRONOS_POS" role="button" tabindex="0" aria-label="Filter Cronos POS">
+      <div class="stat-value" id="statCronosPos">0</div>
+      <div class="stat-label">CRONOS POS</div>
+    </div>
+  </div>
+</section>
+
+  </div>
+  <div class="sidebar-downloads">
+<div class="sidebar-brand" aria-label="Brand">
+  <img alt="Cronobots Logo" class="sidebar-brand-logo" src="CRONOBOTS.png"/>
+  <div class="sidebar-brand-text">CRONOS.WTF</div>
+</div>
+</div>
+</aside>
+    <main class="app-main" id="appMain">
+<div class="profile-section">
+
+<h2 class="collection-title" id="collectionTitle"></h2>
+<div class="asset-count-bar">
+  <div id="nftCountContainer" class="asset-count-text" aria-live="polite"></div>
+</div>
+</div>
+
+<div class="top-toolbar" id="topToolbar">
+  <div class="top-toolbar-inner">
+    <div class="top-toolbar-left">
+<div class="controls filters-toolbar controls--top" id="controls">
+  <div class="filters-left filters-left--row">
+    <div class="select-pill" data-pill-for="creatorFilter" title="Artists">
+<span class="select-pill-text" id="pillTextCreator">ALL ARTISTS</span>
+<span aria-hidden="true" class="select-pill-caret">▾</span>
+<select aria-label="Artists" id="creatorFilter">
+<option value="">ALL ARTISTS</option>
+</select>
+</div>
+    <div class="select-pill" data-pill-for="collectionFilter" title="Collections">
+<span class="select-pill-text" id="pillTextCollection">ALL COLLECTIONS</span>
+<span aria-hidden="true" class="select-pill-caret">▾</span>
+<select aria-label="Collections" id="collectionFilter">
+<option value="">ALL COLLECTIONS</option>
+</select>
+</div>
+    <div class="select-pill" data-pill-for="chainFilter" title="Chains">
+<span class="select-pill-text" id="pillTextChain">ALL CHAINS</span>
+<span aria-hidden="true" class="select-pill-caret">▾</span>
+<select aria-label="Chains" id="chainFilter">
+<option value="">ALL CHAINS</option>
+<option value="CRONOS">CRONOS</option>
+<option value="CRONOS_POS">CRONOS POS CHAIN</option>
+</select>
+</div>
+    <div class="select-pill" data-pill-for="curatedFilter" title="Curations">
+<span class="select-pill-text" id="pillTextCurated">ALL CURATIONS</span>
+<span aria-hidden="true" class="select-pill-caret">▾</span>
+<select aria-label="Curations" id="curatedFilter">
+<option value="">ALL CURATIONS</option>
+<option value="true">CURATED</option>
+<option value="false">NON CURATED</option>
+</select>
+</div>
+    <button class="select-pill select-pill--reset" id="resetFiltersButton" title="Reset filters" type="button">
+<span class="select-pill-text">RESET FILTERS</span>
+</button>
+  </div>
+</div>
+    </div>
+    
+  </div>
+</div>
+<div class="updates-container">
+<div aria-labelledby="availableFeaturesTitle" class="update-modal home-update-modal" id="availableFeaturesModal" role="region">
+<div class="update-modal-content">
+<div class="update-header">
+<h3 id="availableFeaturesTitle">✅ Available Features</h3>
+</div>
+<div class="update-content" id="availableFeaturesContent">
+<ul>
+<li>Profile exploration</li>
+<li>Login</li>
+<li>Filtering (Collection / Blockchain / Curated)</li>
+<li>Display (Small / Medium / Large)</li>
+<li>Sorting (Newest / Oldest / Rank)</li>
+<li>Full assets download (With NFT name)</li>
+<li>Single asset download</li>
+<li>Collage download</li>
+<li>Scroll navigation buttons (Up / Down)</li>
+<li>Community support tracking</li>
+<li>Display name on hover 🆕</li>
+<li>Link to NFTs 🆕</li>
+<li>Filter by artist 🆕</li>
+</ul>
+</div>
+</div>
+</div>
+<div aria-labelledby="inProgressTitle" class="update-modal home-update-modal" id="inProgressModal" role="region">
+<div class="update-modal-content">
+<div class="update-header">
+<h3 id="inProgressTitle">⚙️ In development</h3>
+</div>
+<div class="update-content" id="inProgressContent">
+<ul>
+<li>Filter by bundle (Manecity)</li>
+<li>Collection viewer</li>
+<li>Collection statistics (Floor / Volume / Owners)</li>
+<li>Partner collections integration</li>
+<li>Sales bot (Notifications / Automated alerts)</li>
+<li>Leaderboards (Top holders / Top collections)</li>
+<li>...</li>
+<li>Send me your suggestions for improvements or bug reports on X.</li>
+<ul>
+<li><a href="https://x.com/LoadedPixel_CDC" rel="noopener noreferrer" target="_blank">Twitter/X</a></li>
+</ul>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+<div class="timestamp" id="timestamp"></div>
+<div class="error" id="error" role="alert"></div>
+<div class="no-results" id="noResults" style="display: none;">No results found</div>
+<div class="nft-container" id="nftContainer"></div>
+<div class="modal" id="progressModal">
+<div class="modal-content">
+<h3 id="modalTitle">Creating ZIP File</h3>
+<div class="progress-bar">
+<div class="progress" id="progressBar"></div>
+</div>
+<p class="progress-text" id="progressText">Preparing</p>
+<div class="modal-buttons">
+<button class="cancel-button" id="cancelDownloadButton" type="button">Cancel</button>
+</div>
+</div>
+</div>
+<div class="modal" id="loginModal">
+<div class="modal-content">
+<h3>Enter your Crypto.com/NFT Profile</h3>
+<div class="navbar-search" id="loginSearchContainer">
+<input autocomplete="on" id="loginUsernameInput" onblur="if(!this.value) this.placeholder='🔎 Search a profile'" onfocus="this.placeholder=''" placeholder="🔎 Search a profile" type="text"/>
+<div class="suggestions" id="loginSuggestions"></div>
+</div>
+<div class="modal-buttons">
+<button class="cancel-button" id="cancelLoginButton" type="button">Cancel</button>
+</div>
+</div>
+</div>
+</main>
+  </div>
+</div>
+<button aria-label="Scroll to top" id="scrollToTopButton" type="button">↑</button>
+<button aria-label="Scroll to bottom" id="scrollToBottomButton" type="button">↓</button>
+<script crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script><script crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script>
         const cache = new Map();
 let allNFTs = [];
+let assetsLoaded = false;
 let currentUsername = '';
 let currentDisplayName = '';
 let lastSearchedUsername = '';
@@ -269,6 +367,83 @@ let isProfileLoadingCancelled = false;
 let loggedInUser = null;
 let activeSearch = null;
 let hasSelectedSpecificCollection = false;
+
+
+
+/**
+ * Update the owner statistics block in the left sidebar.
+ * Stats are computed from the full owner inventory (not the filtered view).
+ */
+function updateSidebarStats(nfts) {
+    const statsSection = document.getElementById('sidebarStats');
+    if (!statsSection) return;
+
+    const totalEl = document.getElementById('statTotalNfts');
+    const curatedEl = document.getElementById('statCurated');
+    const nonCuratedEl = document.getElementById('statNonCurated');
+    const cronosEl = document.getElementById('statCronos');
+    const cronosPosEl = document.getElementById('statCronosPos');
+    const artistsEl = document.getElementById('statArtists');
+    const collectionsEl = document.getElementById('statCollections');
+
+    if (!totalEl || !curatedEl || !nonCuratedEl || !cronosEl || !cronosPosEl || !artistsEl || !collectionsEl) return;
+
+    const seen = new Set();
+    const unique = [];
+    for (const nft of (nfts || [])) {
+        const id = nft?.id;
+        if (!id) continue;
+        if (seen.has(id)) continue;
+        seen.add(id);
+        unique.push(nft);
+    }
+
+    let curated = 0;
+    let nonCurated = 0;
+    let cronos = 0;
+    let cronosPos = 0;
+    const artists = new Set();
+    const collections = new Set();
+
+    for (const nft of unique) {
+        const isCurated = nft?.isCurated !== undefined ? nft.isCurated : false;
+        if (isCurated) curated += 1;
+        else nonCurated += 1;
+
+        const isExternalNft = nft?.isExternalNft;
+        const network = nft?.externalNftMetadata?.network?.toUpperCase?.() || '';
+        if (isExternalNft === true && network === 'CRONOS') cronos += 1;
+        else if (isExternalNft === false) cronosPos += 1;
+
+        const creatorId = nft?.collection?.creator?.id;
+        if (creatorId) artists.add(creatorId);
+
+        const collectionName = nft?.collection?.name;
+        if (collectionName) collections.add(collectionName);
+    }
+
+    totalEl.textContent = String(unique.length);
+    curatedEl.textContent = String(curated);
+    nonCuratedEl.textContent = String(nonCurated);
+    cronosEl.textContent = String(cronos);
+    cronosPosEl.textContent = String(cronosPos);
+    artistsEl.textContent = String(artists.size);
+    collectionsEl.textContent = String(collections.size);
+
+    statsSection.style.display = 'block';
+}
+
+
+function syncFixedBarsHeights() {
+    const navbar = document.querySelector('.navbar');
+    const footer = document.querySelector('.footer');
+
+    const navbarHeight = navbar ? Math.ceil(navbar.getBoundingClientRect().height) : 0;
+    const footerHeight = footer ? Math.ceil(footer.getBoundingClientRect().height) : 0;
+
+    document.documentElement.style.setProperty('--navbar-height', `${navbarHeight}px`);
+    document.documentElement.style.setProperty('--footer-height', `${footerHeight}px`);
+}
 
 const profileQuery = `
     query User($id: ID!, $cacheId: ID) {
@@ -389,19 +564,6 @@ function sanitizeFileNameForZip(name, index = 0) {
     return sanitized || `unnamed_nft_${index}`;
 }
 
-function toggleTheme() {
-    const themeButton = document.getElementById('themeButton');
-    if (!themeButton) {
-        console.error('Theme button not found');
-        return;
-    }
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'cdc' : 'dark'; // Remplacer 'light' par 'cdc'
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
-    themeButton.textContent = newTheme === 'dark' ? 'CDC' : 'Dark'; // Mettre à jour le texte du bouton
-    console.log('Theme set to:', newTheme);
-}
 
 function normalizeText(text) {
     if (!text) return '';
@@ -496,10 +658,17 @@ function logout(event) {
     const downloadCollageButton = document.getElementById('downloadCollageButton');
 
     if (profileHeader) profileHeader.style.display = 'none';
+    const sidebarStats = document.getElementById('sidebarStats');
+    if (sidebarStats) sidebarStats.style.display = 'none';
+    syncFixedBarsHeights();
     if (nftContainer) nftContainer.innerHTML = '';
     if (nftCountContainer) nftCountContainer.innerHTML = '';
     if (noResultsDiv) noResultsDiv.style.display = 'none';
     if (controls) controls.classList.remove('visible');
+    const topToolbar = document.getElementById('topToolbar');
+    if (topToolbar) topToolbar.classList.remove('visible');
+    const navbarControls = document.getElementById('navbarControls');
+    if (navbarControls) navbarControls.classList.remove('visible');
     if (collectionTitle) {
         collectionTitle.textContent = '';
         collectionTitle.classList.remove('visible');
@@ -988,6 +1157,7 @@ function updateProfileUI(profileData) {
 
     socialContainer.style.display = hasSocialLinks ? 'flex' : 'none';
     profileHeader.style.display = 'block';
+    syncFixedBarsHeights();
     usernameInput.value = '';
 }
 
@@ -1051,6 +1221,7 @@ function populateCreatorFilter(nfts) {
         displayName: creatorCounts[id].displayName,
         count: creatorCounts[id].count
     })));
+    syncFilterPills();
 }
 
 function populateCollectionFilter(nfts) {
@@ -1131,6 +1302,9 @@ async function fetchProfileAndNFTs() {
     const curatedFilter = document.getElementById('curatedFilter');
     const cardSize = document.getElementById('cardSize');
     const sortBy = document.getElementById('sortBy');
+    const resetFiltersButton = document.getElementById('resetFiltersButton');
+    const viewLarge = document.getElementById('viewLarge');
+    const viewSmall = document.getElementById('viewSmall');
     const downloadZipButton = document.getElementById('downloadZipButton');
     const downloadCollageButton = document.getElementById('downloadCollageButton');
     const progressModal = document.getElementById('progressModal');
@@ -1161,6 +1335,9 @@ async function fetchProfileAndNFTs() {
 
     currentUsername = '';
     allNFTs = [];
+    assetsLoaded = false;
+    if (downloadZipButton) { downloadZipButton.disabled = true; downloadZipButton.classList.add('is-disabled'); downloadZipButton.style.display = 'none'; }
+    if (downloadCollageButton) { downloadCollageButton.disabled = true; downloadCollageButton.classList.add('is-disabled'); downloadCollageButton.style.display = 'none'; }
     cardSize.value = 'small';
     sortBy.value = 'newest';
     collectionFilter.innerHTML = '<option value="">All Collections</option>';
@@ -1182,10 +1359,17 @@ async function fetchProfileAndNFTs() {
     if (inProgressModal) inProgressModal.style.display = 'none';
 
     profileHeader.style.display = 'none';
+    const sidebarStats = document.getElementById('sidebarStats');
+    if (sidebarStats) sidebarStats.style.display = 'none';
+    syncFixedBarsHeights();
     nftContainer.innerHTML = '';
     nftCountContainer.innerHTML = '';
     noResultsDiv.style.display = 'none';
     controls.classList.remove('visible');
+    const topToolbar = document.getElementById('topToolbar');
+    if (topToolbar) topToolbar.classList.remove('visible');
+    const navbarControls = document.getElementById('navbarControls');
+    if (navbarControls) navbarControls.classList.remove('visible');
     collectionTitle.textContent = '';
     collectionTitle.classList.remove('visible');
     errorDiv.textContent = '';
@@ -1265,6 +1449,7 @@ async function fetchProfileAndNFTs() {
             if (isProfileLoadingCancelled) return;
             progressText.textContent = `${nftCount} assets`;
         }));
+        updateSidebarStats(allNFTs);
 
         if (isProfileLoadingCancelled) {
             clearInterval(progressInterval);
@@ -1287,6 +1472,10 @@ async function fetchProfileAndNFTs() {
             collectionFilter.disabled = !hasCollections; // Désactiver uniquement si aucune collection
             creatorFilter.disabled = !hasCreators; // Désactiver uniquement si aucun créateur
             controls.classList.add('visible');
+            const topToolbar = document.getElementById('topToolbar');
+            if (topToolbar) topToolbar.classList.add('visible');
+            const navbarControls = document.getElementById('navbarControls');
+            if (navbarControls) navbarControls.classList.add('visible');
             console.log('Filter state after population:', {
                 collectionDisabled: collectionFilter.disabled,
                 creatorDisabled: creatorFilter.disabled,
@@ -1388,10 +1577,17 @@ async function fetchProfileAndNFTsForLogin(username) {
     if (inProgressModal) inProgressModal.style.display = 'none';
 
     profileHeader.style.display = 'none';
+    const sidebarStats = document.getElementById('sidebarStats');
+    if (sidebarStats) sidebarStats.style.display = 'none';
+    syncFixedBarsHeights();
     nftContainer.innerHTML = '';
     nftCountContainer.innerHTML = '';
     noResultsDiv.style.display = 'none';
     controls.classList.remove('visible');
+    const topToolbar = document.getElementById('topToolbar');
+    if (topToolbar) topToolbar.classList.remove('visible');
+    const navbarControls = document.getElementById('navbarControls');
+    if (navbarControls) navbarControls.classList.remove('visible');
     collectionTitle.textContent = '';
     collectionTitle.classList.remove('visible');
     errorDiv.textContent = '';
@@ -1470,6 +1666,7 @@ async function fetchProfileAndNFTsForLogin(username) {
             if (isProfileLoadingCancelled) return;
             progressText.textContent = `${nftCount} assets`;
         }));
+        updateSidebarStats(allNFTs);
 
         if (isProfileLoadingCancelled) {
             clearInterval(progressInterval);
@@ -1493,6 +1690,10 @@ async function fetchProfileAndNFTsForLogin(username) {
             collectionFilter.disabled = !hasCollections;
             creatorFilter.disabled = !allNFTs.some(nft => nft.collection?.creator?.id);
             controls.classList.add('visible');
+            const topToolbar = document.getElementById('topToolbar');
+            if (topToolbar) topToolbar.classList.add('visible');
+            const navbarControls = document.getElementById('navbarControls');
+            if (navbarControls) navbarControls.classList.add('visible');
             console.log('Filter state after population:', {
                 collectionDisabled: collectionFilter.disabled,
                 creatorDisabled: creatorFilter.disabled,
@@ -1536,6 +1737,7 @@ async function fetchProfileAndNFTsForLogin(username) {
                 curated: curatedFilter.value
             });
 
+            assetsLoaded = true;
             filterNFTs();
         } else {
             console.log('No NFTs found, showing no results');
@@ -1555,6 +1757,8 @@ async function fetchProfileAndNFTsForLogin(username) {
             resetViewport();
         }
     }
+    syncFilterPills();
+
 }
 
 function filterNFTs() {
@@ -1607,22 +1811,9 @@ function filterNFTs() {
     // Populate the collection filter based on the current creator filter
     populateCollectionFilter(creatorValue ? allNFTs.filter(nft => nft.collection?.creator?.id === creatorValue) : allNFTs);
 
-    // Update chain and curated filters based on the filtered NFTs
-    let allCurated = true, allNonCurated = true, allCronos = true, allCronosPos = true;
-    filteredNFTs.forEach(nft => {
-        const isCurated = nft.isCurated !== undefined ? nft.isCurated : false;
-        const isExternalNft = nft.isExternalNft;
-        const network = nft.externalNftMetadata?.network?.toUpperCase() || '';
-        if (!isCurated) allCurated = false;
-        if (isCurated) allNonCurated = false;
-        if (isExternalNft !== true || network !== 'CRONOS') allCronos = false;
-        if (isExternalNft !== false) allCronosPos = false;
-    });
-
-    curatedFilter.value = allCurated ? 'true' : allNonCurated ? 'false' : '';
-    curatedFilter.disabled = allCurated || allNonCurated;
-    chainFilter.value = allCronos ? 'CRONOS' : allCronosPos ? 'CRONOS_POS' : '';
-    chainFilter.disabled = allCronos || allCronosPos;
+    // Keep chain and curation filters usable; don't auto-lock values.
+    chainFilter.disabled = false;
+    curatedFilter.disabled = false;
     hasSelectedSpecificCollection = !!collectionValue;
 
     // Ensure filters are enabled if any NFTs exist
@@ -1750,16 +1941,35 @@ function displayNFTs(assets, selectedCollection) {
 
     const countElement = document.createElement('p');
     countElement.className = 'nft-count';
-    countElement.innerHTML = selectedCollection
-        ? `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${uniqueAssets.length}</span> assets on this collection.`
-        : `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${uniqueAssets.length}</span> assets.`;
+    countElement.innerHTML = `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${uniqueAssets.length}</span> assets.`;
     countContainer.appendChild(countElement);
 
     downloadZipButton.style.display = uniqueAssets.length > 0 && currentUsername ? 'inline-block' : 'none';
     downloadCollageButton.style.display = uniqueAssets.length > 0 && currentUsername ? 'inline-block' : 'none';
+    const canDownload = Boolean(uniqueAssets.length > 0 && currentUsername);
+    downloadZipButton.disabled = !canDownload;
+    downloadCollageButton.disabled = !canDownload;
+    downloadZipButton.classList.toggle('is-disabled', !canDownload);
+    downloadCollageButton.classList.toggle('is-disabled', !canDownload);
+
     if (uniqueAssets.length > 0) {
-        downloadZipButton.textContent = `DOWNLOAD ${uniqueAssets.length} ASSETS`;
+        const zipLabel = `Download pack (ZIP) — ${uniqueAssets.length} assets`;
+        downloadZipButton.setAttribute('aria-label', zipLabel);
+        downloadZipButton.title = zipLabel;
+
+        const badge = document.getElementById('downloadZipBadge');
+        if (badge) {
+            badge.textContent = `${uniqueAssets.length}`;
+            badge.style.display = 'inline-flex';
+        }
+    } else {
+        const badge = document.getElementById('downloadZipBadge');
+        if (badge) badge.style.display = 'none';
     }
+
+    const collageLabel = 'Download image (PNG)';
+    downloadCollageButton.setAttribute('aria-label', collageLabel);
+    downloadCollageButton.title = collageLabel;
 
     uniqueAssets.forEach((asset, index) => {
         const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
@@ -1861,6 +2071,10 @@ function displayNFTs(assets, selectedCollection) {
     });
 
     updateDisplay();
+    syncFixedBarsHeights();
+
+    syncFilterPills();
+    syncViewToggle();
 }
 
 async function fetchWithRetry(url, retries = 3, delay = 1000) {
@@ -2233,8 +2447,8 @@ async function downloadCollage() {
         // Prepare header text (aligned left)
         const usernameText = currentUsername.toUpperCase() || 'UNKNOWN';
         const collectionText = collectionTitle.textContent || collectionFilter.value || 'ALL_COLLECTIONS';
-        const theme = document.documentElement.getAttribute('data-theme') || 'dark';
-        const color1 = theme === 'cdc' ? '#11bafa' : '#FF5733';
+        const theme = 'cdc';
+        const color1 = '#11bafa';
 
         // Create header text container (aligned left)
         const headerTextContainer = document.createElement('div');
@@ -2493,13 +2707,11 @@ function updateDisplay() {
     const baseCardWidth = cardSize === 'small' ? 110 : cardSize === 'medium' ? 180 : 280;
     const gap = 4; // Écart fixe de 4px
 
-    // Marges fixes de nftContainer (50px à gauche, 50px à droite)
-    const marginLeft = 50;
-    const marginRight = 50;
-    const totalMargin = marginLeft + marginRight;
-
-    // Calculer la largeur disponible
-    const availableWidth = document.documentElement.clientWidth - totalMargin;
+    // Largeur réellement disponible (prend en compte la sidebar / responsive)
+    const containerRect = nftContainer.getBoundingClientRect();
+    const availableWidth = Math.max(0, Math.floor(containerRect.width));
+    const marginRight = 10; // sécurité anti-débordement
+    const marginLeft = 0;
 
     // Calculer le nombre de colonnes
     const columnWidthWithGap = baseCardWidth + gap;
@@ -2538,10 +2750,10 @@ function updateDisplay() {
     nftContainer.style.gridTemplateColumns = `repeat(${numColumns}, ${adjustedColumnWidth}px)`;
 
     // Vérifier les débordements
-    const containerRect = nftContainer.getBoundingClientRect();
+    const updatedRect = nftContainer.getBoundingClientRect();
     const windowRightEdge = document.documentElement.clientWidth - marginRight;
-    if (containerRect.right > windowRightEdge + 1) {
-        console.warn(`Débordement détecté: container.right=${containerRect.right}px, windowRightEdge=${windowRightEdge}px`);
+    if (updatedRect.right > windowRightEdge + 1) {
+        console.warn(`Débordement détecté: container.right=${updatedRect.right}px, windowRightEdge=${windowRightEdge}px`);
         numColumns = Math.max(1, numColumns - 1);
         const newTotalGaps = (numColumns - 1) * gap;
         adjustedColumnWidth = (availableWidth - newTotalGaps) / numColumns;
@@ -2557,16 +2769,339 @@ function updateDisplay() {
     console.log(`updateDisplay (PC): clientWidth=${document.documentElement.clientWidth}px, marginLeft=${marginLeft}px, marginRight=${marginRight}px, availableWidth=${availableWidth}px, numColumns=${numColumns}, adjustedColumnWidth=${adjustedColumnWidth}px, container.right=${nftContainer.getBoundingClientRect().right}px, expectedRightEdge=${windowRightEdge}px`);
 }
 
+
+function updateResetFiltersButtonState() {
+    const btn = document.getElementById('resetFiltersButton');
+    if (!btn) return;
+
+    const creator = document.getElementById('creatorFilter');
+    const collection = document.getElementById('collectionFilter');
+    const chain = document.getElementById('chainFilter');
+    const curated = document.getElementById('curatedFilter');
+
+    const hasActive =
+        (!!creator?.value) ||
+        (!!collection?.value) ||
+        (!!chain?.value) ||
+        (!!curated?.value);
+
+    btn.disabled = !hasActive;
+    btn.classList.toggle('is-disabled', !hasActive);
+}
+
+/**
+ * Makes pill width follow the currently displayed label, to avoid line-wrapping.
+ * Uses a detached clone to get an accurate "natural" width.
+ */
+function autosizePillToContent(pillEl, { maxWidth = 520 } = {}) {
+    if (!pillEl) return;
+    try {
+        const clone = pillEl.cloneNode(true);
+        clone.style.position = 'fixed';
+        clone.style.visibility = 'hidden';
+        clone.style.left = '-9999px';
+        clone.style.top = '-9999px';
+        clone.style.width = 'max-content';
+        clone.style.maxWidth = 'none';
+        clone.style.minWidth = '0';
+        clone.classList.remove('is-open');
+
+        clone.querySelectorAll('select').forEach((el) => el.remove());
+        document.body.appendChild(clone);
+
+        const natural = Math.ceil(clone.getBoundingClientRect().width);
+        clone.remove();
+
+        const viewportMax = Math.max(240, window.innerWidth - 20);
+        const clamped = Math.min(natural, maxWidth, viewportMax);
+        pillEl.style.width = `${clamped}px`;
+    } catch (e) {
+        // Ignore autosize errors (non-blocking)
+    }
+}
+
+/**
+ * Makes the dropdown menu wide enough for the longest option (and at least as wide as the pill).
+ */
+function autosizePillDropdownToOptions(pillEl) {
+    if (!pillDropdownMenuEl || !pillEl) return;
+
+    const minW = Math.ceil(pillEl.getBoundingClientRect().width);
+    const buttons = Array.from(pillDropdownMenuEl.querySelectorAll('.pill-dropdown-option'));
+    const maxOpt = buttons.reduce((acc, btn) => Math.max(acc, btn.scrollWidth || 0), 0);
+
+    const left = Math.round(pillDropdownMenuEl.getBoundingClientRect().left);
+    const viewportMax = Math.max(240, window.innerWidth - left - 10);
+    const desired = Math.min(Math.max(minW, maxOpt + 24), viewportMax);
+
+    pillDropdownMenuEl.style.width = `${desired}px`;
+}
+
+function syncFilterPills() {
+    const mappings = [
+        ['creatorFilter', 'pillTextCreator'],
+        ['collectionFilter', 'pillTextCollection'],
+        ['chainFilter', 'pillTextChain'],
+        ['curatedFilter', 'pillTextCurated'],
+        ['sortBy', 'pillTextSort'],
+    ];
+
+    mappings.forEach(([selectId, textId]) => {
+        const selectEl = document.getElementById(selectId);
+        const textEl = document.getElementById(textId);
+        if (!selectEl || !textEl) return;
+
+        const selectedText = selectEl.options?.[selectEl.selectedIndex]?.text || '';
+        textEl.textContent = selectedText;
+        textEl.title = selectedText;
+    
+        const pillEl = selectEl.closest('.select-pill');
+        if (pillEl) autosizePillToContent(pillEl);
+});
+    updateResetFiltersButtonState();
+}
+
+
+/**
+ * Renders select menus in a fixed dropdown positioned under the pill (never above).
+ */
+let pillDropdownMenuEl = null;
+let pillDropdownCurrent = null;
+
+function ensurePillDropdownMenu() {
+    if (pillDropdownMenuEl) return pillDropdownMenuEl;
+    pillDropdownMenuEl = document.createElement('div');
+    pillDropdownMenuEl.className = 'pill-dropdown-menu';
+    pillDropdownMenuEl.style.display = 'none';
+    document.body.appendChild(pillDropdownMenuEl);
+    return pillDropdownMenuEl;
+}
+
+function closePillDropdown() {
+    if (!pillDropdownMenuEl) return;
+    pillDropdownMenuEl.style.display = 'none';
+    pillDropdownMenuEl.innerHTML = '';
+    pillDropdownCurrent = null;
+}
+
+function positionPillDropdown(pillEl) {
+    const rect = pillEl.getBoundingClientRect();
+    const top = Math.round(rect.bottom + 6);
+    const left = Math.round(rect.left);
+    const width = Math.round(rect.width);
+    const maxHeight = Math.max(80, Math.floor(window.innerHeight - top - 10));
+    pillDropdownMenuEl.style.top = `${top}px`;
+    pillDropdownMenuEl.style.left = `${left}px`;
+    pillDropdownMenuEl.style.width = `${width}px`;
+    pillDropdownMenuEl.style.maxHeight = `${maxHeight}px`;
+}
+
+function buildPillDropdownOptions(selectEl) {
+    pillDropdownMenuEl.innerHTML = '';
+    Array.from(selectEl.options || []).forEach((opt) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'pill-dropdown-option';
+        btn.textContent = opt.textContent || '';
+        btn.title = btn.textContent;
+        btn.setAttribute('role', 'option');
+        btn.setAttribute('aria-selected', opt.value === selectEl.value ? 'true' : 'false');
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            selectEl.value = opt.value;
+            selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+            closePillDropdown();
+        });
+        pillDropdownMenuEl.appendChild(btn);
+    });
+}
+
+function openPillDropdown(pillEl, selectEl) {
+    ensurePillDropdownMenu();
+    if (pillDropdownCurrent?.selectEl === selectEl && pillDropdownMenuEl.style.display !== 'none') {
+        closePillDropdown();
+        return;
+    }
+
+    pillDropdownCurrent = { pillEl, selectEl };
+    buildPillDropdownOptions(selectEl);
+    positionPillDropdown(pillEl);
+
+    pillDropdownMenuEl.style.display = 'block';
+    autosizePillDropdownToOptions(pillEl);
+}
+
+function enhancePillSelect(selectId) {
+    const selectEl = document.getElementById(selectId);
+    const pillEl = document.querySelector(`.select-pill[data-pill-for="${selectId}"]`);
+    if (!selectEl || !pillEl) return;
+
+    pillEl.classList.add('select-pill--enhanced');
+    pillEl.setAttribute('role', 'button');
+    pillEl.tabIndex = 0;
+
+    selectEl.classList.add('pill-native-select');
+    selectEl.tabIndex = -1;
+    selectEl.setAttribute('aria-hidden', 'true');
+
+    const open = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openPillDropdown(pillEl, selectEl);
+    };
+
+    pillEl.addEventListener('click', open);
+    pillEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            open(e);
+        } else if (e.key === 'Escape') {
+            closePillDropdown();
+        }
+    });
+
+    const observer = new MutationObserver(() => {
+        if (pillDropdownCurrent?.selectEl === selectEl && pillDropdownMenuEl?.style.display !== 'none') {
+            buildPillDropdownOptions(selectEl);
+            positionPillDropdown(pillEl);
+        }
+        syncFilterPills();
+    });
+    observer.observe(selectEl, { childList: true, subtree: true });
+}
+
+
+function openPillFromStats(selectId) {
+    const selectEl = document.getElementById(selectId);
+    const pillEl = document.querySelector(`.select-pill[data-pill-for="${selectId}"]`);
+    if (!selectEl || !pillEl) return;
+    openPillDropdown(pillEl, selectEl);
+}
+
+function runStatsCardAction(action) {
+    if (!action) return;
+    const resetBtn = document.getElementById('resetFiltersButton');
+    const curatedFilter = document.getElementById('curatedFilter');
+    const chainFilter = document.getElementById('chainFilter');
+
+    if (action === 'reset') {
+        if (resetBtn && !resetBtn.disabled) resetBtn.click();
+        return;
+    }
+    if (action === 'open-creator') {
+        openPillFromStats('creatorFilter');
+        return;
+    }
+    if (action === 'open-collection') {
+        openPillFromStats('collectionFilter');
+        return;
+    }
+    if (action.startsWith('curated:')) {
+        const value = action.split(':')[1] || '';
+        if (curatedFilter) {
+            curatedFilter.value = value;
+            curatedFilter.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        return;
+    }
+    if (action.startsWith('chain:')) {
+        const value = action.split(':')[1] || '';
+        if (chainFilter) {
+            chainFilter.value = value;
+            chainFilter.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    }
+}
+
+function setupStatsCardInteractions() {
+    const statsSection = document.getElementById('sidebarStats');
+    if (!statsSection) return;
+    const cards = statsSection.querySelectorAll('.stat-card[data-stat-action]');
+    const activate = (card) => runStatsCardAction(card.getAttribute('data-stat-action') || '');
+
+    cards.forEach((card) => {
+        card.addEventListener('click', (e) => {
+            e.preventDefault();
+            activate(card);
+        });
+        card.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                activate(card);
+            }
+        });
+    });
+}
+
+function initPillDropdowns() {
+    ['creatorFilter', 'collectionFilter', 'chainFilter', 'curatedFilter'].forEach(enhancePillSelect);
+
+    document.addEventListener('click', (e) => {
+        if (!pillDropdownMenuEl || pillDropdownMenuEl.style.display === 'none') return;
+        const target = e.target;
+        const clickedInsideMenu = pillDropdownMenuEl.contains(target);
+        const clickedOnPill = pillDropdownCurrent?.pillEl?.contains(target);
+        if (!clickedInsideMenu && !clickedOnPill) closePillDropdown();
+    });
+
+    window.addEventListener('resize', () => {
+        if (pillDropdownCurrent?.pillEl && pillDropdownMenuEl?.style.display !== 'none') {
+            positionPillDropdown(pillDropdownCurrent.pillEl);
+        }
+    });
+
+    window.addEventListener('scroll', closePillDropdown, { passive: true });
+
+    const leftSidebar = document.getElementById('leftSidebar');
+    if (leftSidebar) {
+        leftSidebar.addEventListener('scroll', closePillDropdown, { passive: true });
+    }
+}
+
+function setCardSizeFromToggle(size) {
+    const cardSize = document.getElementById('cardSize');
+    if (!cardSize) return;
+    cardSize.value = size;
+    cardSize.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+function syncViewToggle() {
+    const cardSize = document.getElementById('cardSize');
+    const viewLarge = document.getElementById('viewLarge');
+    const viewMedium = document.getElementById('viewMedium');
+    const viewSmall = document.getElementById('viewSmall');
+
+    if (!cardSize) return;
+
+    const value = cardSize.value;
+
+    if (viewLarge) {
+        const active = value === 'large';
+        viewLarge.classList.toggle('is-active', active);
+        viewLarge.setAttribute('aria-pressed', String(active));
+    }
+    if (viewMedium) {
+        const active = value === 'medium';
+        viewMedium.classList.toggle('is-active', active);
+        viewMedium.setAttribute('aria-pressed', String(active));
+    }
+    if (viewSmall) {
+        const active = value === 'small';
+        viewSmall.classList.toggle('is-active', active);
+        viewSmall.setAttribute('aria-pressed', String(active));
+    }
+}
+
 function setupEventListeners() {
     const usernameInput = document.getElementById('usernameInput');
     const loginUsernameInput = document.getElementById('loginUsernameInput');
-    const themeButton = document.getElementById('themeButton');
     const collectionFilter = document.getElementById('collectionFilter');
     const creatorFilter = document.getElementById('creatorFilter');
     const chainFilter = document.getElementById('chainFilter');
     const curatedFilter = document.getElementById('curatedFilter');
     const cardSize = document.getElementById('cardSize');
     const sortBy = document.getElementById('sortBy');
+    const viewLarge = document.getElementById('viewLarge');
+    const viewSmall = document.getElementById('viewSmall');
     const navbarMenu = document.getElementById('navbarMenu');
     const cancelLoginButton = document.getElementById('cancelLoginButton');
     const myProfileLink = document.getElementById('myProfileLink');
@@ -2574,24 +3109,27 @@ function setupEventListeners() {
     const loginLink = document.getElementById('loginLink');
     const scrollToTopButton = document.getElementById('scrollToTopButton');
     const scrollToBottomButton = document.getElementById('scrollToBottomButton');
+    const scrollContainer = document.getElementById('appMain');
+    const scrollTarget = scrollContainer || window;
     const navbarToggle = document.querySelector('.navbar-toggle');
     const downloadZipButton = document.getElementById('downloadZipButton');
     const downloadCollageButton = document.getElementById('downloadCollageButton');
 
-    if (!usernameInput || !loginUsernameInput || !themeButton || !collectionFilter || 
+    if (!usernameInput || !loginUsernameInput || !collectionFilter || 
         !creatorFilter || !chainFilter || !curatedFilter || !cardSize || !sortBy || 
         !navbarMenu || !cancelLoginButton || !myProfileLink || !logoutLink || !loginLink || 
         !navbarToggle || !downloadZipButton || !downloadCollageButton) {
         console.error('One or more DOM elements not found', {
             usernameInput: !!usernameInput,
-            loginUsernameInput: !!loginUsernameInput,
-            themeButton: !!themeButton,
-            collectionFilter: !!collectionFilter,
+            loginUsernameInput: !!loginUsernameInput,            collectionFilter: !!collectionFilter,
             creatorFilter: !!creatorFilter,
             chainFilter: !!chainFilter,
             curatedFilter: !!curatedFilter,
             cardSize: !!cardSize,
             sortBy: !!sortBy,
+            viewLarge: !!viewLarge,
+            viewMedium: !!viewMedium,
+            viewSmall: !!viewSmall,
             navbarMenu: !!navbarMenu,
             cancelLoginButton: !!cancelLoginButton,
             myProfileLink: !!myProfileLink,
@@ -2605,12 +3143,6 @@ function setupEventListeners() {
         if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
         return;
     }
-
-    themeButton.addEventListener('click', () => {
-        toggleTheme();
-        console.log('Theme toggle clicked');
-    });
-
     navbarToggle.addEventListener('click', toggleMenu);
     navbarToggle.addEventListener('touchstart', (e) => {
         e.preventDefault();
@@ -2708,6 +3240,7 @@ function setupEventListeners() {
             }))
         });
         filterNFTs();
+        syncFilterPills();
     });
 
     creatorFilter.addEventListener('change', () => {
@@ -2717,27 +3250,86 @@ function setupEventListeners() {
         });
         collectionFilter.value = ''; // Réinitialiser pour éviter les conflits
         filterNFTs();
+        syncFilterPills();
     });
 
     chainFilter.addEventListener('change', () => {
         console.log('Chain filter changed:', { value: chainFilter.value });
         filterNFTs();
+        syncFilterPills();
     });
 
     curatedFilter.addEventListener('change', () => {
         console.log('Curated filter changed:', { value: curatedFilter.value });
         filterNFTs();
+        syncFilterPills();
     });
 
     cardSize.addEventListener('change', () => {
         console.log('Card size changed:', cardSize.value);
         updateDisplay();
+        syncViewToggle();
     });
+
+    if (viewLarge || viewMedium || viewSmall) {
+    if (viewLarge) viewLarge.addEventListener('click', () => setCardSizeFromToggle('large'));
+    if (viewMedium) viewMedium.addEventListener('click', () => setCardSizeFromToggle('medium'));
+    if (viewSmall) viewSmall.addEventListener('click', () => setCardSizeFromToggle('small'));
+    syncViewToggle();
+}
+
+    
+    // Sort-by: cycle on click (no dropdown)
+    const sortPill = document.querySelector('.select-pill--sort');
+    const sortOrder = ['newest', 'oldest', 'rank'];
+
+    function cycleSort() {
+        if (!sortBy) return;
+        const current = sortBy.value || 'newest';
+        const idx = sortOrder.indexOf(current);
+        const next = sortOrder[(idx + 1) % sortOrder.length];
+        sortBy.value = next;
+        sortBy.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    if (sortPill) {
+        sortPill.addEventListener('click', (e) => {
+            e.preventDefault();
+            cycleSort();
+        });
+
+        sortPill.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                cycleSort();
+            }
+        });
+    }
+
 
     sortBy.addEventListener('change', () => {
         console.log('Sort by changed:', sortBy.value);
         filterNFTs();
+        syncFilterPills();
     });
+
+
+if (resetFiltersButton) {
+    resetFiltersButton.addEventListener('click', () => {
+        creatorFilter.value = '';
+        collectionFilter.value = '';
+        chainFilter.value = '';
+        curatedFilter.value = '';
+        sortBy.value = 'newest';
+        cardSize.value = 'small';
+        updateDisplay();
+        filterNFTs();
+        syncFilterPills();
+        syncViewToggle();
+    });
+}
+
+    updateResetFiltersButtonState();
 
     // Gestion du modal de connexion
     loginLink.addEventListener('click', showLoginModal);
@@ -2761,29 +3353,42 @@ function setupEventListeners() {
 
     // Gestion des boutons de défilement
     const toggleScrollButtons = () => {
-        const scrollY = window.scrollY;
-        const windowHeight = window.innerHeight;
-        const documentHeight = document.documentElement.scrollHeight;
-        const isScrollable = documentHeight > windowHeight + 100;
+        const isWindow = scrollTarget === window;
+        const scrollTop = isWindow ? window.scrollY : scrollTarget.scrollTop;
+        const viewportH = isWindow ? window.innerHeight : scrollTarget.clientHeight;
+        const contentH = isWindow ? document.documentElement.scrollHeight : scrollTarget.scrollHeight;
+        const isScrollable = contentH > viewportH + 100;
 
-        scrollToTopButton.style.display = isScrollable && scrollY > 200 ? 'block' : 'none';
-        scrollToBottomButton.style.display = isScrollable && (scrollY + windowHeight < documentHeight - 10) ? 'block' : 'none';
+        scrollToTopButton.style.display = isScrollable && scrollTop > 200 ? 'block' : 'none';
+        scrollToBottomButton.style.display = isScrollable && (scrollTop + viewportH < contentH - 10) ? 'block' : 'none';
     };
 
-    window.addEventListener('scroll', toggleScrollButtons);
+    if (scrollTarget !== window) {
+        scrollTarget.addEventListener('scroll', toggleScrollButtons);
+    } else {
+        window.addEventListener('scroll', toggleScrollButtons);
+    }
     window.addEventListener('resize', toggleScrollButtons);
     const observer = new MutationObserver(toggleScrollButtons);
     observer.observe(document.body, { childList: true, subtree: true });
 
     scrollToTopButton.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (scrollTarget === window) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            scrollTarget.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     });
 
     scrollToBottomButton.addEventListener('click', () => {
-        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+        if (scrollTarget === window) {
+            window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+        } else {
+            scrollTarget.scrollTo({ top: scrollTarget.scrollHeight, behavior: 'smooth' });
+        }
     });
 
-    // Débogage pour collectionFilter
+// Débogage pour collectionFilter
     collectionFilter.addEventListener('click', () => {
         console.log('Collection filter clicked:', {
             disabled: collectionFilter.disabled,
@@ -2802,14 +3407,6 @@ function setupEventListeners() {
 }
 
 function initialize() {
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    const initialTheme = savedTheme === 'light' ? 'cdc' : savedTheme;
-    document.documentElement.setAttribute('data-theme', initialTheme);
-    const themeButton = document.getElementById('themeButton');
-    if (themeButton) {
-        themeButton.textContent = initialTheme === 'dark' ? 'CDC' : 'Dark';
-    }
-
     const savedUser = localStorage.getItem('loggedInUser');
     if (savedUser) {
         try {
@@ -2822,6 +3419,8 @@ function initialize() {
     }
 
     resetSearchBar(); // Réinitialiser la barre de recherche au chargement
+    syncFixedBarsHeights();
+    setupStatsCardInteractions();
 
     // Afficher les fenêtres des mises à jour sur la page d'accueil
     const availableFeaturesModal = document.getElementById('availableFeaturesModal');
@@ -2843,10 +3442,15 @@ function initialize() {
 
     setupEventListeners();
 
+    initPillDropdowns();
+
     let resizeTimeout;
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(updateDisplay, 100);
+        resizeTimeout = setTimeout(() => {
+            syncFixedBarsHeights();
+            updateDisplay();
+        }, 100);
     });
 
     updateDisplay();
