@@ -3,7 +3,8 @@
     
     --navbar-height: 60px;
     --footer-height: 95px;
---color1: #FF5733;
+--color1: #00B3FF;
+    --download-green: #90EE90;
     --color2: #2C2C2C;
     --text-dark: #fff;
     --text-light: #333;
@@ -20,7 +21,7 @@
     --collection-bg: #0b1426;
     --page-bg: #0f1a30;
     --shadow: 0 2px 4px rgba(0,0,0,0.1);
-    --color1: #11bafa;
+    --color1: #00B3FF;
 }
 
 @font-face {
@@ -694,10 +695,14 @@ a:hover {
 
 .nft-count {
     text-align: center;
-    font-size: 1.1em;
+    font-size: 1.55em;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--text-dark);
-    margin-top: 0;
+    margin: 0;
 }
+
 
 .nft-count .count {
     font-weight: bold;
@@ -1068,11 +1073,54 @@ a:hover {
     text-transform: uppercase;
 }
 
+
+#downloadActionButton {
+    display: none;
+    position: fixed;
+    right: 28px;
+    bottom: calc(var(--footer-height) + 10px + env(safe-area-inset-bottom));
+    background-color: var(--download-green);
+    color: #000;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    opacity: 0.75;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 1003;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+#downloadActionButton.visible {
+    display: flex;
+}
+
+#downloadActionButton:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+#downloadActionButton.is-disabled,
+#downloadActionButton:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#downloadActionButton svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+
 #scrollToTopButton {
     display: none;
     position: fixed;
-    right: 8px;
-    bottom: calc(var(--footer-height) + 60px + env(safe-area-inset-bottom));
+    right: 18px;
+    bottom: calc(var(--footer-height) + 110px + env(safe-area-inset-bottom));
     background-color: var(--color1);
     color: var(--text-dark);
     border: none;
@@ -1098,8 +1146,8 @@ a:hover {
 #scrollToBottomButton {
     display: none;
     position: fixed;
-    right: 8px;
-    bottom: calc(var(--footer-height) + 10px + env(safe-area-inset-bottom));
+    right: 18px;
+    bottom: calc(var(--footer-height) + 60px + env(safe-area-inset-bottom));
     background-color: var(--color1);
     color: var(--text-dark);
     border: none;
@@ -1987,11 +2035,18 @@ a:hover {
         margin-bottom: 20px;
     }
 
+    
+    #downloadActionButton {
+        width: 36px;
+        height: 36px;
+        bottom: 30px;
+    }
+
     #scrollToTopButton {
         width: 36px;
         height: 36px;
         font-size: 1rem;
-        bottom: 80px;
+        bottom: 130px;
     }
 
     #scrollToBottomButton {
@@ -2419,8 +2474,8 @@ a:hover {
    ========================================================= */
 .profile-picture--round img,
 .profile-header--navbar .profile-picture--round img {
-    width: 104px;
-    height: 104px;
+    width: 128px;
+    height: 128px;
     border-width: 3px;
 }
 
@@ -2438,8 +2493,8 @@ a:hover {
 @media (max-width: 520px) {
     .profile-picture--round img,
     .profile-header--navbar .profile-picture--round img {
-        width: 92px;
-        height: 92px;
+        width: 112px;
+        height: 112px;
     }
 
     .profile-header-content--center .username,
@@ -2463,17 +2518,18 @@ a:hover {
 
 #downloadZipButton.select-pill,
 #downloadCollageButton.select-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     height: 38px;
     padding: 0 12px;
     border-radius: 9999px;
     width: auto;
     max-width: none;
-
     background: var(--pill-bg);
     color: var(--pill-fg);
     border: 1px solid var(--pill-border);
     box-shadow: var(--pill-shadow);
-
     font-size: 14px;
     line-height: 1;
     text-align: left;
@@ -2494,19 +2550,26 @@ a:hover {
     max-width: none;
 }
 
-/* Download pills: emoji-only */
-.select-pill--download .select-pill-emoji {
-    font-size: 18px;
-    line-height: 1;
+
+
+.collection-breadcrumb-active {
+    color: var(--color1);
+}
+/* Download pills: SVG icon */
+.select-pill--download .select-pill-icon--download svg {
+    width: 18px;
+    height: 18px;
+    display: block;
 }
 
-/* Top toolbar: keep download buttons compact (emoji only) */
+/* Top toolbar: keep download buttons compact */
 .download-pills--top #downloadZipButton.select-pill,
 .download-pills--top #downloadCollageButton.select-pill {
-    width: 38px;
-    padding: 0;
-    justify-content: center;
-    text-align: center;
+    width: auto;
+    padding: 0 12px;
+    text-align: left;
+    justify-content: flex-start;
+    gap: 8px;
 }
 
 @media (max-width: 700px) {
@@ -2514,6 +2577,29 @@ a:hover {
         width: 100%;
         justify-content: flex-end;
     }
+}
+
+
+
+
+/* =========================================================
+   Top toolbar: download buttons (PACK / COLLAGE) alignment
+   - Ensures a visible gap between icon and label
+   - Matches the vertical alignment of other filter pill labels
+   ========================================================= */
+.download-pills--top .select-pill--download {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.download-pills--top .select-pill--download .select-pill-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.download-pills--top .select-pill--download .select-pill-text {
+    transform: translateY(1px);
 }
 
 
@@ -2762,6 +2848,9 @@ input, textarea, select, option, [contenteditable="true"], [contenteditable=""],
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 190px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
 }
 
 .select-pill .select-pill-caret {
@@ -3223,13 +3312,17 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .asset-count-text {
-    width: 100%;
+    width: auto;
+    max-width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
+    text-align: center;
 }
 
 .asset-count-text .nft-count {
@@ -3347,11 +3440,13 @@ body {
     margin: 0;
     padding: 0;
     gap: 10px;
+    padding-top: 22px !important;
 }
 
+
 .left-sidebar #profileHeader .profile-picture--round img {
-    width: 136px;
-    height: 136px;
+    width: 160px;
+    height: 160px;
 }
 
 .left-sidebar #profileHeader .username {
@@ -3516,15 +3611,6 @@ body {
     text-align: center;
 }
 
-/* Collage download: text-only */
-#downloadCollageButton .select-pill-icon { display: none !important; }
-
-#downloadCollageButton::before,
-#downloadCollageButton::after {
-    content: none !important;
-}
-
-
 /* v5: Ensure top toolbar aligned to the right */
 .top-toolbar, .top-toolbar.visible { justify-content: flex-end !important; }
 .top-toolbar .top-toolbar-inner { justify-content: flex-end !important; margin-left: auto !important; }
@@ -3550,24 +3636,6 @@ body {
     pointer-events: none;
 }
 
-/* v5: Collage download text-onlyno emoji/icon) */
-#downloadCollageButton,
-#downloadCollageButton.select-pill {
-    background-image: none !important;
-    gap: 0 !important;
-}
-#downloadCollageButton::before,
-#downloadCollageButton::after {
-    content: none !important;
-    display: none !important;
-}
-#downloadCollageButton .select-pill-icon,
-#downloadCollageButton svg,
-#downloadCollageButton img {
-    display: none !important;
-}
-
-
 /* Hide right-side navbar links (Home / My Profile / Login) */
 .navbar-menu,
 .navbar-toggle {
@@ -3582,17 +3650,6 @@ body {
     overflow-x: hidden;
     max-width: 100%;
 }
-
-/* Force collage download button to be text-only (no emoji/icon/pseudo). */
-#downloadCollageButton::before,
-#downloadCollageButton::after {
-    content: none !important;
-    display: none !important;
-}
-#downloadCollageButton .select-pill-icon {
-    display: none !important;
-}
-
 
 /* --- Layout: navbar begins after sidebar; right pane no horizontal scroll --- */
 .app-main {
@@ -3682,6 +3739,18 @@ html, body {
     margin: 4px 0 10px;
 }
 
+/* Favorite collection stat (full-width at bottom of stats) */
+.stats-grid .stat-card--full {
+    grid-column: 1 / -1;
+}
+
+.stat-card--favorite .stat-value {
+    font-size: 13px;
+    line-height: 1.2;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
 .stats-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -3689,9 +3758,6 @@ html, body {
 }
 
 
-.stats-grid .stat-card:first-child {
-    grid-column: 1 / -1;
-}
 .stat-card {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -3734,7 +3800,8 @@ html, body {
 }
 
 #scrollToTopButton,
-#scrollToBottomButton {
+#scrollToBottomButton,
+#downloadActionButton {
     left: auto !important;
     right: 18px;
 }
@@ -3891,8 +3958,9 @@ html, body {
 .download-pills--top #downloadCollageButton.select-pill {
     width: auto;
     padding: 0 12px;
-    justify-content: center;
     text-align: left;
+    justify-content: flex-start;
+    gap: 8px;
 }
 
 .select-pill--download {
@@ -3931,4 +3999,1091 @@ html, body {
 .top-toolbar .top-toolbar-inner {
     justify-content: flex-start !important;
     margin-left: 0 !important;
+}
+
+
+/* =========================================================
+   vNext: Top navbar now contains ALL filters (collection / artist / chain / curated / reset)
+   + Left sidebar search aligned with navbar row
+   ========================================================= */
+
+.navbar-controls {
+    flex-wrap: wrap;
+    row-gap: 10px;
+}
+
+/* Filters: remove page-level sizing/margins when living inside the navbar */
+.navbar-controls .controls.filters-toolbar {
+    width: auto;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    justify-content: flex-start;
+}
+
+.navbar-controls .controls.filters-toolbar .filters-left {
+    flex-wrap: wrap;
+}
+
+/* Desktop: keep navbar controls on a single line when possible */
+@media (min-width: 981px) {
+    .navbar-controls {
+        flex-wrap: nowrap;
+        row-gap: 0;
+    }
+    .navbar-controls .controls.filters-toolbar .filters-left {
+        flex-wrap: nowrap;
+    }
+}
+
+/* Left sidebar: align search input with navbar filters row */
+.left-sidebar .sidebar-main {
+    padding-top: calc(10px + env(safe-area-inset-top));
+}
+/* Sidebar: profile bio + totals + artist metrics */
+.profile-bio {
+    margin-top: 10px;
+    font-size: 12px;
+    line-height: 1.35;
+    opacity: 0.85;
+    text-align: center;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.profile-extra-stats {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+}
+
+.profile-extra-stats--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.profile-extra-stat {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 8px 10px;
+    text-align: center;
+}
+
+.profile-extra-value {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--color1);
+}
+
+.profile-extra-label {
+    margin-top: 5px;
+    font-size: 10px;
+    opacity: 0.8;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+}
+
+.profile-artist-stats-divider {
+    height: 1px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.10);
+    margin: 12px 0 8px;
+}
+
+.profile-artist-stats-title {
+    text-align: center;
+    letter-spacing: 0.08em;
+    font-size: 12px;
+    opacity: 0.85;
+    margin-bottom: 8px;
+}
+
+
+/* Final color overrides: all stat values in blue */
+.stat-value,
+.profile-extra-value,
+.stat-card--favorite .stat-value {
+    color: var(--color1) !important;
+    font-weight: 700;
+}
+
+/* Profile totals: 2 columns (COLLECTED + LIKED) */
+#profileExtraStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    margin-bottom: 10px;
+}
+
+
+/* Values in blue */
+/* Values in blue */
+.stat-value,
+.profile-extra-value,
+.stat-card--favorite .stat-value,
+/* Sidebar: keep search at the bottom */
+#leftSidebar{display:flex;flex-direction:column;}
+#leftSidebar .sidebar-main{flex:1 1 auto;min-height:0;}
+#sidebarSearchBottom{margin-top:auto;padding:10px 10px 12px;}
+#sidebarSearchBottom .navbar-search{width:100%;}
+/* Section divider inside profile header */
+.profile-section-divider{
+    height:1px;
+    width:100%;
+    background: rgba(255,255,255,0.10);
+    margin: 10px 0 8px;
+}
+/* Tighten spacing for artist stats */
+#profileArtistStatsTitle{margin-bottom:4px !important;}
+#profileMetricsStats{margin-top:4px !important;}
+/* Force blue values */
+.stat-value,
+.profile-extra-value,
+.stat-card--favorite .stat-value{
+    color: var(--color1) !important;
+    font-weight: 700;
+}
+#profileExtraStats{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}
+/* Artist stats: 4 bubbles on one line */
+#profileMetricsStats{
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+/* Sidebar: reduce horizontal padding (restore compact look) */
+.left-sidebar .sidebar-main{
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+}
+#sidebarSearchBottom{
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+}
+/* Search bar: full width inside sidebar */
+#sidebarSearchBottom .navbar-search{
+    max-width: none !important;
+    min-width: 0 !important;
+    width: 100% !important;
+}
+
+/* Reduce spacing between title and bubbles */
+#profileArtistStatsTitle{ margin-bottom: 2px !important; }
+/* --- Overrides to match favorite bubble padding + restore FROM/WITH --- */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+/* Artist stats: 4 per row */
+#profileMetricsStats{grid-template-columns:repeat(4,minmax(0,1fr)) !important;gap:8px !important;}
+/* Compact sidebar padding like favorite bubble */
+.left-sidebar .sidebar-main{padding-left:6px !important;padding-right:6px !important;}
+.sidebar-stats{padding-left:6px !important;padding-right:6px !important;}
+#sidebarSearchBottom{padding-left:6px !important;padding-right:6px !important;}
+/* Search width */
+#sidebarSearchBottom .navbar-search{max-width:none !important;min-width:0 !important;width:100% !important;}
+/* Ensure removed separators stay hidden */
+.sidebar-separator,.sidebar-divider{display:none !important;}
+/* Sidebar section titles */
+.sidebar-section-title{
+    margin: 6px 0 8px;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    opacity: 0.75;
+}
+/* Align profile totals & search padding with other sidebar bubbles */
+.profile-header-content--center{
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+}
+
+#sidebarSearchBottom{
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+}
+
+#sidebarSearchBottom .navbar-search{
+    max-width: none !important;
+    min-width: 0 !important;
+    width: 100% !important;
+}
+/* --- Layout tweaks (requested) --- */
+
+/* Make "PROFIL OVERVIEW" same style as "CREATOR OVERVIEW" */
+.sidebar-section-title{
+    text-align: center;
+    letter-spacing: 0.08em;
+    font-size: 12px !important;
+    opacity: 0.85;
+    margin: 8px 0 8px;
+    text-transform: uppercase;
+}
+
+/* Reduce top gap above the sidebar profile picture (requested) */
+.left-sidebar .profile-header{padding-top:0 !important;}
+.left-sidebar #profileHeader.profile-header--page .profile-header-content--center{margin-top:0 !important;}
+
+/* Search padding matches stats padding */
+#sidebarSearchBottom{
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+    padding-top: 8px !important;
+    padding-bottom: 12px !important;
+}
+#sidebarSearchBottom .navbar-search{
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+}
+#sidebarSearchBottom input{
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+/* Never show a divider under NFTs COLLECTED / NFTs LIKED */
+#profileTotalsDivider{ display: none !important; }
+.sidebar-separator, .sidebar-divider { display:none !important; }
+
+/* --- Final layout overrides (stability) --- */
+#leftSidebar{display:flex;flex-direction:column;}
+/* Reduce the unused top gap above the sidebar profile picture */
+#leftSidebar .sidebar-main{flex:1 1 auto;overflow:auto;padding: calc(12px + env(safe-area-inset-top)) 6px 18px !important;}
+#sidebarSearchBottom{margin-top:auto;padding: 12px 6px 18px !important;}
+/* Sidebar search: same width as the Favorite Collection bubble */
+#sidebarSearchBottom .navbar-search,
+#sidebarSearchBottom .navbar-search input{width:100% !important; max-width:none !important; min-width:0 !important;}
+
+/* Creator overview: 4 columns */
+#profileMetricsStats{grid-template-columns: repeat(4, minmax(0, 1fr)) !important;}
+
+/* Titles same size */
+.profile-artist-stats-title, .sidebar-section-title{
+  text-align:center;
+  letter-spacing:0.08em;
+  font-size:12px !important;
+  opacity:0.85;
+  text-transform:uppercase;
+  margin: 8px 0;
+}
+
+/* Divider above profile overview always visible */
+#profileOverviewDivider{display:block !important;}
+/* No divider under profile totals */
+#profileTotalsDivider{display:none !important;}
+.sidebar-separator, .sidebar-divider{display:none !important;}
+
+/* Ensure values blue */
+.stat-value, #statFavoriteCollectionName,
+#profileCollectedCount,#profileLikedCount,#profileMetricLikes,#profileMetricViews,#profileMetricCreated,#profileMetricMinted{
+  color: var(--color1) !important;
+  font-weight:700;
+}
+/* Favorite label normal */
+#statFavoriteCollectionCount{color: rgba(255,255,255,0.75) !important;}
+
+
+/* === vNext: Top navbar profile search (right) === */
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+    margin-right: 20px;
+}
+
+.navbar-right .navbar-controls {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.navbar-search-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.navbar-control-sep {
+    width: 1px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.navbar-search.navbar-search--top {
+    width: 245px;
+    max-width: 245px;
+    min-width: 220px;
+    position: relative;
+}
+
+.navbar-search.navbar-search--top input {
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 9999px;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+
+    background: var(--pill-bg);
+    color: var(--pill-fg);
+    border: 1px solid var(--pill-border);
+    box-shadow: var(--pill-shadow);
+
+    font-size: 14px;
+    line-height: 1;
+}
+
+.navbar-search.navbar-search--top input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 183, 255, 0.20);
+}
+
+@media (max-width: 980px) {
+    .navbar-search.navbar-search--top {
+        width: 195px;
+        max-width: 195px;
+        min-width: 0;
+    }
+}
+
+
+/* Context downloads: beside current collection label */
+.download-pills--context {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+
+/* Keep download pills compact in the context bar */
+.download-pills--context #downloadZipButton.select-pill,
+.download-pills--context #downloadCollageButton.select-pill {
+    height: 34px;
+    padding: 0 12px;
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   Collage view (fit all results on current viewport, no scroll)
+   ========================================================= */
+body.is-collage-view #scrollToTopButton,
+body.is-collage-view #scrollToBottomButton {
+    display: none !important;
+}
+
+.app-main.is-collage-view {
+    overflow-y: hidden !important;
+}
+
+.nft-container.collage-mode {
+    gap: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+.nft-container.collage-mode .nft-card {
+    border-radius: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    filter: none !important;
+    overflow: hidden !important;
+    aspect-ratio: auto !important;
+}
+
+.nft-container.collage-mode .nft-card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    filter: none !important;
+}
+
+.nft-container.collage-mode .tooltip {
+    display: none !important;
+}
+
+/* Collage view as a single merged image (saveable via right click) */
+.nft-container.collage-mode {
+    display: flex !important;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.nft-container.collage-mode .nft-card {
+    display: none !important;
+}
+
+.collage-single-image-wrapper {
+    display: none;
+    position: relative;
+}
+
+body.is-collage-view .collage-single-image-wrapper {
+    display: block;
+}
+
+.collage-single-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.collage-single-image-wrapper.is-loading::after {
+    content: 'Building collage…';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Geomanist-Bold, Arial, sans-serif;
+    font-size: 14px;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+
+body.is-collage-view #collectionTitle {
+    display: none !important;
+}
+
+/* === FIX: prevent hover clipping in right pane (NFT grid) === */
+/* Reason: .app-main is a scroll container (overflow != visible) and .nft-container had overflow-x:hidden,
+   so transformed (scaled) cards were getting clipped near edges/top. */
+
+:root {
+  --nft-hover-gutter: 56px; /* increase if you still see clipping */
+}
+
+/* 1) Let cards overflow their grid (stop cutting on the sides) */
+.app-main .nft-container {
+  overflow: visible !important;
+}
+
+/* 2) Create an inner safe area inside the scrollport so scaled cards stay visible */
+.app-main {
+  padding-top: calc(20px + var(--nft-hover-gutter)) !important;
+  padding-left: var(--nft-hover-gutter) !important;
+  padding-right: var(--nft-hover-gutter) !important;
+  padding-bottom: 24px !important;
+}
+
+/* 3) Keep the header area visually at the same vertical position */
+.app-main > .profile-section {
+  margin-top: calc(-1 * var(--nft-hover-gutter)) !important;
+}
+
+/* 4) Don't add gutters in collage mode (keep full-bleed) */
+body.is-collage-view .app-main,
+.app-main.is-collage-view {
+  padding: 0 !important;
+}
+
+@media (max-width: 768px) {
+  :root { --nft-hover-gutter: 18px; }
+}
+
+/* Active mode highlight for profile stats */
+.stat-card.is-active-mode {
+  outline: 2px solid var(--color1);
+  outline-offset: 2px;
+}
+
+/* Active sidebar stat highlight (when "NFTs Collected" is the mode but a sidebar stat is selected) */
+.stat-card.is-active-stat {
+  outline: 2px solid var(--color1);
+  outline-offset: 2px;
+}
+
+.stat-card.is-active-stat.is-dotted {
+  outline-style: dotted;
+}
+
+/* === UI tweaks: profile photo + floating buttons === */
+@media (min-width: 901px) {
+  .profile-header-content {
+    margin-top: 58px !important;
+  }
+
+  .profile-picture img {
+    width: 150px !important;
+    height: 150px !important;
+  }
+}
+
+#scrollToTopButton,
+#scrollToBottomButton,
+#downloadActionButton {
+  right: 22px !important;
+}
+
+/* Scroll buttons: black chevrons + slight left shift */
+#scrollToTopButton,
+#scrollToBottomButton {
+    color: #000;
+}
+
+#scrollToTopButton svg,
+#scrollToBottomButton svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+    margin: 0 auto;
+}
+
+#scrollToTopButton svg path,
+#scrollToBottomButton svg path {
+    stroke: currentColor;
+}
+
+/* Grouped view: headings inside the NFT grid */
+.nft-container--grouped {
+    align-content: start;
+}
+
+.nft-group-header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    align-self: start;
+
+    /* More space above title, less below */
+    padding: 18px 10px 6px;
+    margin-top: 12px;
+}
+
+.nft-group-title {
+    color: var(--text-dark);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: clamp(16px, 1.6vw, 22px);
+    line-height: 1.1;
+}
+
+.nft-group-count {
+    color: var(--color1);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    font-size: clamp(14px, 1.2vw, 18px);
+    white-space: nowrap;
+}
+
+/* Grouped view: prevent selecting collage */
+#cardSize option[value="collage"]:disabled {
+    opacity: 0.5;
+}
+
+/* Final overrides (requested tweaks) */
+.left-sidebar #profileHeader .profile-picture--round img {
+    width: 160px !important;
+    height: 160px !important;
+}
+
+.left-sidebar #profileHeader .profile-header-content--center {
+    padding-top: 22px !important;
+}
+
+#scrollToTopButton,
+#scrollToBottomButton {
+    right: 18px !important;
+}
+
+#downloadActionButton {
+    right: 28px !important;
+}
+
+/* Floating actions: keep aligned in one column (requested) */
+:root {
+    --floating-actions-right: 24px;
+}
+
+#downloadActionButton,
+#scrollToTopButton,
+#scrollToBottomButton {
+    right: var(--floating-actions-right) !important;
+}
+
+
+
+.sidebar-section-title,
+.profile-artist-stats-title {
+    margin-top: 0 !important;
+    margin-bottom: 8px !important;
+    font-size: 12px !important;
+    letter-spacing: 0.10em !important;
+}
+
+/* Sidebar headings + grids: unified look + perfectly aligned */
+:root {
+    --sidebar-heading-opacity: 0.82;
+    --sidebar-heading-gap: 8px;
+    --sidebar-grids-gap: 10px;
+}
+
+/* Same spacing above both headings */
+.profile-section-divider,
+.profile-artist-stats-divider {
+    margin: 12px 0 8px !important;
+}
+
+/* Same typography + color for both headings */
+.sidebar-section-title,
+.profile-artist-stats-title {
+    margin-top: 0 !important;
+    margin-bottom: var(--sidebar-heading-gap) !important;
+
+    text-align: center !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.10em !important;
+
+    font-size: 12px !important;
+    font-weight: 600 !important;
+
+    color: var(--text-dark) !important;
+    opacity: var(--sidebar-heading-opacity) !important;
+}
+
+/* Both grids start at the same level under their heading */
+#profileExtraStats,
+#profileMetricsStats {
+    margin-top: 0 !important;
+}
+
+/* Make both grids share the same width + inner alignment */
+.left-sidebar #profileHeader #profileExtraStats,
+.left-sidebar #profileHeader #profileMetricsStats {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    gap: var(--sidebar-grids-gap) !important;
+}
+
+/* Remove any older per-section tightening that could desync spacing */
+#profileArtistStatsTitle {
+    margin-bottom: var(--sidebar-heading-gap) !important;
+}
+
+
+
+.profile-section-divider,
+.profile-artist-stats-divider {
+    margin: 0 !important;
+    margin-top: var(--overview-divider-gap-top) !important;
+    margin-bottom: 0 !important;
+}
+
+.profile-section-divider + .sidebar-section-title,
+.profile-artist-stats-divider + .profile-artist-stats-title {
+    margin: 0 !important;
+    padding-top: var(--overview-title-gap-between) !important;
+    padding-bottom: var(--overview-title-gap-after) !important;
+    line-height: 1.15 !important;
+}
+
+.profile-section-divider + .sidebar-section-title + #profileExtraStats,
+.profile-artist-stats-divider + .profile-artist-stats-title + #profileMetricsStats {
+    margin-top: 0 !important;
+}
+
+/* Sidebar overview spacing: compensate for flex gap in profile header + remove container padding differences */
+.left-sidebar #profileHeader .profile-header-content--center {
+    --profile-header-flex-gap: 10px; /* must match its gap value */
+}
+
+.left-sidebar .sidebar-stats {
+    padding-top: 0 !important;
+}
+
+/* CREATOR OVERVIEW lives inside a flex column with gap; cancel that gap around divider/title/grid */
+.left-sidebar #profileHeader .profile-artist-stats-divider {
+    margin-top: calc(var(--overview-divider-gap-top) - var(--profile-header-flex-gap)) !important;
+}
+
+.left-sidebar #profileHeader .profile-artist-stats-divider + .profile-artist-stats-title {
+    margin-top: calc(-1 * var(--profile-header-flex-gap)) !important;
+}
+
+.left-sidebar #profileHeader .profile-artist-stats-title + #profileMetricsStats {
+    margin-top: calc(-1 * var(--profile-header-flex-gap)) !important;
+}
+
+.left-sidebar #profileHeader .profile-header-content--center{gap:10px !important;}
+
+
+
+/* PROFIL OVERVIEW (not inside flex-gap) */
+.left-sidebar .sidebar-stats .profile-section-divider {
+    margin-bottom: 0 !important;
+}
+.left-sidebar .sidebar-stats .profile-section-divider + .sidebar-section-title {
+    margin-top: 0 !important;
+    padding-top: var(--overview-divider-to-title) !important;
+}
+
+/* CREATOR OVERVIEW (inside flex column with gap) */
+.left-sidebar #profileHeader .profile-artist-stats-divider {
+    margin-bottom: 0 !important;
+}
+.left-sidebar #profileHeader .profile-artist-stats-divider + .profile-artist-stats-title {
+    /* Cancel the flex gap above the title, then re-apply the exact desired spacing */
+    margin-top: calc(-1 * var(--profile-header-flex-gap)) !important;
+    padding-top: var(--overview-divider-to-title) !important;
+}
+
+/* =========================================================
+   Sidebar overviews: remove flex-gap + unify divider/title/grid spacing everywhere
+   ========================================================= */
+:root {
+    --overview-divider-gap-top: 12px;    /* space above divider */
+    --overview-divider-to-title: 8px;    /* space between divider and title */
+    --overview-title-to-grid: 8px;       /* space between title and grid */
+    --profile-header-stack-gap: 10px;    /* replaces old flex gap */
+    --sidebar-heading-opacity: 0.82;
+}
+
+/* 1) Remove flex gap (it was causing different spacing for CREATOR OVERVIEW) */
+.left-sidebar #profileHeader .profile-header-content--center {
+    gap: 0 !important;
+}
+
+/* Recreate the old vertical rhythm with explicit margins */
+.left-sidebar #profileHeader .profile-picture--round {
+    margin-bottom: var(--profile-header-stack-gap) !important;
+}
+
+.left-sidebar #profileHeader .profile-bio {
+    margin-top: var(--profile-header-stack-gap) !important;
+}
+
+/* 2) CREATOR OVERVIEW (inside profile header) */
+.left-sidebar #profileHeader .profile-artist-stats-divider {
+    margin: 0 !important;
+    margin-top: var(--overview-divider-gap-top) !important;
+}
+
+.left-sidebar #profileHeader .profile-artist-stats-title {
+    margin: 0 !important;
+    padding-top: var(--overview-divider-to-title) !important;
+    padding-bottom: var(--overview-title-to-grid) !important;
+
+    text-align: center !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.10em !important;
+
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: var(--text-dark) !important;
+    opacity: var(--sidebar-heading-opacity) !important;
+}
+
+.left-sidebar #profileHeader #profileMetricsStats {
+    margin-top: 0 !important;
+}
+
+/* 3) PROFIL OVERVIEW (inside sidebar stats section) */
+.left-sidebar .sidebar-stats {
+    padding-top: 0 !important;
+}
+
+.left-sidebar .sidebar-stats .profile-section-divider {
+    margin: 0 !important;
+    margin-top: var(--overview-divider-gap-top) !important;
+}
+
+.left-sidebar .sidebar-stats .sidebar-section-title {
+    margin: 0 !important;
+    padding-top: var(--overview-divider-to-title) !important;
+    padding-bottom: var(--overview-title-to-grid) !important;
+
+    text-align: center !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.10em !important;
+
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: var(--text-dark) !important;
+    opacity: var(--sidebar-heading-opacity) !important;
+}
+
+.left-sidebar .sidebar-stats #profileExtraStats {
+    margin-top: 0 !important;
+}
+
+/* =========================================================
+   FINAL OVERRIDES: identical divider spacing (fix margin-collapsing)
+   ========================================================= */
+:root {
+    --overview-section-pad-top: 12px;     /* distance from section top to divider */
+    --overview-divider-to-title: 8px;     /* divider -> title */
+    --overview-title-to-grid: 8px;        /* title -> grid */
+}
+
+/* PROFIL OVERVIEW: divider is first child -> avoid margin-collapsing with non-zero padding */
+.left-sidebar .sidebar-stats {
+    padding-top: var(--overview-section-pad-top) !important;
+}
+
+.left-sidebar .sidebar-stats .profile-section-divider {
+    margin: 0 !important; /* margin handled by section padding */
+}
+
+.left-sidebar .sidebar-stats .sidebar-section-title {
+    margin: 0 !important;
+    padding-top: var(--overview-divider-to-title) !important;
+    padding-bottom: var(--overview-title-to-grid) !important;
+}
+
+/* CREATOR OVERVIEW: inside profile header */
+.left-sidebar #profileHeader .profile-artist-stats-divider {
+    margin: 0 !important;
+    margin-top: var(--overview-section-pad-top) !important;
+}
+
+.left-sidebar #profileHeader .profile-artist-stats-title {
+    margin: 0 !important;
+    padding-top: var(--overview-divider-to-title) !important;
+    padding-bottom: var(--overview-title-to-grid) !important;
+}
+
+/* Both grids start flush under title padding */
+.left-sidebar #profileHeader #profileMetricsStats,
+.left-sidebar .sidebar-stats #profileExtraStats {
+    margin-top: 0 !important;
+}
+
+/* Stats (all): first line (values) white, second line (labels) blue */
+.stat-card .stat-value,
+.stat-card--favorite .stat-value,
+.profile-extra-value,
+.stat-value {
+    color: var(--text-dark) !important;
+}
+
+.stat-card .stat-label,
+.stat-card--favorite .stat-label,
+.profile-extra-label,
+.stat-label {
+    color: var(--color1) !important;
+    opacity: 1 !important;
+}
+.stat-card .stat-label,
+.profile-extra-label,
+.stat-card--favorite .stat-label {
+    color: var(--color1) !important;
+    opacity: 1 !important;
+}
+
+/* FINAL: lock requested colors (values white, labels blue, overview titles white) */
+#profileMetricsStats .stat-value,
+#profileMetricLikes,
+#profileMetricViews,
+#profileMetricCreated,
+#profileMetricMinted,
+#statFavoriteCollectionName {
+    color: #fff !important;
+}
+
+#profileMetricsStats .stat-label,
+#statFavoriteCollectionCount {
+    color: var(--color1) !important;
+    opacity: 1 !important;
+}
+
+.left-sidebar .sidebar-stats .sidebar-section-title,
+.left-sidebar #profileHeader .profile-artist-stats-title {
+    color: #fff !important;
+    opacity: 1 !important;
+}
+
+/* =========================================================
+   FINAL (requested): overview title size + stats colors + favorite name size
+   ========================================================= */
+
+/* Overview titles: same size as 2nd pseudo (display-name) + white */
+.left-sidebar .sidebar-stats .sidebar-section-title,
+.left-sidebar #profileHeader .profile-artist-stats-title {
+    font-size: 14px !important;
+    line-height: 1.2 !important;
+    color: #fff !important;
+    opacity: 1 !important;
+}
+
+/* Stats values: white (including creator + collected/liked + favorite name) */
+#profileCollectedCount,
+#profileLikedCount,
+#profileMetricLikes,
+#profileMetricViews,
+#profileMetricCreated,
+#profileMetricMinted,
+#statFavoriteCollectionName,
+#profileMetricsStats .stat-value,
+#profileExtraStats .stat-value,
+.stat-card .stat-value,
+.stat-value {
+    color: #fff !important;
+}
+
+/* Stats labels: blue (including favorite label) */
+#profileExtraStats .stat-label,
+#profileMetricsStats .stat-label,
+#statFavoriteCollectionCount,
+.stat-card .stat-label,
+.stat-label {
+    color: var(--color1) !important;
+    opacity: 1 !important;
+}
+
+/* Favorite collection name: same size as other stat values (top line) */
+.stat-card--favorite .stat-value,
+#statFavoriteCollectionName {
+    font-size: 18px !important;
+    line-height: 1.1 !important;
+}
+
+/* Overview titles: match 2nd pseudo letter spacing + larger divider gap */
+:root {
+    --overview-divider-to-title: 12px;
+}
+
+.left-sidebar .sidebar-stats .sidebar-section-title,
+.left-sidebar #profileHeader .profile-artist-stats-title {
+    letter-spacing: normal !important;
+}
+
+/* FINAL: overview titles slightly bigger + a bit more space above bubbles */
+:root {
+    --overview-title-to-grid: 10px;
+}
+
+.left-sidebar .sidebar-stats .sidebar-section-title,
+.left-sidebar #profileHeader .profile-artist-stats-title {
+    font-size: 16px !important;
+    padding-bottom: var(--overview-title-to-grid) !important;
+}
+
+/* Guard: never force CREATOR OVERVIEW visible when inline style hides it */
+#profileArtistStatsDivider[style*="display: none"],
+#profileArtistStatsTitle[style*="display: none"],
+#profileMetricsStats[style*="display: none"] {
+    display: none !important;
+}
+
+/* CREATOR OVERVIEW: a bit more space under the title */
+.left-sidebar #profileHeader .profile-artist-stats-title {
+    padding-bottom: 12px !important;
+}
+
+/* =========================================================
+   FINAL (requested): pseudo colors + twitter icon + CREATOR spacing
+   ========================================================= */
+
+/* Pseudos: 1st (username) white, 2nd (display-name) blue */
+.left-sidebar #profileHeader .username,
+#username {
+    color: #fff !important;
+}
+
+.left-sidebar #profileHeader .display-name,
+#displayName {
+    color: var(--color1) !important;
+    opacity: 1 !important;
+}
+
+/* Twitter icon slightly smaller */
+#twitterLink .social-icon {
+    width: 22px !important;
+    height: 22px !important;
+}
+
+/* CREATOR OVERVIEW: slightly more space above and below the title */
+.left-sidebar #profileHeader .profile-artist-stats-title {
+    padding-top: 14px !important;    /* divider -> title */
+    padding-bottom: 14px !important; /* title -> bubbles */
+}
+
+/* CREATOR OVERVIEW: increase spacing between divider and title (requested) */
+.left-sidebar #profileHeader .profile-artist-stats-title {
+    /* More space between divider and title */
+    padding-top: 24px !important;
+}
+
+/* FIX: CREATOR OVERVIEW - space above divider (wins over earlier !important rules) */
+.left-sidebar #profileHeader .profile-artist-stats-divider {
+    margin-top: 18px !important;
+}
+
+/* =========================================================
+   CREATOR OVERVIEW spacing: remove flex gap and control distances precisely
+   ========================================================= */
+.left-sidebar #profileHeader .profile-header-content--center {
+    gap: 0 !important;
+}
+
+/* Slightly reduce space after profile bio before the divider */
+.left-sidebar #profileHeader .profile-bio {
+    margin-bottom: 6px !important;
+}
+
+/* Divider: no extra margin (space is handled by bio margin-bottom) */
+.left-sidebar #profileHeader .profile-artist-stats-divider {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Title: increase space between divider and "CREATOR OVERVIEW" */
+.left-sidebar #profileHeader .profile-artist-stats-title {
+    margin-top: 18px !important;     /* divider -> title */
+    margin-bottom: 14px !important;  /* title -> bubbles */
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* =========================================================
+   PROFIL OVERVIEW (séparé)
+   ========================================================= */
+:root {
+  --profil-overview-title-size: 16px;
+  --profil-overview-title-letter-spacing: normal; /* même rendu que le 2e pseudo */
+  --profil-overview-divider-to-title: 12px;       /* barre -> titre */
+  --profil-overview-title-to-grid: 10px;          /* titre -> bulles */
+}
+
+.left-sidebar .sidebar-stats .sidebar-section-title {
+  font-size: var(--profil-overview-title-size) !important;
+  letter-spacing: var(--profil-overview-title-letter-spacing) !important;
+  color: #fff !important;
+  opacity: 1 !important;
+}
+
+.left-sidebar .sidebar-stats .profile-section-divider + .sidebar-section-title {
+  margin: 0 !important;
+  padding-top: var(--profil-overview-divider-to-title) !important;
+  padding-bottom: var(--profil-overview-title-to-grid) !important;
+}
+
+
+/* =========================================================
+   CREATOR OVERVIEW (séparé)
+   ========================================================= */
+:root {
+  --creator-overview-title-size: 16px;
+  --creator-overview-title-letter-spacing: normal; /* même rendu que le 2e pseudo */
+  --creator-overview-divider-to-title: 6px;       /* barre -> titre */
+  --creator-overview-title-to-grid: 14px;          /* titre -> bulles */
+}
+
+.left-sidebar #profileHeader .profile-artist-stats-title {
+  font-size: var(--creator-overview-title-size) !important;
+  letter-spacing: var(--creator-overview-title-letter-spacing) !important;
+  color: #fff !important;
+  opacity: 1 !important;
+}
+
+.left-sidebar #profileHeader .profile-artist-stats-divider + .profile-artist-stats-title {
+  margin: 0 !important;
+  padding-top: var(--creator-overview-divider-to-title) !important;
+  padding-bottom: var(--creator-overview-title-to-grid) !important;
 }
