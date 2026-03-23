@@ -12,9 +12,6 @@
 <link as="font" crossorigin="" href="Geomanist-Bold.otf" rel="preload" type="font/otf"/>
 <link href="styles.css" rel="stylesheet"/>
 <!-- Librairies JS -->
-
-
-
 <!-- Open Graph (aperçu lien) -->
 <meta content="CRONOS.WTF | Developed by Unscoop" property="og:title"/>
 <meta content="Browse smarter. Collect better" property="og:description"/>
@@ -28,6 +25,24 @@
 <meta content="https://www.cronos.wtf/link.png" name="twitter:image"/>
 </head>
 <body>
+  <!-- Inline SVG sprite (no extra file) -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
+    <symbol id="icon-download" viewBox="0 0 24 24">
+      <path d="M12 3v10m0 0l4-4m-4 4L8 9M4 17v3h16v-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  
+    <symbol id="icon-chevron-up" viewBox="0 0 24 24">
+      
+      <path d="M12 19V6m0 0l-5 5m5-5l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+    </symbol>
+    <symbol id="icon-chevron-down" viewBox="0 0 24 24">
+      
+      <path d="M12 5v13m0 0l-5-5m5 5l5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+    </symbol>
+</svg>
+
 <noscript>
 <div style="text-align: center; padding: 20px; color: var(--text-dark);">
             JavaScript is required to view this content. Please enable JavaScript in your browser settings.
@@ -42,11 +57,51 @@
 <a aria-label="Logout" href="#" id="logoutLink" style="display: none;">Logout</a>
 <a aria-label="Login" href="#" id="loginLink">Login</a>
 <div class="user-profile" id="userProfile" style="display: none;">
-<img alt="User Profile" class="user-profile-picture" decoding="async" id="userProfilePicture" loading="lazy" src="">
-</img></div>
+<img alt="User Profile" class="user-profile-picture" decoding="async" id="userProfilePicture" loading="lazy" src=""/>
 </div>
-<div class="navbar-controls" id="navbarControls" aria-label="Controls">
-<div class="select-pill select-pill--sort" data-pill-for="sortBy" title="Sort by" role="button" tabindex="0">
+</div>
+<div class="navbar-right" id="navbarRight">
+<div aria-label="Controls" class="navbar-controls" id="navbarControls">
+<div class="controls filters-toolbar controls--navbar" id="controls">
+<div class="filters-left filters-left--row">
+<div class="select-pill" data-pill-for="creatorFilter" title="Artists">
+<span class="select-pill-text" id="pillTextCreator">ALL ARTISTS</span>
+<span aria-hidden="true" class="select-pill-caret">▾</span>
+<select aria-label="Artists" id="creatorFilter">
+<option value="">ALL ARTISTS</option>
+</select>
+</div>
+<div class="select-pill" data-pill-for="collectionFilter" title="Collections">
+<span class="select-pill-text" id="pillTextCollection">ALL COLLECTIONS</span>
+<span aria-hidden="true" class="select-pill-caret">▾</span>
+<select aria-label="Collections" id="collectionFilter">
+<option value="">ALL COLLECTIONS</option>
+</select>
+</div>
+<div class="select-pill" data-pill-for="chainFilter" title="Chains">
+<span class="select-pill-text" id="pillTextChain">ALL CHAINS</span>
+<span aria-hidden="true" class="select-pill-caret">▾</span>
+<select aria-label="Chains" id="chainFilter">
+<option value="">ALL CHAINS</option>
+<option value="CRONOS">CRONOS</option>
+<option value="CRONOS_POS">CRONOS POS CHAIN</option>
+</select>
+</div>
+<div class="select-pill" data-pill-for="curatedFilter" title="Curations">
+<span class="select-pill-text" id="pillTextCurated">ALL CURATIONS</span>
+<span aria-hidden="true" class="select-pill-caret">▾</span>
+<select aria-label="Curations" id="curatedFilter">
+<option value="">ALL CURATIONS</option>
+<option value="true">CURATED</option>
+<option value="false">NON CURATED</option>
+</select>
+</div>
+<button class="select-pill select-pill--reset" id="resetFiltersButton" title="Reset filters" type="button">
+<span class="select-pill-text">RESET FILTERS</span>
+</button>
+</div>
+</div>
+<div class="select-pill select-pill--sort" data-pill-for="sortBy" role="button" tabindex="0" title="Sort by">
 <span aria-hidden="true" class="select-pill-icon">
 <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
 <path d="M3 6h10"></path>
@@ -64,7 +119,7 @@
 <option value="rank">RANK</option>
 </select>
 </div>
-    <div aria-label="Card size" class="view-toggle" role="group">
+<div aria-label="Card size" class="view-toggle" role="group">
 <button aria-pressed="false" class="view-btn" id="viewSmall" title="Small cards" type="button">
 <svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
 <rect height="5" rx="1" width="5" x="3" y="3"></rect>
@@ -91,52 +146,53 @@
 <rect height="16" rx="2" width="16" x="4" y="4"></rect>
 </svg>
 </button>
-</div>
-<div class="download-pills download-pills--top" aria-label="Downloads">
-<button class="select-pill select-pill--download" id="downloadZipButton" onclick="downloadNFTsAsZip()" style="display: none;" title="Download pack (ZIP)" type="button">
-<span aria-hidden="true" class="select-pill-icon">
-<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
-<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-<polyline points="7 10 12 15 17 10"></polyline>
-<line x1="12" x2="12" y1="15" y2="3"></line>
+<button aria-pressed="false" class="view-btn" id="viewCollage" title="Collage view (fit all)" type="button">
+<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<rect x="3" y="3" width="3" height="3" rx="0.6"></rect>
+<rect x="8" y="3" width="3" height="3" rx="0.6"></rect>
+<rect x="13" y="3" width="3" height="3" rx="0.6"></rect>
+<rect x="18" y="3" width="3" height="3" rx="0.6"></rect>
+
+<rect x="3" y="8" width="3" height="3" rx="0.6"></rect>
+<rect x="8" y="8" width="3" height="3" rx="0.6"></rect>
+<rect x="13" y="8" width="3" height="3" rx="0.6"></rect>
+<rect x="18" y="8" width="3" height="3" rx="0.6"></rect>
+
+<rect x="3" y="13" width="3" height="3" rx="0.6"></rect>
+<rect x="8" y="13" width="3" height="3" rx="0.6"></rect>
+<rect x="13" y="13" width="3" height="3" rx="0.6"></rect>
+<rect x="18" y="13" width="3" height="3" rx="0.6"></rect>
+
+<rect x="3" y="18" width="3" height="3" rx="0.6"></rect>
+<rect x="8" y="18" width="3" height="3" rx="0.6"></rect>
+<rect x="13" y="18" width="3" height="3" rx="0.6"></rect>
+<rect x="18" y="18" width="3" height="3" rx="0.6"></rect>
 </svg>
-</span>
-<span class="select-pill-text">PACK</span>
-<span class="select-pill-badge" id="downloadZipBadge" aria-hidden="true" style="display: none;">0</span>
 </button>
-<button class="select-pill select-pill--download" id="downloadCollageButton" onclick="downloadCollage()" style="display: none;" title="Download image (PNG)" type="button">
-<span aria-hidden="true" class="select-pill-icon">
-<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
-<rect x="3" y="3" width="18" height="18" rx="2"></rect>
-<circle cx="9" cy="9" r="2"></circle>
-<path d="M21 15l-5-5L5 21"></path>
-</svg>
-</span>
-<span class="select-pill-text">IMAGE</span>
-</button>
+
 </div>
 <select aria-label="Card size" class="sr-only" id="cardSize">
 <option value="small">SMALL</option>
 <option value="medium">MEDIUM</option>
 <option value="large">LARGE</option>
+<option value="collage">COLLAGE</option>
 </select>
 </div>
-<button aria-expanded="false" aria-label="Toggle menu" class="navbar-toggle" type="button">☰</button>
-
-</div>
-</nav>
-<div class="main-content">
-  <div class="app-layout">
-    <aside class="left-sidebar" id="leftSidebar">
-  <div class="sidebar-main">
-<div class="sidebar-search" id="sidebarProfileSearch">
-<div class="navbar-search navbar-search--sidebar">
+<div class="navbar-search-top" id="navbarSearchTop" aria-label="Profile search">
+<span class="navbar-control-sep" aria-hidden="true"></span>
+<div class="navbar-search navbar-search--top">
 <input aria-describedby="usernameHelp" autocomplete="on" id="usernameInput" onblur="if(!this.value) this.placeholder='🔎 Search a profile'" onfocus="this.placeholder=''" placeholder="🔎 Search a profile" type="text"/><span class="sr-only" id="usernameHelp">Type at least 3 characters to search a profile.</span>
 <div class="suggestions" id="suggestions"></div>
 </div>
 </div>
-<div class="sidebar-separator" aria-hidden="true"></div>
-
+<button aria-expanded="false" aria-label="Toggle menu" class="navbar-toggle" type="button">☰</button>
+</div>
+</div>
+</nav>
+<div class="main-content">
+<div class="app-layout">
+<aside class="left-sidebar" id="leftSidebar">
+<div class="sidebar-main">
 <div class="profile-header profile-header--page" id="profileHeader" style="display: none;">
 <div class="profile-header-content profile-header-content--center">
 <div class="profile-picture profile-picture--round">
@@ -169,108 +225,49 @@
 <img alt="Instagram Profile" class="social-icon" decoding="async" loading="lazy" onerror="this.src='/assets/fallback-icon.png'" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/512px-Instagram_icon.png"/>
 </a>
 </p>
+</div><div class="profile-bio" id="profileBio" style="display: none;"></div><div aria-hidden="true" class="profile-artist-stats-divider" id="profileArtistStatsDivider" style="display: none;"></div><div class="profile-artist-stats-title" id="profileArtistStatsTitle" style="display: none;">CREATOR OVERVIEW</div><div aria-label="Creator overview" class="stats-grid stats-grid--tight stats-grid--artist4" id="profileMetricsStats" style="display: none;"><div class="stat-card"><div class="stat-value" id="profileMetricLikes">0</div><div class="stat-label">LIKES</div></div><div class="stat-card"><div class="stat-value" id="profileMetricViews">0</div><div class="stat-label">VIEWS</div></div><div class="stat-card"><div class="stat-value" id="profileMetricCreated">0</div><div class="stat-label">CREATED</div></div><div class="stat-card"><div class="stat-value" id="profileMetricMinted">0</div><div class="stat-label">MINTED</div></div></div>
+</div></div></div><section aria-label="Owner statistics" class="sidebar-stats" id="sidebarStats" style="display: none;">
+<div aria-hidden="true" class="profile-section-divider" id="profileOverviewDivider" style="display: block;"></div><div class="sidebar-section-title">PROFIL OVERVIEW</div><div aria-label="Profile totals" class="stats-grid stats-grid--tight" id="profileExtraStats" style="display: none;"><div class="stat-card" id="profileCollectedStat" role="button" tabindex="0" aria-label="Show collected NFTs" data-stat-action="mode:collected"><div class="stat-value" id="profileCollectedCount">0</div><div class="stat-label">NFTs COLLECTED</div></div><div class="stat-card" id="profileLikedStat" role="button" tabindex="0" aria-label="Show liked NFTs" data-stat-action="mode:liked"><div class="stat-value" id="profileLikedCount">0</div><div class="stat-label">NFTs LIKED</div></div></div>
+<div class="stats-grid">
+<div aria-label="Group NFTs by artist" class="stat-card" data-stat-action="group:artist" role="button" tabindex="0">
+<div class="stat-value" id="statArtists">0</div>
+<div class="stat-label">ARTISTS</div>
 </div>
-
+<div aria-label="Group NFTs by collection" class="stat-card" data-stat-action="group:collection" role="button" tabindex="0">
+<div class="stat-value" id="statCollections">0</div>
+<div class="stat-label">COLLECTIONS</div>
+</div>
+<div aria-label="Filter curated" class="stat-card" data-stat-action="curated:true" role="button" tabindex="0">
+<div class="stat-value" id="statCurated">0</div>
+<div class="stat-label">CURATED</div>
+</div>
+<div aria-label="Filter non curated" class="stat-card" data-stat-action="curated:false" role="button" tabindex="0">
+<div class="stat-value" id="statNonCurated">0</div>
+<div class="stat-label">NON CURATED</div>
+</div>
+<div aria-label="Filter Cronos" class="stat-card" data-stat-action="chain:CRONOS" role="button" tabindex="0">
+<div class="stat-value" id="statCronos">0</div>
+<div class="stat-label">CRONOS</div>
+</div>
+<div aria-label="Filter Cronos POS" class="stat-card" data-stat-action="chain:CRONOS_POS" role="button" tabindex="0">
+<div class="stat-value" id="statCronosPos">0</div>
+<div class="stat-label">CRONOS POS</div>
+</div>
+<div aria-label="Filter by favorite collection" class="stat-card stat-card--full stat-card--favorite" data-stat-action="collection:" role="button" tabindex="0">
+<div class="stat-value" id="statFavoriteCollectionName">-</div>
+<div class="stat-label" id="statFavoriteCollectionCount">FAVORITE COLLECTION - 0 NFTS</div>
 </div>
 </div>
-</div>
-<div class="sidebar-divider" aria-hidden="true"></div>
-<section class="sidebar-stats" id="sidebarStats" aria-label="Owner statistics" style="display: none;">
-  <div class="sidebar-stats-title">OWNER STATS</div>
-  <div class="stats-grid">
-    <div class="stat-card" data-stat-action="reset" role="button" tabindex="0" aria-label="Show all NFTs">
-      <div class="stat-value" id="statTotalNfts">0</div>
-      <div class="stat-label">NFTS</div>
-    </div>
-    <div class="stat-card" data-stat-action="open-creator" role="button" tabindex="0" aria-label="Open artist filter">
-      <div class="stat-value" id="statArtists">0</div>
-      <div class="stat-label">ARTISTS</div>
-    </div>
-    <div class="stat-card" data-stat-action="open-collection" role="button" tabindex="0" aria-label="Open collection filter">
-      <div class="stat-value" id="statCollections">0</div>
-      <div class="stat-label">COLLECTIONS</div>
-    </div>
-    <div class="stat-card" data-stat-action="curated:true" role="button" tabindex="0" aria-label="Filter curated">
-      <div class="stat-value" id="statCurated">0</div>
-      <div class="stat-label">CURATED</div>
-    </div>
-    <div class="stat-card" data-stat-action="curated:false" role="button" tabindex="0" aria-label="Filter non curated">
-      <div class="stat-value" id="statNonCurated">0</div>
-      <div class="stat-label">NON CURATED</div>
-    </div>
-    <div class="stat-card" data-stat-action="chain:CRONOS" role="button" tabindex="0" aria-label="Filter Cronos">
-      <div class="stat-value" id="statCronos">0</div>
-      <div class="stat-label">CRONOS</div>
-    </div>
-    <div class="stat-card" data-stat-action="chain:CRONOS_POS" role="button" tabindex="0" aria-label="Filter Cronos POS">
-      <div class="stat-value" id="statCronosPos">0</div>
-      <div class="stat-label">CRONOS POS</div>
-    </div>
-  </div>
 </section>
-
-  </div>
-  <div class="sidebar-downloads">
-<div class="sidebar-brand" aria-label="Brand">
-  <img alt="Cronobots Logo" class="sidebar-brand-logo" src="CRONOBOTS.png"/>
-  <div class="sidebar-brand-text">CRONOS.WTF</div>
 </div>
+</aside></div>
 </div>
-</aside>
-    <main class="app-main" id="appMain">
+<main class="app-main" id="appMain">
 <div class="profile-section">
-
 <h2 class="collection-title" id="collectionTitle"></h2>
 <div class="asset-count-bar">
-  <div id="nftCountContainer" class="asset-count-text" aria-live="polite"></div>
+<div aria-live="polite" class="asset-count-text" id="nftCountContainer"></div>
 </div>
-</div>
-
-<div class="top-toolbar" id="topToolbar">
-  <div class="top-toolbar-inner">
-    <div class="top-toolbar-left">
-<div class="controls filters-toolbar controls--top" id="controls">
-  <div class="filters-left filters-left--row">
-    <div class="select-pill" data-pill-for="creatorFilter" title="Artists">
-<span class="select-pill-text" id="pillTextCreator">ALL ARTISTS</span>
-<span aria-hidden="true" class="select-pill-caret">▾</span>
-<select aria-label="Artists" id="creatorFilter">
-<option value="">ALL ARTISTS</option>
-</select>
-</div>
-    <div class="select-pill" data-pill-for="collectionFilter" title="Collections">
-<span class="select-pill-text" id="pillTextCollection">ALL COLLECTIONS</span>
-<span aria-hidden="true" class="select-pill-caret">▾</span>
-<select aria-label="Collections" id="collectionFilter">
-<option value="">ALL COLLECTIONS</option>
-</select>
-</div>
-    <div class="select-pill" data-pill-for="chainFilter" title="Chains">
-<span class="select-pill-text" id="pillTextChain">ALL CHAINS</span>
-<span aria-hidden="true" class="select-pill-caret">▾</span>
-<select aria-label="Chains" id="chainFilter">
-<option value="">ALL CHAINS</option>
-<option value="CRONOS">CRONOS</option>
-<option value="CRONOS_POS">CRONOS POS CHAIN</option>
-</select>
-</div>
-    <div class="select-pill" data-pill-for="curatedFilter" title="Curations">
-<span class="select-pill-text" id="pillTextCurated">ALL CURATIONS</span>
-<span aria-hidden="true" class="select-pill-caret">▾</span>
-<select aria-label="Curations" id="curatedFilter">
-<option value="">ALL CURATIONS</option>
-<option value="true">CURATED</option>
-<option value="false">NON CURATED</option>
-</select>
-</div>
-    <button class="select-pill select-pill--reset" id="resetFiltersButton" title="Reset filters" type="button">
-<span class="select-pill-text">RESET FILTERS</span>
-</button>
-  </div>
-</div>
-    </div>
-    
-  </div>
 </div>
 <div class="updates-container">
 <div aria-labelledby="availableFeaturesTitle" class="update-modal home-update-modal" id="availableFeaturesModal" role="region">
@@ -320,7 +317,6 @@
 </div>
 </div>
 </div>
-
 <div class="timestamp" id="timestamp"></div>
 <div class="error" id="error" role="alert"></div>
 <div class="no-results" id="noResults" style="display: none;">No results found</div>
@@ -350,10 +346,21 @@
 </div>
 </div>
 </main>
-  </div>
-</div>
-<button aria-label="Scroll to top" id="scrollToTopButton" type="button">↑</button>
-<button aria-label="Scroll to bottom" id="scrollToBottomButton" type="button">↓</button>
+<button aria-label="Download" id="downloadActionButton" type="button" title="Download">
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <use href="#icon-download" xlink:href="#icon-download"></use>
+  </svg>
+</button>
+<button aria-label="Scroll to top" id="scrollToTopButton" type="button">
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <use href="#icon-chevron-up" xlink:href="#icon-chevron-up"></use>
+  </svg>
+</button>
+<button aria-label="Scroll to bottom" id="scrollToBottomButton" type="button">
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <use href="#icon-chevron-down" xlink:href="#icon-chevron-down"></use>
+  </svg>
+</button>
 <script crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script><script crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script>
         const cache = new Map();
 let allNFTs = [];
@@ -368,6 +375,35 @@ let loggedInUser = null;
 let activeSearch = null;
 let hasSelectedSpecificCollection = false;
 
+// Asset list mode (collected vs liked)
+let currentAssetMode = 'collected';
+let currentGroupingMode = null; // null | 'artist' | 'collection'
+
+function updateCollageAvailability() {
+    const cardSizeEl = document.getElementById('cardSize');
+    if (!cardSizeEl) return;
+
+    const collageOption = Array.from(cardSizeEl.options).find((opt) => opt.value === 'collage');
+    const groupingActive = currentGroupingMode === 'artist' || currentGroupingMode === 'collection';
+
+    if (collageOption) {
+        collageOption.disabled = groupingActive;
+    }
+
+    // If grouping is active, ensure collage is not selected.
+    if (groupingActive && cardSizeEl.value === 'collage') {
+        document.body.classList.remove('is-collage-view');
+        document.getElementById('appMain')?.classList.remove('is-collage-view');
+        cardSizeEl.value = 'small';
+        cardSizeEl.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+}
+let suppressCollectedModeHighlight = false;
+let favoriteCollectionViewActive = false;
+let collectedNFTsCache = [];
+let likedNFTsCache = [];
+
+
 
 
 /**
@@ -376,17 +412,17 @@ let hasSelectedSpecificCollection = false;
  */
 function updateSidebarStats(nfts) {
     const statsSection = document.getElementById('sidebarStats');
-    if (!statsSection) return;
-
-    const totalEl = document.getElementById('statTotalNfts');
-    const curatedEl = document.getElementById('statCurated');
+    if (!statsSection) return;const curatedEl = document.getElementById('statCurated');
     const nonCuratedEl = document.getElementById('statNonCurated');
     const cronosEl = document.getElementById('statCronos');
     const cronosPosEl = document.getElementById('statCronosPos');
     const artistsEl = document.getElementById('statArtists');
     const collectionsEl = document.getElementById('statCollections');
+    const favoriteCollectionNameEl = document.getElementById('statFavoriteCollectionName');
+    const favoriteCollectionCountEl = document.getElementById('statFavoriteCollectionCount');
+    const favoriteCollectionCardEl = favoriteCollectionNameEl?.closest?.('.stat-card');
 
-    if (!totalEl || !curatedEl || !nonCuratedEl || !cronosEl || !cronosPosEl || !artistsEl || !collectionsEl) return;
+    if (!curatedEl || !nonCuratedEl || !cronosEl || !cronosPosEl || !artistsEl || !collectionsEl) return;
 
     const seen = new Set();
     const unique = [];
@@ -404,6 +440,7 @@ function updateSidebarStats(nfts) {
     let cronosPos = 0;
     const artists = new Set();
     const collections = new Set();
+    const collectionCounts = new Map();
 
     for (const nft of unique) {
         const isCurated = nft?.isCurated !== undefined ? nft.isCurated : false;
@@ -419,16 +456,48 @@ function updateSidebarStats(nfts) {
         if (creatorId) artists.add(creatorId);
 
         const collectionName = nft?.collection?.name;
-        if (collectionName) collections.add(collectionName);
-    }
-
-    totalEl.textContent = String(unique.length);
-    curatedEl.textContent = String(curated);
+        if (collectionName) {
+            const normalized = String(collectionName).trim().toLowerCase();
+            const isUnknown = normalized === 'unknow' || normalized === 'unknown' || normalized === 'unknown collection' || normalized === '...' || normalized === '…';
+            if (!isUnknown && normalized) {
+                collections.add(collectionName);
+                collectionCounts.set(collectionName, (collectionCounts.get(collectionName) || 0) + 1);
+            }
+        }
+    }curatedEl.textContent = String(curated);
     nonCuratedEl.textContent = String(nonCurated);
     cronosEl.textContent = String(cronos);
     cronosPosEl.textContent = String(cronosPos);
     artistsEl.textContent = String(artists.size);
     collectionsEl.textContent = String(collections.size);
+
+    // Favorite collection = most-owned collection in the inventory (tie-break: name A→Z)
+    if (favoriteCollectionNameEl && favoriteCollectionCountEl) {
+        let favoriteName = '';
+        let favoriteCount = 0;
+
+        for (const [name, count] of collectionCounts.entries()) {
+            if (count > favoriteCount) {
+                favoriteName = name;
+                favoriteCount = count;
+                continue;
+            }
+            if (count === favoriteCount && favoriteCount > 0) {
+                if (String(name).localeCompare(String(favoriteName), undefined, { sensitivity: 'base' }) < 0) {
+                    favoriteName = name;
+                }
+            }
+        }
+
+        const plural = favoriteCount === 1 ? '' : 'S';
+        favoriteCollectionNameEl.textContent = favoriteCount > 0 ? String(favoriteName).toUpperCase() : '-';
+        favoriteCollectionCountEl.textContent = `FAVORITE COLLECTION - ${favoriteCount} NFT${plural}`;
+
+        if (favoriteCollectionCardEl) {
+            favoriteCollectionCardEl.setAttribute('data-stat-action', favoriteCount > 0 ? `collection:${favoriteName}` : 'collection:');
+            favoriteCollectionCardEl.setAttribute('aria-label', favoriteCount > 0 ? `Filter by favorite collection: ${favoriteName}` : 'Favorite collection unavailable');
+        }
+    }
 
     statsSection.style.display = 'block';
 }
@@ -449,20 +518,149 @@ const profileQuery = `
     query User($id: ID!, $cacheId: ID) {
         public(cacheId: $cacheId) {
             user(id: $id) {
+                uuid
+                id
                 username
                 displayName
+                bio
                 verified
-                avatar {
-                    url
-                }
                 twitterUsername
                 facebookUsername
                 instagramUsername
+                isCreator
+                canCreateAsset
+                croWalletAddress
+                avatar { url }
+                cover { url }
             }
         }
     }
 `;
 
+
+const profilePageQuery = `
+    query ProfilePage($id: ID!, $cacheId: ID) {
+        public(cacheId: $cacheId) {
+            user(id: $id) {
+                uuid
+                id
+                username
+                displayName
+                bio
+                verified
+                twitterUsername
+                facebookUsername
+                instagramUsername
+                isCreator
+                canCreateAsset
+                croWalletAddress
+                avatar { url }
+                cover { url }
+            }
+            collectedEditionsTotal
+            profileCreatedAssetsTotal
+            profileLikedAssetsTotal
+        }
+    }
+`;
+
+
+
+const profilePageQueryNoCache = `
+    query ProfilePageNoCache($id: ID!) {
+        public {
+            user(id: $id) {
+                uuid
+                id
+                username
+                displayName
+                bio
+                verified
+                twitterUsername
+                facebookUsername
+                instagramUsername
+                isCreator
+                canCreateAsset
+                croWalletAddress
+                avatar { url }
+                cover { url }
+            }
+            collectedEditionsTotal
+            profileCreatedAssetsTotal
+            profileLikedAssetsTotal
+        }
+    }
+`;
+async function fetchProfilePageData(username) {
+    return await fetchWithCache(`profile_page_${username}`, async (signal) => {
+        const tryOnce = async (query, variables) => {
+            const response = await fetch(graphqlEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query, variables }),
+                signal
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            if (result.errors) {
+                throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
+            }
+
+            return result.data?.public || null;
+        };
+
+        const isUsable = (pub) => {
+            if (!pub) return false;
+            const hasAny =
+                pub.collectedEditionsTotal !== undefined ||
+                pub.profileCreatedAssetsTotal !== undefined ||
+                pub.profileLikedAssetsTotal !== undefined;
+
+            const anyPositive =
+                (Number(pub.collectedEditionsTotal) || 0) > 0 ||
+                (Number(pub.profileCreatedAssetsTotal) || 0) > 0 ||
+                (Number(pub.profileLikedAssetsTotal) || 0) > 0;
+
+            // Prefer the shape we need + any positive value.
+            return hasAny && anyPositive;
+        };
+
+        // 1) No-cache variant (often used by the official profile page for totals)
+        try {
+            const pub = await tryOnce(profilePageQueryNoCache, { id: username });
+            if (isUsable(pub)) return pub;
+        } catch (e) {
+            // ignore and fall through
+        }
+
+        // 2) CacheId variants
+        const cacheIds = [
+            `getUserQuery-Profile-${username}`,
+            `getProfileTotalsQuery-Profile-${username}`,
+            `getProfileTotalsQuery-${username}`
+        ];
+
+        for (const cacheId of cacheIds) {
+            try {
+                const pub = await tryOnce(profilePageQuery, { id: username, cacheId });
+                if (isUsable(pub)) return pub;
+            } catch (e) {
+                // try next
+            }
+        }
+
+        // Last resort: return whatever no-cache gives (may be zeros for new accounts)
+        try {
+            return await tryOnce(profilePageQueryNoCache, { id: username });
+        } catch (e) {
+            return null;
+        }
+    });
+}
 const nftQuery = `
     query GetProfileAssets($ownerId: ID!, $first: Int!, $skip: Int!) {
         public {
@@ -498,7 +696,360 @@ const nftQuery = `
     }
 `;
 
+
+const profileTotalsSimpleQuery = `
+    query ProfileTotalsSimple($cacheId: ID) {
+        public(cacheId: $cacheId) {
+            collectedEditionsTotal
+            profileCreatedAssetsTotal
+            profileLikedAssetsTotal
+        }
+    }
+`;
+
+
+
+const profileTotalsOwnerIdQuery = `
+    query ProfileTotalsOwner($id: ID!) {
+        public {
+            collectedEditionsTotal(ownerId: $id)
+            profileCreatedAssetsTotal(ownerId: $id)
+            profileLikedAssetsTotal(ownerId: $id)
+        }
+    }
+`;
+
+
+
+const profileTotalsOwnerIdQueryCached = `
+    query ProfileTotalsOwnerCached($id: ID!, $cacheId: ID) {
+        public(cacheId: $cacheId) {
+            collectedEditionsTotal(ownerId: $id)
+            profileCreatedAssetsTotal(ownerId: $id)
+            profileLikedAssetsTotal(ownerId: $id)
+        }
+    }
+`;
+const profileAssetsTotalQuery = `
+    query GetProfileAssetsTotal($cacheId: ID, $userId: ID!) {
+        public(cacheId: $cacheId) {
+            collectedEditionsTotal(ownerId: $userId)
+            profileCreatedAssetsTotal(creatorId: $userId)
+            profileLikedAssetsTotal(likedById: $userId)
+        }
+    }
+`;
+
+async function fetchProfileTotalsSmart(username) {
+    return await fetchWithCache(`profile_totals_assets_total_${username}`, async (signal) => {
+        // This query matches the official profile page totals:
+        // collectedEditionsTotal(ownerId), profileCreatedAssetsTotal(creatorId), profileLikedAssetsTotal(likedById)
+        const cacheId = `getProfileAssetsTotal-${username}`;
+
+        try {
+            const data = await postGraphQL(profileAssetsTotalQuery, { cacheId, userId: username }, signal);
+            const totals = normalizeProfileTotals(data);
+            if (totals) return totals;
+        } catch (e) {
+            if (typeof debugTotalsLog === 'function') {
+                debugTotalsLog('error', 'GetProfileAssetsTotal', e?.message || e);
+            }
+        }
+
+        // Fallbacks (older strategies)
+        try {
+            const data = await postGraphQL(profileTotalsOwnerIdQueryCached, { id: username, cacheId: `getUserQuery-Profile-${username}` }, signal);
+            const totals = normalizeProfileTotals(data);
+            if (totals) return totals;
+        } catch (e) {}
+
+        try {
+            const data = await postGraphQL(profileTotalsOwnerIdQuery, { id: username }, signal);
+            const totals = normalizeProfileTotals(data);
+            if (totals) return totals;
+        } catch (e) {}
+
+        try {
+            const totals = await fetchProfileTotalsViaCacheId(username);
+            if (totals) return totals;
+        } catch (e) {}
+
+        return null;
+    });
+}async function fetchProfileTotalsViaCacheId(username) {
+    return await fetchWithCache(`profile_totals_via_cache_${username}`, async (signal) => {
+        const cacheIdCandidates = [
+            `getUserQuery-Profile-${username}`,
+            `getProfileTotalsQuery-Profile-${username}`,
+            `getProfileTotalsQuery-${username}`,
+            `getUserQuery-${username}`
+        ];
+
+        const fetchTotalsPublic = async (cacheId) => {
+            const data = await postGraphQL(profileTotalsSimpleQuery, { cacheId }, signal);
+            return data?.public || null;
+        };
+
+        const isGood = (totals) => {
+            if (!totals) return false;
+            return (totals.collected || 0) > 0 || (totals.liked || 0) > 0 || (totals.created || 0) > 0;
+        };
+
+        for (const cacheId of cacheIdCandidates) {
+            // 1) Try totals directly
+            try {
+                const pub = await fetchTotalsPublic(cacheId);
+                const totals = normalizeProfileTotals({ public: pub });
+                if (isGood(totals)) return totals;
+            } catch (e) {
+                // ignore
+            }
+
+            // 2) Prime cache with profileQuery, then retry totals
+            try {
+                await postGraphQL(profileQuery, { id: username, cacheId }, signal);
+            } catch (e) {
+                // ignore
+            }
+
+            try {
+                const pub = await fetchTotalsPublic(cacheId);
+                const totals = normalizeProfileTotals({ public: pub });
+                if (isGood(totals)) return totals;
+            } catch (e) {
+                // ignore
+            }
+        }
+
+        // Fallback
+        return { collected: 0, created: 0, liked: 0 };
+    });
+}
+
 const graphqlEndpoint = "https://crypto.com/nft-api/graphql";
+
+async function postGraphQL(query, variables, signal) {
+    const response = await fetch(graphqlEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, variables }),
+        signal
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    if (result.errors) {
+        throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
+    }
+
+    return result.data;
+}
+
+function toFiniteNumberStrict(value) {
+    if (value === null || value === undefined) return null;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+}
+
+const profileTotalsQueryCacheNoArgs = `
+    query ProfileTotals($cacheId: ID) {
+        public(cacheId: $cacheId) {
+            collectedEditionsTotal
+            profileCreatedAssetsTotal
+            profileLikedAssetsTotal
+        }
+    }
+`;
+
+const profileTotalsQueryNoArgs = `
+    query ProfileTotals {
+        public {
+            collectedEditionsTotal
+            profileCreatedAssetsTotal
+            profileLikedAssetsTotal
+        }
+    }
+`;
+
+const profileTotalsQueryOwnerId = `
+    query ProfileTotals($id: ID!, $cacheId: ID) {
+        public(cacheId: $cacheId) {
+            collectedEditionsTotal(ownerId: $id)
+            profileCreatedAssetsTotal(ownerId: $id)
+            profileLikedAssetsTotal(ownerId: $id)
+        }
+    }
+`;
+
+const profileTotalsQueryId = `
+    query ProfileTotals($id: ID!, $cacheId: ID) {
+        public(cacheId: $cacheId) {
+            collectedEditionsTotal(id: $id)
+            profileCreatedAssetsTotal(id: $id)
+            profileLikedAssetsTotal(id: $id)
+        }
+    }
+`;
+
+const profileTotalsQueryProfileId = `
+    query ProfileTotals($id: ID!, $cacheId: ID) {
+        public(cacheId: $cacheId) {
+            collectedEditionsTotal(profileId: $id)
+            profileCreatedAssetsTotal(profileId: $id)
+            profileLikedAssetsTotal(profileId: $id)
+        }
+    }
+`;
+
+const profileTotalsQueryUserId = `
+    query ProfileTotals($id: ID!, $cacheId: ID) {
+        public(cacheId: $cacheId) {
+            collectedEditionsTotal(userId: $id)
+            profileCreatedAssetsTotal(userId: $id)
+            profileLikedAssetsTotal(userId: $id)
+        }
+    }
+`;
+
+const profileTotalsQueryUsername = `
+    query ProfileTotals($id: ID!, $cacheId: ID) {
+        public(cacheId: $cacheId) {
+            collectedEditionsTotal(username: $id)
+            profileCreatedAssetsTotal(username: $id)
+            profileLikedAssetsTotal(username: $id)
+        }
+    }
+`;
+
+function normalizeProfileTotals(data) {
+    const pub = data?.public;
+    if (!pub) return null;
+
+    return {
+        collected: toFiniteNumberStrict(pub.collectedEditionsTotal) ?? 0,
+        created: toFiniteNumberStrict(pub.profileCreatedAssetsTotal) ?? 0,
+        liked: toFiniteNumberStrict(pub.profileLikedAssetsTotal) ?? 0
+    };
+}
+
+async function fetchProfileTotals(username, uuid = null) {
+    return await fetchWithCache(`profile_totals_${username}_${uuid || ''}`, async (signal) => {
+        const cacheId = `getUserQuery-Profile-${username}`;
+        const ids = Array.from(new Set([uuid, username].filter(Boolean)));
+
+        const queries = [
+            { q: profileTotalsQueryOwnerId, needsId: true },
+            { q: profileTotalsQueryId, needsId: true },
+            { q: profileTotalsQueryProfileId, needsId: true },
+            { q: profileTotalsQueryUserId, needsId: true },
+            { q: profileTotalsQueryUsername, needsId: true },
+            { q: profileTotalsQueryCacheNoArgs, needsId: false },
+            { q: profileTotalsQueryNoArgs, needsId: false }
+        ];
+
+        const score = (t) => {
+            if (!t) return -1;
+            const fields = ['collected', 'created', 'liked'];
+            const nonNull = fields.filter(f => t[f] !== null && t[f] !== undefined).length;
+            const positives = fields.filter(f => (t[f] || 0) > 0).length;
+            const weighted = ((t.liked || 0) * 1_000_000) + ((t.collected || 0) * 10_000) + (t.created || 0);
+            return (nonNull * 1_000_000_000) + (positives * 1_000_000) + Math.min(weighted, 999_999_999);
+        };
+
+        let best = null;
+        let bestScore = -1;
+
+        for (const item of queries) {
+            if (item.needsId) {
+                for (const id of ids) {
+                    try {
+                        const data = await postGraphQL(item.q, { id, cacheId }, signal);
+                        const totals = normalizeProfileTotals(data);
+                        if (!totals) continue;
+                        const s = score(totals);
+                        if (s > bestScore) { best = totals; bestScore = s; }
+                        const complete = totals.collected !== null && totals.created !== null && totals.liked !== null;
+                        if (complete) return totals;
+                    } catch (e) {}
+                }
+            } else {
+                try {
+                    const vars = item.q === profileTotalsQueryCacheNoArgs ? { cacheId } : {};
+                    const data = await postGraphQL(item.q, vars, signal);
+                    const totals = normalizeProfileTotals(data);
+                    if (!totals) continue;
+                    const anyPositive = (totals.collected || 0) > 0 || (totals.liked || 0) > 0 || (totals.created || 0) > 0;
+                    if (!anyPositive) continue;
+                    const s = score(totals);
+                    if (s > bestScore) { best = totals; bestScore = s; }
+                    const complete = totals.collected !== null && totals.created !== null && totals.liked !== null;
+                    if (complete) return totals;
+                } catch (e) {}
+            }
+        }
+
+        return best;
+    });
+}
+
+const userMetricsQueryId = `
+    query UserMetrics($id: ID!) {
+        userMetrics(id: $id) { likes views created minted }
+    }
+`;
+
+const userMetricsQueryUserId = `
+    query UserMetrics($id: ID!) {
+        userMetrics(userId: $id) { likes views created minted }
+    }
+`;
+
+const userMetricsQueryUsername = `
+    query UserMetrics($id: ID!) {
+        userMetrics(username: $id) { likes views created minted }
+    }
+`;
+
+const userMetricsQueryProfileId = `
+    query UserMetrics($id: ID!) {
+        userMetrics(profileId: $id) { likes views created minted }
+    }
+`;
+
+function normalizeUserMetrics(data) {
+    const m = data?.userMetrics;
+    if (!m) return null;
+    return {
+        likes: toFiniteNumberStrict(m.likes),
+        views: toFiniteNumberStrict(m.views),
+        created: toFiniteNumberStrict(m.created),
+        minted: toFiniteNumberStrict(m.minted)
+    };
+}
+
+async function fetchUserMetrics(username, uuid = null) {
+    return await fetchWithCache(`user_metrics_${username}_${uuid || ''}`, async (signal) => {
+        const ids = Array.from(new Set([uuid, username].filter(Boolean)));
+        const queries = [userMetricsQueryId, userMetricsQueryUserId, userMetricsQueryUsername, userMetricsQueryProfileId];
+
+        for (const id of ids) {
+            for (const q of queries) {
+                try {
+                    const data = await postGraphQL(q, { id }, signal);
+                    const metrics = normalizeUserMetrics(data);
+                    if (!metrics) continue;
+                    const anyPositive =
+                        (metrics.likes || 0) > 0 || (metrics.views || 0) > 0 || (metrics.created || 0) > 0 || (metrics.minted || 0) > 0;
+                    if (anyPositive) return metrics;
+                } catch (e) {}
+            }
+        }
+        return null;
+    });
+}
 const homeUrl = "https://cronobots.github.io/Cronos";
 
 function parseUrlHash() {
@@ -654,8 +1205,7 @@ function logout(event) {
     const chainFilter = document.getElementById('chainFilter');
     const curatedFilter = document.getElementById('curatedFilter');
     const usernameInput = document.getElementById('usernameInput');
-    const downloadZipButton = document.getElementById('downloadZipButton');
-    const downloadCollageButton = document.getElementById('downloadCollageButton');
+    const downloadActionButton = document.getElementById('downloadActionButton');
 
     if (profileHeader) profileHeader.style.display = 'none';
     const sidebarStats = document.getElementById('sidebarStats');
@@ -674,14 +1224,13 @@ function logout(event) {
         collectionTitle.classList.remove('visible');
     }
     if (collectionFilter) {
-        collectionFilter.innerHTML = '<option value="">All Collections</option>';
+        collectionFilter.innerHTML = '<option value="">ALL COLLECTIONS</option>';
         collectionFilter.disabled = true;
     }
     if (chainFilter) chainFilter.value = '';
     if (curatedFilter) curatedFilter.value = '';
     if (usernameInput) usernameInput.value = '';
-    if (downloadZipButton) downloadZipButton.style.display = 'none';
-    if (downloadCollageButton) downloadCollageButton.style.display = 'none';
+    if (downloadActionButton) downloadActionButton.classList.remove('visible');
 
     allNFTs = [];
     currentUsername = '';
@@ -785,6 +1334,218 @@ async function fetchAllNFTs(ownerId, progressCallback) {
     });
 
     return allAssets;
+}
+
+/**
+ * Fetch all NFTs liked by a given Crypto.com NFT profile.
+ *
+ * Notes:
+ * - Crypto.com uses a GraphQL endpoint at https://crypto.com/nft-api/graphql (same as this app).
+ * - The schema has changed historically, so we try multiple field/argument combinations.
+ */
+const profileAssetSelectionSet = `
+                id
+                name
+                cover { url }
+                collection {
+                    id
+                    name
+                    creator { id displayName }
+                }
+                isExternalNft
+                externalNftMetadata { network }
+                defaultListingV2 { salePriceDecimalUSD }
+                latestPurchasedEdition { priceUSD }
+                createdAt
+                defaultRarityRank
+                isCurated
+`;
+
+function buildProfileAssetListQuery(fieldName, idArgName, variableName) {
+    return `
+        query GetProfileAssetList($${variableName}: ID!, $first: Int!, $skip: Int!) {
+            public {
+                ${fieldName}(${idArgName}: $${variableName}, first: $first, skip: $skip) {
+${profileAssetSelectionSet}
+                }
+            }
+        }
+    `;
+}
+
+function extractAssetListFromPublic(publicNode) {
+    if (!publicNode) return null;
+    const keys = ['profileLikedAssets', 'profileAssets', 'likedAssets', 'assets'];
+    for (const k of keys) {
+        if (Array.isArray(publicNode[k])) return publicNode[k];
+    }
+    return null;
+}
+
+async function fetchAllLikedNFTs(likedById, progressCallback) {
+    const first = 60;
+    let skip = 0;
+    let allAssets = [];
+    let hasMore = true;
+
+    // Candidates ordered from most likely to least likely (schema differences).
+    const candidates = [
+        { field: 'profileLikedAssets', idArg: 'likedById', varName: 'likedById' },
+        { field: 'profileAssets', idArg: 'likedById', varName: 'likedById' },
+        { field: 'likedAssets', idArg: 'likedById', varName: 'likedById' },
+        { field: 'assets', idArg: 'likedById', varName: 'likedById' },
+    ];
+
+    let chosen = null;
+    let lastError = null;
+
+    while (hasMore) {
+        const tryFetchPage = async (candidate) => {
+            const query = buildProfileAssetListQuery(candidate.field, candidate.idArg, candidate.varName);
+            const variables = { first, skip, [candidate.varName]: likedById };
+            const data = await postGraphQL(query, variables);
+            const assets = extractAssetListFromPublic(data?.public);
+            if (!assets) {
+                throw new Error('Liked assets query returned no list');
+            }
+            return assets;
+        };
+
+        let assets = null;
+
+        if (!chosen) {
+            for (const candidate of candidates) {
+                try {
+                    assets = await tryFetchPage(candidate);
+                    chosen = candidate;
+                    break;
+                } catch (e) {
+                    lastError = e;
+                }
+            }
+            if (!chosen) {
+                throw lastError || new Error('Unable to load liked NFTs (no compatible query found).');
+            }
+        } else {
+            assets = await tryFetchPage(chosen);
+        }
+
+        allAssets = [...allAssets, ...assets];
+        skip += first;
+        hasMore = assets.length === first;
+
+        if (progressCallback) progressCallback(allAssets.length);
+    }
+
+    return allAssets;
+}
+
+function syncProfileModeStatsUI() {
+    const collected = document.getElementById('profileCollectedStat');
+    const liked = document.getElementById('profileLikedStat');
+    if (collected) {
+        const shouldActive = currentAssetMode === 'collected' && !suppressCollectedModeHighlight;
+        collected.classList.toggle('is-active-mode', shouldActive);
+    }
+    if (liked) liked.classList.toggle('is-active-mode', currentAssetMode === 'liked');
+}
+
+
+
+function clearActiveSidebarStatHighlights() {
+    const sidebar = document.getElementById('sidebarStats');
+    if (!sidebar) return;
+    sidebar.querySelectorAll('.stat-card.is-active-stat').forEach((card) => {
+        card.classList.remove('is-active-stat', 'is-dotted');
+    });
+}
+
+function setActiveSidebarStatHighlight(sourceCard) {
+    if (!sourceCard) return;
+    const sidebar = document.getElementById('sidebarStats');
+    if (!sidebar || !sidebar.contains(sourceCard)) return;
+
+    clearActiveSidebarStatHighlights();
+
+    sourceCard.classList.add('is-active-stat');
+    if (!sourceCard.classList.contains('stat-card--favorite')) {
+        sourceCard.classList.add('is-dotted');
+    }
+}
+
+async function switchProfileAssetMode(nextMode) {
+    const mode = (nextMode || '').toLowerCase().trim();
+    if (!currentUsername) return;
+    if (mode !== 'collected' && mode !== 'liked') return;
+    if (mode === currentAssetMode) return;
+
+    const progressModal = document.getElementById('progressModal');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const modalTitle = document.getElementById('modalTitle');
+    const cancelButton = document.getElementById('cancelButton');
+
+    currentAssetMode = mode;
+    syncProfileModeStatsUI();
+
+    // Switch back to collected instantly.
+    if (mode === 'collected') {
+        allNFTs = collectedNFTsCache || [];
+        populateCreatorFilter(allNFTs);
+        populateCollectionFilter(allNFTs);
+        filterNFTs();
+        return;
+    }
+
+    // Liked mode: fetch on-demand (cached per profile).
+    if (likedNFTsCache && likedNFTsCache.length) {
+        allNFTs = likedNFTsCache;
+        populateCreatorFilter(allNFTs);
+        populateCollectionFilter(allNFTs);
+        filterNFTs();
+        return;
+    }
+
+    if (progressModal && progressBar && progressText && modalTitle) {
+        modalTitle.textContent = 'Loading Liked NFTs';
+        progressText.textContent = `0 assets`;
+        progressBar.style.width = '0%';
+        progressModal.style.display = 'flex';
+        if (cancelButton) cancelButton.style.display = 'none';
+    }
+
+    try {
+        const likedTotal = Number(document.getElementById('profileLikedCount')?.textContent || 0) || 0;
+        const assets = await fetchWithCache(`liked_nfts_${currentUsername}`, () =>
+            fetchAllLikedNFTs(currentUsername, (n) => {
+                if (progressText) progressText.textContent = `${n} assets`;
+                if (progressBar && likedTotal > 0) {
+                    const pct = Math.min(100, Math.round((n / likedTotal) * 100));
+                    progressBar.style.width = `${pct}%`;
+                }
+            })
+        );
+
+        likedNFTsCache = assets || [];
+        allNFTs = likedNFTsCache;
+
+        populateCreatorFilter(allNFTs);
+        populateCollectionFilter(allNFTs);
+        filterNFTs();
+    } catch (e) {
+        console.error('Failed to load liked NFTs:', e);
+        const errorDiv = document.getElementById('error');
+        if (errorDiv) errorDiv.textContent = `Failed to load liked NFTs: ${e?.message || e}`;
+        // fallback to collected view
+        currentAssetMode = 'collected';
+        syncProfileModeStatsUI();
+        allNFTs = collectedNFTsCache || [];
+        populateCreatorFilter(allNFTs);
+        populateCollectionFilter(allNFTs);
+        filterNFTs();
+    } finally {
+        if (progressModal) progressModal.style.display = 'none';
+    }
 }
 
 async function searchProfiles(query) {
@@ -1070,7 +1831,6 @@ async function selectLoginSuggestion(username, avatarUrl) {
             loginUsernameInput.value = '';
 
             // Charger et afficher le profil complet
-            updateProfileUI(profileData);
             fetchProfileAndNFTsForLogin(profileData.username);
         } else {
             errorDiv.textContent = 'No profile found';
@@ -1083,7 +1843,7 @@ async function selectLoginSuggestion(username, avatarUrl) {
     }
 }
 
-function updateProfileUI(profileData) {
+function updateProfileUI(profileData, profileTotals = null, profileMetrics = null) {
     const profileHeader = document.getElementById('profileHeader');
     const profilePicture = document.getElementById('profilePicture');
     const username = document.getElementById('username');
@@ -1099,6 +1859,16 @@ function updateProfileUI(profileData) {
     const instagramLink = document.getElementById('instagramLink');
     const instagramUrl = document.getElementById('instagramUrl');
     const usernameInput = document.getElementById('usernameInput');
+    const profileBio = document.getElementById('profileBio');
+    const profileExtraStats = document.getElementById('profileExtraStats');
+    const profileCollectedStat = document.getElementById('profileCollectedStat');    const profileLikedStat = document.getElementById('profileLikedStat');
+    const profileCollectedCount = document.getElementById('profileCollectedCount');    const profileLikedCount = document.getElementById('profileLikedCount');
+    const profileArtistStatsDivider = document.getElementById('profileArtistStatsDivider');    const profileArtistStatsTitle = document.getElementById('profileArtistStatsTitle');
+    const profileMetricsStats = document.getElementById('profileMetricsStats');    const profileOverviewDivider = document.getElementById('profileOverviewDivider');
+    const profileMetricLikes = document.getElementById('profileMetricLikes');
+    const profileMetricViews = document.getElementById('profileMetricViews');
+    const profileMetricCreated = document.getElementById('profileMetricCreated');
+    const profileMetricMinted = document.getElementById('profileMetricMinted');
 
     if (!profileHeader || !profilePicture || !username || !verifiedBadge || !displayName || !socialContainer ||
         !croLink || !croUrl || !twitterLink || !twitterUrl || !facebookLink || !facebookUrl || !instagramLink || !instagramUrl || !usernameInput) {
@@ -1156,6 +1926,40 @@ function updateProfileUI(profileData) {
     }
 
     socialContainer.style.display = hasSocialLinks ? 'flex' : 'none';
+
+    // Profile totals + artist metrics
+    const bioText = String(profileData?.bio || '').trim();
+    if (profileBio) {
+        profileBio.textContent = bioText;
+        profileBio.style.display = bioText ? 'block' : 'none';
+    }
+
+    const collected = toFiniteNumberStrict(profileTotals?.collected) ?? 0;
+    const created = toFiniteNumberStrict(profileTotals?.created) ?? 0;
+    const liked = toFiniteNumberStrict(profileTotals?.liked) ?? 0;
+    if (profileExtraStats) {
+        profileExtraStats.style.display = 'grid';
+    }
+    if (profileCollectedCount) profileCollectedCount.textContent = String(collected);    if (profileLikedCount) profileLikedCount.textContent = String(liked);
+
+    const mLikes = toFiniteNumberStrict(profileMetrics?.likes) ?? 0;
+    const mViews = toFiniteNumberStrict(profileMetrics?.views) ?? 0;
+    const mCreated = toFiniteNumberStrict(profileMetrics?.created) ?? 0;
+    const mMinted = toFiniteNumberStrict(profileMetrics?.minted) ?? 0;
+
+    const anyMetricPositive = mLikes > 0 || mViews > 0 || mCreated > 0 || mMinted > 0;
+    const isArtist = profileData?.isCreator === true || created > 0 || mCreated > 0;
+    const showArtistMetrics = isArtist && anyMetricPositive;
+
+    if (profileOverviewDivider) profileOverviewDivider.style.display = showArtistMetrics ? 'none' : 'block';
+
+    if (profileArtistStatsDivider) profileArtistStatsDivider.style.display = showArtistMetrics ? 'block' : 'none';    if (profileArtistStatsTitle) profileArtistStatsTitle.style.display = showArtistMetrics ? 'block' : 'none';
+    if (profileMetricsStats) profileMetricsStats.style.display = showArtistMetrics ? 'grid' : 'none';    // Show divider above profile overview only for non-creators
+    if (profileMetricLikes) profileMetricLikes.textContent = String(mLikes);
+    if (profileMetricViews) profileMetricViews.textContent = String(mViews);
+    if (profileMetricCreated) profileMetricCreated.textContent = String(mCreated);
+    if (profileMetricMinted) profileMetricMinted.textContent = String(mMinted);
+
     profileHeader.style.display = 'block';
     syncFixedBarsHeights();
     usernameInput.value = '';
@@ -1209,10 +2013,11 @@ function populateCreatorFilter(nfts) {
         const displayName = creatorCounts[creatorId].displayName;
         const count = creatorCounts[creatorId].count;
         // Appliquer majuscules pour mobile, sinon garder le texte original
-        const displayText = isMobile ? displayName.toUpperCase() : displayName;
-        option.textContent = displayNameCounts[displayName] > 1
+        const displayText = displayName.toUpperCase();
+        const baseText = displayNameCounts[displayName] > 1
             ? `${displayText} (${creatorId}) (${count})`
             : `${displayText} (${count})`;
+        option.textContent = baseText.toUpperCase();
         creatorFilter.appendChild(option);
     });
 
@@ -1263,7 +2068,7 @@ function populateCollectionFilter(nfts) {
         const option = document.createElement('option');
         option.value = collection;
         // Appliquer majuscules pour mobile, sinon garder le texte original
-        const displayText = isMobile ? collection.toUpperCase() : collection;
+        const displayText = collection.toUpperCase();
         option.textContent = `${displayText} (${collectionCounts[collection]})`;
         collectionFilter.appendChild(option);
     });
@@ -1305,8 +2110,7 @@ async function fetchProfileAndNFTs() {
     const resetFiltersButton = document.getElementById('resetFiltersButton');
     const viewLarge = document.getElementById('viewLarge');
     const viewSmall = document.getElementById('viewSmall');
-    const downloadZipButton = document.getElementById('downloadZipButton');
-    const downloadCollageButton = document.getElementById('downloadCollageButton');
+    const downloadActionButton = document.getElementById('downloadActionButton');
     const progressModal = document.getElementById('progressModal');
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
@@ -1318,7 +2122,7 @@ async function fetchProfileAndNFTs() {
     if (!usernameInput || !errorDiv || !noResultsDiv || !controls || !collectionTitle ||
         !profileHeader || !nftContainer || !nftCountContainer || !collectionFilter ||
         !creatorFilter || !chainFilter || !curatedFilter || !cardSize || !sortBy ||
-        !downloadZipButton || !downloadCollageButton || !progressModal ||
+        !downloadActionButton || !progressModal ||
         !progressBar || !progressText || !modalTitle || !cancelButton) {
         console.error('Required DOM elements not found');
         if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
@@ -1336,13 +2140,16 @@ async function fetchProfileAndNFTs() {
     currentUsername = '';
     allNFTs = [];
     assetsLoaded = false;
-    if (downloadZipButton) { downloadZipButton.disabled = true; downloadZipButton.classList.add('is-disabled'); downloadZipButton.style.display = 'none'; }
-    if (downloadCollageButton) { downloadCollageButton.disabled = true; downloadCollageButton.classList.add('is-disabled'); downloadCollageButton.style.display = 'none'; }
+    if (downloadActionButton) {
+        downloadActionButton.disabled = true;
+        downloadActionButton.classList.add('is-disabled');
+        downloadActionButton.classList.remove('visible');
+    }
     cardSize.value = 'small';
     sortBy.value = 'newest';
-    collectionFilter.innerHTML = '<option value="">All Collections</option>';
+    collectionFilter.innerHTML = '<option value="">ALL COLLECTIONS</option>';
     collectionFilter.value = '';
-    creatorFilter.innerHTML = '<option value="">ALL CREATORS</option>';
+    creatorFilter.innerHTML = '<option value="">ALL ARTISTS</option>';
     creatorFilter.value = '';
     chainFilter.value = '';
     curatedFilter.value = '';
@@ -1373,8 +2180,7 @@ async function fetchProfileAndNFTs() {
     collectionTitle.textContent = '';
     collectionTitle.classList.remove('visible');
     errorDiv.textContent = '';
-    downloadZipButton.style.display = 'none';
-    downloadCollageButton.style.display = 'none';
+    if (downloadActionButton) downloadActionButton.classList.remove('visible');
     resetSearchBar();
 
     modalTitle.textContent = 'Loading Profile';
@@ -1427,6 +2233,11 @@ async function fetchProfileAndNFTs() {
 
             return result.data?.public?.user;
         });
+        try {
+            profileTotals = await fetchProfileTotalsSmart(profileData?.username || currentUsername);
+        } catch (e) {
+            console.warn('Profile totals unavailable:', e?.message || e);
+        }
 
         if (isProfileLoadingCancelled) {
             clearInterval(progressInterval);
@@ -1442,13 +2253,24 @@ async function fetchProfileAndNFTs() {
             return;
         }
 
-        updateProfileUI(profileData);
+        let profileMetrics = null;
+        try {
+            profileMetrics = await fetchUserMetrics(profileData.username, profileData.uuid);
+        } catch (e) {
+            console.warn('User metrics unavailable:', e?.message || e);
+        }
+
+        updateProfileUI(profileData, profileTotals, profileMetrics);
 
         progressText.textContent = `0 assets`;
         allNFTs = await fetchWithCache(`nfts_${currentUsername}`, () => fetchAllNFTs(currentUsername, (nftCount) => {
             if (isProfileLoadingCancelled) return;
             progressText.textContent = `${nftCount} assets`;
         }));
+        collectedNFTsCache = allNFTs;
+        likedNFTsCache = [];
+        currentAssetMode = 'collected';
+        syncProfileModeStatsUI();
         updateSidebarStats(allNFTs);
 
         if (isProfileLoadingCancelled) {
@@ -1476,6 +2298,7 @@ async function fetchProfileAndNFTs() {
             if (topToolbar) topToolbar.classList.add('visible');
             const navbarControls = document.getElementById('navbarControls');
             if (navbarControls) navbarControls.classList.add('visible');
+            syncFixedBarsHeights();
             console.log('Filter state after population:', {
                 collectionDisabled: collectionFilter.disabled,
                 creatorDisabled: creatorFilter.disabled,
@@ -1525,8 +2348,7 @@ async function fetchProfileAndNFTsForLogin(username) {
     const curatedFilter = document.getElementById('curatedFilter');
     const cardSize = document.getElementById('cardSize');
     const sortBy = document.getElementById('sortBy');
-    const downloadZipButton = document.getElementById('downloadZipButton');
-    const downloadCollageButton = document.getElementById('downloadCollageButton');
+    const downloadActionButton = document.getElementById('downloadActionButton');
     const progressModal = document.getElementById('progressModal');
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
@@ -1538,7 +2360,7 @@ async function fetchProfileAndNFTsForLogin(username) {
     if (!errorDiv || !noResultsDiv || !controls || !collectionTitle ||
         !profileHeader || !nftContainer || !nftCountContainer || !collectionFilter ||
         !creatorFilter || !chainFilter || !curatedFilter || !cardSize || !sortBy ||
-        !downloadZipButton || !downloadCollageButton || !progressModal ||
+        !downloadActionButton || !progressModal ||
         !progressBar || !progressText || !modalTitle || !cancelButton) {
         console.error('Required DOM elements not found');
         if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
@@ -1558,9 +2380,9 @@ async function fetchProfileAndNFTsForLogin(username) {
     allNFTs = [];
     cardSize.value = 'small';
     sortBy.value = 'newest';
-    collectionFilter.innerHTML = '<option value="">All Collections</option>';
+    collectionFilter.innerHTML = '<option value="">ALL COLLECTIONS</option>';
     collectionFilter.value = '';
-    creatorFilter.innerHTML = '<option value="">ALL CREATORS</option>';
+    creatorFilter.innerHTML = '<option value="">ALL ARTISTS</option>';
     creatorFilter.value = '';
     chainFilter.value = '';
     curatedFilter.value = '';
@@ -1591,8 +2413,7 @@ async function fetchProfileAndNFTsForLogin(username) {
     collectionTitle.textContent = '';
     collectionTitle.classList.remove('visible');
     errorDiv.textContent = '';
-    downloadZipButton.style.display = 'none';
-    downloadCollageButton.style.display = 'none';
+    if (downloadActionButton) downloadActionButton.classList.remove('visible');
 
     modalTitle.textContent = 'Loading Profile';
     progressText.textContent = `Loading profile for ${sanitizedUsername}...`;
@@ -1622,28 +2443,10 @@ async function fetchProfileAndNFTsForLogin(username) {
     }, 500);
 
     try {
-        const profileData = await fetchWithCache(`profile_${currentUsername}`, async (signal) => {
-            const response = await fetch(graphqlEndpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    query: profileQuery,
-                    variables: { id: currentUsername, cacheId: `getUserQuery-Profile-${currentUsername}` }
-                }),
-                signal
-            });
+        const publicProfile = await fetchProfilePageData(currentUsername);
 
-            if (!response.ok) {
-                throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
-            }
-
-            const result = await response.json();
-            if (result.errors) {
-                throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
-            }
-
-            return result.data?.public?.user;
-        });
+        const profileData = publicProfile?.user;
+        let profileTotals = publicProfile ? normalizeProfileTotals({ public: publicProfile }) : { collected: 0, created: 0, liked: 0 };
 
         if (isProfileLoadingCancelled) {
             clearInterval(progressInterval);
@@ -1658,14 +2461,30 @@ async function fetchProfileAndNFTsForLogin(username) {
             resetViewport();
             return;
         }
+        try {
+            profileTotals = await fetchProfileTotalsSmart(profileData?.username || currentUsername);
+        } catch (e) {
+            console.warn('Profile totals unavailable:', e?.message || e);
+        }
 
-        updateProfileUI(profileData);
+        let profileMetrics = null;
+        try {
+            profileMetrics = await fetchUserMetrics(profileData.username, profileData.uuid);
+        } catch (e) {
+            console.warn('User metrics unavailable:', e?.message || e);
+        }
+
+        updateProfileUI(profileData, profileTotals, profileMetrics);
 
         progressText.textContent = `0 assets`;
         allNFTs = await fetchWithCache(`nfts_${currentUsername}`, () => fetchAllNFTs(currentUsername, (nftCount) => {
             if (isProfileLoadingCancelled) return;
             progressText.textContent = `${nftCount} assets`;
         }));
+        collectedNFTsCache = allNFTs;
+        likedNFTsCache = [];
+        currentAssetMode = 'collected';
+        syncProfileModeStatsUI();
         updateSidebarStats(allNFTs);
 
         if (isProfileLoadingCancelled) {
@@ -1694,6 +2513,7 @@ async function fetchProfileAndNFTsForLogin(username) {
             if (topToolbar) topToolbar.classList.add('visible');
             const navbarControls = document.getElementById('navbarControls');
             if (navbarControls) navbarControls.classList.add('visible');
+            syncFixedBarsHeights();
             console.log('Filter state after population:', {
                 collectionDisabled: collectionFilter.disabled,
                 creatorDisabled: creatorFilter.disabled,
@@ -1900,11 +2720,10 @@ function filterNFTs() {
 function displayNFTs(assets, selectedCollection) {
     const container = document.getElementById('nftContainer');
     const countContainer = document.getElementById('nftCountContainer');
-    const downloadZipButton = document.getElementById('downloadZipButton');
-    const downloadCollageButton = document.getElementById('downloadCollageButton');
+    const downloadActionButton = document.getElementById('downloadActionButton');
     const cardSize = document.getElementById('cardSize')?.value || 'small';
 
-    if (!container || !countContainer || !downloadZipButton || !downloadCollageButton) {
+    if (!container || !countContainer || !downloadActionButton) {
         console.error('NFT container, count container, or download buttons not found');
         return;
     }
@@ -1937,43 +2756,49 @@ function displayNFTs(assets, selectedCollection) {
 
     countContainer.innerHTML = '';
     container.innerHTML = '';
-    container.className = `nft-container thumbnail-mode ${cardSize}-size`;
+    container.className = 'nft-container thumbnail-mode';
+    container.style.gridTemplateColumns = '';
+    container.style.gridAutoRows = '';
+    container.style.width = '';
+    container.style.height = '';
+    container.style.overflow = '';
+
 
     const countElement = document.createElement('p');
     countElement.className = 'nft-count';
-    countElement.innerHTML = `<span style="color: var(--color1);">${currentUsername.toUpperCase()}</span> has <span class="count">${uniqueAssets.length}</span> assets.`;
+    const activeCollectionLabel = selectedCollection ? selectedCollection : 'ALL COLLECTIONS';
+    countElement.textContent = '';
+    const labelSpan = document.createElement('span');
+    labelSpan.style.color = 'var(--text-dark)';
+    labelSpan.textContent = activeCollectionLabel;
+    countElement.appendChild(labelSpan);
     countContainer.appendChild(countElement);
 
-    downloadZipButton.style.display = uniqueAssets.length > 0 && currentUsername ? 'inline-block' : 'none';
-    downloadCollageButton.style.display = uniqueAssets.length > 0 && currentUsername ? 'inline-block' : 'none';
+    window.currentActiveCollectionLabel = activeCollectionLabel;
+
     const canDownload = Boolean(uniqueAssets.length > 0 && currentUsername);
-    downloadZipButton.disabled = !canDownload;
-    downloadCollageButton.disabled = !canDownload;
-    downloadZipButton.classList.toggle('is-disabled', !canDownload);
-    downloadCollageButton.classList.toggle('is-disabled', !canDownload);
-
-    if (uniqueAssets.length > 0) {
-        const zipLabel = `Download pack (ZIP) — ${uniqueAssets.length} assets`;
-        downloadZipButton.setAttribute('aria-label', zipLabel);
-        downloadZipButton.title = zipLabel;
-
-        const badge = document.getElementById('downloadZipBadge');
-        if (badge) {
-            badge.textContent = `${uniqueAssets.length}`;
-            badge.style.display = 'inline-flex';
-        }
-    } else {
-        const badge = document.getElementById('downloadZipBadge');
-        if (badge) badge.style.display = 'none';
+    if (downloadActionButton) {
+        downloadActionButton.disabled = !canDownload;
+        downloadActionButton.classList.toggle('is-disabled', !canDownload);
+        downloadActionButton.classList.toggle('visible', canDownload);
+        updateDownloadActionButtonLabel();
     }
 
-    const collageLabel = 'Download image (PNG)';
-    downloadCollageButton.setAttribute('aria-label', collageLabel);
-    downloadCollageButton.title = collageLabel;
+        const getArtistName = (asset) => {
+        const creator = asset?.collection?.creator;
+        return (
+            creator?.displayName ||
+            creator?.name ||
+            creator?.username ||
+            creator?.id ||
+            'Unknown Artist'
+        );
+    };
 
-    uniqueAssets.forEach((asset, index) => {
+    const getCollectionName = (asset) => (asset?.collection?.name || 'Unknown Collection');
+
+    const createNFTCard = (asset, index) => {
         const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
-        console.log(`Processing asset ${index + 1}:`, { id: asset.id, name: asset.name, imageUrl });
 
         const card = document.createElement('div');
         card.className = 'nft-card';
@@ -1982,7 +2807,7 @@ function displayNFTs(assets, selectedCollection) {
         if (imageUrl.endsWith('.mp4')) {
             mediaElement = document.createElement('video');
             mediaElement.src = imageUrl;
-            mediaElement.controls = true;
+            mediaElement.controls = cardSize !== 'collage';
             mediaElement.muted = true;
             mediaElement.loop = true;
             mediaElement.setAttribute('playsinline', '');
@@ -1990,14 +2815,10 @@ function displayNFTs(assets, selectedCollection) {
             mediaElement = document.createElement('img');
             mediaElement.src = imageUrl;
             mediaElement.alt = asset.name || 'NFT Image';
-            mediaElement.loading = 'lazy'; // Restaurer lazy loading
+            mediaElement.loading = 'lazy';
             mediaElement.decoding = 'async';
             mediaElement.sizes = '(max-width: 768px) 80px, 200px';
         }
-
-        mediaElement.onload = () => {
-            console.log(`Media loaded successfully for asset ${index + 1}:`, { imageUrl, dimensions: `${mediaElement.naturalWidth}x${mediaElement.naturalHeight}` });
-        };
 
         mediaElement.onerror = () => {
             console.error('Media failed to load for asset:', asset.name || 'Unnamed', { index, imageUrl });
@@ -2008,15 +2829,9 @@ function displayNFTs(assets, selectedCollection) {
             card.appendChild(placeholder);
         };
 
-        const tooltipText = (asset.name && asset.name.trim() !== '') 
-            ? asset.name 
+        const tooltipText = (asset.name && asset.name.trim() !== '')
+            ? asset.name
             : (asset.id ? `NFT #${asset.id}` : `Unnamed NFT #${index + 1}`);
-        console.log(`Tooltip for asset ${index + 1}:`, {
-            name: asset.name,
-            id: asset.id,
-            tooltipText,
-            collection: asset.collection?.name || 'No collection'
-        });
 
         const tooltip = document.createElement('span');
         tooltip.className = 'tooltip';
@@ -2061,14 +2876,56 @@ function displayNFTs(assets, selectedCollection) {
             `;
             cryptoButton.addEventListener('click', (e) => {
                 e.stopPropagation();
-                console.log(`Crypto.com button clicked for asset ${index + 1}:`, { href: cryptoButton.href });
             });
             card.appendChild(cryptoButton);
         }
 
         card.appendChild(mediaElement);
-        container.appendChild(card);
-    });
+        return card;
+    };
+
+    const renderGrouped = (groupBy) => {
+        const getKey = groupBy === 'artist' ? getArtistName : getCollectionName;
+
+        const groupMap = new Map();
+        uniqueAssets.forEach((asset, idx) => {
+            const key = (getKey(asset) || '').trim() || (groupBy === 'artist' ? 'Unknown Artist' : 'Unknown Collection');
+            const entry = groupMap.get(key) || { key, assets: [], firstIndex: idx };
+            entry.assets.push({ asset, idx });
+            groupMap.set(key, entry);
+        });
+
+        const groups = Array.from(groupMap.values());
+        groups.sort((a, b) => {
+            const diff = b.assets.length - a.assets.length;
+            if (diff !== 0) return diff;
+            return a.key.localeCompare(b.key, undefined, { sensitivity: 'base' });
+        });
+
+        container.classList.add('nft-container--grouped');
+
+        groups.forEach((group) => {
+            const header = document.createElement('div');
+            header.className = 'nft-group-header';
+            header.innerHTML = `
+                <span class="nft-group-title">${group.key}</span>
+                <span class="nft-group-count">${group.assets.length} NFT${group.assets.length === 1 ? '' : 's'}</span>
+            `;
+            container.appendChild(header);
+
+            group.assets.forEach(({ asset, idx }) => {
+                container.appendChild(createNFTCard(asset, idx));
+            });
+        });
+    };
+
+    if (currentGroupingMode === 'artist' || currentGroupingMode === 'collection') {
+        renderGrouped(currentGroupingMode);
+    } else {
+        uniqueAssets.forEach((asset, index) => {
+            container.appendChild(createNFTCard(asset, index));
+        });
+    }
 
     updateDisplay();
     syncFixedBarsHeights();
@@ -2148,6 +3005,31 @@ async function downloadSingleNFT(url, name, index) {
         errorDiv.textContent = `Failed to download ${name}: ${error.message}`;
         setTimeout(() => errorDiv.textContent = '', 5000);
     }
+}
+
+
+function isCollageViewActive() {
+    const cardSize = document.getElementById('cardSize');
+    return Boolean(cardSize && cardSize.value === 'collage');
+}
+
+function updateDownloadActionButtonLabel() {
+    const downloadActionButton = document.getElementById('downloadActionButton');
+    if (!downloadActionButton) return;
+
+    const activeCollectionLabel = window.currentActiveCollectionLabel || 'ALL COLLECTIONS';
+    const labelBase = isCollageViewActive() ? 'Download collage (PNG)' : 'Download pack (ZIP)';
+    const label = `${labelBase} — ${activeCollectionLabel}`;
+
+    downloadActionButton.setAttribute('aria-label', label);
+    downloadActionButton.title = label;
+}
+
+function handleDownloadAction() {
+    if (isCollageViewActive()) {
+        return downloadCollage();
+    }
+    return downloadNFTsAsZip();
 }
 
 async function downloadNFTsAsZip() {
@@ -2252,39 +3134,39 @@ async function downloadNFTsAsZip() {
     }
 }
 
-async function downloadCollage() {
-    const nftContainer = document.getElementById('nftContainer');
-    const errorDiv = document.getElementById('error');
-    const progressModal = document.getElementById('progressModal');
-    const progressBar = document.getElementById('progressBar');
-    const progressText = document.getElementById('progressText');
-    const modalTitle = document.getElementById('modalTitle');
-    const cancelButton = document.getElementById('cancelDownloadButton');
+// Collage export: cache last render so the on-page COLLAGE preview and the downloaded PNG are identical.
+let collageExportCache = { key: '', blob: null, fileName: '' };
+let collageExportInFlight = null;
+
+function buildCollageDownloadFileName() {
     const collectionFilter = document.getElementById('collectionFilter');
-    const collectionTitle = document.getElementById('collectionTitle');
+    const creatorFilter = document.getElementById('creatorFilter');
 
-    if (!nftContainer || !errorDiv || !progressModal || !progressBar || !progressText || !modalTitle || !cancelButton || !collectionFilter || !collectionTitle) {
-        console.error('Required DOM elements for collage download not found');
-        if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
-        return;
-    }
+    const cleanUsername = currentUsername ? currentUsername.replace(/[^a-zA-Z0-9-_]/g, '').toUpperCase() : '';
+    const cleanCreator = (creatorFilter?.value || 'UNKNOWN').replace(/[^a-zA-Z0-9-_]/g, '').toUpperCase();
+    const cleanCollectionText = (collectionFilter?.value || 'ALL_COLLECTIONS').replace(/[^a-zA-Z0-9-_]/g, '').toUpperCase();
 
-    // Silently ignore if a download is already in progress
-    if (window.isDownloading) {
-        console.log('Download already in progress, ignoring new attempt.');
-        return;
-    }
+    const parts = [];
+    if (cleanUsername) parts.push(cleanUsername);
+    if (cleanCreator !== 'UNKNOWN') parts.push(cleanCreator);
+    parts.push(cleanCollectionText);
 
-    window.isDownloading = true;
+    return parts.join('_') + '.png';
+}
 
-    // Collect valid assets from nftContainer
+function triggerDownloadBlob(blob, fileName) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function collectValidCollageCards(nftContainer) {
     const cards = Array.from(nftContainer.querySelectorAll('.nft-card:not(.empty)'));
-    if (cards.length === 0) {
-        errorDiv.textContent = 'No assets to include in the collage.';
-        window.isDownloading = false;
-        return;
-    }
-
     const validCards = cards
         .map((card, index) => {
             const img = card.querySelector('img');
@@ -2296,135 +3178,122 @@ async function downloadCollage() {
         })
         .filter(card => card.src && card.src !== 'https://via.placeholder.com/150' && !card.isVideo);
 
-    if (validCards.length === 0) {
-        errorDiv.textContent = 'No valid image assets to include in the collage. Try downloading individual assets as a ZIP.';
-        window.isDownloading = false;
-        return;
-    }
+    const collectionFilter = document.getElementById('collectionFilter');
+    const creatorFilter = document.getElementById('creatorFilter');
+    const chainFilter = document.getElementById('chainFilter');
+    const curatedFilter = document.getElementById('curatedFilter');
 
-    console.log(`Valid cards for collage: ${validCards.length}`, validCards.map(card => ({
-        title: card.title,
-        index: card.index,
-        src: card.src
-    })));
+    const keyParts = [
+        currentUsername || '',
+        creatorFilter?.value || '',
+        collectionFilter?.value || '',
+        chainFilter?.value || '',
+        curatedFilter?.value || '',
+        validCards.map(c => c.src).join('|'),
+    ];
+    const key = keyParts.join('::');
 
-    modalTitle.textContent = 'Creating Collage';
-    progressText.textContent = `Fetching ${validCards.length} assets`;
-    progressBar.style.width = '0%';
-    progressModal.style.display = 'flex';
-    cancelButton.style.display = 'block';
+    return { validCards, key };
+}
 
-    window.isDownloadCancelled = false;
-    let collageContainer = null;
+async function canvasToPngBlob(canvas) {
+    return await new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+            if (!blob) {
+                reject(new Error('Failed to generate blob'));
+                return;
+            }
+            resolve(blob);
+        }, 'image/png', 1.0);
+    });
+}
+
+async function generateCollageBlobFromValidCards(validCards, {
+    onProgress,
+    shouldCancel,
+} = {}) {
+    const collectionFilter = document.getElementById('collectionFilter');
+    const collectionTitle = document.getElementById('collectionTitle');
+
     const objectUrls = [];
-
-    cancelButton.onclick = () => {
-        window.isDownloadCancelled = true;
-        progressText.textContent = 'Collage creation cancelled.';
-        progressBar.style.width = '0%';
-        if (collageContainer && document.body.contains(collageContainer)) {
-            document.body.removeChild(collageContainer);
-            console.log('Collage container removed on cancel');
-        }
-        setTimeout(() => {
-            progressModal.style.display = 'none';
-            window.isDownloading = false;
-        }, 1000);
-        objectUrls.forEach(url => URL.revokeObjectURL(url));
-    };
-
-    // Fetch images as blobs
-    const loadedCards = [];
-    const failedImages = [];
-    let processed = 0;
-
-    for (const card of validCards) {
-        if (window.isDownloadCancelled) {
-            console.log('Collage creation cancelled during fetch');
-            window.isDownloading = false;
-            objectUrls.forEach(url => URL.revokeObjectURL(url));
-            return;
-        }
-
-        try {
-            const response = await fetchWithRetry(card.src, 3, 5000);
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('image/')) {
-                throw new Error(`Invalid content type: ${contentType || 'none'}`);
-            }
-            const blob = await response.blob();
-            if (!blob || blob.size === 0) {
-                throw new Error('Received empty or invalid blob');
-            }
-            console.log(`Fetched image: ${card.title} (index ${card.index}, src: ${card.src}, size: ${blob.size} bytes)`);
-            loadedCards.push({ blob, title: card.title, index: card.index });
-        } catch (error) {
-            console.error(`Failed to fetch image ${card.title} (index ${card.index}, src: ${card.src}): ${error.message}`);
-            failedImages.push({ title: card.title, index: card.index, url: card.src, error: error.message });
-        }
-
-        processed++;
-        const progressPercent = (processed / validCards.length) * 100;
-        progressBar.style.width = `${progressPercent}%`;
-        progressText.textContent = `Fetching: ${processed}/${validCards.length}`;
-    }
-
-    if (window.isDownloadCancelled) {
-        console.log('Collage creation cancelled after fetch');
-        window.isDownloading = false;
-        objectUrls.forEach(url => URL.revokeObjectURL(url));
-        return;
-    }
-
-    if (loadedCards.length === 0) {
-        progressModal.style.display = 'none';
-        errorDiv.textContent = 'No valid images could be fetched for the collage. Try downloading individual assets as a ZIP.';
-        window.isDownloading = false;
-        objectUrls.forEach(url => URL.revokeObjectURL(url));
-        return;
-    }
-
-    if (failedImages.length > 0) {
-        console.warn(`${failedImages.length} images failed to fetch:`, failedImages);
-        errorDiv.textContent = `${failedImages.length} image(s) failed to fetch. ${loadedCards.length} will be included in the collage.`;
-        setTimeout(() => (errorDiv.textContent = ''), 5000);
-    }
-
-    progressText.textContent = `Creating collage with ${loadedCards.length} assets`;
+    let collageContainer = null;
 
     try {
+        const loadedCards = [];
+        const failedImages = [];
+        let processed = 0;
+
+        // Fetch images as blobs (same as legacy DOWNLOAD COLLAGE)
+        for (const card of validCards) {
+            if (shouldCancel?.()) {
+                throw new Error('CANCELLED');
+            }
+
+            try {
+                const response = await fetchWithRetry(card.src, 3, 5000);
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('image/')) {
+                    throw new Error(`Invalid content type: ${contentType || 'none'}`);
+                }
+                const blob = await response.blob();
+                if (!blob || blob.size === 0) {
+                    throw new Error('Received empty or invalid blob');
+                }
+                loadedCards.push({ blob, title: card.title, index: card.index });
+            } catch (error) {
+                console.error(`Failed to fetch image ${card.title}: ${error.message}`);
+                failedImages.push({ title: card.title, index: card.index, error: error.message });
+            }
+
+            processed++;
+            onProgress?.({ stage: 'fetch', processed, total: validCards.length });
+        }
+
+        if (shouldCancel?.()) {
+            throw new Error('CANCELLED');
+        }
+
+        if (!loadedCards.length) {
+            throw new Error('No assets could be fetched');
+        }
+
+        onProgress?.({ stage: 'build', processed: loadedCards.length, total: loadedCards.length });
+
+        // Compute grid layout (same as legacy DOWNLOAD COLLAGE)
         const numCards = loadedCards.length;
         let cols = Math.ceil(Math.sqrt(numCards));
         let rows = Math.ceil(numCards / cols);
+
         if (numCards > 1) {
             while (rows * (cols - 1) >= numCards && cols > 1) {
                 cols--;
                 rows = Math.ceil(numCards / cols);
             }
         }
+
         const cardSize = 300;
         const gridWidth = cols * cardSize;
         const gridHeight = rows * cardSize;
         const borderWidth = Math.min(Math.max(Math.round(gridWidth / 20), 30), 60);
         const headerHeight = Math.min(Math.max(Math.round(gridWidth * 0.1), 80), 150);
         const margin = Math.min(Math.max(Math.round(gridWidth / 50), 10), 30);
+
         // Ajuster la taille de la police pour CRONOS.WTF | DEVELOPED BY UNSCOOP
         const baseCronosFontSize = Math.min(Math.max(Math.round(gridWidth / 25), 16), 32) * 0.75;
-        const cronosFontSize = numCards <= 4 ? baseCronosFontSize * 0.7 : baseCronosFontSize; // Réduire la taille pour peu de NFTs
+        const cronosFontSize = numCards <= 4 ? baseCronosFontSize * 0.7 : baseCronosFontSize;
 
         // Calculate dynamic font size for header to fill available width
-        const availableTextWidth = gridWidth - 2 * borderWidth; // Width excluding left and right borders
-        const estimatedCharWidthRatio = 0.55; // Adjusted ratio for Geomanist-Bold to better fit
-        const headerText = `${currentUsername.toUpperCase() || 'UNKNOWN'} / ${collectionTitle.textContent || collectionFilter.value || 'ALL_COLLECTIONS'}`;
+        const availableTextWidth = gridWidth - 2 * borderWidth;
+        const estimatedCharWidthRatio = 0.55;
+        const headerText = `${currentUsername.toUpperCase() || 'UNKNOWN'} / ${collectionTitle?.textContent || collectionFilter?.value || 'ALL_COLLECTIONS'}`;
         const estimatedTextLength = headerText.length;
         let fontSize = Math.round(availableTextWidth / (estimatedTextLength * estimatedCharWidthRatio));
-        // Ajuster la taille de la police si moins de 9 NFTs
         if (numCards < 9) {
-            fontSize = Math.round(fontSize * 0.7); // Réduire de 30% pour éviter le troncage
+            fontSize = Math.round(fontSize * 0.7);
         }
-        fontSize = Math.min(Math.max(fontSize, 16), 50); // Limit font size between 16px and 50px
+        fontSize = Math.min(Math.max(fontSize, 16), 50);
 
-        // Create a temporary container for the collage
+        // Create an offscreen container (same as legacy DOWNLOAD COLLAGE)
         collageContainer = document.createElement('div');
         collageContainer.style.position = 'absolute';
         collageContainer.style.left = '-9999px';
@@ -2439,22 +3308,21 @@ async function downloadCollage() {
         header.style.height = `${headerHeight}px`;
         header.style.display = 'flex';
         header.style.alignItems = 'center';
-        header.style.justifyContent = 'space-between'; // Alignement gauche/droite
-        header.style.padding = `0 ${borderWidth}px`; // Respecter la bordure à gauche et à droite
+        header.style.justifyContent = 'space-between';
+        header.style.padding = `0 ${borderWidth}px`;
         header.style.boxSizing = 'border-box';
         collageContainer.appendChild(header);
 
-        // Prepare header text (aligned left)
+        // Prepare header text
         const usernameText = currentUsername.toUpperCase() || 'UNKNOWN';
-        const collectionText = collectionTitle.textContent || collectionFilter.value || 'ALL_COLLECTIONS';
+        const collectionText = collectionTitle?.textContent || collectionFilter?.value || 'ALL_COLLECTIONS';
         const theme = 'cdc';
         const color1 = '#11bafa';
 
-        // Create header text container (aligned left)
         const headerTextContainer = document.createElement('div');
         headerTextContainer.style.textAlign = 'left';
         headerTextContainer.style.fontFamily = 'Geomanist-Bold, Arial, sans-serif';
-        headerTextContainer.style.fontSize = `${fontSize}px`; // Même taille pour tout l'en-tête
+        headerTextContainer.style.fontSize = `${fontSize}px`;
         headerTextContainer.style.lineHeight = '1.2';
         headerTextContainer.style.color = '#fff';
         headerTextContainer.style.overflow = 'hidden';
@@ -2465,18 +3333,17 @@ async function downloadCollage() {
         headerTextContainer.innerHTML = `<span style="color: ${color1}">${usernameText}</span> / ${collectionText.toUpperCase()}`;
         header.appendChild(headerTextContainer);
 
-        // Create NFT count text (aligned right)
         const nftCountText = document.createElement('div');
         nftCountText.style.textAlign = 'right';
         nftCountText.style.fontFamily = 'Geomanist-Bold, Arial, sans-serif';
-        nftCountText.style.fontSize = `${fontSize}px`; // Même taille que l'en-tête
+        nftCountText.style.fontSize = `${fontSize}px`;
         nftCountText.style.lineHeight = '1.2';
         nftCountText.style.color = '#fff';
         nftCountText.style.overflow = 'hidden';
         nftCountText.style.whiteSpace = 'nowrap';
         nftCountText.style.margin = '0';
         nftCountText.style.padding = '0';
-        nftCountText.textContent = `${loadedCards.length} NFTs`; // Afficher "x NFT"
+        nftCountText.textContent = `${loadedCards.length} NFTs`;
         header.appendChild(nftCountText);
 
         // Add grid with lateral borders
@@ -2492,15 +3359,8 @@ async function downloadCollage() {
         // Add images to grid
         processed = 0;
         for (let i = 0; i < loadedCards.length; i++) {
-            if (window.isDownloadCancelled) {
-                console.log('Collage creation cancelled');
-                if (collageContainer && document.body.contains(collageContainer)) {
-                    document.body.removeChild(collageContainer);
-                    console.log('Collage container removed on cancel');
-                }
-                window.isDownloading = false;
-                objectUrls.forEach(url => URL.revokeObjectURL(url));
-                return;
+            if (shouldCancel?.()) {
+                throw new Error('CANCELLED');
             }
 
             const { blob, title, index } = loadedCards[i];
@@ -2522,28 +3382,12 @@ async function downloadCollage() {
                 img.style.fontSize = '16px';
                 img.style.textAlign = 'center';
                 img.textContent = 'Image Failed';
-                failedImages.push({ title, index, error: 'Failed to load in DOM' });
             };
             grid.appendChild(img);
 
             processed++;
-            const progressPercent = (processed / loadedCards.length) * 100;
-            progressBar.style.width = `${progressPercent}%`;
-            progressText.textContent = `Processing: ${processed}/${loadedCards.length}`;
+            onProgress?.({ stage: 'place', processed, total: loadedCards.length });
         }
-
-        // Add CRONOS.WTF | DEVELOPED BY UNSCOOP text in bottom-right corner
-        const cronosText = document.createElement('div');
-        cronosText.style.position = 'absolute';
-        cronosText.style.bottom = `${borderWidth / 2 - cronosFontSize / 2}px`;
-        cronosText.style.right = `${borderWidth}px`; // Utiliser borderWidth pour respecter la bordure droite
-        cronosText.style.fontFamily = 'Geomanist-Bold, Arial, sans-serif';
-        cronosText.style.fontSize = `${cronosFontSize}px`;
-        cronosText.style.lineHeight = '1';
-        cronosText.style.whiteSpace = 'nowrap';
-        // Construire le texte avec CRONOS.WTF en blanc et UNSCOOP en couleur du thème
-        cronosText.innerHTML = `CRONOS.WTF | DEVELOPPED BY <span style="color: ${color1}">UNSCOOP</span>`;
-        collageContainer.appendChild(cronosText);
 
         // Wait for all images to load with timeout
         await Promise.race([
@@ -2551,154 +3395,418 @@ async function downloadCollage() {
                 Array.from(grid.querySelectorAll('img')).map(
                     img => new Promise(resolve => {
                         if (img.complete) {
-                            console.log(`Image loaded: ${img.src}`);
                             resolve();
                         } else {
-                            img.onload = () => {
-                                console.log(`Image loaded: ${img.src}`);
-                                resolve();
-                            };
-                            img.onerror = () => {
-                                console.error(`Image failed to load in DOM: ${img.src}`);
-                                resolve();
-                            };
+                            img.onload = () => resolve();
+                            img.onerror = () => resolve();
                         }
                     })
                 )
             ),
             new Promise((_, reject) => setTimeout(() => reject(new Error('Image loading timeout')), 30000))
-        ]).catch(error => {
-            console.error(`Image loading error: ${error.message}`);
-            throw error;
+        ]);
+
+        if (shouldCancel?.()) {
+            throw new Error('CANCELLED');
+        }
+
+        onProgress?.({ stage: 'render', processed: loadedCards.length, total: loadedCards.length });
+
+        const canvas = await Promise.race([
+            html2canvas(collageContainer, { scale: 1, useCORS: false, logging: true }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('html2canvas rendering timeout')), 60000))
+        ]);
+
+        const blob = await canvasToPngBlob(canvas);
+        return { blob };
+    } finally {
+        if (collageContainer && document.body.contains(collageContainer)) {
+            document.body.removeChild(collageContainer);
+        }
+        objectUrls.forEach(url => URL.revokeObjectURL(url));
+    }
+}
+
+async function downloadCollage() {
+    const nftContainer = document.getElementById('nftContainer');
+    const errorDiv = document.getElementById('error');
+    const progressModal = document.getElementById('progressModal');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const modalTitle = document.getElementById('modalTitle');
+    const cancelButton = document.getElementById('cancelDownloadButton');
+
+    if (!nftContainer || !errorDiv || !progressModal || !progressBar || !progressText || !modalTitle || !cancelButton) {
+        console.error('Required DOM elements for collage download not found');
+        if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
+        return;
+    }
+
+    // Compute state + try cache first
+    const { validCards, key } = collectValidCollageCards(nftContainer);
+
+    if (validCards.length === 0) {
+        errorDiv.textContent = 'No valid image assets to include in the collage. Try downloading individual assets as a ZIP.';
+        return;
+    }
+
+    const cached = collageExportCache.blob && collageExportCache.key === key;
+    if (cached) {
+        triggerDownloadBlob(collageExportCache.blob, collageExportCache.fileName || buildCollageDownloadFileName());
+        return;
+    }
+
+    // If preview render is in-flight for the same key, reuse it.
+    if (collageExportInFlight && collageExportInFlight.key === key) {
+        try {
+            const res = await collageExportInFlight.promise;
+            const fileName = buildCollageDownloadFileName();
+            collageExportCache = { key, blob: res.blob, fileName };
+            triggerDownloadBlob(res.blob, fileName);
+        } catch (e) {
+            console.error(`Error reusing in-flight collage render: ${e.message}`);
+        }
+        return;
+    }
+
+    if (window.isDownloading) {
+        console.log('Download already in progress, ignoring new attempt.');
+        return;
+    }
+
+    window.isDownloading = true;
+
+    modalTitle.textContent = 'Creating Collage';
+    progressText.textContent = `Fetching ${validCards.length} assets`;
+    progressBar.style.width = '0%';
+    progressModal.style.display = 'flex';
+    cancelButton.style.display = 'block';
+
+    window.isDownloadCancelled = false;
+
+    cancelButton.onclick = () => {
+        window.isDownloadCancelled = true;
+        progressText.textContent = 'Collage creation cancelled.';
+        progressBar.style.width = '0%';
+    };
+
+    try {
+        const blobResult = await generateCollageBlobFromValidCards(validCards, {
+            onProgress: ({ stage, processed, total }) => {
+                if (stage === 'fetch') {
+                    const pct = (processed / total) * 100;
+                    progressBar.style.width = `${pct}%`;
+                    progressText.textContent = `Fetching: ${processed}/${total}`;
+                } else if (stage === 'build') {
+                    progressText.textContent = `Creating collage with ${processed} assets`;
+                } else if (stage === 'place') {
+                    const pct = (processed / total) * 100;
+                    progressBar.style.width = `${pct}%`;
+                    progressText.textContent = `Processing: ${processed}/${total}`;
+                } else if (stage === 'render') {
+                    progressText.textContent = 'Generating collage image';
+                }
+            },
+            shouldCancel: () => Boolean(window.isDownloadCancelled),
         });
 
         if (window.isDownloadCancelled) {
-            console.log('Collage creation cancelled');
-            if (collageContainer && document.body.contains(collageContainer)) {
-                document.body.removeChild(collageContainer);
-                console.log('Collage container removed on cancel');
-            }
+            progressModal.style.display = 'none';
             window.isDownloading = false;
-            objectUrls.forEach(url => URL.revokeObjectURL(url));
             return;
         }
 
-        if (failedImages.length > 0) {
-            console.warn(`${failedImages.length} images failed to process:`, failedImages);
-            errorDiv.textContent = `${failedImages.length} image(s) failed to process. ${loadedCards.length} included in the collage.`;
-            setTimeout(() => (errorDiv.textContent = ''), 5000);
-        }
+        const fileName = buildCollageDownloadFileName();
+        collageExportCache = { key, blob: blobResult.blob, fileName };
 
-        progressText.textContent = 'Generating collage image';
-        console.log('Generating collage with html2canvas');
-        try {
-            const canvas = await Promise.race([
-                html2canvas(collageContainer, { scale: 1, useCORS: false, logging: true }),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('html2canvas rendering timeout')), 60000))
-            ]);
+        triggerDownloadBlob(blobResult.blob, fileName);
 
-            if (collageContainer && document.body.contains(collageContainer)) {
-                document.body.removeChild(collageContainer);
-                console.log('Collage container removed after html2canvas');
-            }
-            collageContainer = null;
-            objectUrls.forEach(url => URL.revokeObjectURL(url));
-            objectUrls.length = 0;
-
-            canvas.toBlob(
-                (blob) => {
-                    try {
-                        if (!blob) {
-                            throw new Error('Failed to generate blob');
-                        }
-                        if (window.isDownloadCancelled) {
-                            console.log('Download cancelled before blob generation');
-                            window.isDownloading = false;
-                            return;
-                        }
-
-                        console.log('Blob generated, initiating download');
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-
-// Générer les parties du nom de fichier
-const cleanUsername = currentUsername ? currentUsername.replace(/[^a-zA-Z0-9-_]/g, '').toUpperCase() : '';
-const creatorFilter = document.getElementById('creatorFilter');
-const cleanCreator = (creatorFilter?.value || 'UNKNOWN').replace(/[^a-zA-Z0-9-_]/g, '').toUpperCase();
-const cleanCollectionText = (collectionFilter.value || 'ALL_COLLECTIONS').replace(/[^a-zA-Z0-9-_]/g, '').toUpperCase();
-
-// Construire le nom du fichier en omettant cleanUsername si vide
-const fileNameParts = [];
-if (cleanUsername) fileNameParts.push(cleanUsername);
-if (cleanCreator !== 'UNKNOWN') fileNameParts.push(cleanCreator); // Éviter d'inclure UNKNOWN pour le créateur si non défini
-fileNameParts.push(cleanCollectionText);
-a.download = fileNameParts.join('_') + '.png';
-
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-
-                        progressText.textContent = 'Collage download complete!';
-                        progressBar.style.width = '100%';
-                        setTimeout(() => {
-                            progressModal.style.display = 'none';
-                            window.isDownloading = false;
-                        }, 1500);
-                    } catch (error) {
-                        console.error(`Error during download: ${error.message}`);
-                        errorDiv.textContent = `Failed to initiate download: ${error.message}. Try downloading individual assets as a ZIP.`;
-                        setTimeout(() => (errorDiv.textContent = ''), 5000);
-                        window.isDownloading = false;
-                    }
-                },
-                'image/png',
-                1.0
-            );
-        } catch (error) {
-            console.error(`Error generating collage with html2canvas: ${error.message}`);
-            if (collageContainer && document.body.contains(collageContainer)) {
-                document.body.removeChild(collageContainer);
-                console.log('Collage container removed on html2canvas error');
-            }
-            collageContainer = null;
-            objectUrls.forEach(url => URL.revokeObjectURL(url));
-            objectUrls.length = 0;
-            errorDiv.textContent = `Failed to generate collage: ${error.message}. Try downloading individual assets as a ZIP.`;
-            setTimeout(() => (errorDiv.textContent = ''), 5000);
+        progressText.textContent = 'Collage download complete!';
+        progressBar.style.width = '100%';
+        setTimeout(() => {
+            progressModal.style.display = 'none';
             window.isDownloading = false;
-        }
+        }, 1500);
     } catch (error) {
-        console.error(`Error generating collage: ${error.message}`);
-        if (collageContainer && document.body.contains(collageContainer)) {
-            document.body.removeChild(collageContainer);
-            console.log('Collage container removed on general error');
+        if (String(error?.message || '').includes('CANCELLED')) {
+            progressModal.style.display = 'none';
+            window.isDownloading = false;
+            return;
         }
-        collageContainer = null;
-        objectUrls.forEach(url => URL.revokeObjectURL(url));
-        objectUrls.length = 0;
-        progressModal.style.display = 'none';
+        console.error(`Error generating collage: ${error.message}`);
         errorDiv.textContent = `Failed to generate collage: ${error.message}. Try downloading individual assets as a ZIP.`;
         setTimeout(() => (errorDiv.textContent = ''), 5000);
+        progressModal.style.display = 'none';
         window.isDownloading = false;
     }
 }
 
+function resetCollageView(nftContainer, appMain) {
+    nftContainer.classList.remove('collage-mode');
+    nftContainer.style.gridTemplateColumns = '';
+    nftContainer.style.gridAutoRows = '';
+    nftContainer.style.width = '';
+    nftContainer.style.height = '';
+    nftContainer.style.marginLeft = '';
+    nftContainer.style.marginRight = '';
+    nftContainer.style.gap = '';
+    nftContainer.style.overflow = '';
+
+    clearCollageSingleImage(nftContainer);
+
+    if (appMain) appMain.style.overflowY = '';
+}
+
+function applyCollageView(nftContainer, appMain) {
+    nftContainer.className = 'nft-container thumbnail-mode collage-mode';
+
+    if (appMain) {
+        appMain.scrollTop = 0;
+        appMain.style.overflowY = 'hidden';
+    }
+
+    void renderCollageSingleImage(nftContainer, appMain);
+
+    syncViewToggle();
+}
+
+let collageRenderToken = 0;
+
+function ensureCollageSingleImageElements(nftContainer) {
+    let wrapper = nftContainer.querySelector('#collageSingleImageWrapper');
+    if (!wrapper) {
+        wrapper = document.createElement('div');
+        wrapper.id = 'collageSingleImageWrapper';
+        wrapper.className = 'collage-single-image-wrapper';
+        nftContainer.appendChild(wrapper);
+    }
+
+    let img = wrapper.querySelector('#collageSingleImage');
+    if (!img) {
+        img = document.createElement('img');
+        img.id = 'collageSingleImage';
+        img.className = 'collage-single-image';
+        img.alt = 'Collage';
+        img.draggable = false;
+        wrapper.appendChild(img);
+    }
+
+    return { wrapper, img };
+}
+
+function clearCollageSingleImage(nftContainer) {
+    const wrapper = nftContainer.querySelector('#collageSingleImageWrapper');
+    const img = nftContainer.querySelector('#collageSingleImage');
+
+    if (img?.dataset?.objectUrl) {
+        URL.revokeObjectURL(img.dataset.objectUrl);
+        img.dataset.objectUrl = '';
+    }
+
+    if (wrapper) {
+        wrapper.classList.remove('is-loading');
+    }
+}
+
+function getDrawableDimensions(drawable) {
+    if (!drawable) return { width: 0, height: 0 };
+    if (drawable instanceof ImageBitmap) return { width: drawable.width, height: drawable.height };
+    if (drawable instanceof HTMLImageElement) return { width: drawable.naturalWidth, height: drawable.naturalHeight };
+    if (drawable instanceof HTMLVideoElement) return { width: drawable.videoWidth, height: drawable.videoHeight };
+    return { width: drawable.width || 0, height: drawable.height || 0 };
+}
+
+function drawCover(ctx, drawable, dx, dy, dw, dh) {
+    const { width: sw, height: sh } = getDrawableDimensions(drawable);
+    if (!sw || !sh) return;
+
+    const sAspect = sw / sh;
+    const dAspect = dw / dh;
+
+    if (sAspect > dAspect) {
+        const cropW = sh * dAspect;
+        const sx = (sw - cropW) / 2;
+        ctx.drawImage(drawable, sx, 0, cropW, sh, dx, dy, dw, dh);
+    } else {
+        const cropH = sw / dAspect;
+        const sy = (sh - cropH) / 2;
+        ctx.drawImage(drawable, 0, sy, sw, cropH, dx, dy, dw, dh);
+    }
+}
+
+async function decodeImageFromBlob(blob) {
+    if (typeof createImageBitmap === 'function') {
+        try {
+            return await createImageBitmap(blob);
+        } catch (err) {
+            // Fallback below
+        }
+    }
+
+    const url = URL.createObjectURL(blob);
+    try {
+        const img = new Image();
+        img.decoding = 'async';
+        await new Promise((resolve, reject) => {
+            img.onload = () => resolve(null);
+            img.onerror = () => reject(new Error('Image decode failed'));
+            img.src = url;
+        });
+        return img;
+    } finally {
+        URL.revokeObjectURL(url);
+    }
+}
+
+async function decodeVideoFrameFromBlob(blob) {
+    const url = URL.createObjectURL(blob);
+    try {
+        const video = document.createElement('video');
+        video.src = url;
+        video.muted = true;
+        video.playsInline = true;
+
+        await new Promise((resolve, reject) => {
+            video.onloadedmetadata = () => resolve(null);
+            video.onerror = () => reject(new Error('Video decode failed'));
+        });
+
+        const targetTime = Number.isFinite(video.duration) && video.duration > 0 ? Math.min(0.05, video.duration) : 0;
+        video.currentTime = targetTime;
+
+        await new Promise((resolve) => {
+            video.onseeked = () => resolve(null);
+        });
+
+        return video;
+    } finally {
+        URL.revokeObjectURL(url);
+    }
+}
+
+async function asyncPool(limit, items, iteratorFn) {
+    const executing = new Set();
+    const results = [];
+
+    for (const item of items) {
+        const p = Promise.resolve().then(() => iteratorFn(item));
+        results.push(p);
+        executing.add(p);
+
+        const clean = () => executing.delete(p);
+        p.then(clean, clean);
+
+        if (executing.size >= limit) {
+            await Promise.race(executing);
+        }
+    }
+
+    return Promise.allSettled(results);
+}
+
+async function renderCollageSingleImage(nftContainer, appMain) {
+    const token = ++collageRenderToken;
+    const { wrapper, img } = ensureCollageSingleImageElements(nftContainer);
+
+    wrapper.classList.add('is-loading');
+
+    // Fit the rendered PNG inside the current viewport (no scroll), while keeping the PNG itself
+    // identical to the downloaded "DOWNLOAD COLLAGE" output.
+    const containerRect = nftContainer.getBoundingClientRect();
+    const availableWidth = Math.max(0, Math.floor(containerRect.width));
+
+    const appRect = appMain ? appMain.getBoundingClientRect() : { top: 0 };
+    const topInApp = appMain ? containerRect.top - appRect.top : containerRect.top;
+    const availableHeight = Math.max(
+        0,
+        Math.floor((appMain ? appMain.clientHeight : window.innerHeight) - topInApp - 10)
+    );
+
+    wrapper.style.width = `${availableWidth}px`;
+    wrapper.style.height = `${availableHeight}px`;
+
+    const shouldCancel = () => token !== collageRenderToken || !isCollageViewActive();
+
+    try {
+        const { validCards, key } = collectValidCollageCards(nftContainer);
+
+        if (!validCards.length) {
+            clearCollageSingleImage(nftContainer);
+            return;
+        }
+
+        // Cache hit
+        if (collageExportCache.blob && collageExportCache.key === key) {
+            if (img?.dataset?.objectUrl) {
+                URL.revokeObjectURL(img.dataset.objectUrl);
+            }
+            const url = URL.createObjectURL(collageExportCache.blob);
+            img.src = url;
+            img.dataset.objectUrl = url;
+            return;
+        }
+
+        // Reuse in-flight render if same key
+        if (!collageExportInFlight || collageExportInFlight.key !== key) {
+            collageExportInFlight = {
+                key,
+                promise: generateCollageBlobFromValidCards(validCards, { shouldCancel }),
+            };
+        }
+
+        const result = await collageExportInFlight.promise;
+
+        if (shouldCancel()) return;
+
+        const fileName = buildCollageDownloadFileName();
+        collageExportCache = { key, blob: result.blob, fileName };
+
+        if (img?.dataset?.objectUrl) {
+            URL.revokeObjectURL(img.dataset.objectUrl);
+        }
+        const url = URL.createObjectURL(result.blob);
+        img.src = url;
+        img.dataset.objectUrl = url;
+    } catch (error) {
+        if (String(error?.message || '').includes('CANCELLED')) {
+            return;
+        }
+        console.error(`Error rendering collage preview: ${error.message}`);
+        clearCollageSingleImage(nftContainer);
+    } finally {
+        wrapper.classList.remove('is-loading');
+    }
+}
+
+
+
 function updateDisplay() {
     const cardSize = document.getElementById('cardSize')?.value || 'small';
     const nftContainer = document.getElementById('nftContainer');
+    const appMain = document.getElementById('appMain');
 
     if (!nftContainer) {
         console.error('Conteneur NFT non trouvé');
         return;
     }
 
+    const enableCollage = cardSize === 'collage';
+    document.body.classList.toggle('is-collage-view', enableCollage);
+    if (appMain) appMain.classList.toggle('is-collage-view', enableCollage);
+
+    if (enableCollage) {
+        applyCollageView(nftContainer, appMain);
+        syncViewToggle();
+        return;
+    }
+
+    resetCollageView(nftContainer, appMain);
+
     nftContainer.className = `nft-container thumbnail-mode ${cardSize}-size`;
 
     // Ignorer les ajustements dynamiques sur mobile (≤ 768px)
     if (window.innerWidth <= 768) {
-        nftContainer.style.gridTemplateColumns = ''; // Supprimer tout style inline
+        nftContainer.style.gridTemplateColumns = '';
         console.log('Mobile view: Using CSS grid-template-columns for', cardSize);
         return;
     }
@@ -2707,30 +3815,24 @@ function updateDisplay() {
     const baseCardWidth = cardSize === 'small' ? 110 : cardSize === 'medium' ? 180 : 280;
     const gap = 4; // Écart fixe de 4px
 
-    // Largeur réellement disponible (prend en compte la sidebar / responsive)
     const containerRect = nftContainer.getBoundingClientRect();
     const availableWidth = Math.max(0, Math.floor(containerRect.width));
     const marginRight = 10; // sécurité anti-débordement
-    const marginLeft = 0;
 
-    // Calculer le nombre de colonnes
     const columnWidthWithGap = baseCardWidth + gap;
     let numColumns = Math.floor((availableWidth + gap) / columnWidthWithGap);
-    numColumns = Math.max(1, numColumns); // Minimum 1 colonne
+    numColumns = Math.max(1, numColumns);
 
-    // Calculer la largeur ajustée des colonnes
     const totalGaps = (numColumns - 1) * gap;
     let adjustedColumnWidth = (availableWidth - totalGaps) / numColumns;
 
-    // Appliquer des contraintes de taille minimale/maximale
-    const minWidth = baseCardWidth * 0.8; // 80% de la taille de base
-    let maxWidth = baseCardWidth * 1.2; // 120% de la taille de base
+    const minWidth = baseCardWidth * 0.8;
+    let maxWidth = baseCardWidth * 1.2;
     if (cardSize === 'large') {
-        maxWidth = baseCardWidth * 1.5; // Assouplir pour mode large
+        maxWidth = baseCardWidth * 1.5;
     }
     adjustedColumnWidth = Math.min(Math.max(adjustedColumnWidth, minWidth), maxWidth);
 
-    // Réajuster si la largeur totale dépasse availableWidth
     let totalWidthWithAdjusted = numColumns * adjustedColumnWidth + totalGaps;
     if (totalWidthWithAdjusted > availableWidth) {
         numColumns = Math.max(1, numColumns - 1);
@@ -2740,16 +3842,13 @@ function updateDisplay() {
         totalWidthWithAdjusted = numColumns * adjustedColumnWidth + newTotalGaps;
     }
 
-    // Maximiser l'espace en mode "large"
     if (cardSize === 'large' && totalWidthWithAdjusted < availableWidth * 0.95) {
         adjustedColumnWidth = (availableWidth - totalGaps) / numColumns;
         adjustedColumnWidth = Math.min(Math.max(adjustedColumnWidth, minWidth), maxWidth);
     }
 
-    // Appliquer la grille
     nftContainer.style.gridTemplateColumns = `repeat(${numColumns}, ${adjustedColumnWidth}px)`;
 
-    // Vérifier les débordements
     const updatedRect = nftContainer.getBoundingClientRect();
     const windowRightEdge = document.documentElement.clientWidth - marginRight;
     if (updatedRect.right > windowRightEdge + 1) {
@@ -2761,12 +3860,11 @@ function updateDisplay() {
         nftContainer.style.gridTemplateColumns = `repeat(${numColumns}, ${adjustedColumnWidth}px)`;
     }
 
-    // Forcer un recalcul du layout
     nftContainer.style.display = 'none';
-    nftContainer.offsetHeight; // Forcer un reflow
+    nftContainer.offsetHeight;
     nftContainer.style.display = 'grid';
 
-    console.log(`updateDisplay (PC): clientWidth=${document.documentElement.clientWidth}px, marginLeft=${marginLeft}px, marginRight=${marginRight}px, availableWidth=${availableWidth}px, numColumns=${numColumns}, adjustedColumnWidth=${adjustedColumnWidth}px, container.right=${nftContainer.getBoundingClientRect().right}px, expectedRightEdge=${windowRightEdge}px`);
+    console.log(`updateDisplay (PC): clientWidth=${document.documentElement.clientWidth}px, availableWidth=${availableWidth}px, numColumns=${numColumns}, adjustedColumnWidth=${adjustedColumnWidth}px`);
 }
 
 
@@ -2858,9 +3956,74 @@ function syncFilterPills() {
         const pillEl = selectEl.closest('.select-pill');
         if (pillEl) autosizePillToContent(pillEl);
 });
+    applyCollectionBreadcrumb();
     updateResetFiltersButtonState();
 }
 
+
+let activeStatsBreadcrumbLabel = '';
+
+function getStatsBreadcrumbLabel(action) {
+    if (!action) return '';
+    if (action.startsWith('curated:')) {
+        const value = (action.split(':')[1] || '').trim().toLowerCase();
+        return value === 'false' ? 'NON CURATED' : 'CURATED';
+    }
+    if (action.startsWith('chain:')) {
+        const value = (action.split(':')[1] || '').trim();
+        return value ? value.toUpperCase() : 'CHAIN';
+    }
+    if (action.startsWith('group:')) {
+        const value = (action.split(':')[1] || '').trim().toLowerCase();
+        if (value === 'artist') return 'ARTISTS';
+        if (value === 'collection') return 'COLLECTIONS';
+        return value ? value.toUpperCase() : 'GROUP';
+    }
+    return '';
+}
+
+function applyCollectionBreadcrumb() {
+    const textEl = document.getElementById('pillTextCollection');
+    const selectEl = document.getElementById('collectionFilter');
+    if (!textEl) return;
+
+    const baseText = selectEl?.options?.[selectEl.selectedIndex]?.text || textEl.dataset.baseText || 'ALL COLLECTIONS';
+    textEl.dataset.baseText = baseText;
+
+    if (!activeStatsBreadcrumbLabel) {
+        textEl.textContent = baseText;
+        textEl.title = baseText;
+    } else {
+        textEl.textContent = '';
+        textEl.appendChild(document.createTextNode(`${baseText} / `));
+
+        const active = document.createElement('span');
+        active.className = 'collection-breadcrumb-active';
+        active.textContent = activeStatsBreadcrumbLabel;
+        textEl.appendChild(active);
+
+        textEl.title = `${baseText} / ${activeStatsBreadcrumbLabel}`;
+    }
+
+    const pillEl = selectEl?.closest('.select-pill') || textEl.closest('.select-pill');
+    if (pillEl) autosizePillToContent(pillEl);
+}
+
+function setActiveStatsBreadcrumbFromAction(action) {
+    if (!action) return;
+
+    if (action === 'reset') {
+        activeStatsBreadcrumbLabel = '';
+        applyCollectionBreadcrumb();
+        return;
+    }
+
+    const label = getStatsBreadcrumbLabel(action);
+    if (!label) return;
+
+    activeStatsBreadcrumbLabel = label;
+    applyCollectionBreadcrumb();
+}
 
 /**
  * Renders select menus in a fixed dropdown positioned under the pill (never above).
@@ -2977,24 +4140,98 @@ function openPillFromStats(selectId) {
     openPillDropdown(pillEl, selectEl);
 }
 
-function runStatsCardAction(action) {
+async function runStatsCardAction(action, sourceCard) {
     if (!action) return;
+
     const resetBtn = document.getElementById('resetFiltersButton');
     const curatedFilter = document.getElementById('curatedFilter');
     const chainFilter = document.getElementById('chainFilter');
+    const collectionFilter = document.getElementById('collectionFilter');
 
-    if (action === 'reset') {
-        if (resetBtn && !resetBtn.disabled) resetBtn.click();
+    const triggerReset = () => {
+        if (!resetBtn) return;
+        resetBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    };
+
+    const waitNextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+
+    const isReset = action === 'reset';
+        setActiveStatsBreadcrumbFromAction(action);
+
+const isModeAction = action.startsWith('mode:');
+    const modeValue = isModeAction ? (action.split(':')[1] || '').toLowerCase().trim() : '';
+    const isSwitchToCollected = isModeAction && modeValue === 'collected';
+    const isSwitchToLiked = isModeAction && modeValue === 'liked';
+
+    const isGroupAction = action.startsWith('group:');
+    const groupValue = isGroupAction ? (action.split(':')[1] || '').toLowerCase().trim() : '';
+
+    const isFavoriteCollection = !!(sourceCard && sourceCard.classList && sourceCard.classList.contains('stat-card--favorite'));
+
+    // Stats must always operate on profile NFTs (collected), never on liked.
+    // If user is in liked mode and clicks anything except "NFTs liked", force back to collected first.
+    if (currentAssetMode === 'liked' && !isSwitchToLiked) {
+        await switchProfileAssetMode('collected');
+    }
+
+    // Grouping mode is a "display mode". It should be set BEFORE the reset runs,
+    // because reset triggers filterNFTs() which calls displayNFTs().
+    if (isGroupAction) {
+        currentGroupingMode = groupValue === 'artist' ? 'artist' : groupValue === 'collection' ? 'collection' : null;
+    } else {
+        // Any other stat/button cancels grouping by default.
+        currentGroupingMode = null;
+    }
+
+    
+    updateCollageAvailability();
+// Requirement: Every stats button resets filters to default BEFORE applying the new change.
+    // (This includes mode switches and grouping actions.)
+    if (!isReset) {
+        triggerReset();
+        await waitNextFrame();
+        favoriteCollectionViewActive = false;
+    }
+
+    // Visual selection:
+    // - Mode cards keep their solid outline (is-active-mode)
+    // - Other sidebar stat cards get a dotted outline while we're in collected mode
+    // - Favorite collection is a special view: it unselects 'NFTs Collected' visually
+    if (isReset || isModeAction) {
+        suppressCollectedModeHighlight = false;
+        favoriteCollectionViewActive = false;
+        clearActiveSidebarStatHighlights();
+        syncProfileModeStatsUI();
+    } else {
+        suppressCollectedModeHighlight = isFavoriteCollection;
+        setActiveSidebarStatHighlight(sourceCard);
+        syncProfileModeStatsUI();
+    }
+
+    if (isReset) {
+        currentGroupingMode = null;
+        triggerReset();
         return;
     }
-    if (action === 'open-creator') {
-        openPillFromStats('creatorFilter');
+
+    if (isModeAction) {
+        favoriteCollectionViewActive = false;
+        if (modeValue && currentAssetMode !== modeValue) {
+            void switchProfileAssetMode(modeValue);
+        } else {
+            syncProfileModeStatsUI();
+            // Ensure display reflects grouping cancellation
+            filterNFTs();
+        }
         return;
     }
-    if (action === 'open-collection') {
-        openPillFromStats('collectionFilter');
+
+    if (isGroupAction) {
+        // Reset already applied. Just re-render with grouping.
+        filterNFTs();
         return;
     }
+
     if (action.startsWith('curated:')) {
         const value = action.split(':')[1] || '';
         if (curatedFilter) {
@@ -3003,6 +4240,33 @@ function runStatsCardAction(action) {
         }
         return;
     }
+
+    if (action.startsWith('collection:')) {
+        const value = action.slice('collection:'.length) || '';
+        const isFavoriteCollectionCard = !!(sourceCard && sourceCard.classList && sourceCard.classList.contains('stat-card--favorite'));
+
+        if (isFavoriteCollectionCard) {
+            favoriteCollectionViewActive = true;
+            suppressCollectedModeHighlight = true;
+            currentGroupingMode = null; // favorite view overrides grouping
+            syncProfileModeStatsUI();
+            setActiveSidebarStatHighlight(sourceCard);
+        }
+
+        if (collectionFilter) {
+            const optionExists = Array.from(collectionFilter.options).some((opt) => opt.value === value);
+            if (value && !optionExists) {
+                const opt = document.createElement('option');
+                opt.value = value;
+                opt.textContent = value;
+                collectionFilter.appendChild(opt);
+            }
+            collectionFilter.value = value;
+            collectionFilter.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        return;
+    }
+
     if (action.startsWith('chain:')) {
         const value = action.split(':')[1] || '';
         if (chainFilter) {
@@ -3012,11 +4276,33 @@ function runStatsCardAction(action) {
     }
 }
 
+
 function setupStatsCardInteractions() {
     const statsSection = document.getElementById('sidebarStats');
     if (!statsSection) return;
     const cards = statsSection.querySelectorAll('.stat-card[data-stat-action]');
-    const activate = (card) => runStatsCardAction(card.getAttribute('data-stat-action') || '');
+    const activate = (card) => void runStatsCardAction(card.getAttribute('data-stat-action') || '', card);
+
+    cards.forEach((card) => {
+        card.addEventListener('click', (e) => {
+            e.preventDefault();
+            activate(card);
+        });
+        card.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                activate(card);
+            }
+        });
+    });
+
+}
+
+function setupProfileExtraStatsInteractions() {
+    const stats = document.getElementById('profileExtraStats');
+    if (!stats) return;
+    const cards = stats.querySelectorAll('.stat-card[data-stat-action]');
+    const activate = (card) => void runStatsCardAction(card.getAttribute('data-stat-action') || '', card);
 
     cards.forEach((card) => {
         card.addEventListener('click', (e) => {
@@ -3069,6 +4355,7 @@ function syncViewToggle() {
     const viewLarge = document.getElementById('viewLarge');
     const viewMedium = document.getElementById('viewMedium');
     const viewSmall = document.getElementById('viewSmall');
+    const viewCollage = document.getElementById('viewCollage');
 
     if (!cardSize) return;
 
@@ -3089,6 +4376,12 @@ function syncViewToggle() {
         viewSmall.classList.toggle('is-active', active);
         viewSmall.setAttribute('aria-pressed', String(active));
     }
+    if (viewCollage) {
+        const active = value === 'collage';
+        viewCollage.classList.toggle('is-active', active);
+        viewCollage.setAttribute('aria-pressed', String(active));
+    }
+    updateDownloadActionButtonLabel();
 }
 
 function setupEventListeners() {
@@ -3101,7 +4394,9 @@ function setupEventListeners() {
     const cardSize = document.getElementById('cardSize');
     const sortBy = document.getElementById('sortBy');
     const viewLarge = document.getElementById('viewLarge');
+    const viewMedium = document.getElementById('viewMedium');
     const viewSmall = document.getElementById('viewSmall');
+    const viewCollage = document.getElementById('viewCollage');
     const navbarMenu = document.getElementById('navbarMenu');
     const cancelLoginButton = document.getElementById('cancelLoginButton');
     const myProfileLink = document.getElementById('myProfileLink');
@@ -3112,13 +4407,13 @@ function setupEventListeners() {
     const scrollContainer = document.getElementById('appMain');
     const scrollTarget = scrollContainer || window;
     const navbarToggle = document.querySelector('.navbar-toggle');
-    const downloadZipButton = document.getElementById('downloadZipButton');
-    const downloadCollageButton = document.getElementById('downloadCollageButton');
+    const downloadActionButton = document.getElementById('downloadActionButton');
 
     if (!usernameInput || !loginUsernameInput || !collectionFilter || 
         !creatorFilter || !chainFilter || !curatedFilter || !cardSize || !sortBy || 
+        !viewLarge || !viewMedium || !viewSmall || !viewCollage ||
         !navbarMenu || !cancelLoginButton || !myProfileLink || !logoutLink || !loginLink || 
-        !navbarToggle || !downloadZipButton || !downloadCollageButton) {
+        !navbarToggle || !downloadActionButton) {
         console.error('One or more DOM elements not found', {
             usernameInput: !!usernameInput,
             loginUsernameInput: !!loginUsernameInput,            collectionFilter: !!collectionFilter,
@@ -3130,14 +4425,14 @@ function setupEventListeners() {
             viewLarge: !!viewLarge,
             viewMedium: !!viewMedium,
             viewSmall: !!viewSmall,
+            viewCollage: !!viewCollage,
             navbarMenu: !!navbarMenu,
             cancelLoginButton: !!cancelLoginButton,
             myProfileLink: !!myProfileLink,
             logoutLink: !!logoutLink,
             loginLink: !!loginLink,
             navbarToggle: !!navbarToggle,
-            downloadZipButton: !!downloadZipButton,
-            downloadCollageButton: !!downloadCollageButton
+            downloadActionButton: !!downloadActionButton
         });
         const errorDiv = document.getElementById('error');
         if (errorDiv) errorDiv.textContent = 'Internal error: UI elements missing.';
@@ -3266,15 +4561,17 @@ function setupEventListeners() {
     });
 
     cardSize.addEventListener('change', () => {
+        updateCollageAvailability();
         console.log('Card size changed:', cardSize.value);
         updateDisplay();
         syncViewToggle();
     });
 
-    if (viewLarge || viewMedium || viewSmall) {
+    if (viewLarge || viewMedium || viewSmall || viewCollage) {
     if (viewLarge) viewLarge.addEventListener('click', () => setCardSizeFromToggle('large'));
     if (viewMedium) viewMedium.addEventListener('click', () => setCardSizeFromToggle('medium'));
     if (viewSmall) viewSmall.addEventListener('click', () => setCardSizeFromToggle('small'));
+    if (viewCollage) viewCollage.addEventListener('click', () => setCardSizeFromToggle('collage'));
     syncViewToggle();
 }
 
@@ -3314,8 +4611,10 @@ function setupEventListeners() {
     });
 
 
-if (resetFiltersButton) {
-    resetFiltersButton.addEventListener('click', () => {
+const resetFiltersAndRefresh = () => {
+        clearActiveSidebarStatHighlights();
+        suppressCollectedModeHighlight = false;
+        syncProfileModeStatsUI();
         creatorFilter.value = '';
         collectionFilter.value = '';
         chainFilter.value = '';
@@ -3326,10 +4625,14 @@ if (resetFiltersButton) {
         filterNFTs();
         syncFilterPills();
         syncViewToggle();
-    });
-}
+    
+        updateCollageAvailability();
+    };
 
-    updateResetFiltersButtonState();
+    if (resetFiltersButton) {
+        resetFiltersButton.addEventListener('click', resetFiltersAndRefresh);
+    }
+updateResetFiltersButtonState();
 
     // Gestion du modal de connexion
     loginLink.addEventListener('click', showLoginModal);
@@ -3348,8 +4651,7 @@ if (resetFiltersButton) {
 
     logoutLink.addEventListener('click', logout);
 
-    downloadZipButton.addEventListener('click', downloadNFTsAsZip);
-    downloadCollageButton.addEventListener('click', downloadCollage);
+    downloadActionButton.addEventListener('click', handleDownloadAction);
 
     // Gestion des boutons de défilement
     const toggleScrollButtons = () => {
@@ -3421,6 +4723,7 @@ function initialize() {
     resetSearchBar(); // Réinitialiser la barre de recherche au chargement
     syncFixedBarsHeights();
     setupStatsCardInteractions();
+    setupProfileExtraStatsInteractions();
 
     // Afficher les fenêtres des mises à jour sur la page d'accueil
     const availableFeaturesModal = document.getElementById('availableFeaturesModal');
