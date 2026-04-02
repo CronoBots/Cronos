@@ -55,7 +55,7 @@
             JavaScript is required to view this content. Please enable JavaScript in your browser settings.
         </div>
 </noscript>
-<nav class="navbar">
+<nav class="navbar navbar--floating-controls">
 <div class="navbar-top-row">
 </div>
 <div class="navbar-right" id="navbarRight">
@@ -222,9 +222,6 @@
 </div>
 </div>
 
-<div aria-hidden="true" class="profile-artist-stats-divider" id="profileArtistStatsDivider" style="display: none;"></div><div class="profile-artist-stats-title" id="profileArtistStatsTitle" style="display: none;">
-  <span class="creator-title-text">CRYPTO.COM/NFT ARTIST</span>
-</div><div aria-label="Creator overview" class="stats-grid stats-grid--tight stats-grid--artist4" id="profileMetricsStats" style="display: none;"><div class="stat-card"><div class="stat-value" id="profileMetricLikes">0</div><div class="stat-label">LIKES</div></div><div class="stat-card"><div class="stat-value" id="profileMetricViews">0</div><div class="stat-label">VIEWS</div></div><div class="stat-card"><div class="stat-value" id="profileMetricCreated">0</div><div class="stat-label">CREATED</div></div><div class="stat-card"><div class="stat-value" id="profileMetricMinted">0</div><div class="stat-label">MINTED</div></div></div>
 </section>
 </div>
 </aside></div>
@@ -241,6 +238,7 @@
 <div class="error" id="error" role="alert"></div>
 <div class="no-results" id="noResults" style="display: none;">No results found</div>
 <div class="nft-container" id="nftContainer"></div>
+
 <div class="modal" id="progressModal">
 <div class="modal-content">
 <h3 id="modalTitle">Creating ZIP File</h3>
@@ -252,6 +250,20 @@
 <button class="cancel-button" id="cancelDownloadButton" type="button">Cancel</button>
 </div>
 </div>
+</div>
+<div aria-hidden="true" aria-labelledby="nftPreviewTitle" aria-modal="true" class="nft-preview-modal" id="nftPreviewModal" role="dialog">
+  <div class="nft-preview-backdrop" data-preview-close="true"></div>
+  <div class="nft-preview-panel" role="document">
+    <button aria-label="Close preview" class="nft-preview-close" id="nftPreviewCloseButton" type="button">×</button>
+    <button aria-label="Previous NFT" class="nft-preview-nav nft-preview-nav--prev" id="nftPreviewPrevButton" type="button">‹</button>
+    <button aria-label="Next NFT" class="nft-preview-nav nft-preview-nav--next" id="nftPreviewNextButton" type="button">›</button>
+    <div class="nft-preview-stage" id="nftPreviewStage"></div>
+    <div aria-live="polite" class="nft-preview-counter" id="nftPreviewCounter"></div>
+    <div class="nft-preview-meta">
+      <h3 class="nft-preview-title" id="nftPreviewTitle">NFT PREVIEW</h3>
+      <p class="nft-preview-subtitle" id="nftPreviewSubtitle"></p>
+    </div>
+  </div>
 </div>
 </main>
 <button aria-label="Download" id="downloadActionButton" type="button" title="Download">
@@ -327,6 +339,19 @@ function resetLikedNFTsStateForProfile(username) {
     likedNFTsCache = [];
     likedNFTsCacheReady = false;
     likedNFTsCacheUsername = String(username || '');
+}
+
+
+function resetProfileStatsViewToDefault() {
+    forcedAssetIdFilter = '';
+    currentAssetMode = 'collected';
+    currentGroupingMode = null;
+    currentGroupingLegendTitleOverride = '';
+    suppressCollectedModeHighlight = false;
+    document.body.classList.remove('is-group-stats-view');
+    clearActiveSidebarStatHighlights();
+    syncProfileModeStatsUI();
+    updateCollageAvailability();
 }
 
 function startLikedNFTsPrefetch(username) {
@@ -1113,61 +1138,6 @@ async function fetchProfileTotals(username, uuid = null) {
     });
 }
 
-const userMetricsQueryId = `
-    query UserMetrics($id: ID!) {
-        userMetrics(id: $id) { likes views created minted }
-    }
-`;
-
-const userMetricsQueryUserId = `
-    query UserMetrics($id: ID!) {
-        userMetrics(userId: $id) { likes views created minted }
-    }
-`;
-
-const userMetricsQueryUsername = `
-    query UserMetrics($id: ID!) {
-        userMetrics(username: $id) { likes views created minted }
-    }
-`;
-
-const userMetricsQueryProfileId = `
-    query UserMetrics($id: ID!) {
-        userMetrics(profileId: $id) { likes views created minted }
-    }
-`;
-
-function normalizeUserMetrics(data) {
-    const m = data?.userMetrics;
-    if (!m) return null;
-    return {
-        likes: toFiniteNumberStrict(m.likes),
-        views: toFiniteNumberStrict(m.views),
-        created: toFiniteNumberStrict(m.created),
-        minted: toFiniteNumberStrict(m.minted)
-    };
-}
-
-async function fetchUserMetrics(username, uuid = null) {
-    return await fetchWithCache(`user_metrics_${username}_${uuid || ''}`, async (signal) => {
-        const ids = Array.from(new Set([uuid, username].filter(Boolean)));
-        const queries = [userMetricsQueryId, userMetricsQueryUserId, userMetricsQueryUsername, userMetricsQueryProfileId];
-
-        for (const id of ids) {
-            for (const q of queries) {
-                try {
-                    const data = await postGraphQL(q, { id }, signal);
-                    const metrics = normalizeUserMetrics(data);
-                    if (!metrics) continue;
-                    const anyPositive =
-                        (metrics.likes || 0) > 0 || (metrics.views || 0) > 0 || (metrics.created || 0) > 0 || (metrics.minted || 0) > 0;
-                    if (anyPositive) return metrics;
-                } catch (e) {}
-            }
-        }
-        return null;
-    });
-}
 const homeUrl = "https://cronobots.github.io/Cronos";
 
 function parseUrlHash() {
@@ -1213,24 +1183,25 @@ function setupSidebarAutoFit() {
     if (!leftSidebar || !sidebarMain || !stats) return;
 
     const applyFit = () => {
-        // Force 1 when stats hidden
         const isVisible = stats.style.display !== 'none' && stats.offsetParent !== null;
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+
         if (!isVisible) {
             leftSidebar.style.setProperty('--sidebar-stats-scale', '1');
+            leftSidebar.classList.remove('sidebar--compact', 'sidebar--ultra-compact');
             return;
         }
 
+        leftSidebar.style.setProperty('--sidebar-stats-scale', '1');
+
         const mainStyles = window.getComputedStyle(sidebarMain);
         const paddingBottom = parseFloat(mainStyles.paddingBottom || '0') || 0;
-
-        const available = Math.max(
-            0,
-            sidebarMain.clientHeight - stats.offsetTop - paddingBottom
-        );
-
+        const available = Math.max(0, sidebarMain.clientHeight - stats.offsetTop - paddingBottom);
         const needed = Math.max(1, stats.scrollHeight);
-        const scale = Math.max(0.55, Math.min(1, available / needed));
-        leftSidebar.style.setProperty('--sidebar-stats-scale', scale.toFixed(3));
+        const ratio = available / needed;
+
+        leftSidebar.classList.toggle('sidebar--compact', ratio < 0.95 || viewportHeight < 980);
+        leftSidebar.classList.toggle('sidebar--ultra-compact', ratio < 0.86 || viewportHeight < 860);
     };
 
     const debounced = debounce(applyFit, 60);
@@ -1282,6 +1253,16 @@ function normalizeText(text) {
     let normalized = text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
     normalized = normalized.replace(/\n\s*\n/g, '\n').trim();
     return normalized;
+}
+
+function stripEmojiForLegend(text) {
+    const source = String(text || '');
+    return source
+        .replace(/[\p{Extended_Pictographic}\p{Emoji_Presentation}]/gu, '')
+        .replace(/[\uFE0F\u200D]/gu, '')
+        .replace(/[#*0-9]\uFE0F?\u20E3/gu, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
 }
 
 async function fetchWithCache(key, fetchFn, retries = 3, delay = 1000) {
@@ -1699,7 +1680,7 @@ function selectSuggestion(username) {
     }
 }
 
-function updateProfileUI(profileData, profileTotals = null, profileMetrics = null) {
+function updateProfileUI(profileData, profileTotals = null) {
     const profileHeader = document.getElementById('profileHeader');
     const profilePicture = document.getElementById('profilePicture');
     const username = document.getElementById('username');
@@ -1719,12 +1700,6 @@ function updateProfileUI(profileData, profileTotals = null, profileMetrics = nul
     const profileExtraStats = document.getElementById('profileExtraStats');
     const profileCollectedStat = document.getElementById('profileCollectedStat');    const profileLikedStat = document.getElementById('profileLikedStat');
     const profileCollectedCount = document.getElementById('profileCollectedCount');    const profileLikedCount = document.getElementById('profileLikedCount');
-    const profileArtistStatsDivider = document.getElementById('profileArtistStatsDivider');    const profileArtistStatsTitle = document.getElementById('profileArtistStatsTitle');
-    const profileMetricsStats = document.getElementById('profileMetricsStats');    const profileOverviewDivider = document.getElementById('profileOverviewDivider');
-    const profileMetricLikes = document.getElementById('profileMetricLikes');
-    const profileMetricViews = document.getElementById('profileMetricViews');
-    const profileMetricCreated = document.getElementById('profileMetricCreated');
-    const profileMetricMinted = document.getElementById('profileMetricMinted');
 
     if (!profileHeader || !profilePicture || !username || !verifiedBadge || !displayName || !socialContainer ||
         !croLink || !croUrl || !twitterLink || !twitterUrl || !facebookLink || !facebookUrl || !instagramLink || !instagramUrl || !usernameInput) {
@@ -1797,39 +1772,6 @@ function updateProfileUI(profileData, profileTotals = null, profileMetrics = nul
         profileExtraStats.style.display = 'grid';
     }
     if (profileCollectedCount) profileCollectedCount.textContent = String(collected);    if (profileLikedCount) profileLikedCount.textContent = String(liked);
-
-    const mLikes = toFiniteNumberStrict(profileMetrics?.likes) ?? 0;
-    const mViews = toFiniteNumberStrict(profileMetrics?.views) ?? 0;
-    const mCreated = toFiniteNumberStrict(profileMetrics?.created) ?? 0;
-    const mMinted = toFiniteNumberStrict(profileMetrics?.minted) ?? 0;
-
-    const anyMetricPositive = mLikes > 0 || mViews > 0 || mCreated > 0 || mMinted > 0;
-    const isArtist = profileData?.isCreator === true || created > 0 || mCreated > 0;
-    const showArtistMetrics = isArtist && anyMetricPositive;
-
-    if (profileOverviewDivider) profileOverviewDivider.style.display = 'none';
-
-    if (profileArtistStatsDivider) profileArtistStatsDivider.style.display = showArtistMetrics ? 'block' : 'none';
-    if (profileArtistStatsTitle) {
-      profileArtistStatsTitle.style.display = showArtistMetrics ? 'flex' : 'none';
-      if (showArtistMetrics) {
-        const displayNameEl = document.getElementById('displayName');
-        const displayNameStyle = displayNameEl ? getComputedStyle(displayNameEl) : null;
-        if (displayNameStyle) {
-          profileArtistStatsTitle.style.setProperty('font-size', displayNameStyle.fontSize, 'important');
-          profileArtistStatsTitle.style.setProperty('line-height', displayNameStyle.lineHeight, 'important');
-          profileArtistStatsTitle.style.setProperty('font-family', displayNameStyle.fontFamily, 'important');
-          profileArtistStatsTitle.style.setProperty('font-weight', displayNameStyle.fontWeight, 'important');
-        }
-        profileArtistStatsTitle.style.setProperty('color', '#fff', 'important');
-        profileArtistStatsTitle.style.setProperty('opacity', '1', 'important');
-      }
-    }
-    if (profileMetricsStats) profileMetricsStats.style.display = showArtistMetrics ? 'grid' : 'none';    // Show divider above profile overview only for non-creators
-    if (profileMetricLikes) profileMetricLikes.textContent = String(mLikes);
-    if (profileMetricViews) profileMetricViews.textContent = String(mViews);
-    if (profileMetricCreated) profileMetricCreated.textContent = String(mCreated);
-    if (profileMetricMinted) profileMetricMinted.textContent = String(mMinted);
 
     profileHeader.style.display = 'block';
     syncFixedBarsHeights();
@@ -2006,6 +1948,8 @@ async function fetchProfileAndNFTs() {
 
     console.log('Starting fetchProfileAndNFTs for:', username);
 
+    resetProfileStatsViewToDefault();
+
     currentUsername = '';
     allNFTs = [];
     assetsLoaded = false;
@@ -2120,15 +2064,7 @@ async function fetchProfileAndNFTs() {
             resetViewport();
             return;
         }
-
-        let profileMetrics = null;
-        try {
-            profileMetrics = await fetchUserMetrics(profileData.username, profileData.uuid);
-        } catch (e) {
-            console.warn('User metrics unavailable:', e?.message || e);
-        }
-
-        updateProfileUI(profileData, profileTotals, profileMetrics);
+        updateProfileUI(profileData, profileTotals);
         void startLikedNFTsPrefetch(currentUsername);
 
         progressText.textContent = `0 assets`;
@@ -2138,7 +2074,12 @@ async function fetchProfileAndNFTs() {
         }));
         collectedNFTsCache = allNFTs;
         currentAssetMode = 'collected';
+        currentGroupingMode = 'collection';
+        currentGroupingLegendTitleOverride = getStatsBreadcrumbLabel('mode:collected');
+        document.body.classList.add('is-group-stats-view');
+        setActiveStatsBreadcrumbFromAction('mode:collected');
         syncProfileModeStatsUI();
+        updateCollageAvailability();
         updateSidebarStats(allNFTs);
 
         if (isProfileLoadingCancelled) {
@@ -2385,11 +2326,212 @@ const canDownload = Boolean(uniqueAssets.length > 0 && currentUsername);
 
     const getCollectionName = (asset) => (asset?.collection?.name || 'Unknown Collection');
 
-    const createNFTCard = (asset, index) => {
+    
+
+window.__nftPreviewState = window.__nftPreviewState || {
+    lastFocusedElement: null,
+    assets: [],
+    currentIndex: -1,
+    initialized: false,
+};
+
+function getNftPreviewState() {
+    return window.__nftPreviewState;
+}
+
+function getNftPreviewModalElements() {
+    return {
+        modal: document.getElementById('nftPreviewModal'),
+        stage: document.getElementById('nftPreviewStage'),
+        title: document.getElementById('nftPreviewTitle'),
+        subtitle: document.getElementById('nftPreviewSubtitle'),
+        counter: document.getElementById('nftPreviewCounter'),
+        closeButton: document.getElementById('nftPreviewCloseButton'),
+        prevButton: document.getElementById('nftPreviewPrevButton'),
+        nextButton: document.getElementById('nftPreviewNextButton'),
+    };
+}
+
+function updateNftPreviewNavigationUI() {
+    const state = getNftPreviewState();
+    const { prevButton, nextButton, counter } = getNftPreviewModalElements();
+    const totalAssets = state.assets.length;
+    const hasMultiple = totalAssets > 1;
+    const safeIndex = totalAssets ? Math.max(0, Math.min(state.currentIndex, totalAssets - 1)) : 0;
+
+    [prevButton, nextButton].forEach((button) => {
+        if (!button) return;
+        button.hidden = !hasMultiple;
+        button.disabled = !hasMultiple;
+        button.setAttribute('aria-hidden', hasMultiple ? 'false' : 'true');
+    });
+
+    if (counter) {
+        counter.textContent = totalAssets ? `${safeIndex + 1} / ${totalAssets}` : '';
+        counter.style.display = totalAssets ? 'inline-flex' : 'none';
+    }
+}
+
+function renderNftPreviewAsset(asset) {
+    const { stage, title, subtitle } = getNftPreviewModalElements();
+    if (!stage || !title || !subtitle) return false;
+
+    const mediaUrl = String(asset?.cover?.url || '').trim();
+    if (!mediaUrl) return false;
+
+    const activeVideo = stage.querySelector('video');
+    if (activeVideo) {
+        activeVideo.pause();
+        activeVideo.removeAttribute('src');
+        activeVideo.load();
+    }
+
+    stage.innerHTML = '';
+
+    let previewMedia;
+    if (/\.mp4(\?|$)/i.test(mediaUrl)) {
+        previewMedia = document.createElement('video');
+        previewMedia.src = mediaUrl;
+        previewMedia.controls = true;
+        previewMedia.autoplay = true;
+        previewMedia.loop = true;
+        previewMedia.playsInline = true;
+        previewMedia.setAttribute('playsinline', '');
+        previewMedia.setAttribute('preload', 'metadata');
+    } else {
+        previewMedia = document.createElement('img');
+        previewMedia.src = mediaUrl;
+        previewMedia.alt = asset?.name || 'NFT Preview';
+        previewMedia.loading = 'eager';
+        previewMedia.decoding = 'async';
+    }
+
+    previewMedia.className = 'nft-preview-media';
+    stage.appendChild(previewMedia);
+
+    const previewTitle = String(asset?.name || '').trim() || (asset?.id ? `NFT #${asset.id}` : 'NFT PREVIEW');
+    const collectionName = String(asset?.collection?.name || '').trim();
+    const creatorName = String(asset?.collection?.creator?.displayName || asset?.collection?.creator?.id || '').trim();
+    const subtitleParts = [collectionName, creatorName].filter(Boolean);
+
+    title.textContent = previewTitle;
+    subtitle.textContent = subtitleParts.join(' • ');
+    subtitle.style.display = subtitleParts.length ? 'block' : 'none';
+    return true;
+}
+
+function closeNftPreview() {
+    const state = getNftPreviewState();
+    const { modal, stage } = getNftPreviewModalElements();
+    if (!modal || !stage) return;
+
+    const activeVideo = stage.querySelector('video');
+    if (activeVideo) {
+        activeVideo.pause();
+        activeVideo.removeAttribute('src');
+        activeVideo.load();
+    }
+
+    stage.innerHTML = '';
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('nft-preview-open');
+
+    if (state.lastFocusedElement && typeof state.lastFocusedElement.focus === 'function') {
+        state.lastFocusedElement.focus({ preventScroll: true });
+    }
+
+    state.lastFocusedElement = null;
+    state.assets = [];
+    state.currentIndex = -1;
+    updateNftPreviewNavigationUI();
+}
+
+function openNftPreview(asset, triggerElement = null, assetList = [], assetIndex = -1) {
+    const state = getNftPreviewState();
+    const { modal, closeButton } = getNftPreviewModalElements();
+    if (!modal) return;
+
+    const normalizedAssets = Array.isArray(assetList) && assetList.length
+        ? assetList.filter(Boolean)
+        : [asset].filter(Boolean);
+
+    const hasExplicitIndex = Number.isInteger(assetIndex) && assetIndex >= 0 && assetIndex < normalizedAssets.length;
+    const matchedIndex = normalizedAssets.findIndex((item) => item === asset);
+    const resolvedIndex = hasExplicitIndex ? assetIndex : (matchedIndex >= 0 ? matchedIndex : 0);
+
+    state.assets = normalizedAssets;
+    state.currentIndex = resolvedIndex;
+    state.lastFocusedElement = triggerElement || document.activeElement;
+
+    const currentAsset = state.assets[state.currentIndex];
+    if (!renderNftPreviewAsset(currentAsset)) return;
+
+    updateNftPreviewNavigationUI();
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('nft-preview-open');
+
+    requestAnimationFrame(() => {
+        closeButton?.focus({ preventScroll: true });
+    });
+}
+
+function navigateNftPreview(direction) {
+    const state = getNftPreviewState();
+    if (state.assets.length <= 1) return;
+    state.currentIndex = (state.currentIndex + direction + state.assets.length) % state.assets.length;
+    renderNftPreviewAsset(state.assets[state.currentIndex]);
+    updateNftPreviewNavigationUI();
+}
+
+function initializeNftPreviewModal() {
+    const state = getNftPreviewState();
+    const { modal, closeButton, prevButton, nextButton } = getNftPreviewModalElements();
+    if (!modal || state.initialized) return;
+
+    state.initialized = true;
+
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal || event.target.closest('[data-preview-close="true"]')) {
+            closeNftPreview();
+        }
+    });
+
+    closeButton?.addEventListener('click', closeNftPreview);
+    prevButton?.addEventListener('click', () => navigateNftPreview(-1));
+    nextButton?.addEventListener('click', () => navigateNftPreview(1));
+
+    document.addEventListener('keydown', (event) => {
+        if (!modal.classList.contains('is-open')) return;
+        if (event.key === 'Escape') {
+            closeNftPreview();
+            return;
+        }
+        if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            navigateNftPreview(-1);
+            return;
+        }
+        if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            navigateNftPreview(1);
+        }
+    });
+
+    updateNftPreviewNavigationUI();
+}
+
+initializeNftPreviewModal();
+
+const createNFTCard = (asset, index, assetList = uniqueAssets) => {
         const imageUrl = asset.cover?.url || 'https://via.placeholder.com/150';
 
         const card = document.createElement('div');
         card.className = 'nft-card';
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('aria-label', `Open preview for ${asset.name || `NFT ${index + 1}`}`);
 
         let mediaElement;
         if (imageUrl.endsWith('.mp4')) {
@@ -2438,7 +2580,11 @@ const canDownload = Boolean(uniqueAssets.length > 0 && currentUsername);
                     <path d="M3.5 9.75a.75.75 0 0 0-1.5 0v1.5A2.75 2.75 0 0 0 4.75 14h6.5A2.75 2.75 0 0 0 14 11.25v-1.5a.75.75 0 0 0-1.5 0v1.5c0 .69-.56 1.25-1.25 1.25h-6.5c-.69 0-1.25-.56-1.25-1.25v-1.5Z" />
                 </svg>
             `;
-            downloadButton.onclick = () => downloadSingleNFT(imageUrl, asset.name || `NFT_${index + 1}`, index);
+            downloadButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                downloadSingleNFT(imageUrl, asset.name || `NFT_${index + 1}`, index);
+            });
             card.appendChild(downloadButton);
         }
 
@@ -2469,6 +2615,18 @@ const canDownload = Boolean(uniqueAssets.length > 0 && currentUsername);
         }
 
         card.appendChild(mediaElement);
+
+        card.addEventListener('click', (event) => {
+            if (event.target.closest('.download-nft-btn, .crypto-nft-btn')) return;
+            openNftPreview(asset, card, assetList, index);
+        });
+
+        card.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            openNftPreview(asset, card, assetList, index);
+        });
+
         return card;
     };
     function slugifyGroupKey(value) {
@@ -2584,7 +2742,7 @@ const list = document.createElement('ul');
             `;
 
             item.querySelector('.group-legend-tip').textContent = String(groupIndex + 1);
-            item.querySelector('.group-legend-name').textContent = group.key;
+            item.querySelector('.group-legend-name').textContent = stripEmojiForLegend(group.key) || group.key;
             item.querySelector('.group-legend-num').textContent = String(group.assets.length);
             item.querySelector('.group-legend-label').textContent = 'NFTs';
 
@@ -2715,8 +2873,9 @@ const renderGrouped = (groupBy) => {
             header.appendChild(titleEl);
             header.appendChild(countEl);
             container.appendChild(header);
-group.assets.forEach(({ asset, idx }) => {
-                container.appendChild(createNFTCard(asset, idx));
+const groupAssetList = group.assets.map(({ asset }) => asset);
+            group.assets.forEach(({ asset }, groupAssetIndex) => {
+                container.appendChild(createNFTCard(asset, groupAssetIndex, groupAssetList));
             });
         });
     };
@@ -2733,7 +2892,7 @@ group.assets.forEach(({ asset, idx }) => {
         const profileSection = document.querySelector('.profile-section');
         if (profileSection) profileSection.classList.remove('profile-section--legend');
 uniqueAssets.forEach((asset, index) => {
-            container.appendChild(createNFTCard(asset, index));
+            container.appendChild(createNFTCard(asset, index, uniqueAssets));
         });
     }
 
@@ -3966,7 +4125,10 @@ function getStatsBreadcrumbLabel(action) {
     if (action.startsWith('mode:')) {
         const value = (action.split(':')[1] || '').trim().toLowerCase();
         if (value === 'liked') return 'LIKED NFTs';
-        if (value === 'collected') return 'NFTs TOTAL';
+        if (value === 'collected') {
+            const profileLabel = String(currentDisplayName || currentUsername || 'PROFILE').trim().toUpperCase();
+            return `${profileLabel} COLLECTION`;
+        }
         return value ? value.toUpperCase() : '';
     }
 
@@ -4361,6 +4523,44 @@ async function runStatsCardAction(action, sourceCard) {
 
 
 
+
+function syncProfileLoadingState() {
+    const progressModal = document.getElementById('progressModal');
+    const modalTitle = document.getElementById('modalTitle');
+
+    if (!progressModal || !modalTitle) return;
+
+    const modalVisible = getComputedStyle(progressModal).display !== 'none';
+    const title = String(modalTitle.textContent || '').trim().toLowerCase();
+    const isLoadingModal = modalVisible && title.startsWith('loading');
+
+    document.body.classList.toggle('is-profile-loading', isLoadingModal);
+}
+
+function setupProfileLoadingStateObserver() {
+    const progressModal = document.getElementById('progressModal');
+    const modalTitle = document.getElementById('modalTitle');
+
+    if (!progressModal || !modalTitle) return;
+
+    const observer = new MutationObserver(() => {
+        syncProfileLoadingState();
+    });
+
+    observer.observe(progressModal, {
+        attributes: true,
+        attributeFilter: ['style', 'class']
+    });
+
+    observer.observe(modalTitle, {
+        childList: true,
+        characterData: true,
+        subtree: true
+    });
+
+    syncProfileLoadingState();
+}
+
 function setupStatsCardInteractions() {
     const statsSection = document.getElementById('sidebarStats');
     if (!statsSection) return;
@@ -4552,6 +4752,22 @@ function setupEventListeners() {
     const sortPill = document.querySelector('.select-pill--sort');
     const sortOrder = ['newest', 'oldest', 'rank'];
 
+    function getCurrentScrollTop() {
+        return scrollTarget === window ? window.scrollY : scrollTarget.scrollTop;
+    }
+
+    function restoreScrollTop(scrollTopValue) {
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                if (scrollTarget === window) {
+                    window.scrollTo({ top: scrollTopValue, behavior: 'auto' });
+                } else {
+                    scrollTarget.scrollTop = scrollTopValue;
+                }
+            });
+        });
+    }
+
     function cycleSort() {
         const current = sortBy.value || 'newest';
         const idx = sortOrder.indexOf(current);
@@ -4561,6 +4777,10 @@ function setupEventListeners() {
     }
 
     if (sortPill) {
+        sortPill.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+        });
+
         sortPill.addEventListener('click', (e) => {
             e.preventDefault();
             cycleSort();
@@ -4575,8 +4795,10 @@ function setupEventListeners() {
     }
 
     sortBy.addEventListener('change', () => {
+        const scrollTopBefore = getCurrentScrollTop();
         filterNFTs();
         syncFilterPills();
+        restoreScrollTop(scrollTopBefore);
     });
 
     const resetFiltersAndRefresh = () => {
@@ -4652,6 +4874,7 @@ function setupEventListeners() {
 function initialize() {
     resetSearchBar();
     syncFixedBarsHeights();
+    setupProfileLoadingStateObserver();
     setupStatsCardInteractions();
     const { username } = parseUrlHash();
     if (username) {
@@ -4690,5 +4913,43 @@ function initialize() {
 
 
 document.addEventListener('DOMContentLoaded', initialize);
-    </script></body>
+    </script>
+<script>
+(function () {
+    const topButton = document.getElementById('scrollToTopButton');
+    const bottomButton = document.getElementById('scrollToBottomButton');
+    const scrollContainer = document.getElementById('appMain');
+
+    if (!topButton || !bottomButton || !scrollContainer) return;
+
+    const EPSILON = 2;
+
+    function updateScrollButtonsCamouflage() {
+        const maxScrollTop = Math.max(0, scrollContainer.scrollHeight - scrollContainer.clientHeight);
+        const currentScrollTop = Math.max(0, scrollContainer.scrollTop);
+        const canScroll = maxScrollTop > EPSILON;
+        const isAtTop = currentScrollTop <= EPSILON;
+        const isAtBottom = currentScrollTop >= (maxScrollTop - EPSILON);
+
+        topButton.classList.toggle('is-camouflaged', !canScroll || isAtTop);
+        bottomButton.classList.toggle('is-camouflaged', !canScroll || isAtBottom);
+    }
+
+    scrollContainer.addEventListener('scroll', updateScrollButtonsCamouflage, { passive: true });
+    window.addEventListener('resize', updateScrollButtonsCamouflage, { passive: true });
+    window.addEventListener('load', updateScrollButtonsCamouflage);
+
+    const observer = new MutationObserver(updateScrollButtonsCamouflage);
+    observer.observe(scrollContainer, { childList: true, subtree: true, attributes: true });
+
+    updateScrollButtonsCamouflage();
+
+    const delayedRefresh = () => requestAnimationFrame(updateScrollButtonsCamouflage);
+    setTimeout(delayedRefresh, 150);
+    setTimeout(delayedRefresh, 500);
+    setTimeout(delayedRefresh, 1000);
+})();
+</script>
+
+</body>
 </html>
