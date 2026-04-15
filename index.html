@@ -150,8 +150,8 @@
       </svg>
     </span>
     <input aria-describedby="usernameHelp" autocomplete="on" id="usernameInput"
-           placeholder="Search a profile" type="text"/>
-    <span class="sr-only" id="usernameHelp">Type at least 3 characters to search a profile.</span>
+           placeholder="Search profiles, collections…" type="text"/>
+    <span class="sr-only" id="usernameHelp">Type at least 3 characters to search profiles, collections or collectibles.</span>
     <div class="suggestions" id="suggestions"></div>
   </div>
 </div>
@@ -189,7 +189,31 @@
 </a>
 </p>
 </div><div class="profile-bio" id="profileBio" style="display: none;"></div>
-</div></div></div><section aria-label="Owner statistics" class="sidebar-stats" id="sidebarStats" style="display: none;"><div aria-label="Owner statistics grid" class="stats-grid" id="profileExtraStats" style="display: none;"><div class="stat-card" id="profileCollectedStat" role="button" tabindex="0" aria-label="Show collected NFTs" data-stat-action="mode:collected"><div class="stat-value" id="profileCollectedCount">0</div><div class="stat-label">NFTs COLLECTED</div></div><div class="stat-card" id="profileLikedStat" role="button" tabindex="0" aria-label="Show liked NFTs" data-stat-action="mode:liked"><div class="stat-value" id="profileLikedCount">0</div><div class="stat-label">NFTs LIKED</div></div><div aria-label="Group NFTs by supported artists" class="stat-card" data-stat-action="group:artist" role="button" tabindex="0">
+</div></div></div>
+
+<!-- ── Collection mode header (affiché à la place du profil) ── -->
+<div class="collection-mode-header" id="collectionModeHeader" style="display:none;">
+  <div class="collection-mode-logo-wrap">
+    <img alt="Collection logo" class="collection-mode-logo" id="collectionModeLogo" src="" style="display:none;"/>
+  </div>
+  <div class="collection-mode-info">
+    <div class="collection-mode-name-row">
+      <span class="collection-mode-title" id="collectionModeTitle"></span>
+      <svg id="collectionModeVerified" class="collection-mode-verified-svg" viewBox="0 0 20 20" fill="none" style="display:none;" aria-label="Verified">
+        <circle cx="10" cy="10" r="10" fill="#1DA1F2"/>
+        <path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="collection-mode-items" id="collectionModeItems"></div>
+    <div class="collection-mode-links">
+      <a class="collection-mode-cro-link" id="collectionModeCroLink" href="#" target="_blank" rel="noopener noreferrer" title="Voir sur Crypto.com NFT">
+        <img alt="Crypto.com NFT" src="https://crypto.com/nft/favicon.png?v=0f6f06777a5d4bc338bfeca412628e1c" class="social-icon"/>
+      </a>
+    </div>
+  </div>
+</div>
+
+<section aria-label="Owner statistics" class="sidebar-stats" id="sidebarStats" style="display: none;"><div aria-label="Owner statistics grid" class="stats-grid" id="profileExtraStats" style="display: none;"><div class="stat-card" id="profileCollectedStat" role="button" tabindex="0" aria-label="Show collected NFTs" data-stat-action="mode:collected"><div class="stat-value" id="profileCollectedCount">0</div><div class="stat-label">NFTs COLLECTED</div></div><div class="stat-card" id="profileLikedStat" role="button" tabindex="0" aria-label="Show liked NFTs" data-stat-action="mode:liked"><div class="stat-value" id="profileLikedCount">0</div><div class="stat-label">NFTs LIKED</div></div><div aria-label="Group NFTs by supported artists" class="stat-card" data-stat-action="group:artist" role="button" tabindex="0">
 <div class="stat-value" id="statArtists">0</div>
 <div class="stat-label">ARTISTS COLLECTED</div>
 </div>
@@ -1187,7 +1211,7 @@ function resetSearchBar() {
     if (searchInput) {
         searchInput.value = ''; // Vider le contenu
         searchInput.blur(); // Retirer le focus
-        searchInput.placeholder = 'Search a profile';
+        searchInput.placeholder = 'Search profiles, collections…';
     }
 }
 
@@ -1573,107 +1597,430 @@ async function switchProfileAssetMode(nextMode) {
     }
 }
 
+// ── Requête officielle crypto.com NFT : getSearchPreviewResults ─────────────
+
+const getSearchPreviewResultsQuery = `
+    query getSearchPreviewResults($keyWord: String!) {
+        public {
+            dropDown(keyWord: $keyWord) {
+                collectibles {
+                    id
+                    cover { url }
+                    name
+                    externalNftMetadata { network isSuspicious }
+                    copies
+                    copiesInCirculation
+                    defaultEditionId
+                    primaryListingsCount
+                    secondaryListingsCount
+                    kind
+                    isCurated
+                    defaultListingV2 { editionId }
+                }
+                collections {
+                    id
+                    logo { url }
+                    name
+                    verified
+                    metrics { items }
+                }
+                users {
+                    avatar { url }
+                    displayName
+                    username
+                    verified
+                }
+            }
+        }
+    }
+`;
+
+async function fetchDropDown(keyWord, signal) {
+    try {
+        const response = await fetch(graphqlEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                operationName: 'getSearchPreviewResults',
+                variables: { keyWord },
+                query: getSearchPreviewResultsQuery
+            }),
+            signal
+        });
+        if (!response.ok) return null;
+        const result = await response.json();
+        return result.data?.public?.dropDown || null;
+    } catch (e) {
+        return null;
+    }
+}
+
+// ── Requête assets d'une collection ─────────────────────────────────────────
+
+const collectionAssetsQuery = `
+    query GetCollectionAssets($collectionId: ID!, $first: Int!, $skip: Int!) {
+        public {
+            collectionAssets(collectionId: $collectionId, first: $first, skip: $skip) {
+                id
+                name
+                cover { url }
+                collection {
+                    id
+                    name
+                    creator { id displayName }
+                }
+                isExternalNft
+                externalNftMetadata { network }
+                defaultListingV2 { salePriceDecimalUSD }
+                latestPurchasedEdition { priceUSD }
+                createdAt
+                defaultRarityRank
+                isCurated
+            }
+        }
+    }
+`;
+
+async function fetchAllCollectionAssets(collectionId, progressCallback) {
+    const first = 60;
+    let skip = 0;
+    let all = [];
+    let hasMore = true;
+    while (hasMore && !isProfileLoadingCancelled) {
+        const response = await fetch(graphqlEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: collectionAssetsQuery, variables: { collectionId, first, skip } })
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const result = await response.json();
+        if (result.errors) throw new Error(result.errors.map(e => e.message).join(', '));
+        const assets = result.data?.public?.collectionAssets || [];
+        all = [...all, ...assets];
+        skip += first;
+        hasMore = assets.length === first;
+        if (progressCallback) progressCallback(all.length);
+    }
+    return all;
+}
+
+async function fetchAndDisplayCollection(collectionData) {
+    // collectionData: { id, name, logo:{url}, verified, metrics:{items} }
+    const collectionId = collectionData.id;
+    const collectionName = collectionData.name || collectionId;
+
+    clearSuggestions();
+    resetSearchBar();
+
+    // Reset UI state
+    currentUsername = '';
+    allNFTs = [];
+    assetsLoaded = false;
+    isProfileLoadingCancelled = false;
+    currentAssetMode = 'collected';
+    currentGroupingMode = 'all';
+    currentGroupingLegendTitleOverride = collectionName;
+    suppressCollectedModeHighlight = true;
+
+    // Reset filters
+    const collectionFilter = document.getElementById('collectionFilter');
+    const creatorFilter    = document.getElementById('creatorFilter');
+    const chainFilter      = document.getElementById('chainFilter');
+    const curatedFilter    = document.getElementById('curatedFilter');
+    const cardSize         = document.getElementById('cardSize');
+    const sortBy           = document.getElementById('sortBy');
+    if (collectionFilter) { collectionFilter.innerHTML = '<option value="">ALL COLLECTIONS</option>'; collectionFilter.value = ''; }
+    if (creatorFilter)    { creatorFilter.innerHTML = '<option value="">ALL ARTISTS</option>'; creatorFilter.value = ''; }
+    if (chainFilter)      chainFilter.value = '';
+    if (curatedFilter)    curatedFilter.value = '';
+    if (cardSize)         cardSize.value = 'small';
+    if (sortBy)           sortBy.value = 'newest';
+
+    // Hide profile header, show loading overlay
+    const profileHeader = document.getElementById('profileHeader');
+    const sidebarStats  = document.getElementById('sidebarStats');
+    const nftContainer  = document.getElementById('nftContainer');
+    const nftCountContainer = document.getElementById('nftCountContainer');
+    const noResultsDiv  = document.getElementById('noResults');
+    const errorDiv      = document.getElementById('error');
+    const controls      = document.getElementById('controls');
+    const navbarControls = document.getElementById('navbarControls');
+
+    if (profileHeader)   profileHeader.style.display = 'none';
+    if (sidebarStats)    sidebarStats.style.display = 'none';
+    if (nftContainer)    nftContainer.innerHTML = '';
+    if (nftCountContainer) nftCountContainer.innerHTML = '';
+    if (noResultsDiv)    noResultsDiv.style.display = 'none';
+    if (errorDiv)        errorDiv.textContent = '';
+    if (controls)        controls.classList.remove('visible');
+    if (navbarControls)  navbarControls.classList.remove('visible');
+
+    // Show collection header in sidebar
+    const collectionHeader = document.getElementById('collectionModeHeader');
+    if (collectionHeader) {
+        document.getElementById('collectionModeTitle').textContent   = collectionName;
+        document.getElementById('collectionModeVerified').style.display = collectionData.verified ? 'inline' : 'none';
+        const logoEl = document.getElementById('collectionModeLogo');
+        if (logoEl) {
+            logoEl.src = collectionData.logo?.url || '';
+            logoEl.style.display = collectionData.logo?.url ? 'block' : 'none';
+        }
+        const itemsEl = document.getElementById('collectionModeItems');
+        if (itemsEl) itemsEl.textContent = collectionData.metrics?.items ? Number(collectionData.metrics.items).toLocaleString() + ' items' : '';
+        const linkEl = document.getElementById('collectionModeCroLink');
+        if (linkEl) linkEl.href = `https://crypto.com/nft/collection/${collectionId}`;
+        collectionHeader.style.display = 'block';
+    }
+
+    // Loading overlay
+    const profileLoadingOverlay = document.getElementById('profileLoadingOverlay');
+    const circularFill = document.getElementById('circularFill');
+    const circularPct  = document.getElementById('circularPct');
+    const elementsToHide = [
+        document.querySelector('.navbar'),
+        document.getElementById('leftSidebar'),
+        document.getElementById('appMain'),
+        document.getElementById('scrollToTopButton'),
+        document.getElementById('scrollToBottomButton'),
+        document.getElementById('navbarRight'),
+    ].filter(Boolean);
+
+    if (profileLoadingOverlay) {
+        profileLoadingOverlay.classList.add('visible');
+        profileLoadingOverlay.style.visibility = 'visible';
+        profileLoadingOverlay.style.display = 'flex';
+        profileLoadingOverlay.style.zIndex = '99999';
+    }
+    elementsToHide.forEach(el => { el.style.visibility = 'hidden'; el.style.pointerEvents = 'none'; });
+    document.body.classList.add('is-profile-loading');
+
+    try {
+        const totalExpected = collectionData.metrics?.items || 0;
+        allNFTs = await fetchAllCollectionAssets(collectionId, (n) => {
+            if (isProfileLoadingCancelled) return;
+            if (circularPct) circularPct.textContent = totalExpected > 0 ? `${Math.min(99, Math.round(n / totalExpected * 100))}%` : `${n}`;
+            if (circularFill && totalExpected > 0) {
+                const pct = Math.min(99, Math.round(n / totalExpected * 100));
+                circularFill.style.strokeDashoffset = 326.7 - (326.7 * pct / 100);
+            }
+        });
+
+        collectedNFTsCache = allNFTs;
+        document.body.classList.add('is-group-stats-view');
+        updateSidebarStats(allNFTs);
+        if (sidebarStats) sidebarStats.style.display = 'block';
+
+        if (controls)      controls.classList.add('visible');
+        if (navbarControls) navbarControls.classList.add('visible');
+
+        populateCreatorFilter(allNFTs);
+        populateCollectionFilter(allNFTs);
+        filterNFTs();
+
+    } catch (e) {
+        console.error('fetchAndDisplayCollection error:', e);
+        if (errorDiv) errorDiv.textContent = `Error loading collection: ${e.message}`;
+    } finally {
+        if (circularFill) circularFill.style.strokeDashoffset = 0;
+        if (circularPct)  circularPct.textContent = '100%';
+        setTimeout(() => {
+            if (profileLoadingOverlay) {
+                profileLoadingOverlay.classList.remove('visible');
+                profileLoadingOverlay.style.display = 'none';
+            }
+            elementsToHide.forEach(el => { el.style.visibility = ''; el.style.pointerEvents = ''; });
+            document.body.classList.remove('is-profile-loading');
+            if (circularFill) circularFill.style.strokeDashoffset = 326.7;
+            if (circularPct)  circularPct.textContent = '0%';
+        }, 400);
+    }
+}
+
+function buildSuggestionSection(labelText, labelClass, items) {
+    if (!items || !items.length) return null;
+    const section = document.createElement('div');
+    section.className = 'suggestion-section';
+    const label = document.createElement('div');
+    label.className = `suggestion-section-label ${labelClass}`;
+    label.textContent = labelText;
+    section.appendChild(label);
+    items.forEach(item => section.appendChild(item));
+    return section;
+}
+
+function makeThumb(url, alt, square) {
+    const img = document.createElement('img');
+    img.src = url || '';
+    img.alt = alt || '';
+    img.className = square ? 'suggestion-thumb suggestion-thumb--square' : 'suggestion-thumb';
+    img.onerror = () => { img.style.display = 'none'; };
+    if (!url) img.style.display = 'none';
+    return img;
+}
+
+function makePlaceholder(square) {
+    const ph = document.createElement('div');
+    ph.className = square
+        ? 'suggestion-thumb suggestion-thumb--square suggestion-thumb--placeholder'
+        : 'suggestion-thumb suggestion-thumb--placeholder';
+    return ph;
+}
+
+function makeVerifiedBadge() {
+    // Badge coche bleue identique au site officiel crypto.com NFT
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 20 20');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('class', 'suggestion-verified-svg');
+    svg.setAttribute('aria-label', 'Verified');
+    svg.innerHTML = `
+        <circle cx="10" cy="10" r="10" fill="#1DA1F2"/>
+        <path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    `;
+    return svg;
+}
+
 async function searchProfiles(query) {
     const suggestions = document.getElementById('suggestions');
-    if (!suggestions) {
-        console.error('Suggestions container not found');
-        return;
-    }
+    if (!suggestions) return;
 
     if (!query || query.length < 3) {
         suggestions.innerHTML = '';
         suggestions.style.display = 'none';
-        console.log('Query too short, clearing suggestions');
         return;
     }
 
-    suggestions.innerHTML = '<div class="suggestion-item">Searching...</div>';
+    suggestions.innerHTML = '<div class="suggestion-searching"><span class="suggestion-searching-dot"></span><span class="suggestion-searching-dot"></span><span class="suggestion-searching-dot"></span></div>';
     suggestions.style.display = 'block';
 
-    if (activeSearch) {
-        activeSearch.cancel = true;
-    }
-
+    if (activeSearch) activeSearch.cancel = true;
     const searchToken = { cancel: false };
     activeSearch = searchToken;
 
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     try {
-        const profileData = await fetchWithCache(`profile_${query}`, async (signal) => {
-            const response = await fetch(graphqlEndpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    query: profileQuery,
-                    variables: { id: query, cacheId: `getUserQuery-Profile-${query}` }
-                }),
-                signal
-            });
+        const dropDown = await fetchDropDown(query, signal);
+        if (searchToken.cancel) return;
 
-            if (searchToken.cancel) {
-                throw new Error('Search cancelled');
-            }
+        suggestions.innerHTML = '';
 
-            if (!response.ok) {
-                throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
-            }
+        // Limiter à 3 résultats par catégorie
+        const collections  = (dropDown?.collections  || []).slice(0, 3);
+        const users        = (dropDown?.users        || []).slice(0, 3);
+        const collectibles = (dropDown?.collectibles || []).slice(0, 3);
 
-            const result = await response.json();
-            if (result.errors) {
-                throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
-            }
-
-            return result.data?.public?.user;
-        });
-
-        if (searchToken.cancel) {
-            console.log('Search cancelled, ignoring result');
+        if (!collections.length && !users.length && !collectibles.length) {
+            const empty = document.createElement('div');
+            empty.className = 'suggestion-empty';
+            empty.textContent = 'No results found';
+            suggestions.appendChild(empty);
+            suggestions.style.display = 'block';
             return;
         }
 
-        suggestions.innerHTML = '';
-        if (profileData && profileData.username) {
+        // ── COLLECTIONS ──
+        const collectionItems = collections.map(c => {
             const item = document.createElement('div');
-            item.className = 'suggestion-item';
-            
-            if (profileData.avatar?.url) {
-                const img = document.createElement('img');
-                img.src = profileData.avatar.url;
-                img.alt = `${profileData.username} avatar`;
-                img.onerror = () => {
-                    console.error(`Failed to load avatar for ${profileData.username}`);
-                    img.style.display = 'none';
-                };
-                item.appendChild(img);
+            item.className = 'suggestion-item suggestion-item--collection';
+            const thumbUrl = c.logo?.url || '';
+            item.appendChild(thumbUrl ? makeThumb(thumbUrl, c.name, true) : makePlaceholder(true));
+            const info = document.createElement('div');
+            info.className = 'suggestion-item-info';
+            const name = document.createElement('span');
+            name.className = 'suggestion-item-name';
+            name.textContent = c.name || '';
+            info.appendChild(name);
+            if (c.metrics?.items) {
+                const sub = document.createElement('span');
+                sub.className = 'suggestion-item-sub';
+                sub.textContent = Number(c.metrics.items).toLocaleString() + ' items';
+                info.appendChild(sub);
             }
-
-            const text = document.createElement('span');
-            text.textContent = profileData.username;
-            item.appendChild(text);
-
-            item.dataset.username = profileData.username;
+            item.appendChild(info);
+            if (c.verified) item.appendChild(makeVerifiedBadge());
             item.addEventListener('click', () => {
-                selectSuggestion(profileData.username);
+                clearSuggestions();
+                fetchAndDisplayCollection(c);
             });
-            suggestions.appendChild(item);
-            suggestions.style.display = 'block';
-        } else {
-            suggestions.innerHTML = '<div class="suggestion-item">No profile found</div>';
-            suggestions.style.display = 'block';
-        }
+            return item;
+        });
+
+        // ── PROFILES (users) ──
+        const profileItems = users.map(u => {
+            const item = document.createElement('div');
+            item.className = 'suggestion-item suggestion-item--profile';
+            const thumbUrl = u.avatar?.url || '';
+            item.appendChild(thumbUrl ? makeThumb(thumbUrl, u.username) : makePlaceholder(false));
+            const info = document.createElement('div');
+            info.className = 'suggestion-item-info';
+            const name = document.createElement('span');
+            name.className = 'suggestion-item-name';
+            name.textContent = u.username || '';
+            info.appendChild(name);
+            if (u.displayName && u.displayName !== u.username) {
+                const sub = document.createElement('span');
+                sub.className = 'suggestion-item-sub';
+                sub.textContent = u.displayName;
+                info.appendChild(sub);
+            }
+            item.appendChild(info);
+            if (u.verified) item.appendChild(makeVerifiedBadge());
+            item.addEventListener('click', () => selectSuggestion(u.username));
+            return item;
+        });
+
+        // ── COLLECTIBLES ──
+        const collectibleItems = collectibles.map(a => {
+            const item = document.createElement('div');
+            item.className = 'suggestion-item suggestion-item--asset';
+            const thumbUrl = a.cover?.url || '';
+            item.appendChild(thumbUrl ? makeThumb(thumbUrl, a.name, true) : makePlaceholder(true));
+            const info = document.createElement('div');
+            info.className = 'suggestion-item-info';
+            const name = document.createElement('span');
+            name.className = 'suggestion-item-name';
+            name.textContent = a.name || '';
+            info.appendChild(name);
+            const subParts = [];
+            const network = a.externalNftMetadata?.network;
+            if (network) subParts.push(network);
+            const listings = (a.primaryListingsCount || 0) + (a.secondaryListingsCount || 0);
+            if (listings > 0) subParts.push(listings + ' listing' + (listings > 1 ? 's' : ''));
+            if (subParts.length) {
+                const sub = document.createElement('span');
+                sub.className = 'suggestion-item-sub';
+                sub.textContent = subParts.join(' · ');
+                info.appendChild(sub);
+            }
+            item.appendChild(info);
+            item.addEventListener('click', () => {
+                const editionId = a.defaultEditionId || a.defaultListingV2?.editionId || a.id;
+                if (editionId) window.open(`https://crypto.com/nft/marketplace/edition/${editionId}`, '_blank', 'noopener');
+                clearSuggestions();
+            });
+            return item;
+        });
+
+        // Ordre identique au site officiel : Collections → Profiles → Collectibles
+        const collectionsSection  = buildSuggestionSection('COLLECTIONS',  'suggestion-section-label--collection', collectionItems);
+        const profilesSection     = buildSuggestionSection('PROFILES',     'suggestion-section-label--profile',    profileItems);
+        const collectiblesSection = buildSuggestionSection('COLLECTIBLES', 'suggestion-section-label--asset',      collectibleItems);
+
+        if (collectionsSection)  suggestions.appendChild(collectionsSection);
+        if (profilesSection)     suggestions.appendChild(profilesSection);
+        if (collectiblesSection) suggestions.appendChild(collectiblesSection);
+
+        suggestions.style.display = 'block';
+
     } catch (error) {
-        if (error.message !== 'Search cancelled') {
-            console.error(`Error in searchProfiles: ${error.message}`);
-            suggestions.innerHTML = `<div class="suggestion-item">${
-                error.message.includes('user[id=') && error.message.includes('not found')
-                    ? 'No profile found'
-                    : `Error: ${error.message}`
-            }</div>`;
-            suggestions.style.display = 'block';
-        }
+        if (searchToken.cancel || error?.name === 'AbortError') return;
+        console.error('searchProfiles error:', error);
+        suggestions.innerHTML = '<div class="suggestion-empty">Search error. Please try again.</div>';
+        suggestions.style.display = 'block';
     } finally {
-        if (activeSearch === searchToken) {
-            activeSearch = null;
-        }
+        if (activeSearch === searchToken) activeSearch = null;
     }
 }
 
@@ -1789,6 +2136,8 @@ function updateProfileUI(profileData, profileTotals = null) {
     if (profileCollectedCount) profileCollectedCount.textContent = String(collected);    if (profileLikedCount) profileLikedCount.textContent = String(liked);
 
     profileHeader.style.display = 'block';
+    const collectionModeHeader = document.getElementById('collectionModeHeader');
+    if (collectionModeHeader) collectionModeHeader.style.display = 'none';
     syncFixedBarsHeights();
     usernameInput.value = '';
 }
@@ -2013,6 +2362,8 @@ async function fetchProfileAndNFTs() {
     if (inProgressModal) inProgressModal.style.display = 'none';
 
     profileHeader.style.display = 'none';
+    const collectionModeHeaderEl = document.getElementById('collectionModeHeader');
+    if (collectionModeHeaderEl) collectionModeHeaderEl.style.display = 'none';
     const sidebarStats = document.getElementById('sidebarStats');
     if (sidebarStats) sidebarStats.style.display = 'none';
     syncFixedBarsHeights();
