@@ -55,6 +55,50 @@
             JavaScript is required to view this content. Please enable JavaScript in your browser settings.
         </div>
 </noscript>
+<!-- ── TOP NAV BAR ── -->
+<header class="topnav" id="topNav" role="banner">
+  <div class="topnav-inner">
+
+    <!-- Logo -->
+    <div class="topnav-brand">
+      <span class="topnav-logo-text">CRONOS<span class="topnav-logo-dot">.WTF</span></span>
+    </div>
+
+    <!-- Search (centre-gauche) -->
+    <div class="topnav-search-wrap">
+      <svg class="topnav-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><line x1="13.5" y1="13.5" x2="18" y2="18"/></svg>
+      <input class="topnav-search-input" id="topnavSearchInput" type="text" placeholder="Search profiles, collections…" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-label="Search"/>
+      <span class="topnav-search-kbd">⌘K</span>
+      <div class="topnav-suggestions" id="topnavSuggestions"></div>
+    </div>
+
+    <!-- Spacer -->
+    <div class="topnav-spacer"></div>
+
+    <!-- Tabs (droite) -->
+    <nav class="topnav-tabs" role="tablist" aria-label="Main navigation">
+      <button class="topnav-tab topnav-tab--active" data-tab="collections" role="tab" aria-selected="true" type="button">
+        <svg class="topnav-tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="7" height="7" rx="1.5"/><rect x="11" y="3" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
+        <span>Collections</span>
+      </button>
+      <button class="topnav-tab" data-tab="profile" role="tab" aria-selected="false" type="button">
+        <svg class="topnav-tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.5"/><path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/></svg>
+        <span>Profil</span>
+      </button>
+      <button class="topnav-tab" data-tab="stats" role="tab" aria-selected="false" type="button">
+        <svg class="topnav-tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,15 7,9 11,12 18,4"/><line x1="2" y1="18" x2="18" y2="18"/></svg>
+        <span>Stats</span>
+      </button>
+      <button class="topnav-tab topnav-tab--disabled" data-tab="salesbot" role="tab" aria-selected="false" type="button" disabled>
+        <svg class="topnav-tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="10" rx="2"/><circle cx="7.5" cy="10" r="1"/><circle cx="12.5" cy="10" r="1"/><path d="M8 3.5V5M12 3.5V5"/></svg>
+        <span>Sales Bot</span>
+        <span class="topnav-tab-badge">SOON</span>
+      </button>
+    </nav>
+
+  </div>
+  <div class="topnav-indicator" id="topnavIndicator"></div>
+</header>
 <nav class="navbar navbar--floating-controls">
 <div class="navbar-top-row">
 </div>
@@ -141,7 +185,7 @@
 <aside class="left-sidebar" id="leftSidebar">
 <div class="left-sidebar-glass">
 <div class="sidebar-main">
-<div class="sidebar-search" id="sidebarSearchTop" aria-label="Profile search">
+<div class="sidebar-search" id="sidebarSearchTop" aria-label="Profile search" style="display:none;">
   <div class="navbar-search navbar-search--sidebar sidebar-search-pill">
     <span class="sidebar-search-icon" aria-hidden="true">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -268,6 +312,88 @@
 <div class="error" id="error" role="alert"></div>
 <div class="no-results" id="noResults" style="display: none;">No results found</div>
 <div class="nft-container" id="nftContainer"></div>
+
+<!-- ── STATS PANEL ── -->
+<div class="stats-panel" id="statsPanel" style="display:none;">
+  <div class="stats-panel-header">
+    <!-- Big centered title matching profile legend -->
+    <h2 class="stats-panel-title">TOP COLLECTIONS</h2>
+    <!-- Controls row: summary LEFT, filters+search RIGHT -->
+    <div class="stats-panel-title-row">
+      <div class="stats-summary" id="statsSummary"></div>
+      <div class="stats-panel-controls">
+        <div class="stats-search-wrap">
+          <svg class="stats-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="5.5"/><line x1="13" y1="13" x2="17" y2="17"/></svg>
+          <input class="stats-search-input" id="statsSearchInput" type="text" placeholder="Search a collection…" autocomplete="off" spellcheck="false"/>
+          <button class="stats-search-clear" id="statsSearchClear" type="button" style="display:none;">×</button>
+        </div>
+        <div class="stats-timerange" id="statsTimeRange">
+          <button class="stats-tr-btn stats-tr-btn--active" data-range="ONE_DAY" type="button">24H</button>
+          <button class="stats-tr-btn" data-range="SEVEN_DAYS" type="button">7D</button>
+          <button class="stats-tr-btn" data-range="THIRTY_DAYS" type="button">30D</button>
+          <button class="stats-tr-btn" data-range="ALL" type="button">ALL</button>
+        </div>
+        <div class="stats-chain-filter" id="statsChainFilter">
+          <button class="stats-cf-btn stats-cf-btn--active" data-chain="ALL" type="button">All Chains</button>
+          <button class="stats-cf-btn" data-chain="CRONOS" type="button">Cronos</button>
+          <button class="stats-cf-btn" data-chain="CRO" type="button">Cronos POS</button>
+        </div>
+        <div class="stats-verified-filter" id="statsVerifiedFilter">
+          <button class="stats-vf-btn stats-vf-btn--active" data-verified="ALL" type="button">All Status</button>
+          <button class="stats-vf-btn" data-verified="true" type="button">Verified</button>
+          <button class="stats-vf-btn" data-verified="false" type="button">Unverified</button>
+        </div>
+        <button class="stats-refresh-btn" id="statsRefreshBtn" type="button" title="Refresh">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 4v5h5"/><path d="M19 16v-5h-5"/>
+            <path d="M17.94 7A8 8 0 1 0 18 10"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-table-wrap" id="statsTableWrap">
+    <!-- Skeleton loader -->
+    <div class="stats-loading" id="statsLoading">
+      <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
+    </div>
+    <div class="stats-error" id="statsError" style="display:none;"></div>
+    <table class="stats-table" id="statsTable" style="display:none;">
+      <colgroup>
+        <col class="scol-rank">
+        <col class="scol-collection">
+        <col class="scol-floor">
+        <col class="scol-floorpct">
+        <col class="scol-vol">
+        <col class="scol-change">
+        <col class="scol-buyers">
+        <col class="scol-owners">
+        <col class="scol-items">
+        <col class="scol-listed">
+        <col class="scol-totalsales">
+        <col class="scol-chain">
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="stats-th stats-th--rank">#</th>
+          <th class="stats-th stats-th--collection">Collection</th>
+          <th class="stats-th stats-th--floor stats-th--sortable" data-col="floor">Floor Price <span class="stats-sort-icon"></span></th>
+          <th class="stats-th stats-th--floorpct stats-th--sortable" data-col="floorpct">Floor % <span class="stats-sort-icon"></span></th>
+          <th class="stats-th stats-th--vol stats-th--sortable stats-th--sorted-desc" data-col="vol">Volume <span class="stats-sort-icon">↓</span></th>
+          <th class="stats-th stats-th--change stats-th--sortable" data-col="change">Volume % <span class="stats-sort-icon"></span></th>
+          <th class="stats-th stats-th--buyers stats-th--sortable" data-col="buyers">Buyers <span class="stats-sort-icon"></span></th>
+          <th class="stats-th stats-th--owners stats-th--sortable" data-col="owners">Owners <span class="stats-sort-icon"></span></th>
+          <th class="stats-th stats-th--items stats-th--sortable" data-col="items">Total Supply <span class="stats-sort-icon"></span></th>
+          <th class="stats-th stats-th--listed stats-th--sortable" data-col="listed">Listed % <span class="stats-sort-icon"></span></th>
+          <th class="stats-th stats-th--totalsales stats-th--sortable" data-col="totalsales">Volume Traded <span class="stats-sort-icon"></span></th>
+          <th class="stats-th stats-th--chain">Chain</th>
+        </tr>
+      </thead>
+      <tbody id="statsTableBody"></tbody>
+    </table>
+  </div>
+</div>
 
 <div class="modal" id="progressModal">
 <div class="modal-content">
@@ -5459,3 +5585,733 @@ document.addEventListener('DOMContentLoaded', initialize);
 
 </body>
 </html>
+<script>
+/* ── TOP NAV BAR + STATS ── */
+(function () {
+    'use strict';
+
+    /* ── Tab switching ── */
+    const tabs = document.querySelectorAll('.topnav-tab');
+
+    const MAIN_ELEMENTS = ['nftContainer','profileSection','groupLegend','timestamp','error','noResults','nftCountContainer'];
+    const statsPanel = document.getElementById('statsPanel');
+    const appMain = document.getElementById('appMain');
+
+    function showMainView() {
+        document.querySelectorAll('.profile-section, #nftContainer, #timestamp, #error, #noResults, #profileLoadingOverlay').forEach(el => {
+            if (el) el.style.removeProperty('display');
+        });
+        if (statsPanel) statsPanel.style.display = 'none';
+        const leftSidebar = document.getElementById('leftSidebar');
+        if (leftSidebar) leftSidebar.style.removeProperty('display');
+        const navbar = document.querySelector('.navbar--floating-controls');
+        if (navbar) navbar.style.removeProperty('display');
+        if (appMain) appMain.style.removeProperty('margin-left');
+        // Restore main-content sizing (navbar is back)
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            mainContent.style.removeProperty('top');
+            mainContent.style.removeProperty('margin-top');
+            mainContent.style.removeProperty('height');
+        }
+    }
+
+    function showStatsView() {
+        document.querySelectorAll('.profile-section, #nftContainer, #timestamp, #noResults, #profileLoadingOverlay').forEach(el => {
+            if (el) el.style.display = 'none';
+        });
+        const errEl = document.getElementById('error');
+        if (errEl) errEl.style.display = 'none';
+        // Hide left sidebar and the floating navbar (sort/size filters — irrelevant for stats)
+        const leftSidebar = document.getElementById('leftSidebar');
+        if (leftSidebar) leftSidebar.style.display = 'none';
+        const navbar = document.querySelector('.navbar--floating-controls');
+        if (navbar) navbar.style.display = 'none';
+        if (statsPanel) statsPanel.style.display = 'block';
+        if (appMain) {
+            appMain.style.marginLeft = '0';
+            appMain.scrollTop = 0;
+        }
+        // Adjust main-content so it starts right below topnav (navbar is hidden)
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            const topnavH = getComputedStyle(document.documentElement).getPropertyValue('--topnav-height').trim() || '52px';
+            mainContent.style.setProperty('top', topnavH, 'important');
+            mainContent.style.setProperty('margin-top', topnavH, 'important');
+            mainContent.style.setProperty('height', `calc(100vh - ${topnavH})`, 'important');
+        }
+        window._statsLoaded = false;
+        loadStats();
+    }
+
+    function activateTab(tab) {
+        tabs.forEach(t => {
+            t.classList.remove('topnav-tab--active');
+            t.setAttribute('aria-selected', 'false');
+        });
+        tab.classList.add('topnav-tab--active');
+        tab.setAttribute('aria-selected', 'true');
+
+        const tabName = tab.dataset.tab;
+        if (tabName === 'stats') {
+            showStatsView();
+        } else {
+            showMainView();
+        }
+    }
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            if (tab.classList.contains('topnav-tab--disabled')) return;
+            activateTab(tab);
+        });
+    });
+
+    /* ── Search ── */
+    const topnavInput = document.getElementById('topnavSearchInput');
+    const topnavSuggestions = document.getElementById('topnavSuggestions');
+    const sidebarInput = document.getElementById('usernameInput');
+
+    document.addEventListener('keydown', e => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+            e.preventDefault();
+            if (topnavInput) topnavInput.focus();
+        }
+    });
+
+    if (topnavInput && sidebarInput) {
+        topnavInput.addEventListener('input', () => {
+            sidebarInput.value = topnavInput.value;
+            sidebarInput.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+
+        topnavInput.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                topnavSuggestions.innerHTML = '';
+                topnavSuggestions.classList.remove('is-visible');
+                topnavInput.blur();
+            }
+        });
+
+        document.addEventListener('click', e => {
+            if (!topnavInput.contains(e.target) && !topnavSuggestions.contains(e.target)) {
+                topnavSuggestions.classList.remove('is-visible');
+            }
+        });
+
+        const sidebarSuggestions = document.getElementById('suggestions');
+        if (sidebarSuggestions) {
+            const obs = new MutationObserver(() => {
+                if (document.activeElement !== topnavInput && topnavInput.value.length < 3) return;
+                if (sidebarSuggestions.innerHTML && sidebarSuggestions.style.display !== 'none') {
+                    topnavSuggestions.innerHTML = sidebarSuggestions.innerHTML;
+                    topnavSuggestions.classList.add('is-visible');
+                } else {
+                    topnavSuggestions.innerHTML = '';
+                    topnavSuggestions.classList.remove('is-visible');
+                }
+            });
+            obs.observe(sidebarSuggestions, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+        }
+    }
+
+    /* ── Stats panel ── */
+    const CRONOS_NETWORKS = ['CRONOS', 'CRONOS_POS'];
+    let currentTimeRange = 'ONE_DAY';
+    let currentChainFilter = 'ALL'; // ALL | CRONOS | CRO
+    let currentVerifiedFilter = 'ALL'; // ALL | true | false
+    let currentSort = { col: 'vol', dir: 'desc' }; // active column sort
+    let _allRows = []; // full merged dataset for client-side filter+sort
+    window._statsLoaded = false;
+
+    function getVolumeField(range) {
+        if (range === 'ONE_DAY')     return ['oneDayVolumeDecimal','oneDayVolumeDecimalChange','oneDayFloorPriceDecimal','oneDayBuyerCount'];
+        if (range === 'SEVEN_DAYS')  return ['sevenDayVolumeDecimal','sevenDayVolumeDecimalChange','sevenDayFloorPriceDecimal','sevenDayBuyerCount'];
+        if (range === 'THIRTY_DAYS') return ['thirtyDayVolumeDecimal','thirtyDayVolumeDecimalChange','thirtyDayFloorPriceDecimal','thirtyDayBuyerCount'];
+        // ALL: use totalSalesDecimal from metrics, no change %, floor from stats
+        return ['_totalSales','_noChange','floorPriceDecimal','allDayBuyerCount'];
+    }
+
+    function getSortField(range) {
+        if (range === 'ONE_DAY')     return 'totalSalesDecimalInLast1Day';
+        if (range === 'SEVEN_DAYS')  return 'totalSalesDecimalInLast7Days';
+        if (range === 'THIRTY_DAYS') return 'totalSalesDecimalInLast30Days';
+        return 'totalSalesDecimal'; // ALL_TIME
+    }
+
+    // The API timeRange enum value to send — ALL uses no timeRange (omit it)
+    function getApiTimeRange(range) {
+        if (range === 'ALL') return null; // omit timeRange for all-time
+        return range;
+    }
+
+    const QUERY = `query GetCollectionsPage($cacheId: ID, $search: String, $first: Int, $skip: Int, $sort: SingleFieldSort, $withStats: Boolean!, $categories: [ID!], $networks: [SupportedNetwork!], $isSortFieldZeroLast: Boolean!, $timeRange: TimeRange, $hideEmpty: Boolean, $verifiedOnly: Boolean) {
+  public(cacheId: $cacheId) {
+    collections(
+      search: $search
+      first: $first
+      skip: $skip
+      sort: $sort
+      categories: $categories
+      networks: $networks
+      isSortFieldZeroLast: $isSortFieldZeroLast
+      timeRange: $timeRange
+      hideEmpty: $hideEmpty
+      verifiedOnly: $verifiedOnly
+    ) {
+      ...CollectionStatsData
+      __typename
+    }
+    __typename
+  }
+}
+
+fragment CollectionStatsData on Collection {
+  id
+  creator { username __typename }
+  name
+  logo { url __typename }
+  metrics {
+    listedCollectiblesCount owners items editionsCount totalSalesDecimal minSaleListingPriceDecimal __typename
+  }
+  verified
+  stats @include(if: $withStats) {
+    floorPriceDecimal
+    allDayBuyerCount oneDayBuyerCount
+    oneDayFloorPriceDecimal oneDayFloorPriceDecimalChange
+    oneDayVolumeDecimal oneDayVolumeDecimalChange
+    sevenDayBuyerCount
+    sevenDayFloorPriceDecimal sevenDayFloorPriceDecimalChange
+    sevenDayVolumeDecimal sevenDayVolumeDecimalChange
+    thirtyDayBuyerCount
+    thirtyDayFloorPriceDecimal thirtyDayFloorPriceDecimalChange
+    thirtyDayVolumeDecimal thirtyDayVolumeDecimalChange
+    __typename
+  }
+  __typename
+}`;
+
+    async function fetchCollections(network, timeRange, verifiedOnly) {
+        const sortField = getSortField(timeRange);
+        // Always use hideEmpty:true (matches official site for all timeRanges)
+        const hideEmpty = true;
+        const apiTimeRange = getApiTimeRange(timeRange);
+        const vars = {
+            first: 100,
+            skip: 0,
+            sort: { field: sortField, order: 'DESC' },
+            isSortFieldZeroLast: true,
+            ...(apiTimeRange ? { timeRange: apiTimeRange } : {}),
+            verifiedOnly: verifiedOnly === true,
+            hideEmpty: hideEmpty,
+            withStats: true,
+            networks: [network]
+        };
+
+        // Try primary network name, then fallback aliases if 400
+        const networkAliases = {
+            'CRONOS_POS': ['CRO']
+        };
+        const aliases = networkAliases[network] || [network];
+
+        for (const alias of aliases) {
+            const body = Object.assign({}, vars, { networks: [alias] });
+            const res = await fetch(graphqlEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    operationName: 'GetCollectionsPage',
+                    variables: body,
+                    query: QUERY
+                })
+            });
+            if (res.status === 400) {
+                console.warn('Network enum "' + alias + '" rejected (400), trying next alias...');
+                continue;
+            }
+            if (!res.ok) throw new Error('HTTP ' + res.status + ' - ' + res.statusText);
+            const json = await res.json();
+            if (json.errors) {
+                console.warn('GraphQL error for ' + alias + ':', json.errors[0]?.message);
+                continue;
+            }
+            return (json && json.data && json.data.public && json.data.public.collections) || [];
+        }
+        // All aliases failed — return empty array (not throw, so other network still renders)
+        console.warn('All aliases exhausted for network:', network);
+        return [];
+    }
+
+    function formatCRO(val) {
+        if (val == null || val === '' || isNaN(Number(val))) return '—';
+        const n = Number(val);
+        if (n === 0) return '0';
+        if (n >= 1000000) return (n / 1000000).toFixed(2) + 'M';
+        if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+        if (n < 1) return n.toFixed(4);
+        return n.toFixed(2);
+    }
+
+    function formatChange(val) {
+        if (val == null || val === '' || isNaN(Number(val))) return { text: '—', cls: 'stats-zero' };
+        const n = Number(val);
+        if (n === 0) return { text: '0%', cls: 'stats-zero' };
+        const sign = n > 0 ? '+' : '';
+        const cls = n > 0 ? 'stats-up' : 'stats-down';
+        return { text: sign + n.toFixed(1) + '%', cls };
+    }
+
+    function chainBadge(network) {
+        const isCronos = network === 'CRONOS';
+        const label = isCronos ? 'CRONOS' : 'CRONOS POS CHAIN';
+        const cls   = isCronos ? 'stats-chain--cronos' : 'stats-chain--pos';
+        return '<span class="stats-chain-badge ' + cls + '">' + label + '</span>';
+    }
+
+    // Apply chain filter + column sort to _allRows and re-render
+    function applyFilterSort() {
+        let rows = _allRows.slice();
+        if (currentChainFilter !== 'ALL') {
+            rows = rows.filter(c => c._network === currentChainFilter);
+        }
+        if (currentVerifiedFilter !== 'ALL') {
+            const wantVerified = currentVerifiedFilter === 'true';
+            rows = rows.filter(c => !!c.verified === wantVerified);
+        }
+        const [volField, volChangeField, floorField, buyersField] = getVolumeField(currentTimeRange);
+        const listedPct = c => {
+            const listed = Number(c.metrics?.listedCollectiblesCount) || 0;
+            const editions = Number(c.metrics?.editionsCount) || 0;
+            return editions > 0 ? (listed / editions) * 100 : 0;
+        };
+        const floorPctVal = c => {
+            const s = c.stats || {};
+            const chg = s[floorField + 'Change'] ?? (floorField === 'floorPriceDecimal' ? null : s['oneDayFloorPriceDecimalChange']);
+            return Number(chg) || 0;
+        };
+        const getVal = (col, c) => {
+            const s = c.stats || {};
+            if (col === 'vol')      return Number(volField === '_totalSales' ? c.metrics?.totalSalesDecimal : s[volField]) || 0;
+            if (col === 'floor')    return Number(s[floorField] ?? s.floorPriceDecimal) || 0;
+            if (col === 'floorpct') return floorPctVal(c);
+            if (col === 'totalsales') return Number(c.metrics?.totalSalesDecimal) || 0;
+            if (col === 'change')   return Number(s[volChangeField]) || 0;
+            if (col === 'buyers')   return Number(buyersField === 'allDayBuyerCount' ? s.allDayBuyerCount : s[buyersField]) || 0;
+            if (col === 'items')    return Number(c.metrics?.items) || 0;
+            if (col === 'owners')   return Number(c.metrics?.owners) || 0;
+            if (col === 'listed')   return listedPct(c);
+            return 0;
+        };
+        const dir = currentSort.dir === 'asc' ? 1 : -1;
+        rows.sort((a, b) => dir * (getVal(currentSort.col, a) - getVal(currentSort.col, b)));
+        document.querySelectorAll('.stats-th--sortable').forEach(th => {
+            const col = th.dataset.col;
+            const icon = th.querySelector('.stats-sort-icon');
+            if (col === currentSort.col) {
+                th.classList.add('stats-th--sorted-' + currentSort.dir);
+                th.classList.remove('stats-th--sorted-' + (currentSort.dir === 'asc' ? 'desc' : 'asc'));
+                if (icon) icon.textContent = currentSort.dir === 'asc' ? '↑' : '↓';
+            } else {
+                th.classList.remove('stats-th--sorted-asc', 'stats-th--sorted-desc');
+                if (icon) icon.textContent = '';
+            }
+        });
+        renderTable(rows, currentTimeRange);
+    }
+
+    function miniBar(pct, color) {
+        // Mini sparkbar 0-100
+        const w = Math.min(100, Math.max(0, Math.abs(pct)));
+        const c = pct > 0 ? '#4ade80' : pct < 0 ? '#f87171' : 'rgba(255,255,255,0.15)';
+        return `<div class="stats-minibar-wrap"><div class="stats-minibar" style="width:${w.toFixed(1)}%;background:${c}"></div></div>`;
+    }
+
+    function rankBadge(i) {
+        if (i === 0) return '<span class="stats-rank stats-rank--gold"><span class="stats-rank-shine"></span><span class="stats-rank-num">1</span></span>';
+        if (i === 1) return '<span class="stats-rank stats-rank--silver"><span class="stats-rank-shine"></span><span class="stats-rank-num">2</span></span>';
+        if (i === 2) return '<span class="stats-rank stats-rank--bronze"><span class="stats-rank-shine"></span><span class="stats-rank-num">3</span></span>';
+        return `<span class="stats-rank"><span class="stats-rank-num">${i + 1}</span></span>`;
+    }
+
+    function renderTable(rows, timeRange) {
+        const tbody = document.getElementById('statsTableBody');
+        const table = document.getElementById('statsTable');
+        const loading = document.getElementById('statsLoading');
+        const errEl = document.getElementById('statsError');
+        if (!tbody) return;
+
+        loading.style.display = 'none';
+        errEl.style.display = 'none';
+        table.style.display = '';
+
+        const [volField, volChangeField, floorField, buyersField] = getVolumeField(timeRange);
+        const isAll = timeRange === 'ALL';
+
+        // Apply search filter client-side
+        const searchVal = (document.getElementById('statsSearchInput')?.value || '').toLowerCase().trim();
+        const filtered = searchVal
+            ? rows.filter(c => (c.name || '').toLowerCase().includes(searchVal) || (c.creator?.username || '').toLowerCase().includes(searchVal))
+            : rows;
+
+        // Compute median for floor and vol (for the median reference row)
+        const getFloor = c => Number(c.stats?.[floorField] ?? c.stats?.floorPriceDecimal) || 0;
+        const getVol   = c => Number(volField === '_totalSales' ? c.metrics?.totalSalesDecimal : c.stats?.[volField]) || 0;
+        const medianOf = arr => {
+            const s = [...arr].sort((a, b) => a - b);
+            const m = Math.floor(s.length / 2);
+            return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+        };
+        const floorVals = filtered.map(getFloor).filter(v => v > 0);
+        const volVals   = filtered.map(getVol).filter(v => v > 0);
+        const medFloor  = floorVals.length ? medianOf(floorVals) : null;
+        const medVol    = volVals.length   ? medianOf(volVals)   : null;
+
+        // Summary bar
+        const summary = document.getElementById('statsSummary');
+        if (summary) {
+            const totalVol = volVals.reduce((a, b) => a + b, 0);
+            summary.innerHTML = `
+                <span class="stats-summary-item"><span class="stats-summary-label">Collections</span><span class="stats-summary-val">${filtered.length}</span></span>
+                <span class="stats-summary-sep">·</span>
+                <span class="stats-summary-item"><span class="stats-summary-label">Period volume</span><span class="stats-summary-val">$${formatCRO(totalVol)}</span></span>
+                <span class="stats-summary-sep">·</span>
+                <span class="stats-summary-item"><span class="stats-summary-label">Median floor</span><span class="stats-summary-val">${medFloor ? '$' + formatCRO(medFloor) : '—'}</span><i class="stats-summary-hint" title="Median floor price — 50% of collections have a floor above this, 50% below">i</i></span>
+                <span class="stats-summary-sep">·</span>
+                <span class="stats-summary-item"><span class="stats-summary-label">Median volume</span><span class="stats-summary-val">${medVol ? '$' + formatCRO(medVol) : '—'}</span><i class="stats-summary-hint" title="Median volume — central reference for trading volume over the period">i</i></span>
+            `;
+        }
+
+        // Listed % badge
+        function listedBadge(pct) {
+            if (pct <= 0) return '<span class="stats-listed-badge stats-listed-badge--none">—</span>';
+            const p = pct.toFixed(1) + '%';
+            if (pct < 5)  return `<span class="stats-listed-badge stats-listed-badge--low">${p}</span>`;
+            if (pct > 30) return `<span class="stats-listed-badge stats-listed-badge--high">${p}</span>`;
+            return `<span class="stats-listed-badge stats-listed-badge--mid">${p}</span>`;
+        }
+
+        // Mini sparkline SVG (7-day vol points using available data)
+        function sparkline(col, floorField) {
+            // Build 4-point proxy from available period data
+            const s = col.stats || {};
+            const points = [
+                Number(s.oneDayVolumeDecimal) || 0,
+                Number(s.sevenDayVolumeDecimal) || 0,
+                Number(s.thirtyDayVolumeDecimal) || 0,
+                Number(col.metrics?.totalSalesDecimal) || 0,
+            ].filter((_, i, arr) => arr.some(v => v > 0));
+            if (points.length < 2) return '<span class="stats-spark-empty">·</span>';
+            const max = Math.max(...points) || 1;
+            const W = 48, H = 18;
+            const step = W / (points.length - 1);
+            const pts = points.map((v, i) => `${(i * step).toFixed(1)},${(H - (v / max) * H).toFixed(1)}`).join(' ');
+            const last = points[points.length - 1];
+            const first = points[0];
+            const color = last >= first ? '#4ade80' : '#f87171';
+            return `<svg class="stats-spark" viewBox="0 0 ${W} ${H}" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <polyline points="${pts}" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="${((points.length-1)*step).toFixed(1)}" cy="${(H-(last/max)*H).toFixed(1)}" r="2" fill="${color}"/>
+            </svg>`;
+        }
+
+        tbody.innerHTML = '';
+
+        // Insert median reference row in middle
+        const midIdx = Math.floor(filtered.length / 2);
+
+        filtered.forEach((col, i) => {
+            // Insert median row before the middle item
+            if (i === midIdx && (medFloor !== null || medVol !== null) && filtered.length > 4) {
+                const medTr = document.createElement('tr');
+                medTr.className = 'stats-tr stats-tr--median';
+                medTr.innerHTML = `
+                    <td class="stats-td stats-td--rank" colspan="1"><span class="stats-median-label">MED</span></td>
+                    <td class="stats-td" colspan="2"><span class="stats-median-desc">Reference point — 50% of collections are above, 50% below</span></td>
+                    <td class="stats-td stats-td--floor-combined">
+                        <div class="stats-combined-cell">
+                            <span class="stats-combined-main stats-median-val">${medFloor ? '$' + formatCRO(medFloor) : '—'}</span>
+                        </div>
+                    </td>
+                    <td class="stats-td stats-td--vol-combined">
+                        <div class="stats-combined-cell">
+                            <span class="stats-combined-main stats-median-val">${medVol ? '$' + formatCRO(medVol) : '—'}</span>
+                        </div>
+                    </td>
+                    <td class="stats-td" colspan="5"></td>
+                    <td class="stats-td" colspan="1"></td>`;
+                tbody.appendChild(medTr);
+            }
+
+            const s = col.stats || {};
+            const m = col.metrics || {};
+
+            const volRaw = volField === '_totalSales' ? m.totalSalesDecimal : s[volField];
+            const vol = formatCRO(volRaw);
+
+            const change = isAll
+                ? { text: '$' + formatCRO(m.totalSalesDecimal), cls: 'stats-total' }
+                : volChangeField === '_noChange'
+                    ? { text: '—', cls: '' }
+                    : formatChange(s[volChangeField]);
+
+            const floorRaw = s[floorField] ?? s.floorPriceDecimal;
+            const floor = floorRaw ? '$' + formatCRO(floorRaw) : '<span class="stats-na">N/A</span>';
+
+            const floorChgKey = floorField.replace('Decimal', 'DecimalChange');
+            const floorChgRaw = s[floorChgKey];
+            const floorChg = formatChange(floorChgRaw);
+
+            const buyersVal = buyersField === 'allDayBuyerCount' ? s.allDayBuyerCount : s[buyersField];
+            const buyers = buyersVal != null ? Number(buyersVal).toLocaleString() : '—';
+            const items   = m.items   != null ? Number(m.items).toLocaleString()   : '—';
+            const owners  = m.owners  != null ? Number(m.owners).toLocaleString()  : '—';
+            const listedPct = m.editionsCount > 0 ? (m.listedCollectiblesCount / m.editionsCount) * 100 : 0;
+
+            const logo = col.logo?.url
+                ? `<img src="${col.logo.url}" class="stats-col-logo" alt="" loading="lazy"/>`
+                : `<div class="stats-col-logo stats-col-logo--placeholder"></div>`;
+            const verified = col.verified
+                ? `<svg class="stats-verified" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+                : '';
+            const croLink = `https://crypto.com/nft/collection/${col.id}`;
+            const artistLink = col.creator?.username
+                ? `https://crypto.com/nft/profile/${col.creator.username}`
+                : null;
+
+            const tr = document.createElement('tr');
+            tr.className = 'stats-tr' + (i % 2 === 1 ? ' stats-tr--alt' : '');
+            tr.style.cursor = 'pointer';
+            tr.addEventListener('click', () => window.open(croLink, '_blank', 'noopener'));
+
+            tr.innerHTML = `
+                <td class="stats-td stats-td--rank">${rankBadge(i)}</td>
+                <td class="stats-td stats-td--collection">
+                    <a class="stats-col-link" href="${croLink}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+                        ${logo}
+                        <div class="stats-col-info">
+                            <span class="stats-col-name">${col.name || '—'}${verified}</span>
+                            ${artistLink ? `<span class="stats-col-creator" data-artist-link="${artistLink}">${col.creator.username.toUpperCase()}</span>` : ''}
+                        </div>
+                    </a>
+                </td>
+                <td class="stats-td stats-td--num stats-td--floor">${floor}</td>
+                <td class="stats-td stats-td--num stats-td--floorpct">
+                    <div class="stats-pct-cell">
+                        <span class="${floorChg.cls}">${floorChg.text}</span>
+                        ${miniBar(Number(floorChgRaw) || 0, floorChg.cls)}
+                    </div>
+                </td>
+                <td class="stats-td stats-td--num stats-td--vol">$${vol}</td>
+                <td class="stats-td stats-td--num stats-td--change">
+                    <div class="stats-pct-cell">
+                        <span class="${change.cls}">${isAll ? '' : change.text}</span>
+                        ${isAll ? '' : miniBar(Number(s[volChangeField]) || 0, change.cls)}
+                    </div>
+                </td>
+                <td class="stats-td stats-td--num">${buyers}</td>
+                <td class="stats-td stats-td--num">${owners}</td>
+                <td class="stats-td stats-td--num">${items}</td>
+                <td class="stats-td stats-td--num stats-td--listed">
+                    <div class="stats-pct-cell">
+                        <span>${m.editionsCount > 0 ? ((m.listedCollectiblesCount / m.editionsCount) * 100).toFixed(1) + '%' : '—'}</span>
+                        ${m.editionsCount > 0 ? miniBar(listedPct, 0) : ''}
+                    </div>
+                </td>
+                <td class="stats-td stats-td--num stats-td--totalsales">$${formatCRO(m.totalSalesDecimal)}</td>
+                <td class="stats-td stats-td--chain">${chainBadge(col._network)}</td>`;
+            tbody.appendChild(tr);
+        });
+
+        // No results from search
+        if (filtered.length === 0 && searchVal) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td class="stats-td" colspan="10" style="text-align:center;padding:40px;color:rgba(255,255,255,0.3);font-size:13px;">No collections match "<strong>${searchVal}</strong>"</td>`;
+            tbody.appendChild(tr);
+        }
+    }
+
+    async function loadStats(forceRefresh) {
+        const loading = document.getElementById('statsLoading');
+        const errEl   = document.getElementById('statsError');
+        const table   = document.getElementById('statsTable');
+        if (!loading) return;
+
+        loading.style.display = 'flex';
+        if (errEl) errEl.style.display = 'none';
+        if (table) table.style.display = 'none';
+
+        const refreshBtn = document.getElementById('statsRefreshBtn');
+        if (refreshBtn) refreshBtn.classList.add('is-spinning');
+
+        try {
+            // Fetch each network independently so one failure doesn't block the other
+            // If verifiedFilter is ALL, fetch both verified and unverified then merge
+            let cronosResult, posResult;
+            if (currentVerifiedFilter === 'ALL') {
+                // Fetch verified + unverified for each network, merge deduped by id
+                const [cvRes, cuRes, pvRes, puRes] = await Promise.allSettled([
+                    fetchCollections('CRONOS', currentTimeRange, true),
+                    fetchCollections('CRONOS', currentTimeRange, false),
+                    fetchCollections('CRONOS_POS', currentTimeRange, true),
+                    fetchCollections('CRONOS_POS', currentTimeRange, false)
+                ]);
+                const mergeDedup = (a, b) => {
+                    const arr = [...(a.status==='fulfilled'?a.value:[]), ...(b.status==='fulfilled'?b.value:[])];
+                    const seen = new Set();
+                    return arr.filter(c => { if (seen.has(c.id)) return false; seen.add(c.id); return true; });
+                };
+                cronosResult = { status: 'fulfilled', value: mergeDedup(cvRes, cuRes) };
+                posResult    = { status: 'fulfilled', value: mergeDedup(pvRes, puRes) };
+            } else {
+                const wantVerified = currentVerifiedFilter === 'true';
+                [cronosResult, posResult] = await Promise.allSettled([
+                    fetchCollections('CRONOS', currentTimeRange, wantVerified),
+                    fetchCollections('CRONOS_POS', currentTimeRange, wantVerified)
+                ]);
+            }
+
+            const cronosRows = cronosResult.status === 'fulfilled' ? cronosResult.value : [];
+            const posRows    = posResult.status === 'fulfilled'    ? posResult.value    : [];
+
+            if (cronosResult.status === 'rejected') {
+                console.warn('CRONOS fetch failed:', cronosResult.reason?.message);
+            }
+            if (posResult.status === 'rejected') {
+                console.warn('CRONOS_POS fetch failed:', posResult.reason?.message);
+            }
+
+            if (!cronosRows.length && !posRows.length) {
+                throw new Error((cronosResult.reason?.message || posResult.reason?.message || 'No data returned'));
+            }
+
+            // Tag with network, store globally for filter/sort
+            _allRows = [
+                ...cronosRows.map(c => ({ ...c, _network: 'CRONOS' })),
+                ...posRows.map(c => ({ ...c, _network: 'CRO' }))
+            ];
+            // Show table, then apply current filter+sort
+            document.getElementById('statsTable').style.display = '';
+            applyFilterSort();
+            window._statsLoaded = true;
+        } catch (e) {
+            loading.style.display = 'none';
+            if (errEl) {
+                errEl.textContent = 'Failed to load collections: ' + (e.message || 'unknown error');
+                errEl.style.display = 'block';
+            }
+        } finally {
+            if (refreshBtn) refreshBtn.classList.remove('is-spinning');
+        }
+    }
+
+    // Time range buttons
+    document.addEventListener('click', e => {
+        const btn = e.target.closest('.stats-tr-btn');
+        if (!btn) return;
+        document.querySelectorAll('.stats-tr-btn').forEach(b => b.classList.remove('stats-tr-btn--active'));
+        btn.classList.add('stats-tr-btn--active');
+        currentTimeRange = btn.dataset.range;
+        // Reset sort to volume desc on period change
+        currentSort = { col: 'vol', dir: 'desc' };
+        // Update subtitle
+        // subtitle element removed — nothing to update
+        window._statsLoaded = false;
+        const tbl = document.getElementById('statsTable');
+        const ldr = document.getElementById('statsLoading');
+        const err = document.getElementById('statsError');
+        if (tbl) tbl.style.display = 'none';
+        if (err) err.style.display = 'none';
+        if (ldr) ldr.style.display = 'flex';
+        loadStats();
+    });
+
+    // Chain filter buttons
+    document.addEventListener('click', e => {
+        const btn = e.target.closest('.stats-cf-btn');
+        if (!btn) return;
+        document.querySelectorAll('.stats-cf-btn').forEach(b => b.classList.remove('stats-cf-btn--active'));
+        btn.classList.add('stats-cf-btn--active');
+        currentChainFilter = btn.dataset.chain;
+        if (_allRows.length) applyFilterSort();
+    });
+
+    // Verified filter buttons
+    document.addEventListener('click', e => {
+        const btn = e.target.closest('.stats-vf-btn');
+        if (!btn) return;
+        document.querySelectorAll('.stats-vf-btn').forEach(b => b.classList.remove('stats-vf-btn--active'));
+        btn.classList.add('stats-vf-btn--active');
+        currentVerifiedFilter = btn.dataset.verified;
+        // Must reload from API since verifiedOnly is a server-side param
+        window._statsLoaded = false;
+        const tbl = document.getElementById('statsTable');
+        const ldr = document.getElementById('statsLoading');
+        const err = document.getElementById('statsError');
+        if (tbl) tbl.style.display = 'none';
+        if (err) err.style.display = 'none';
+        if (ldr) ldr.style.display = 'flex';
+        loadStats();
+    });
+
+    // Standard 2-state sort for all columns
+    document.addEventListener('click', e => {
+        const th = e.target.closest('.stats-th--sortable');
+        if (!th) return;
+        const col = th.dataset.col;
+        if (currentSort.col === col) {
+            currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSort = { col, dir: 'desc' };
+        }
+        document.querySelectorAll('.stats-th--sortable').forEach(t => {
+            const c = t.dataset.col;
+            const icon = t.querySelector('.stats-sort-icon');
+            if (c === currentSort.col) {
+                t.classList.add('stats-th--sorted-' + currentSort.dir);
+                t.classList.remove('stats-th--sorted-' + (currentSort.dir === 'asc' ? 'desc' : 'asc'));
+                if (icon) icon.textContent = currentSort.dir === 'asc' ? '↑' : '↓';
+            } else {
+                t.classList.remove('stats-th--sorted-asc', 'stats-th--sorted-desc');
+                if (icon) icon.textContent = '';
+            }
+        });
+        if (_allRows.length) applyFilterSort();
+    });
+
+    // Artist link clicks (span with data-artist-link — avoids nested <a> invalid HTML)
+    document.addEventListener('click', e => {
+        const creator = e.target.closest('.stats-col-creator[data-artist-link]');
+        if (!creator) return;
+        e.stopPropagation();
+        e.preventDefault();
+        window.open(creator.dataset.artistLink, '_blank', 'noopener');
+    });
+
+    // Refresh button
+    document.addEventListener('click', e => {
+        if (e.target.closest('#statsRefreshBtn')) {
+            window._statsLoaded = false;
+            loadStats(true);
+        }
+    });
+
+    // Stats inline search
+    document.addEventListener('input', e => {
+        if (e.target.id !== 'statsSearchInput') return;
+        const val = e.target.value;
+        const clearBtn = document.getElementById('statsSearchClear');
+        if (clearBtn) clearBtn.style.display = val ? 'flex' : 'none';
+        if (_allRows.length) applyFilterSort();
+    });
+    document.addEventListener('click', e => {
+        if (e.target.id !== 'statsSearchClear') return;
+        const inp = document.getElementById('statsSearchInput');
+        if (inp) { inp.value = ''; inp.focus(); }
+        e.target.style.display = 'none';
+        if (_allRows.length) applyFilterSort();
+    });
+
+    window.loadStatsPanel = loadStats;
+
+})();
+</script>
