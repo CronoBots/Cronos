@@ -318,15 +318,17 @@
   <div class="stats-panel-header">
     <!-- Big centered title matching profile legend -->
     <h2 class="stats-panel-title">TOP COLLECTIONS</h2>
-    <!-- Controls row: summary LEFT, filters+search RIGHT -->
+    <!-- Controls row: search + summary LEFT, filters RIGHT -->
     <div class="stats-panel-title-row">
-      <div class="stats-summary" id="statsSummary"></div>
-      <div class="stats-panel-controls">
+      <div class="stats-left-controls">
         <div class="stats-search-wrap">
           <svg class="stats-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="5.5"/><line x1="13" y1="13" x2="17" y2="17"/></svg>
-          <input class="stats-search-input" id="statsSearchInput" type="text" placeholder="Search a collection…" autocomplete="off" spellcheck="false"/>
+          <input class="stats-search-input" id="statsSearchInput" type="text" placeholder="Search collection or creator…" autocomplete="off" spellcheck="false"/>
           <button class="stats-search-clear" id="statsSearchClear" type="button" style="display:none;">×</button>
         </div>
+        <div class="stats-summary" id="statsSummary"></div>
+      </div>
+      <div class="stats-panel-controls">
         <div class="stats-timerange" id="statsTimeRange">
           <button class="stats-tr-btn stats-tr-btn--active" data-range="ONE_DAY" type="button">24H</button>
           <button class="stats-tr-btn" data-range="SEVEN_DAYS" type="button">7D</button>
@@ -363,31 +365,31 @@
       <colgroup>
         <col class="scol-rank">
         <col class="scol-collection">
+        <col class="scol-chain">
         <col class="scol-floor">
         <col class="scol-floorpct">
         <col class="scol-vol">
         <col class="scol-change">
         <col class="scol-buyers">
-        <col class="scol-owners">
         <col class="scol-items">
+        <col class="scol-owners">
         <col class="scol-listed">
         <col class="scol-totalsales">
-        <col class="scol-chain">
       </colgroup>
       <thead>
         <tr>
           <th class="stats-th stats-th--rank">#</th>
           <th class="stats-th stats-th--collection">Collection</th>
-          <th class="stats-th stats-th--floor stats-th--sortable" data-col="floor">Floor Price <span class="stats-sort-icon"></span></th>
-          <th class="stats-th stats-th--floorpct stats-th--sortable" data-col="floorpct">Floor % <span class="stats-sort-icon"></span></th>
-          <th class="stats-th stats-th--vol stats-th--sortable stats-th--sorted-desc" data-col="vol">Volume <span class="stats-sort-icon">↓</span></th>
-          <th class="stats-th stats-th--change stats-th--sortable" data-col="change">Volume % <span class="stats-sort-icon"></span></th>
-          <th class="stats-th stats-th--buyers stats-th--sortable" data-col="buyers">Buyers <span class="stats-sort-icon"></span></th>
-          <th class="stats-th stats-th--owners stats-th--sortable" data-col="owners">Owners <span class="stats-sort-icon"></span></th>
-          <th class="stats-th stats-th--items stats-th--sortable" data-col="items">Total Supply <span class="stats-sort-icon"></span></th>
-          <th class="stats-th stats-th--listed stats-th--sortable" data-col="listed">Listed % <span class="stats-sort-icon"></span></th>
-          <th class="stats-th stats-th--totalsales stats-th--sortable" data-col="totalsales">Volume Traded <span class="stats-sort-icon"></span></th>
           <th class="stats-th stats-th--chain">Chain</th>
+          <th class="stats-th stats-th--floor stats-th--sortable stats-th--sep" data-col="floor">Floor Price <span class="stats-sort-icon"></span></th>
+          <th class="stats-th stats-th--floorpct stats-th--sortable" data-col="floorpct">Floor % <span class="stats-sort-icon"></span></th>
+          <th class="stats-th stats-th--vol stats-th--sortable stats-th--sorted-desc stats-th--sep" data-col="vol">Volume <span class="stats-sort-icon">↓</span></th>
+          <th class="stats-th stats-th--change stats-th--sortable" data-col="change">Volume % <span class="stats-sort-icon"></span></th>
+          <th class="stats-th stats-th--buyers stats-th--sortable stats-th--sep-after" data-col="buyers">Buyers <span class="stats-sort-icon"></span></th>
+          <th class="stats-th stats-th--items stats-th--sortable" data-col="items">Supply <span class="stats-sort-icon"></span></th>
+          <th class="stats-th stats-th--owners stats-th--sortable" data-col="owners">Owners <span class="stats-sort-icon"></span></th>
+          <th class="stats-th stats-th--listed stats-th--sortable stats-th--sep-after" data-col="listed">Listed % <span class="stats-sort-icon"></span></th>
+          <th class="stats-th stats-th--totalsales stats-th--sortable" data-col="totalsales">Vol. Traded <span class="stats-sort-icon"></span></th>
         </tr>
       </thead>
       <tbody id="statsTableBody"></tbody>
@@ -5736,13 +5738,12 @@ document.addEventListener('DOMContentLoaded', initialize);
         if (range === 'ONE_DAY')     return 'totalSalesDecimalInLast1Day';
         if (range === 'SEVEN_DAYS')  return 'totalSalesDecimalInLast7Days';
         if (range === 'THIRTY_DAYS') return 'totalSalesDecimalInLast30Days';
-        return 'totalSalesDecimal'; // ALL_TIME
+        return 'totalSalesDecimalAllTime'; // ALL — matches official site payload
     }
 
-    // The API timeRange enum value to send — ALL uses no timeRange (omit it)
+    // The API timeRange enum value to send — ALL sends 'ALL' explicitly
     function getApiTimeRange(range) {
-        if (range === 'ALL') return null; // omit timeRange for all-time
-        return range;
+        return range; // send for all periods including ALL
     }
 
     const QUERY = `query GetCollectionsPage($cacheId: ID, $search: String, $first: Int, $skip: Int, $sort: SingleFieldSort, $withStats: Boolean!, $categories: [ID!], $networks: [SupportedNetwork!], $isSortFieldZeroLast: Boolean!, $timeRange: TimeRange, $hideEmpty: Boolean, $verifiedOnly: Boolean) {
@@ -5801,7 +5802,7 @@ fragment CollectionStatsData on Collection {
             skip: 0,
             sort: { field: sortField, order: 'DESC' },
             isSortFieldZeroLast: true,
-            ...(apiTimeRange ? { timeRange: apiTimeRange } : {}),
+            timeRange: apiTimeRange,
             verifiedOnly: verifiedOnly === true,
             hideEmpty: hideEmpty,
             withStats: true,
@@ -5846,10 +5847,10 @@ fragment CollectionStatsData on Collection {
         if (val == null || val === '' || isNaN(Number(val))) return '—';
         const n = Number(val);
         if (n === 0) return '0';
-        if (n >= 1000000) return (n / 1000000).toFixed(2) + 'M';
-        if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
-        if (n < 1) return n.toFixed(4);
-        return n.toFixed(2);
+        if (n >= 1000000) return Math.round(n / 1000000) + 'M';
+        if (n >= 1000) return Math.round(n / 1000) + 'K';
+        if (n < 1) return n.toFixed(2);
+        return Math.round(n).toString();
     }
 
     function formatChange(val) {
@@ -5970,14 +5971,15 @@ fragment CollectionStatsData on Collection {
         const summary = document.getElementById('statsSummary');
         if (summary) {
             const totalVol = volVals.reduce((a, b) => a + b, 0);
+            const infoSvg = `<svg class="stats-info-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="6.5" r="1" fill="currentColor"/></svg>`;
             summary.innerHTML = `
                 <span class="stats-summary-item"><span class="stats-summary-label">Collections</span><span class="stats-summary-val">${filtered.length}</span></span>
                 <span class="stats-summary-sep">·</span>
                 <span class="stats-summary-item"><span class="stats-summary-label">Period volume</span><span class="stats-summary-val">$${formatCRO(totalVol)}</span></span>
                 <span class="stats-summary-sep">·</span>
-                <span class="stats-summary-item"><span class="stats-summary-label">Median floor</span><span class="stats-summary-val">${medFloor ? '$' + formatCRO(medFloor) : '—'}</span><i class="stats-summary-hint" title="Median floor price — 50% of collections have a floor above this, 50% below">i</i></span>
+                <span class="stats-summary-item" title="Median floor price — 50% of collections have a floor above this, 50% below"><span class="stats-summary-label">Median floor</span><span class="stats-summary-val">${medFloor ? '$' + formatCRO(medFloor) : '—'}</span>${infoSvg}</span>
                 <span class="stats-summary-sep">·</span>
-                <span class="stats-summary-item"><span class="stats-summary-label">Median volume</span><span class="stats-summary-val">${medVol ? '$' + formatCRO(medVol) : '—'}</span><i class="stats-summary-hint" title="Median volume — central reference for trading volume over the period">i</i></span>
+                <span class="stats-summary-item" title="Median volume — central reference for trading volume over the period"><span class="stats-summary-label">Median volume</span><span class="stats-summary-val">${medVol ? '$' + formatCRO(medVol) : '—'}</span>${infoSvg}</span>
             `;
         }
 
@@ -6086,39 +6088,47 @@ fragment CollectionStatsData on Collection {
             tr.innerHTML = `
                 <td class="stats-td stats-td--rank">${rankBadge(i)}</td>
                 <td class="stats-td stats-td--collection">
-                    <a class="stats-col-link" href="${croLink}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
-                        ${logo}
-                        <div class="stats-col-info">
-                            <span class="stats-col-name">${col.name || '—'}${verified}</span>
-                            ${artistLink ? `<span class="stats-col-creator" data-artist-link="${artistLink}">${col.creator.username.toUpperCase()}</span>` : ''}
+                    <div class="stats-col-wrap">
+                        <a href="${croLink}" target="_blank" rel="noopener" onclick="event.stopPropagation()" tabindex="-1" style="display:flex;flex-shrink:0;">${logo}</a>
+                        <div class="stats-col-texts">
+                            <a class="stats-col-link" href="${croLink}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+                                <span class="stats-col-name">${col.name || '—'}</span>
+                            </a>
+                            ${artistLink ? `<span class="stats-col-creator" data-artist-link="${artistLink}">${col.creator.username.toUpperCase()}${verified}</span>` : `<span class="stats-col-creator stats-col-creator--empty">${verified}</span>`}
                         </div>
-                    </a>
+                    </div>
                 </td>
-                <td class="stats-td stats-td--num stats-td--floor">${floor}</td>
+                <td class="stats-td stats-td--chain">${chainBadge(col._network)}</td>
+                <td class="stats-td stats-td--num stats-td--floor stats-td--sep">${floor}</td>
                 <td class="stats-td stats-td--num stats-td--floorpct">
                     <div class="stats-pct-cell">
                         <span class="${floorChg.cls}">${floorChg.text}</span>
                         ${miniBar(Number(floorChgRaw) || 0, floorChg.cls)}
                     </div>
                 </td>
-                <td class="stats-td stats-td--num stats-td--vol">$${vol}</td>
+                <td class="stats-td stats-td--num stats-td--vol stats-td--sep">$${vol}</td>
                 <td class="stats-td stats-td--num stats-td--change">
                     <div class="stats-pct-cell">
                         <span class="${change.cls}">${isAll ? '' : change.text}</span>
                         ${isAll ? '' : miniBar(Number(s[volChangeField]) || 0, change.cls)}
                     </div>
                 </td>
-                <td class="stats-td stats-td--num">${buyers}</td>
-                <td class="stats-td stats-td--num">${owners}</td>
+                <td class="stats-td stats-td--num stats-td--sep-after">${buyers}</td>
                 <td class="stats-td stats-td--num">${items}</td>
-                <td class="stats-td stats-td--num stats-td--listed">
+                <td class="stats-td stats-td--num">${owners}</td>
+                <td class="stats-td stats-td--num stats-td--listed stats-td--sep-after">
                     <div class="stats-pct-cell">
-                        <span>${m.editionsCount > 0 ? ((m.listedCollectiblesCount / m.editionsCount) * 100).toFixed(1) + '%' : '—'}</span>
-                        ${m.editionsCount > 0 ? miniBar(listedPct, 0) : ''}
+                        ${(() => {
+                            if (m.editionsCount <= 0) return '<span class="stats-zero">—</span>';
+                            const pct = (m.listedCollectiblesCount / m.editionsCount) * 100;
+                            if (pct === 0) return '<span class="stats-zero">0%</span>';
+                            const cls = pct < 5 ? 'stats-up' : pct < 20 ? 'stats-listed-mid' : 'stats-listed-high';
+                            const barColor = pct < 5 ? '#4ade80' : pct < 20 ? '#fb923c' : '#f87171';
+                            return `<span class="${cls}">${pct.toFixed(1)}%</span><div class="stats-minibar-wrap"><div class="stats-minibar" style="width:${Math.min(100,pct*3).toFixed(1)}%;background:${barColor}"></div></div>`;
+                        })()}
                     </div>
                 </td>
-                <td class="stats-td stats-td--num stats-td--totalsales">$${formatCRO(m.totalSalesDecimal)}</td>
-                <td class="stats-td stats-td--chain">${chainBadge(col._network)}</td>`;
+                <td class="stats-td stats-td--num stats-td--totalsales">$${formatCRO(m.totalSalesDecimal)}</td>`;
             tbody.appendChild(tr);
         });
 
@@ -6211,8 +6221,7 @@ fragment CollectionStatsData on Collection {
         document.querySelectorAll('.stats-tr-btn').forEach(b => b.classList.remove('stats-tr-btn--active'));
         btn.classList.add('stats-tr-btn--active');
         currentTimeRange = btn.dataset.range;
-        // Reset sort to volume desc on period change
-        currentSort = { col: 'vol', dir: 'desc' };
+        // Conserver le tri actif au changement de période
         // Update subtitle
         // subtitle element removed — nothing to update
         window._statsLoaded = false;
@@ -6278,14 +6287,14 @@ fragment CollectionStatsData on Collection {
         if (_allRows.length) applyFilterSort();
     });
 
-    // Artist link clicks (span with data-artist-link — avoids nested <a> invalid HTML)
+    // Artist link clicks — capture phase so it fires before the tr row click
     document.addEventListener('click', e => {
         const creator = e.target.closest('.stats-col-creator[data-artist-link]');
         if (!creator) return;
         e.stopPropagation();
         e.preventDefault();
         window.open(creator.dataset.artistLink, '_blank', 'noopener');
-    });
+    }, true); // true = capture phase, fires before tr listener
 
     // Refresh button
     document.addEventListener('click', e => {
