@@ -2848,7 +2848,7 @@ input, textarea, select, option, [contenteditable="true"], [contenteditable=""],
     position: static;
     font-size: 18px;
     line-height: 1.2;
-    margin-top: 2px;
+    margin-top: 4px;
 }
 
 .social-container {
@@ -11494,15 +11494,23 @@ body.is-profile-loading #profileLoadingOverlay * {
    ═══════════════════════════════════════════════════════ */
 
 .stats-panel {
-    padding: 0 20px 24px;
-    min-height: 100%;
+    padding: 0 20px 20px;
+    height: 100%;
     box-sizing: border-box;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+#statsTableWrap {
+    flex: 1;
+    min-height: 0;
 }
 
 /* Header — same spacing as profile legend title zone */
 .stats-panel-header {
     padding-top: clamp(20px, 3vh, 36px);
     margin-bottom: 16px;
+    flex-shrink: 0;
 }
 
 /* Big centered title — exact match of profile group legend title */
@@ -11679,15 +11687,31 @@ body.is-profile-loading #profileLoadingOverlay * {
 /* Table wrapper — NO vertical scroll, page scroll only */
 .stats-table-wrap {
     overflow-x: auto;
+    overflow-y: auto;
+    /* height set dynamically by JS */
     border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
     background: rgba(0,0,0,0.15);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.4) rgba(255,255,255,0.06);
+    box-sizing: border-box;
 }
+.stats-table-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
+.stats-table-wrap::-webkit-scrollbar-track { background: rgba(255,255,255,0.06); border-radius: 0 0 10px 10px; }
+.stats-table-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.35); border-radius: 4px; }
+.stats-table-wrap::-webkit-scrollbar-thumb:hover { background: rgba(0,179,255,0.6); }
+.stats-table-wrap::-webkit-scrollbar-corner { background: rgba(255,255,255,0.06); border-radius: 0 0 10px 10px; }
+.stats-table-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
+.stats-table-wrap::-webkit-scrollbar-track { background: transparent; }
+.stats-table-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+.stats-table-wrap::-webkit-scrollbar-corner { background: transparent; }
 
 /* Table */
 .stats-table {
-    width: 100%;
-    border-collapse: collapse;
+    width: max-content;
+    min-width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 13px;
     table-layout: fixed;
@@ -11776,17 +11800,7 @@ body.is-profile-loading #profileLoadingOverlay * {
     color: rgba(255,255,255,0.15);
     font-size: 13px;
 }
-.stats-info-icon {
-    width: 14px;
-    height: 14px;
-    flex-shrink: 0;
-    color: var(--color1);
-    cursor: help;
-    transition: color 0.15s;
-    vertical-align: middle;
-    position: relative;
-    top: -1px;
-}
+
 .stats-summary-item:hover .stats-info-icon {
     color: var(--color1);
     opacity: 0.75;
@@ -11888,19 +11902,29 @@ body.is-profile-loading #profileLoadingOverlay * {
 
 /* ── Column widths via colgroup ────────────────────────────────────────────── */
 .scol-rank       { width: 42px; }
-.scol-collection { width: 280px; }
-.scol-chain      { width: 100px; }
-.scol-floor      { width: 86px; }
+.scol-collection { width: 220px; }
+.scol-chain      { width: 56px; }
+.scol-minlisting { width: 80px; }
 .scol-floorpct   { width: 76px; }
 .scol-vol        { width: 88px; }
 .scol-change     { width: 80px; }
-.scol-buyers     { width: 54px; }
-.scol-items      { width: 60px; }
-.scol-owners     { width: 56px; }
+.scol-buyers     { width: 60px; }
+.scol-items      { width: 64px; }
+.scol-mintrate   { width: 76px; }
 .scol-listed     { width: 76px; }
-.scol-totalsales { width: 88px; }
+.scol-owners     { width: 60px; }
+.scol-ownerspct  { width: 76px; }
+.scol-marketcap  { width: 88px; }
+.scol-avgimplied { width: 76px; }
+.scol-volmcap    { width: 76px; }
+.scol-totalsales { width: 104px; }
 
 /* ── Table headers ─────────────────────────────────────────────────────────── */
+.stats-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
 .stats-th {
     text-align: center;
     font-size: 13px;
@@ -11908,11 +11932,11 @@ body.is-profile-loading #profileLoadingOverlay * {
     text-transform: uppercase;
     color: #ffffff;
     padding: 12px 10px;
-    border-bottom: 1px solid rgba(255,255,255,0.09);
     white-space: nowrap;
-    background: rgba(255,255,255,0.04);
+    background: #0d1829;
     font-weight: normal;
     font-family: 'Geomanist-Bold', sans-serif;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
 }
 .stats-th--sortable { cursor: pointer; user-select: none; transition: color 0.15s; }
 .stats-th--sortable:hover { color: rgba(255,255,255,0.85); }
@@ -11970,64 +11994,64 @@ body.is-profile-loading #profileLoadingOverlay * {
 
 /* ── Rank badge ────────────────────────────────────────────────────────────── */
 /* ── Rank badge — legend bubble style ─────────────────────────────────────── */
+/* Numéros classiques pour les rangs courants */
 .stats-rank {
-    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
+    width: 32px;
     height: 28px;
-    border-radius: 50%;
-    border: 1.5px solid rgba(255,255,255,0.22);
-    background: rgba(255,255,255,0.09);
-    color: rgba(255,255,255,0.75);
-    font-size: 11px;
-    font-weight: 700;
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.35);
+    font-size: 12px;
+    font-weight: 500;
     font-family: 'Geomanist-Bold', sans-serif;
-    overflow: hidden;
-    box-sizing: border-box;
-    line-height: 1;
+    font-variant-numeric: tabular-nums;
     flex-shrink: 0;
     margin: 0 auto;
+    line-height: 1;
+    box-sizing: border-box;
 }
-/* Shine is purely decorative, must not affect text layout */
-.stats-rank-shine {
-    position: absolute;
-    top: -8px; left: -6px;
-    width: 14px; height: 34px;
-    transform: rotate(25deg);
-    background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0));
-    opacity: 0.45;
-    pointer-events: none;
-    z-index: 0;
-}
-/* Push number text above the shine overlay */
 .stats-rank-num {
-    position: relative;
-    z-index: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
     height: 100%;
 }
+
+/* Médailles top 3 — forme ronde avec anneau et ruban */
+.stats-rank--gold,
+.stats-rank--silver,
+.stats-rank--bronze {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'Geomanist-Bold', sans-serif;
+    overflow: visible;
+    box-sizing: border-box;
+}
 .stats-rank--gold {
-    background: linear-gradient(145deg, #fff3b0 0%, #d4af37 45%, #8a6b00 100%);
-    border-color: #d4af37;
-    box-shadow: 0 0 10px rgba(212,175,55,0.45), inset 0 1px 2px rgba(255,255,255,0.45);
-    color: rgba(0,0,0,0.92);
+    background: radial-gradient(circle at 35% 35%, #ffe97a, #d4a017 55%, #8a6200 100%);
+    border: 2px solid #f0c030;
+    box-shadow: 0 2px 8px rgba(212,160,23,0.55), inset 0 1px 3px rgba(255,255,220,0.6), inset 0 -1px 2px rgba(0,0,0,0.3);
+    color: #3d2500;
 }
 .stats-rank--silver {
-    background: linear-gradient(145deg, #ffffff 0%, #c0c0c0 45%, #7d7d7d 100%);
-    border-color: #c0c0c0;
-    box-shadow: 0 0 10px rgba(192,192,192,0.42), inset 0 1px 2px rgba(255,255,255,0.5);
-    color: rgba(0,0,0,0.92);
+    background: radial-gradient(circle at 35% 35%, #f5f5f5, #b8b8b8 55%, #787878 100%);
+    border: 2px solid #d0d0d0;
+    box-shadow: 0 2px 8px rgba(160,160,160,0.45), inset 0 1px 3px rgba(255,255,255,0.7), inset 0 -1px 2px rgba(0,0,0,0.2);
+    color: #1a1a1a;
 }
 .stats-rank--bronze {
-    background: linear-gradient(145deg, #f2c09a 0%, #cd7f32 45%, #7a3e12 100%);
-    border-color: #cd7f32;
-    box-shadow: 0 0 10px rgba(205,127,50,0.42), inset 0 1px 2px rgba(255,255,255,0.35);
-    color: rgba(0,0,0,0.92);
+    background: radial-gradient(circle at 35% 35%, #f0b97a, #c07830 55%, #7a3e10 100%);
+    border: 2px solid #d08840;
+    box-shadow: 0 2px 8px rgba(180,100,40,0.45), inset 0 1px 3px rgba(255,210,150,0.5), inset 0 -1px 2px rgba(0,0,0,0.3);
+    color: #1e0800;
 }
 
 /* ── % + mini-bar cell ─────────────────────────────────────────────────────── */
@@ -12098,28 +12122,39 @@ body.is-profile-loading #profileLoadingOverlay * {
 /* Lien collection : juste le nom, sans le logo */
 .stats-col-link {
     display: block;
-    text-decoration: none;
-    color: inherit;
-    min-width: 0;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
     line-height: 1;
+    min-width: 0;
+    overflow: hidden;
 }
-.stats-col-link:hover .stats-col-name { color: var(--color1); }
 
-/* Nom de la collection */
+/* Collection name */
 .stats-col-name {
+    display: inline-block;
+    cursor: pointer;
     font-size: 14px;
     color: rgba(255,255,255,0.92);
     transition: color 0.15s;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    line-height: 1;
-    display: block;
+    max-width: 100%;
+    pointer-events: auto !important;
+    margin-top: 2px;
 }
+.stats-col-name:hover,
+.stats-col-name--logo-hover {
+    color: var(--color1) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.6) !important;
+    margin-bottom: -1px !important;
+}
+.stats-col-link {
+    display: block;
+    line-height: 1;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+
 
 /* Logo — aligné par le flex parent */
 .stats-col-logo {
@@ -12130,6 +12165,16 @@ body.is-profile-loading #profileLoadingOverlay * {
     flex-shrink: 0;
     display: block;
     background: rgba(255,255,255,0.06);
+    cursor: pointer;
+    pointer-events: all;
+}
+/* Logo wrapper span */
+.stats-logo-btn {
+    display: flex;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
 }
 .stats-col-logo--placeholder {
     background: rgba(0,179,255,0.1);
@@ -12149,6 +12194,7 @@ body.is-profile-loading #profileLoadingOverlay * {
     transition: color 0.15s;
     line-height: 1;
     cursor: pointer;
+    pointer-events: all;
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -12166,15 +12212,43 @@ body.is-profile-loading #profileLoadingOverlay * {
 .stats-col-name--nocreator { display: inline-flex; align-items: center; gap: 4px; }
 .stats-verified { width: 13px; height: 13px; flex-shrink: 0; }
 
+/* ── Inline chain badge in collection cell ─────────────────────────────────── */
+.stats-col-sub-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+}
+.stats-col-chain-inline {
+    font-size: 9px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 2px 5px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    line-height: 1.4;
+}
+.stats-col-chain-inline--cronos {
+    background: rgba(0,179,255,0.12);
+    color: var(--color1);
+    border: 1px solid rgba(0,179,255,0.22);
+}
+.stats-col-chain-inline--pos {
+    background: rgba(125,222,154,0.08);
+    color: #7dde9a;
+    border: 1px solid rgba(125,222,154,0.18);
+}
+
 /* ── Chain badges ──────────────────────────────────────────────────────────── */
 .stats-chain-badge {
     display: inline-block;
-    font-size: 8px;
-    letter-spacing: 0.08em;
-    padding: 2px 0;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 3px 7px;
     border-radius: 4px;
     text-transform: uppercase;
-    width: 100px;
     text-align: center;
     box-sizing: border-box;
 }
@@ -12244,6 +12318,30 @@ body.is-profile-loading #profileLoadingOverlay * {
     font-size: 13px;
     text-align: center;
 }
+.stats-td--avgprice,
+.stats-td--sales,
+.stats-td--sellers,
+.stats-td--bsratio,
+.stats-td--ownerspct,
+.stats-td--minlisting {
+    font-size: 12px;
+    text-align: center;
+    color: rgba(255,255,255,0.72);
+}
+.stats-td--minlisting {
+    color: #fff;
+    font-style: normal;
+    font-size: 13px;
+}
+.stats-td--mintrate {
+    font-size: 11px;
+    text-align: center;
+}
+.stats-minted-full {
+    color: rgba(255,255,255,0.2);
+    font-size: 10px;
+    letter-spacing: 0;
+}
 
 /* ── Verified filter buttons (same style as chain filter) ─────────────────── */
 .stats-verified-filter {
@@ -12274,3 +12372,76 @@ body.is-profile-loading #profileLoadingOverlay * {
 .stats-vf-btn:last-child { border-right: none; }
 .stats-vf-btn:hover { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.04); }
 .stats-vf-btn--active { color: var(--color1) !important; background: rgba(0,179,255,0.1) !important; }
+
+/* ── Column selector ──────────────────────────────────────────────────────── */
+.stats-col-selector-wrap {
+    position: relative;
+}
+.stats-col-selector-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 7px;
+    color: rgba(255,255,255,0.7);
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0 12px;
+    height: 32px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+.stats-col-selector-btn:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+.stats-col-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: #0f1a30;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 12px;
+    min-width: 200px;
+    z-index: 999;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+.stats-col-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 320px;
+    overflow-y: auto;
+}
+.stats-col-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 6px;
+    border-radius: 5px;
+    cursor: pointer;
+    color: rgba(255,255,255,0.65);
+    font-size: 12px;
+    transition: background 0.12s;
+}
+.stats-col-item:hover {
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+}
+.stats-col-check {
+    accent-color: var(--color1);
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+
+
+
