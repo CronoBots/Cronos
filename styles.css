@@ -4689,8 +4689,12 @@ body.is-collage-view #collectionTitle {
 }
 
 /* 3) Keep the header area visually at the same vertical position */
-.app-main > .profile-section {
+.app-main > .profile-section:not(.profile-section--legend) {
   margin-top: calc(-1 * var(--nft-hover-gutter)) !important;
+  justify-content: center !important;
+}
+.app-main > .profile-section.profile-section--legend {
+  margin-top: 0 !important;
   justify-content: center !important;
 }
 
@@ -5806,6 +5810,26 @@ body.is-group-stats-view #scrollToTopButton {
 
 .group-legend-title {
     margin-bottom: 20px;
+}
+
+/* ── Profile view : titre legend (COLLECTED NFTs / COLLECTIONS OWNED / ARTISTS COLLECTED)
+   Match EXACT de .stats-panel-title + .stats-panel-header pour la symétrie visuelle ── */
+.profile-section--legend .group-legend {
+    padding-top: clamp(20px, 3vh, 36px);
+    margin-top: 0;
+}
+.profile-section--legend .group-legend > .group-legend-title:first-child {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-weight: 800;
+    font-size: clamp(40px, 4.8vw, 68px);
+    letter-spacing: 0.04em;
+    line-height: 1.05;
+    color: #fff;
+    text-align: center;
+    margin: 0 0 clamp(28px, 4vh, 48px);
+    /* override des règles display:flex + min-height du selector générique */
+    display: block;
+    min-height: 0;
 }
 
 /* NFT COLLECTED title: bottom gap = top gap (20px) */
@@ -13613,15 +13637,17 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 .sb-price-input {
     width: 72px;
+    height: 32px;
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 6px;
     color: #fff;
     font-size: 11px;
-    padding: 5px 8px;
+    padding: 0 8px;
     outline: none;
     font-family: 'Geomanist-Bold', sans-serif;
     transition: border-color 0.15s;
+    box-sizing: border-box;
 }
 .sb-price-input:focus { border-color: rgba(0,179,255,0.4); }
 .sb-price-input::placeholder { color: rgba(255,255,255,0.25); }
@@ -13631,38 +13657,36 @@ body.is-profile-loading #profileLoadingOverlay * {
 /* ══════════════════════════════════════════════════════════════════════════
    LOGIN MODULE
    ══════════════════════════════════════════════════════════════════════════ */
-.topnav-login { display: flex; align-items: center; }
-/* Login tab — même style que topnav-tab */
-.topnav-tab--login {
-    border-left: 1px solid rgba(255,255,255,0.06) !important;
-    padding-left: 12px !important;
-    margin-left: 4px;
+/* ── Auth bloc topnav ── */
+.topnav-auth-sep {
+    width: 1px; height: 22px;
+    background: rgba(255,255,255,0.1);
+    margin: 0 4px; flex-shrink: 0; align-self: center;
 }
-.topnav-tab--user {
-    border-left: 1px solid rgba(255,255,255,0.06) !important;
-    padding-left: 12px !important;
-    margin-left: 4px;
-    cursor: default !important;
-    gap: 6px;
+.topnav-auth { display: flex; align-items: stretch; height: 100%; }
+
+/* ── Sign in ── */
+.topnav-tab--signin {
+    color: rgba(0,179,255,0.85) !important;
+    padding: 0 16px !important;
 }
-.topnav-tab--user:hover { background: none !important; color: inherit !important; }
-.topnav-user-avatar {
-    width: 20px; height: 20px; border-radius: 50%;
-    object-fit: cover; border: 1px solid rgba(0,179,255,0.4);
-    display: block;
+.topnav-tab--signin svg { stroke: rgba(0,179,255,0.85); }
+.topnav-tab--signin:hover {
+    color: #fff !important;
+    background: rgba(0,179,255,0.1) !important;
 }
-.topnav-user-icon { opacity: 0.5; }
-.topnav-user-name {
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 11px; color: rgba(255,255,255,0.75); letter-spacing: 0.04em;
-    max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+.topnav-tab--signin:hover svg { stroke: #fff; }
+
+    padding: 0 10px !important;
+    color: rgba(255,255,255,0.2) !important;
+    border-left: none !important;
 }
-.topnav-user-logout {
-    background: none; border: none; color: rgba(255,255,255,0.25);
-    font-size: 14px; line-height: 1; cursor: pointer; padding: 0 2px;
-    transition: color 0.15s;
+.topnav-tab--signout svg { stroke: rgba(255,255,255,0.2); }
+.topnav-tab--signout:hover {
+    color: #f87171 !important;
+    background: rgba(248,113,113,0.07) !important;
 }
-.topnav-user-logout:hover { color: #f87171; }
+.topnav-tab--signout:hover svg { stroke: #f87171; }
 
 /* Modal backdrop */
 .login-modal-backdrop {
@@ -13758,12 +13782,6 @@ body.is-profile-loading #profileLoadingOverlay * {
 
 /* ── Onglet Support : accent spécial ── */
 .topnav-tab--support { position: relative; }
-.topnav-tab--support svg { stroke: rgba(251,113,133,0.8); }
-.topnav-tab--support span { color: rgba(251,113,133,0.85); }
-.topnav-tab--support:hover svg,
-.topnav-tab--support:hover span { color: #fb7185; stroke: #fb7185; }
-.topnav-tab--support.topnav-tab--active svg,
-.topnav-tab--support.topnav-tab--active span { stroke: #fb7185; color: #fb7185; }
 
 /* ── Panel ── */
 .sup-panel {
@@ -13772,31 +13790,46 @@ body.is-profile-loading #profileLoadingOverlay * {
     flex-direction: column;
     overflow-x: hidden;
 }
-.sup-inner {
+.sup-inner { width: 100%; box-sizing: border-box; padding: 0; }
+.sup-inner--wide {
     width: 100%;
     box-sizing: border-box;
     padding: clamp(20px, 4vh, 48px) 20px 80px;
-    max-width: 900px;
-    margin: 0 auto;
 }
+.sup-layout {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 40px;
+    align-items: start;
+}
+@media (max-width: 860px) {
+    .sup-layout { grid-template-columns: 1fr; }
+    .sup-col-right { order: -1; }
+}
+.sup-col-left { display: flex; flex-direction: column; gap: 28px; }
+.sup-col-right { position: sticky; top: 20px; }
+.sup-hero--inline {
+    display: flex; align-items: center; gap: 20px;
+    padding: 0 0 4px;
+}
+.sup-hero--inline .sup-heart-wrap { margin: 0; flex-shrink: 0; }
+.sup-hero--inline .sup-heart-icon { width: 44px; height: 44px; }
+.sup-impact-grid--2col {
+    grid-template-columns: repeat(2, 1fr);
+}
+.sup-impact-item {
+    display: flex; align-items: flex-start; gap: 10px;
+}
+.sup-impact-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
 
 /* ── Hero ── */
 .sup-hero {
     position: relative;
-    text-align: center;
-    padding: clamp(40px, 7vh, 80px) 0 clamp(28px, 4vh, 48px);
     overflow: hidden;
 }
-.sup-hero-glow {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 400px; height: 400px;
-    background: radial-gradient(circle, rgba(251,113,133,0.08) 0%, transparent 70%);
-    pointer-events: none;
-}
+.sup-hero-glow { display: none; }
 .sup-heart-wrap {
-    display: flex; justify-content: center; margin-bottom: 24px;
+    display: flex; align-items: center;
 }
 .sup-heart-icon {
     width: 64px; height: 64px;
@@ -13971,26 +14004,15 @@ code.sup-card-address {
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 12px;
 }
-.sup-impact-item {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.05);
-    border-radius: 12px; padding: 20px;
-    transition: background 0.15s, border-color 0.15s;
-}
-.sup-impact-item:hover {
-    background: rgba(251,113,133,0.04);
-    border-color: rgba(251,113,133,0.15);
-}
-.sup-impact-icon { font-size: 24px; display: block; margin-bottom: 10px; }
 .sup-impact-title {
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 12px; font-weight: 800;
     color: #fff; letter-spacing: 0.04em;
-    text-transform: uppercase; margin: 0 0 6px;
+    text-transform: uppercase; margin: 0 0 4px;
 }
 .sup-impact-desc {
     font-size: 11px; color: rgba(255,255,255,0.35);
-    line-height: 1.6; margin: 0;
+    line-height: 1.5; margin: 0;
     font-family: sans-serif; font-weight: normal;
 }
 
@@ -14077,4 +14099,3396 @@ code.sup-card-address {
 .home-support-btn:hover {
     background: rgba(251,113,133,0.22); border-color: #fb7185;
     transform: translateY(-1px);
+}
+
+/* ── Sales Bot : current collection display (header) ── */
+.sb-col-current {
+    display: flex; align-items: center; gap: 8px;
+}
+.sb-col-logo {
+    width: 22px; height: 22px; border-radius: 4px;
+    object-fit: cover; flex-shrink: 0;
+}
+.sb-col-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px; font-weight: 800;
+    color: rgba(255,255,255,0.6); letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* ── Sales Bot : radio buttons dans le dropdown collection ── */
+.sb-col-radio {
+    accent-color: var(--color1, #00B3FF);
+    width: 14px; height: 14px;
+    cursor: pointer; flex-shrink: 0;
+}
+
+/* ── Rich collection selector (Sales Bot / Listing Bot) ── */
+.sb-col-dropdown-rich { min-width: 240px; padding: 6px; }
+.sb-col-rich-list { display: flex; flex-direction: column; gap: 2px; }
+.sb-col-rich-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.12s;
+    position: relative;
+}
+.sb-col-rich-item:hover { background: rgba(255,255,255,0.05); }
+.sb-col-rich-item input[type="checkbox"] { display: none; }
+.sb-col-rich-logo {
+    width: 30px; height: 30px; border-radius: 6px;
+    object-fit: cover; background: #0b1426;
+    border: 1px solid rgba(255,255,255,0.08);
+    flex-shrink: 0; opacity: 0.5;
+    transition: opacity 0.2s;
+}
+.sb-col-rich-logo.loaded { opacity: 1; }
+.sb-col-rich-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px; color: rgba(255,255,255,0.6);
+    letter-spacing: 0.03em; flex: 1;
+    transition: color 0.12s;
+}
+.sb-col-rich-check {
+    font-size: 12px; color: #00B3FF;
+    opacity: 0; transition: opacity 0.15s;
+    flex-shrink: 0;
+}
+/* État coché */
+.sb-col-rich-item:has(input:checked) .sb-col-rich-name { color: #fff; }
+.sb-col-rich-item:has(input:checked) .sb-col-rich-check { opacity: 1; }
+.sb-col-rich-item:has(input:checked) { background: rgba(0,179,255,0.07); }
+
+/* Listing Bot : badge auction */
+.lb-auction-badge {
+    position: absolute; bottom: 6px; left: 6px;
+    background: rgba(251,191,36,0.85);
+    color: #050d1a;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px; font-weight: 800;
+    letter-spacing: 0.04em;
+    padding: 2px 6px; border-radius: 4px;
+    pointer-events: none;
+}
+.lb-card { /* même style que sb-card */ }
+
+/* ── Market Bot : rank badge sur l'image ── */
+.sb-rank-badge {
+    position: absolute;
+    bottom: 6px; left: 6px;
+    display: flex; align-items: center; gap: 3px;
+    background: rgba(0,90,200,0.88);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px; font-weight: 800;
+    letter-spacing: 0.04em;
+    padding: 3px 7px 3px 5px; border-radius: 6px;
+    border: 1px solid rgba(100,180,255,0.3);
+    pointer-events: none; line-height: 1.3;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* ── Market Bot : row nom + type badge ── */
+.sb-card-name-row {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+}
+.sb-card-name-row .sb-card-name {
+    flex: 1; min-width: 0;
+}
+
+/* ── Type badges : Sale / Listing / Auction ── */
+.sb-type-badge {
+    font-size: 8px; font-family: 'Geomanist-Bold', sans-serif;
+    font-weight: 800; letter-spacing: 0.05em;
+    padding: 2px 5px; border-radius: 4px;
+    white-space: nowrap; flex-shrink: 0;
+    line-height: 1.5;
+}
+.sb-type-badge--sale {
+    background: rgba(74,222,128,0.12);
+    color: #4ade80;
+    border: 1px solid rgba(74,222,128,0.25);
+}
+.sb-type-badge--listing {
+    background: rgba(0,179,255,0.12);
+    color: #00B3FF;
+    border: 1px solid rgba(0,179,255,0.25);
+}
+.sb-type-badge--auction {
+    background: rgba(251,191,36,0.12);
+    color: #fbbf24;
+    border: 1px solid rgba(251,191,36,0.25);
+}
+
+/* ── Market Bot : filtre mode ── */
+.sb-mode-group { margin: 0; }
+
+
+
+/* ── Support : progress bar ── */
+.sup-progress-block {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px; padding: 16px;
+}
+.sup-progress-header {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 6px;
+}
+.sup-progress-pct {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 18px; font-weight: 800; color: #00B3FF;
+}
+.sup-progress-label-row {
+    display: flex; justify-content: space-between;
+    font-size: 10px; color: rgba(255,255,255,0.35);
+    letter-spacing: 0.06em; margin-bottom: 10px;
+}
+.sup-progress-raised { color: rgba(255,255,255,0.6); font-family: 'Geomanist-Bold', sans-serif; }
+.sup-progress-bar-wrap {
+    height: 8px; background: rgba(255,255,255,0.06);
+    border-radius: 99px; overflow: hidden; margin-bottom: 10px;
+}
+.sup-progress-bar {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, #00B3FF 0%, #4ade80 100%);
+    transition: width 0.8s cubic-bezier(.4,0,.2,1);
+    min-width: 0;
+}
+.sup-progress-note {
+    font-size: 10px; color: rgba(255,255,255,0.25);
+    line-height: 1.5; margin: 0;
+    font-family: sans-serif; font-weight: normal;
+}
+
+/* ── Support : donors ── */
+.sup-donors-block {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px; padding: 16px;
+}
+.sup-donors-header {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 12px;
+}
+.sup-add-donor-btn {
+    background: rgba(251,113,133,0.1);
+    border: 1px solid rgba(251,113,133,0.25);
+    color: #fb7185;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px; font-weight: 800;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 5px 10px; border-radius: 6px; cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+.sup-add-donor-btn:hover { background: rgba(251,113,133,0.2); border-color: #fb7185; }
+.sup-donor-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    flex-wrap: wrap;
+}
+.sup-donor-item:last-child { border-bottom: none; }
+.sup-donor-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, rgba(0,179,255,0.3), rgba(251,113,133,0.3));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px; font-weight: 800; color: #fff;
+    flex-shrink: 0;
+}
+.sup-donor-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px; color: #fff; letter-spacing: 0.03em; flex: 1;
+}
+.sup-donor-amount {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px; color: #4ade80; letter-spacing: 0.04em;
+}
+.sup-donor-msg {
+    font-size: 10px; color: rgba(255,255,255,0.35);
+    font-style: italic; width: 100%; padding-left: 36px;
+    line-height: 1.4;
+}
+.sup-no-donors {
+    text-align: center; font-size: 12px;
+    color: rgba(255,255,255,0.25); padding: 12px 0;
+    letter-spacing: 0.04em;
+}
+
+/* ── Support : donor modal ── */
+.sup-donor-modal-backdrop {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.7);
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+}
+.sup-donor-modal {
+    position: relative;
+    background: #0d1829;
+    border: 1px solid rgba(251,113,133,0.2);
+    border-radius: 20px; padding: 36px 32px 28px;
+    width: 100%; max-width: 380px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.7);
+    display: flex; flex-direction: column; gap: 0;
+    animation: loginModalIn 0.22s ease;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SUPPORT PAGE v2 — PREMIUM REDESIGN
+   ══════════════════════════════════════════════════════════════════════════ */
+.sup-panel { min-height: 100%; display: flex; flex-direction: column; }
+
+/* ── Hero ── */
+.sup2-hero {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(48px, 8vh, 96px) 20px clamp(36px, 6vh, 72px);
+    background: #060e1e;
+    flex-shrink: 0;
+}
+.sup2-hero-bg {
+    position: absolute; inset: 0; pointer-events: none;
+}
+.sup2-orb {
+    position: absolute; border-radius: 50%;
+    filter: blur(60px); pointer-events: none;
+    animation: sup2OrbFloat 10s ease-in-out infinite alternate;
+}
+.sup2-orb--1 {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(251,113,133,0.14) 0%, transparent 70%);
+    top: -100px; left: -80px; animation-delay: 0s;
+}
+.sup2-orb--2 {
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(0,179,255,0.1) 0%, transparent 70%);
+    top: 20%; right: 5%; animation-delay: 3s;
+}
+.sup2-orb--3 {
+    width: 250px; height: 250px;
+    background: radial-gradient(circle, rgba(251,191,36,0.08) 0%, transparent 70%);
+    bottom: -60px; left: 40%; animation-delay: 6s;
+}
+@keyframes sup2OrbFloat {
+    from { transform: translate(0,0) scale(1); }
+    to   { transform: translate(20px, 15px) scale(1.08); }
+}
+.sup2-hero-inner {
+    position: relative; z-index: 1;
+    max-width: 680px; margin: 0 auto; text-align: center;
+}
+.sup2-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(251,113,133,0.1);
+    border: 1px solid rgba(251,113,133,0.25);
+    color: rgba(251,113,133,0.9);
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px; font-weight: 800;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 5px 14px; border-radius: 20px;
+    margin-bottom: 24px;
+}
+.sup2-title {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: clamp(36px, 5.5vw, 72px);
+    font-weight: 800; color: #fff;
+    letter-spacing: 0.03em; text-transform: uppercase;
+    line-height: 1.0; margin: 0 0 20px;
+}
+.sup2-title-accent {
+    background: linear-gradient(135deg, #fb7185 0%, #f43f5e 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.sup2-subtitle {
+    font-size: clamp(14px, 1.8vw, 17px);
+    color: rgba(255,255,255,0.45);
+    line-height: 1.65; margin: 0;
+    font-family: sans-serif; font-weight: normal;
+}
+
+/* ── Body ── */
+.sup2-body {
+    flex: 1;
+    padding: clamp(24px, 4vh, 48px) 20px 80px;
+    display: flex; flex-direction: column; gap: 32px;
+    max-width: 1100px; margin: 0 auto; width: 100%;
+    box-sizing: border-box;
+}
+.sup2-section-label {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px; font-weight: 800;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(255,255,255,0.35); margin: 0 0 16px;
+}
+
+/* ── Row 1 : Story + Goal ── */
+.sup2-row--top {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 24px; align-items: start;
+}
+@media (max-width: 860px) { .sup2-row--top { grid-template-columns: 1fr; } }
+
+/* Story */
+.sup2-story-block {
+    display: flex; gap: 20px;
+}
+.sup2-story-line {
+    width: 2px; flex-shrink: 0;
+    background: linear-gradient(to bottom, #fb7185, transparent);
+    border-radius: 2px; min-height: 100%;
+}
+.sup2-story-content { display: flex; flex-direction: column; gap: 14px; }
+.sup2-story-content p {
+    font-size: 14px; color: rgba(255,255,255,0.5);
+    line-height: 1.75; margin: 0;
+    font-family: sans-serif; font-weight: normal;
+}
+.sup2-story-cta-text {
+    color: rgba(255,255,255,0.72) !important;
+    font-style: italic;
+}
+
+/* Goal block */
+.sup2-goal-block {
+    background: rgba(251,113,133,0.04);
+    border: 1px solid rgba(251,113,133,0.12);
+    border-radius: 16px; padding: 22px;
+    position: sticky; top: 16px;
+}
+.sup2-goal-header {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 10px;
+}
+.sup2-goal-label {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px; font-weight: 800;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+}
+.sup2-goal-pct {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 22px; font-weight: 800; color: #fb7185;
+    letter-spacing: -0.01em;
+}
+.sup2-goal-bar-wrap {
+    height: 10px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 99px; overflow: hidden;
+    margin-bottom: 10px;
+}
+.sup2-goal-bar {
+    height: 100%; border-radius: 99px; position: relative;
+    background: linear-gradient(90deg, #fb7185 0%, #f43f5e 50%, #fbbf24 100%);
+    transition: width 1s cubic-bezier(.4,0,.2,1);
+    min-width: 0;
+}
+.sup2-goal-bar-shine {
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.25) 50%, transparent 100%);
+    animation: sup2Shine 2s ease-in-out infinite;
+}
+@keyframes sup2Shine {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(300%); }
+}
+.sup2-goal-amounts {
+    display: flex; justify-content: space-between;
+    font-size: 11px; margin-bottom: 8px;
+}
+.sup2-goal-raised {
+    font-family: 'Geomanist-Bold', sans-serif;
+    color: rgba(255,255,255,0.8);
+}
+.sup2-goal-target { color: rgba(255,255,255,0.3); }
+.sup2-goal-note {
+    font-size: 10px; color: rgba(255,255,255,0.25);
+    line-height: 1.5; margin: 0 0 16px;
+    font-family: sans-serif; font-weight: normal;
+}
+.sup2-impact-pills {
+    display: flex; flex-wrap: wrap; gap: 6px;
+}
+.sup2-pill {
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px; padding: 4px 10px;
+    font-size: 10px; color: rgba(255,255,255,0.5);
+    font-family: 'Geomanist-Bold', sans-serif;
+    letter-spacing: 0.04em;
+}
+.sup2-pill-icon { font-size: 12px; }
+
+/* ── Row 2 : Donate ── */
+.sup2-donate-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+}
+.sup2-donate-card {
+    position: relative; overflow: hidden;
+    border-radius: 16px; padding: 24px;
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: transform 0.2s, border-color 0.2s;
+    cursor: default;
+}
+.sup2-donate-card:hover { transform: translateY(-3px); }
+.sup2-donate-card--cro {
+    background: linear-gradient(135deg, rgba(0,179,255,0.06) 0%, rgba(5,13,26,0.9) 100%);
+}
+.sup2-donate-card--cro:hover { border-color: rgba(0,179,255,0.25); }
+.sup2-donate-card--eth {
+    background: linear-gradient(135deg, rgba(139,92,246,0.06) 0%, rgba(5,13,26,0.9) 100%);
+}
+.sup2-donate-card--eth:hover { border-color: rgba(139,92,246,0.25); }
+.sup2-donate-card-glow {
+    position: absolute; top: 0; right: 0;
+    width: 200px; height: 200px; border-radius: 50%;
+    pointer-events: none;
+}
+.sup2-donate-card--cro .sup2-donate-card-glow {
+    background: radial-gradient(circle at top right, rgba(0,179,255,0.08) 0%, transparent 70%);
+}
+.sup2-donate-card--eth .sup2-donate-card-glow {
+    background: radial-gradient(circle at top right, rgba(139,92,246,0.08) 0%, transparent 70%);
+}
+.sup2-donate-card-top {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 16px;
+}
+.sup2-donate-network {
+    display: flex; align-items: center; gap: 7px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px; color: rgba(255,255,255,0.6);
+    letter-spacing: 0.06em; text-transform: uppercase;
+}
+.sup2-donate-network-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+}
+.sup2-donate-network-dot--cro {
+    background: #00B3FF;
+    box-shadow: 0 0 6px rgba(0,179,255,0.8);
+}
+.sup2-donate-network-dot--eth {
+    background: #a78bfa;
+    box-shadow: 0 0 6px rgba(167,139,250,0.8);
+}
+.sup2-donate-badge {
+    font-size: 9px; color: rgba(255,255,255,0.3);
+    letter-spacing: 0.06em;
+}
+.sup2-donate-domain {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 22px; font-weight: 800; color: #fff;
+    letter-spacing: 0.02em; margin-bottom: 6px;
+}
+.sup2-donate-or {
+    font-size: 10px; color: rgba(255,255,255,0.2);
+    letter-spacing: 0.08em; margin-bottom: 12px;
+    text-align: center;
+}
+.sup2-donate-addr-row {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px; padding: 10px 12px;
+}
+.sup2-donate-addr {
+    font-family: 'Courier New', monospace;
+    font-size: 10px; color: rgba(255,255,255,0.6);
+    word-break: break-all; flex: 1; line-height: 1.4;
+    background: none;
+}
+.sup2-copy-btn {
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.55);
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px; letter-spacing: 0.06em;
+    padding: 6px 10px; border-radius: 6px;
+    cursor: pointer; flex-shrink: 0; white-space: nowrap;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.sup2-copy-btn:hover { background: rgba(0,179,255,0.12); color: #00B3FF; border-color: rgba(0,179,255,0.3); }
+.sup2-copy-btn--done { background: rgba(74,222,128,0.12); color: #4ade80; border-color: rgba(74,222,128,0.3); }
+
+/* ── Row 3 : Supporters ── */
+.sup2-supporters-row {}
+.sup2-supporters-header {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 16px;
+}
+.sup2-add-btn {
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(251,113,133,0.1);
+    border: 1px solid rgba(251,113,133,0.25);
+    color: #fb7185;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px; font-weight: 800;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 6px 12px; border-radius: 6px; cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+.sup2-add-btn:hover { background: rgba(251,113,133,0.2); border-color: #fb7185; transform: translateY(-1px); }
+.sup2-supporters-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 10px;
+}
+.sup2-supporter-item {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px; padding: 12px 14px;
+    transition: background 0.15s, border-color 0.15s;
+}
+.sup2-supporter-item:hover {
+    background: rgba(251,113,133,0.04);
+    border-color: rgba(251,113,133,0.12);
+}
+.sup2-supporter-rank {
+    font-size: 16px; flex-shrink: 0; line-height: 1;
+}
+.sup2-supporter-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, rgba(251,113,133,0.3), rgba(0,179,255,0.3));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 13px; font-weight: 800; color: #fff;
+    flex-shrink: 0;
+}
+.sup2-supporter-info { flex: 1; min-width: 0; }
+.sup2-supporter-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px; color: #fff; letter-spacing: 0.03em;
+    display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sup2-supporter-msg {
+    font-size: 10px; color: rgba(255,255,255,0.3);
+    font-style: italic; display: block; margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sup2-supporter-amount {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 14px; font-weight: 800; color: #4ade80;
+    letter-spacing: 0.02em; flex-shrink: 0;
+}
+.sup2-no-donors {
+    grid-column: 1/-1;
+    text-align: center; font-size: 13px;
+    color: rgba(255,255,255,0.2); padding: 24px;
+    letter-spacing: 0.04em;
+}
+
+/* ── Footer ── */
+.sup2-footer {
+    text-align: center;
+    padding: 32px 0 0;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+.sup2-footer-heart {
+    width: 36px; height: 36px;
+    margin: 0 auto 16px;
+}
+.sup2-footer-heart svg {
+    width: 36px; height: 36px;
+    stroke: rgba(251,113,133,0.5);
+    animation: supHeartbeat 2.5s ease-in-out infinite;
+}
+.sup2-footer-text {
+    font-size: 13px; color: rgba(255,255,255,0.35);
+    line-height: 1.75; max-width: 520px; margin: 0 auto 12px;
+    font-family: sans-serif; font-weight: normal; font-style: italic;
+}
+.sup2-footer-sig {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px; color: rgba(251,113,133,0.45);
+    letter-spacing: 0.08em;
+}
+
+/* ── Market Bot : bouton Add collection ── */
+.sb-request-wrap { position: relative; }
+.sb-request-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(0,179,255,0.07);
+    border: 1px solid rgba(0,179,255,0.2);
+    color: rgba(0,179,255,0.8);
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px; font-weight: 800;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 0 12px; height: 32px; border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+.sb-request-btn:hover {
+    background: rgba(0,179,255,0.14); border-color: rgba(0,179,255,0.45); color: #00B3FF;
+}
+.sb-request-dropdown {
+    position: absolute;
+    top: calc(100% + 8px); right: 0;
+    width: 280px;
+    background: #0d1829;
+    border: 1px solid rgba(0,179,255,0.18);
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+    padding: 16px;
+    z-index: 200;
+}
+.sb-request-title {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px; font-weight: 800;
+    color: #fff; letter-spacing: 0.04em; text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.sb-request-desc {
+    font-size: 11px; color: rgba(255,255,255,0.4);
+    line-height: 1.55; margin: 0 0 14px;
+    font-family: sans-serif; font-weight: normal;
+}
+.sb-request-links {
+    display: flex; flex-direction: column; gap: 8px;
+}
+.sb-request-link {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 8px;
+    text-decoration: none;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px; font-weight: 800;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    transition: background 0.15s, transform 0.15s;
+}
+.sb-request-link:hover { transform: translateY(-1px); }
+.sb-request-link--discord {
+    background: rgba(88,101,242,0.12);
+    border: 1px solid rgba(88,101,242,0.25);
+    color: #7289da;
+}
+.sb-request-link--discord:hover {
+    background: rgba(88,101,242,0.22); border-color: rgba(88,101,242,0.5);
+}
+.sb-request-link--x {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.75);
+}
+.sb-request-link--x:hover {
+    background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25); color: #fff;
+}
+
+/* ── Bot : Price Alarm ── */
+.sb-alarm-wrap { position: relative; }
+.sb-alarm-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.45);
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px; font-weight: 800;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 0 12px; height: 32px; border-radius: 7px;
+    cursor: pointer; white-space: nowrap;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.sb-alarm-btn:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.7); }
+.sb-alarm-btn--active {
+    background: rgba(74,222,128,0.1) !important;
+    border-color: rgba(74,222,128,0.35) !important;
+    color: #4ade80 !important;
+}
+.sb-alarm-icon { flex-shrink: 0; }
+.sb-alarm-panel {
+    position: absolute;
+    top: calc(100% + 8px); right: 0;
+    width: 260px;
+    background: #0d1829;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+    padding: 16px; z-index: 200;
+}
+.sb-alarm-panel-title {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px; font-weight: 800;
+    color: #fff; letter-spacing: 0.04em; text-transform: uppercase;
+    margin-bottom: 6px;
+}
+.sb-alarm-panel-desc {
+    font-size: 11px; color: rgba(255,255,255,0.35);
+    line-height: 1.5; margin: 0 0 12px;
+    font-family: sans-serif;
+}
+.sb-alarm-input-row {
+    display: flex; align-items: center; gap: 6px; margin-bottom: 10px;
+}
+.sb-alarm-currency {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 13px; color: rgba(255,255,255,0.4);
+}
+.sb-alarm-input {
+    flex: 1; height: 32px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px; color: #fff;
+    font-size: 13px; font-family: 'Geomanist-Bold', sans-serif;
+    padding: 0 8px; outline: none;
+    transition: border-color 0.15s;
+}
+.sb-alarm-input:focus { border-color: rgba(0,179,255,0.4); }
+.sb-alarm-input::-webkit-outer-spin-button,
+.sb-alarm-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.sb-alarm-input[type=number] { -moz-appearance: textfield; }
+.sb-alarm-set {
+    height: 32px; padding: 0 12px;
+    background: #00B3FF; border: none; border-radius: 6px;
+    color: #050d1a;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px; font-weight: 800;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.sb-alarm-set:hover { background: #22c5ff; }
+.sb-alarm-status {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(74,222,128,0.08);
+    border: 1px solid rgba(74,222,128,0.2);
+    border-radius: 7px; padding: 6px 10px;
+    margin-bottom: 10px;
+}
+.sb-alarm-status-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #4ade80; flex-shrink: 0;
+    animation: sbPulse 1.8s ease-in-out infinite;
+}
+.sb-alarm-status span {
+    font-size: 10px; color: #4ade80;
+    font-family: 'Geomanist-Bold', sans-serif;
+    letter-spacing: 0.04em; flex: 1;
+}
+.sb-alarm-clear {
+    background: none; border: none; color: rgba(74,222,128,0.5);
+    font-size: 16px; cursor: pointer; padding: 0; line-height: 1;
+    transition: color 0.15s;
+}
+.sb-alarm-clear:hover { color: #4ade80; }
+.sb-alarm-volume-row {
+    display: flex; align-items: center; gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+.sb-alarm-volume {
+    flex: 1; accent-color: #00B3FF; cursor: pointer;
+    height: 4px;
+}
+
+/* ── Collection panel : écran d'accueil (collection vide) ── */
+.cp-welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    text-align: center;
+    padding: 40px 24px;
+    gap: 20px;
+}
+.cp-welcome-icon {
+    width: 64px; height: 64px; border-radius: 16px;
+    background: rgba(0,179,255,0.08);
+    border: 1px solid rgba(0,179,255,0.18);
+    display: flex; align-items: center; justify-content: center;
+    color: #00B3FF;
+}
+.cp-welcome-title {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: clamp(20px, 3vw, 32px);
+    font-weight: 800; color: #fff;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    margin: 0;
+}
+.cp-welcome-sub {
+    font-size: 14px; color: rgba(255,255,255,0.4);
+    line-height: 1.65; margin: 0; max-width: 400px;
+    font-family: sans-serif;
+}
+.cp-welcome-search-row {
+    display: flex; align-items: center; gap: 0;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(0,179,255,0.25);
+    border-radius: 10px; overflow: hidden;
+    max-width: 420px; width: 100%;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-shadow: 0 0 0 0 rgba(0,179,255,0);
+}
+.cp-welcome-search-row:focus-within {
+    border-color: rgba(0,179,255,0.6);
+    box-shadow: 0 0 0 3px rgba(0,179,255,0.12);
+}
+.cp-welcome-search-icon {
+    padding: 0 12px;
+    color: rgba(0,179,255,0.6);
+    display: flex; align-items: center;
+    flex-shrink: 0;
+}
+.cp-welcome-input {
+    flex: 1; background: none; border: none; outline: none;
+    color: #fff; font-size: 14px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    letter-spacing: 0.02em;
+    padding: 12px 0;
+}
+.cp-welcome-input::placeholder { color: rgba(255,255,255,0.25); font-weight: normal; }
+.cp-welcome-btn {
+    background: #00B3FF; border: none; color: #050d1a;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px; font-weight: 800;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 0 18px; height: 44px; cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s;
+}
+.cp-welcome-btn:hover { background: #22c5ff; }
+.cp-welcome-hint {
+    font-size: 11px; color: rgba(255,255,255,0.2);
+    letter-spacing: 0.06em;
+}
+.cp-welcome-featured {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: center; max-width: 500px;
+}
+.cp-welcome-col-chip {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 7px 12px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px; color: rgba(255,255,255,0.6);
+    letter-spacing: 0.04em; text-transform: uppercase;
+}
+.cp-welcome-col-chip:hover {
+    background: rgba(0,179,255,0.08);
+    border-color: rgba(0,179,255,0.25);
+    color: #fff;
+}
+.cp-welcome-col-chip img {
+    width: 24px; height: 24px; border-radius: 5px; object-fit: cover;
+}
+
+/* ── Profile Explorer welcome screen — overlay plein écran ── */
+.pf-welcome-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    top: var(--topnav-height, 52px);
+    z-index: 400;
+    background: var(--bg, #0a1428);
+    align-items: center;
+    justify-content: center;
+}
+.pf-welcome-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 20px;
+    padding: 40px 24px;
+    max-width: 520px;
+    width: 100%;
+}
+
+/* ── Section "Featured collections" dans le welcome unifié Explorer ── */
+#pfWelcome .ex-welcome-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    width: 100%;
+}
+#pfWelcome .ex-welcome-section-title {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    margin: 0;
+}
+#pfWelcome .cp-welcome-sub strong {
+    color: rgba(255,255,255,0.75);
+    font-weight: 600;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CONTRÔLES PAR GROUPE — sort + size dans chaque group header
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Masquer les contrôles flottants droits quand les contrôles sont dans les headers */
+#navbarControls.controls-in-groups {
+    display: none !important;
+}
+
+/* Container groupé : garder le grid mais avec taille variable par --g-card-min */
+#nftContainer.nft-container--grouped {
+    grid-template-columns: repeat(auto-fill, minmax(var(--g-card-min, 115px), 1fr)) !important;
+    align-content: start;
+}
+
+/* Les wrappers de cartes sont transparents au grid (les cartes participent directement) */
+.nft-group-cards {
+    display: contents;
+}
+
+/* Barre de filtres globale (chain + curated) injectée au-dessus des groupes */
+.nft-group-filters-bar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 6px 0 14px;
+    flex-wrap: wrap;
+}
+.nft-gfb-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Séparateur visuel entre les boutons download et les boutons sort/size */
+.nft-group-controls-sep {
+    width: 1px;
+    height: 20px;
+    background: rgba(255,255,255,0.1);
+    flex-shrink: 0;
+    align-self: center;
+}
+
+/* ── Contrôles dans les group headers profil — taille identique aux autres vues ── */
+
+/* Sort : même hauteur 32px que stats-timerange standard */
+.nft-group-sort-btns {
+    height: 32px;
+    flex-shrink: 0;
+}
+.nft-group-sort-btns .stats-tr-btn {
+    font-size: 10px;
+    padding: 0 11px;
+    letter-spacing: 0.08em;
+    height: 100%;
+}
+
+/* Size toggle : même style que cp-view-toggle standard */
+.nft-group-size-btns {
+    flex-shrink: 0;
+}
+.nft-group-size-btns .cp-view-btn {
+    width: 28px;
+    height: 28px;
+}
+
+/* Overlay : même hauteur 32px que stats-chain-filter standard */
+.nft-group-overlay-btns {
+    height: 32px;
+    flex-shrink: 0;
+}
+.nft-group-overlay-btns .stats-cf-btn {
+    font-size: 10px;
+    padding: 0 11px;
+    letter-spacing: 0.08em;
+    height: 100%;
+    line-height: 1;
+}
+
+/* nft-group-count : flex aligné centré */
+.nft-group-count {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+    overflow: visible;
+}
+
+/* ── Bouton de taille avec icône SVG (profil groupé + collection explorer) ──
+   Réutilise stats-tr-btn (hauteur 32px, séparateurs) mais centre l'icône SVG  */
+.nft-group-size-btn svg,
+.cp-size-btn svg {
+    width: 14px;
+    height: 14px;
+    display: block;
+    flex-shrink: 0;
+}
+.nft-group-size-btn,
+.cp-size-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   DROPS PANEL — Premium NFT Drops Page
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.topnav-tab--drops { }
+
+.drops-panel {
+    min-height: 100%;
+    box-sizing: border-box;
+}
+.drops-inner {
+    padding: clamp(20px, 3vh, 40px) 20px 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+}
+
+/* ── En-tête ── */
+.drops-page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.drops-page-title {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: clamp(32px, 4vw, 56px);
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 0;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.drops-page-title svg {
+    width: clamp(24px, 3vw, 38px);
+    height: clamp(24px, 3vw, 38px);
+    color: #00B3FF;
+    flex-shrink: 0;
+}
+.drops-page-sub {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 8px 0 0;
+}
+.drops-all-link {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    color: rgba(0,179,255,0.7);
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color 0.15s;
+    white-space: nowrap;
+    align-self: flex-end;
+    padding-bottom: 4px;
+}
+.drops-all-link:hover { color: #00B3FF; }
+
+/* ── Loading ── */
+.drops-loading {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    padding: 60px 0;
+}
+
+/* ── Sections ── */
+.drops-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.drops-section-label {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.drops-section-label--muted { color: rgba(255,255,255,0.3); }
+
+/* Dot LIVE animé */
+.drops-live-pulse {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 8px rgba(74,222,128,0.8);
+    animation: dropsPulse 1.8s ease-in-out infinite;
+    flex-shrink: 0;
+}
+@keyframes dropsPulse {
+    0%,100% { box-shadow: 0 0 6px rgba(74,222,128,0.8); transform: scale(1); }
+    50%      { box-shadow: 0 0 14px rgba(74,222,128,1); transform: scale(1.25); }
+}
+
+/* ── Grilles ── */
+.drops-live-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+.drops-grid {
+    display: grid;
+    gap: 16px;
+}
+.drops-grid--upcoming {
+    grid-template-columns: 1fr;
+}
+.drops-grid--ended {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+/* ── Carte commune ── */
+.drop-card {
+    background: linear-gradient(180deg, rgba(14,24,48,0.95), rgba(8,15,32,0.98));
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    position: relative;
+}
+.drop-card:hover {
+    border-color: rgba(0,179,255,0.4);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,179,255,0.15);
+}
+
+/* Image wrap */
+.drop-card-img-wrap {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+.drop-card--live    .drop-card-img-wrap { aspect-ratio: 21/9; }
+.drop-card--upcoming .drop-card-img-wrap { aspect-ratio: 16/10; }
+.drop-card--ended   .drop-card-img-wrap { aspect-ratio: 1; }
+
+.drop-card-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.35s ease;
+    will-change: transform;
+    backface-visibility: hidden;
+}
+.drop-card:hover .drop-card-img { transform: scale(1.04); }
+
+.drop-card-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(8,15,32,0.95) 0%, rgba(8,15,32,0.15) 50%, transparent 100%);
+    pointer-events: none;
+}
+.drop-card-gradient--ended {
+    background: linear-gradient(to top, rgba(8,15,32,0.9) 0%, rgba(8,15,32,0.4) 60%, rgba(0,0,0,0.2) 100%);
+}
+
+/* Badges */
+.drop-card-badges {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.drop-badge {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.drop-badge--live {
+    background: rgba(74,222,128,0.2);
+    border: 1px solid rgba(74,222,128,0.5);
+    color: #4ade80;
+}
+.drop-badge-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #4ade80;
+    animation: dropsPulse 1.8s ease-in-out infinite;
+}
+.drop-badge--upcoming {
+    background: rgba(0,179,255,0.15);
+    border: 1px solid rgba(0,179,255,0.4);
+    color: #00B3FF;
+}
+.drop-badge--ea {
+    background: rgba(251,191,36,0.15);
+    border: 1px solid rgba(251,191,36,0.4);
+    color: #fbbf24;
+}
+.drop-badge--ended {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.35);
+    backdrop-filter: blur(4px);
+}
+
+/* Corps de la carte */
+.drop-card-body {
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+.drop-card-body--compact {
+    padding: 10px 12px 12px;
+    gap: 4px;
+}
+
+.drop-card-creator {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+.drop-card-avatar {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid rgba(255,255,255,0.1);
+    flex-shrink: 0;
+}
+.drop-card-creator-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+.drop-card-creator-name--sm {
+    font-size: 10px;
+    color: rgba(255,255,255,0.4);
+}
+.drop-card-verified {
+    width: 14px; height: 14px;
+    flex-shrink: 0;
+}
+
+.drop-card-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: clamp(14px, 1.6vw, 20px);
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin: 0;
+    line-height: 1.15;
+}
+.drop-card--live .drop-card-name {
+    font-size: clamp(18px, 2.2vw, 30px);
+}
+.drop-card-name--sm {
+    font-size: 12px;
+    letter-spacing: 0.02em;
+}
+
+.drop-card-desc {
+    font-size: 12px;
+    color: rgba(255,255,255,0.45);
+    line-height: 1.6;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.drop-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+.drop-card-dates {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.drop-card-date-label {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    font-weight: 800;
+}
+.drop-card-date-val {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+.drop-card-countdown {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    color: #4ade80;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+.drop-card-countdown--start {
+    color: #00B3FF;
+}
+.drop-card-cta {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(0,179,255,0.7);
+    white-space: nowrap;
+    transition: color 0.15s;
+}
+.drop-card:hover .drop-card-cta { color: #00B3FF; }
+
+/* Carte ended : image + overlay seulement, corps compact */
+.drop-card--ended { opacity: 0.7; }
+.drop-card--ended:hover { opacity: 1; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .drops-grid--upcoming { grid-template-columns: 1fr; }
+    .drops-grid--ended { grid-template-columns: repeat(2, 1fr); }
+    .drops-inner { padding: 16px 14px 60px; gap: 32px; }
+}
+
+/* ── Drops enrichis : prix, utilitaires, dates ── */
+.drop-card-prices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 2px;
+}
+.drop-price-pill {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #fbbf24;
+    background: rgba(251,191,36,0.1);
+    border: 1px solid rgba(251,191,36,0.25);
+    border-radius: 5px;
+    padding: 2px 8px;
+}
+.drop-card-utils {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 2px;
+}
+.drop-util-pill {
+    font-size: 11px;
+    color: rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 5px;
+    padding: 2px 8px;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+.drop-date-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+.drop-date-row--ea {
+    margin-top: 3px;
+}
+
+/* ── Carte LIVE enrichie : vidéo, packs, progression, EA ── */
+
+/* Vidéo hover */
+.drop-card-video {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    z-index: 3;
+    will-change: opacity;
+}
+.drop-card-img--static {
+    transition: opacity 0.35s ease;
+    position: relative;
+    z-index: 2;
+}
+.drop-live-media-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent 60%, rgba(8,15,32,0.5) 100%),
+                linear-gradient(180deg, transparent 50%, rgba(8,15,32,0.3) 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Top row : creator + dates alignés */
+.drop-card-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.drop-card-dates-inline {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+/* Bio créateur */
+.drop-card-creator-bio {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    line-height: 1.5;
+    margin: 0;
+    font-style: italic;
+}
+
+/* Packs */
+.drop-packs {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+}
+.drop-pack-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 8px 12px;
+    transition: border-color 0.15s;
+}
+.drop-pack-item:hover { border-color: rgba(0,179,255,0.3); }
+.drop-pack-item--sold { opacity: 0.5; }
+.drop-pack-img {
+    width: 40px; height: 40px;
+    border-radius: 6px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.drop-pack-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.drop-pack-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.drop-pack-sub {
+    font-size: 10px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.06em;
+}
+.drop-pack-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    flex-shrink: 0;
+}
+.drop-pack-price {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: #00B3FF;
+    letter-spacing: 0.02em;
+}
+.drop-pack-price--sold {
+    font-size: 10px;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 0.1em;
+}
+.drop-pack-avail {
+    font-size: 10px;
+    color: #4ade80;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+}
+
+/* Barre de progression */
+.drop-progress-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 4px;
+}
+.drop-progress-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.drop-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00B3FF, #4ade80);
+    border-radius: 2px;
+    transition: width 0.6s ease;
+}
+.drop-progress-labels {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.drop-progress-text, .drop-progress-avail {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: rgba(255,255,255,0.55);
+}
+.drop-progress-avail { color: #4ade80; }
+
+/* Early Access info */
+.drop-ea-info {
+    background: rgba(251,191,36,0.06);
+    border: 1px solid rgba(251,191,36,0.2);
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.drop-ea-label {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    color: #fbbf24;
+    text-transform: uppercase;
+}
+.drop-ea-text {
+    font-size: 10px;
+    color: rgba(255,255,255,0.45);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   DROPS — Layout 2 colonnes carte LIVE + Timeline
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Layout 2 colonnes pour la carte LIVE */
+.drop-live-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    min-height: 480px;
+}
+.drop-card--live { flex-direction: row; }
+
+/* Colonne media */
+.drop-live-media {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px 0 0 16px;
+    min-height: 420px;
+}
+.drop-live-media .drop-card-img--static,
+.drop-live-media .drop-card-video {
+    position: absolute;
+    inset: 0; width: 100%; height: 100%;
+    object-fit: cover;
+}
+.drop-live-media-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent 60%, rgba(8,15,32,0.6) 100%),
+                linear-gradient(180deg, transparent 50%, rgba(8,15,32,0.4) 100%);
+}
+.drop-live-play-hint {
+    position: absolute;
+    bottom: 14px; left: 14px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.5);
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+.drop-card-badges--media {
+    position: absolute;
+    top: 14px; left: 14px;
+}
+
+/* Colonne infos */
+.drop-live-info {
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.drop-live-info-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.drop-live-countdown-box {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+    flex-shrink: 0;
+}
+.drop-live-countdown-label {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+.drop-live-countdown-val {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: #4ade80;
+    letter-spacing: 0.04em;
+}
+.drop-live-title {
+    font-size: clamp(16px, 1.8vw, 26px);
+    margin-top: 0;
+}
+
+/* Packs grille 2 colonnes */
+.drop-live-packs-title {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+.drop-live-packs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.drop-pack-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+}
+.drop-pack-card:hover { border-color: rgba(0,179,255,0.4); }
+.drop-pack-card--sold { opacity: 0.55; }
+.drop-pack-card-img {
+    width: 100%;
+    aspect-ratio: 16/10;
+    object-fit: cover;
+    display: block;
+}
+.drop-pack-card-body {
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.drop-pack-card-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.drop-pack-card-nfts {
+    font-size: 10px;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.06em;
+}
+.drop-pack-card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+.drop-pack-card-price {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: #00B3FF;
+}
+.drop-pack-card-price--sold {
+    font-size: 10px;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 0.1em;
+}
+.drop-pack-card-avail {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    color: #4ade80;
+    letter-spacing: 0.04em;
+}
+
+/* Dates row */
+.drop-live-dates-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+.drop-live-date-pill {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 6px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.drop-live-date-pill--end {
+    border-color: rgba(0,179,255,0.2);
+    background: rgba(0,179,255,0.05);
+}
+.drop-live-date-label {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 8px;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+.drop-live-date-val {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px;
+    color: #fff;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+.drop-live-date-arrow {
+    color: rgba(255,255,255,0.25);
+    font-size: 14px;
+}
+.drop-live-cta {
+    margin-left: auto;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #00B3FF;
+    background: rgba(0,179,255,0.1);
+    border: 1px solid rgba(0,179,255,0.3);
+    border-radius: 8px;
+    padding: 8px 16px;
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+.drop-live-cta:hover { background: rgba(0,179,255,0.2); border-color: #00B3FF; }
+
+/* Responsive 1 colonne */
+@media (max-width: 900px) {
+    .drop-live-layout { grid-template-columns: 1fr; }
+    .drop-live-media { border-radius: 16px 16px 0 0; min-height: 240px; }
+    .drop-live-packs-grid { grid-template-columns: 1fr; }
+}
+
+/* ── TIMELINE horizontale ───────────────────────────────────────────────── */
+.drops-timeline-wrap {
+    width: calc(100% + 40px);
+    margin-left: -20px;
+    margin-right: -20px;
+    overflow-x: auto;
+    padding: 16px 20px 24px;
+    background: rgba(255,255,255,0.02);
+    border-top: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.08) transparent;
+    -webkit-overflow-scrolling: touch;
+}
+.drops-timeline-wrap::-webkit-scrollbar { height: 4px; }
+.drops-timeline-wrap::-webkit-scrollbar-track { background: transparent; }
+.drops-timeline-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+.drops-timeline {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    padding: 0 40px;
+    min-width: max-content;
+}
+
+/* Ligne de connexion entre les noeuds */
+.tl-line {
+    width: 40px;
+    height: 2px;
+    background: rgba(255,255,255,0.08);
+    align-self: center;
+    flex-shrink: 0;
+    margin-top: -46px; /* aligner sur le centre des images agrandies */
+}
+.tl-line--accent {
+    background: linear-gradient(90deg, rgba(0,179,255,0.4), rgba(74,222,128,0.4));
+}
+
+/* Noeud de la timeline */
+.tl-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    width: 90px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.15s;
+    flex-shrink: 0;
+}
+.tl-node:hover { transform: translateY(-2px); }
+
+/* Image du noeud */
+.tl-img-wrap {
+    position: relative;
+    width: 88px; height: 88px;
+    flex-shrink: 0;
+}
+.tl-img {
+    width: 100%; height: 100%;
+    border-radius: 14px;
+    object-fit: cover;
+    border: 2px solid rgba(255,255,255,0.08);
+    transition: border-color 0.15s;
+    display: block;
+}
+.tl-node--live .tl-img { border-color: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,0.2), 0 0 16px rgba(74,222,128,0.25); }
+.tl-node--upcoming .tl-img { border-color: rgba(0,179,255,0.4); }
+.tl-node--ended .tl-img { filter: saturate(0.4) brightness(0.7); }
+.tl-node:hover .tl-img { border-color: rgba(0,179,255,0.6); }
+
+/* Anneau pulsé sur le noeud LIVE */
+.tl-live-ring {
+    position: absolute;
+    inset: -6px;
+    border-radius: 16px;
+    border: 2px solid rgba(74,222,128,0.4);
+    animation: tlLivePulse 2s ease-in-out infinite;
+    pointer-events: none;
+}
+@keyframes tlLivePulse {
+    0%,100% { opacity: 0.4; transform: scale(1); }
+    50%      { opacity: 1;   transform: scale(1.05); }
+}
+
+/* Point central */
+.tl-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.tl-dot--live    { background: #4ade80; box-shadow: 0 0 8px rgba(74,222,128,0.8); animation: dropsPulse 1.8s ease-in-out infinite; }
+.tl-dot--upcoming { background: #00B3FF; }
+.tl-dot--ended  { background: rgba(255,255,255,0.2); }
+
+/* Texte du noeud */
+.tl-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    text-align: center;
+}
+.tl-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.75);
+    letter-spacing: 0.03em;
+    line-height: 1.3;
+    text-align: center;
+}
+.tl-node--ended .tl-name { color: rgba(255,255,255,0.35); }
+.tl-node--live .tl-name { color: #fff; }
+.tl-date {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.06em;
+    text-align: center;
+}
+.tl-node--live .tl-date { color: #4ade80; }
+.tl-node--upcoming .tl-date { color: rgba(0,179,255,0.7); }
+
+/* ── Drops : supprimer soulignement au hover (cards sont des <a>) ── */
+.drop-card,
+.drop-card *,
+.drop-card:hover,
+.drop-card:hover *,
+.tl-node,
+.tl-node *,
+.tl-node:hover,
+.tl-node:hover * {
+    text-decoration: none !important;
+}
+
+/* Forcer bio créateur sur 1 ligne dans la carte LIVE */
+.drop-live-info .drop-card-creator-bio {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 11px;
+    color: rgba(255,255,255,0.38);
+    line-height: 1.4;
+    margin: 0;
+    font-style: italic;
+}
+
+/* EA info plus compacte */
+.drop-live-info .drop-ea-info {
+    padding: 7px 10px;
+}
+.drop-live-info .drop-ea-text {
+    -webkit-line-clamp: 1;
+}
+
+/* Progress bar plus compacte */
+.drop-live-info .drop-progress-wrap {
+    margin-top: 0;
+}
+
+/* Hauteur min de la media column pour garder la proportion */
+.drop-live-media {
+    min-height: 380px;
+}
+
+/* Cards upcoming : pas de soulignement non plus */
+.drops-all-link,
+.drops-all-link:hover {
+    text-decoration: none !important;
+}
+
+/* ── Tiers de prix pour UPCOMING ── */
+.drop-upcoming-tiers {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 8px 12px;
+}
+.drop-tier-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+}
+.drop-tier-label {
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.drop-tier-detail {
+    color: rgba(255,255,255,0.35);
+    font-size: 10px;
+    flex-shrink: 0;
+}
+.drop-tier-price {
+    color: #00B3FF;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+    min-width: 40px;
+    text-align: right;
+}
+
+/* Countdown upcoming dans le header de la carte */
+.drop-card-countdown--start-val {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: #00B3FF;
+    letter-spacing: 0.04em;
+}
+
+/* Packs cards ultra-compacts : juste image + price en ligne */
+.drop-live-packs-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+.drop-pack-card-img {
+    aspect-ratio: 16/9;
+}
+.drop-pack-card-body {
+    padding: 6px 8px;
+    gap: 2px;
+}
+.drop-pack-card-name {
+    font-size: 10px;
+}
+.drop-pack-card-nfts {
+    display: none; /* masqué pour compacité max */
+}
+.drop-pack-card-bottom {
+    padding-top: 4px;
+    margin-top: 2px;
+}
+.drop-pack-card-price { font-size: 13px; }
+.drop-pack-card-avail { font-size: 9px; }
+
+/* Timeline : distribuer les noeuds sur toute la largeur */
+.drops-timeline {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    padding: 8px 20px;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: space-between;
+}
+.tl-node {
+    flex: 1;
+    max-width: 160px;
+    min-width: 90px;
+    width: auto;
+}
+.tl-line {
+    flex: 1;
+    min-width: 12px;
+    height: 2px;
+    align-self: center;
+    margin-top: -56px;
+}
+.tl-img-wrap {
+    width: min(90px, 100%);
+    height: auto;
+    aspect-ratio: 1;
+}
+.tl-img {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1;
+}
+.tl-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.75);
+    letter-spacing: 0.03em;
+    line-height: 1.25;
+    text-align: center;
+    word-break: break-word;
+    hyphens: auto;
+}
+.tl-node--ended .tl-name { color: rgba(255,255,255,0.35); }
+.tl-node--live .tl-name { color: #fff; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   DROP LIVE INFO — Colonne droite redesignée (dli-*)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.drop-live-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    height: 100%;
+}
+
+/* ── 1. Header : creator + titre + desc ── */
+.dli-header {
+    padding: 20px 22px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.dli-title {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: clamp(16px, 1.6vw, 22px);
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0;
+    line-height: 1.15;
+}
+.dli-desc {
+    font-size: 12.5px;
+    color: rgba(255,255,255,0.8);
+    font-size: 13px;
+    line-height: 1.7;
+    margin: 0;
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+
+/* ── Sections intermédiaires ── */
+.dli-section {
+    padding: 14px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.dli-section-label {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+}
+
+/* ── 2. Packs ── */
+.dli-packs {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.dli-pack {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 8px 12px 8px 8px;
+    transition: border-color 0.15s;
+}
+.dli-pack:hover { border-color: rgba(0,179,255,0.3); }
+.dli-pack--sold { opacity: 0.5; }
+.dli-pack-img {
+    width: 48px; height: 48px;
+    border-radius: 7px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.dli-pack-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.dli-pack-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dli-pack-nfts {
+    font-size: 11px;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 0.05em;
+}
+.dli-pack-price-block {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    flex-shrink: 0;
+}
+.dli-pack-price {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: #00B3FF;
+    letter-spacing: 0.02em;
+    line-height: 1;
+}
+.dli-pack-left {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px;
+    color: #4ade80;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+}
+.dli-pack-sold {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    color: #fbbf24;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: rgba(251,191,36,0.12);
+    border: 1px solid rgba(251,191,36,0.35);
+    border-radius: 6px;
+    padding: 3px 9px;
+}
+
+/* Barre de progression */
+.dli-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.dli-progress-track {
+    width: 100%; height: 3px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.dli-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00B3FF 0%, #4ade80 100%);
+    border-radius: 2px;
+    transition: width 0.6s ease;
+}
+.dli-progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.dli-progress-sold {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.06em;
+}
+.dli-progress-pct {
+    color: rgba(255,255,255,0.3);
+    margin-left: 4px;
+}
+.dli-progress-rem {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    color: #4ade80;
+    letter-spacing: 0.05em;
+}
+
+/* ── 3. Utilitaires ── */
+.dli-utils {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+.dli-util {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 6px;
+    padding: 3px 9px;
+    white-space: nowrap;
+}
+
+/* ── 4. Early Access ── */
+.dli-ea {
+    margin: 0 22px;
+    padding: 10px 14px;
+    background: rgba(251,191,36,0.06);
+    border: 1px solid rgba(251,191,36,0.2);
+    border-radius: 10px;
+}
+.dli-ea-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+.dli-ea-badge {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: #fbbf24;
+    text-transform: uppercase;
+}
+.dli-ea-date {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    color: rgba(251,191,36,0.6);
+    letter-spacing: 0.06em;
+}
+.dli-ea-text {
+    font-size: 13px;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* ── 5. Footer : dates + countdown + CTA ── */
+.dli-footer {
+    margin-top: auto;
+    padding: 16px 22px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.dli-footer-dates {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.dli-footer-date {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+.dli-footer-date-lbl {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+}
+.dli-footer-date-val {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+.dli-footer-arrow {
+    color: rgba(255,255,255,0.2);
+    font-size: 14px;
+    flex-shrink: 0;
+}
+.dli-countdown {
+    margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+}
+.dli-countdown-lbl {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+}
+.dli-countdown-val {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    color: #4ade80;
+    letter-spacing: 0.04em;
+}
+.dli-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, rgba(0,179,255,0.15), rgba(0,179,255,0.08));
+    border: 1px solid rgba(0,179,255,0.4);
+    border-radius: 10px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #00B3FF;
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    box-sizing: border-box;
+}
+.dli-cta:hover {
+    background: linear-gradient(135deg, rgba(0,179,255,0.3), rgba(0,179,255,0.15));
+    border-color: #00B3FF;
+    color: #fff;
+    text-decoration: none;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .dli-footer { padding: 14px 16px 16px; }
+    .dli-header  { padding: 16px 16px 14px; }
+    .dli-section { padding: 12px 16px; }
+    .dli-ea      { margin: 0 16px; }
+}
+
+/* ── Upcoming : pricing tiers (dli-tiers) ── */
+.dli-tiers {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.dli-tier {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+}
+.dli-tier-left {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+.dli-tier-label {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.75);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.dli-tier-qty {
+    font-size: 10px;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 0.06em;
+}
+.dli-tier-price {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: #00B3FF;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+}
+
+/* Bouton upcoming cyan plus clair */
+.dli-cta--upcoming {
+    border-color: rgba(0,179,255,0.35);
+    color: rgba(0,179,255,0.85);
+}
+
+/* ── Footer dates sur 1 ligne (no wrap) ── */
+.dli-footer-dates {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    min-width: 0;
+}
+.dli-footer-date {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex-shrink: 0;
+}
+.dli-footer-date-val {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 13px;
+    color: rgba(255,255,255,0.85);
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+.dli-footer-arrow {
+    color: rgba(255,255,255,0.2);
+    font-size: 12px;
+    flex-shrink: 0;
+}
+.dli-countdown {
+    margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+    flex-shrink: 0;
+}
+
+/* Countdown upcoming (data-start) */
+.dli-countdown-val[data-start] {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    color: #00B3FF;
+    letter-spacing: 0.04em;
+}
+
+/* ── Timeline : tailles légèrement augmentées ── */
+.tl-img-wrap {
+    width: min(100px, 100%);
+    height: auto;
+    aspect-ratio: 1;
+}
+.tl-img {
+    border-radius: 14px;
+}
+.tl-node {
+    max-width: 170px;
+    min-width: 90px;
+}
+.tl-line {
+    margin-top: -60px;
+}
+
+/* ── Timeline : alignement horizontal des dates + noms 1 ligne ── */
+
+/* Forcer une structure à hauteur fixe par zone */
+.tl-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    flex: 0 0 auto;          /* largeur naturelle selon le nom */
+    min-width: 90px;
+    padding: 0 8px;          /* espace de chaque côté */
+}
+
+/* Image wrap : taille fixe */
+.tl-img-wrap {
+    width: min(100px, 100%);
+    aspect-ratio: 1;
+    flex-shrink: 0;
+}
+
+/* Dot : hauteur fixe */
+.tl-dot {
+    margin: 6px 0;
+    flex-shrink: 0;
+}
+
+/* Info : deux zones à hauteur fixe séparées */
+.tl-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 0;
+}
+
+/* Nom : 1 seule ligne, largeur naturelle du texte */
+.tl-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.75);
+    letter-spacing: 0.03em;
+    line-height: 1.25;
+    text-align: center;
+    white-space: nowrap;
+    height: 14px;
+    display: block;
+}
+.tl-node--ended .tl-name { color: rgba(255,255,255,0.35); }
+.tl-node--live  .tl-name { color: #fff; }
+
+/* Date : toujours à la même hauteur, alignée */
+.tl-date {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.05em;
+    text-align: center;
+    white-space: nowrap;
+    margin-top: 4px;
+    height: 12px; /* hauteur fixe */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.tl-node--live     .tl-date { color: #4ade80; }
+.tl-node--upcoming .tl-date { color: rgba(0,179,255,0.7); }
+
+/* Ligne de connexion : alignement sur le centre des images */
+.tl-line {
+    flex: 1 1 20px;
+    min-width: 16px;
+    height: 2px;
+    align-self: flex-start;
+    margin-top: 49px;
+}
+
+/* ── Drops : bouton Get Featured (même style que sales bot) ── */
+.drops-header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+}
+.drops-feature-wrap {
+    position: relative;
+}
+.drops-feature-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 7px;
+    padding: 7px 13px;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+.drops-feature-btn:hover,
+.drops-feature-btn--open {
+    color: #00B3FF;
+    background: rgba(0,179,255,0.08);
+    border-color: rgba(0,179,255,0.35);
+}
+.drops-feature-btn svg {
+    opacity: 0.7;
+}
+
+.drops-feature-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 280px;
+    background: #0d1a2e;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+    z-index: 200;
+}
+.drops-feature-title {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.drops-feature-desc {
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.55;
+    margin: 0 0 14px;
+}
+.drops-feature-links {
+    display: flex;
+    gap: 8px;
+}
+.drops-feature-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: opacity 0.15s;
+    flex: 1;
+    justify-content: center;
+}
+.drops-feature-link:hover { opacity: 0.85; text-decoration: none; }
+.drops-feature-link--discord {
+    background: #5865F2;
+    color: #fff;
+    border-color: #4752c4;
+}
+.drops-feature-link--x {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.8);
+    border-color: rgba(255,255,255,0.15);
+}
+
+/* Timeline : nom de l'artiste sous le titre de collection */
+.tl-artist {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: center;
+    white-space: nowrap;
+    margin-top: 2px;
+    height: 11px;
+    display: block;
+}
+.tl-node--live .tl-artist     { color: rgba(255,255,255,0.55); }
+.tl-node--upcoming .tl-artist { color: rgba(0,179,255,0.5); }
+
+/* ── Timeline : artiste gris uniforme (override upcoming cyan) ── */
+.tl-artist {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 13px;
+    margin-top: 3px;
+}
+.tl-node--upcoming .tl-artist { color: rgba(255,255,255,0.35); }
+
+/* Badge verified dans la timeline */
+.tl-verified {
+    width: 11px; height: 11px;
+    flex-shrink: 0;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+/* Dates plus grandes */
+.tl-date {
+    font-size: 10px !important;
+    margin-top: 4px;
+}
+
+/* ── Home : badge NEW sur les feature cards ── */
+.home-feature {
+    position: relative;
+}
+.home-feature--new {
+    border-color: rgba(0,179,255,0.2);
+}
+.home-feature-new-badge {
+    position: absolute;
+    top: 14px; right: 14px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    color: #00B3FF;
+    background: rgba(0,179,255,0.12);
+    border: 1px solid rgba(0,179,255,0.3);
+    border-radius: 5px;
+    padding: 2px 7px;
+    text-transform: uppercase;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   DROPS HERO CAROUSEL
+   ══════════════════════════════════════════════════════════════════════════ */
+.drops-hero {
+    position: relative;
+    width: calc(100% + 40px);
+    margin-left: -20px;
+    margin-right: -20px;
+    height: 480px;
+    overflow: hidden;
+    border-radius: 0;
+}
+.drops-hero-track {
+    display: flex;
+    height: 100%;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+}
+.drops-hero-slide {
+    position: relative;
+    flex: 0 0 100%;
+    height: 100%;
+    overflow: hidden;
+}
+.drops-hero-bg {
+    position: absolute; inset: 0;
+}
+.drops-hero-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: opacity 0.4s;
+}
+.drops-hero-video {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    opacity: 1;
+    z-index: 1;
+}
+.drops-hero-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(
+        90deg,
+        rgba(5,13,26,0.92) 0%,
+        rgba(5,13,26,0.7) 45%,
+        rgba(5,13,26,0.15) 100%
+    ), linear-gradient(
+        0deg,
+        rgba(5,13,26,0.6) 0%,
+        transparent 50%
+    );
+    z-index: 2;
+}
+.drops-hero-content {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 40px 48px;
+    max-width: 560px;
+}
+.drops-hero-badges {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.drops-hero-date {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.drops-hero-title {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: clamp(22px, 3vw, 42px);
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.1;
+    margin: 0 0 12px;
+}
+.drops-hero-creator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.drops-hero-avatar {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255,255,255,0.2);
+}
+.drops-hero-creator-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+.drops-hero-verified {
+    width: 15px; height: 15px;
+}
+.drops-hero-countdown {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+.drops-hero-countdown-lbl {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+.drops-hero-countdown-val {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: #4ade80;
+    letter-spacing: 0.04em;
+}
+.drops-hero-countdown-val[data-start] {
+    color: #00B3FF;
+}
+.drops-hero-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 28px;
+    background: rgba(255,255,255,0.1);
+    border: 1.5px solid rgba(255,255,255,0.35);
+    border-radius: 10px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #fff;
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s;
+    align-self: flex-start;
+    backdrop-filter: blur(4px);
+}
+.drops-hero-cta:hover {
+    background: rgba(255,255,255,0.2);
+    border-color: rgba(255,255,255,0.6);
+    text-decoration: none;
+}
+
+/* Navigation */
+.drops-hero-nav {
+    position: absolute;
+    top: 50%; transform: translateY(-50%);
+    z-index: 10;
+    width: 44px; height: 44px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 50%;
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+    backdrop-filter: blur(4px);
+    line-height: 1;
+}
+.drops-hero-nav:hover { background: rgba(0,0,0,0.65); }
+.drops-hero-nav--prev { left: 16px; }
+.drops-hero-nav--next { right: 16px; }
+
+/* Dots */
+.drops-hero-dots {
+    position: absolute;
+    bottom: 16px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 6px;
+    z-index: 10;
+}
+.drops-hero-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    border: none; cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+}
+.drops-hero-dot--active {
+    background: #fff;
+    transform: scale(1.3);
+}
+
+/* ── Rank badge : couleur cyan du site (#00B3FF) ── */
+.sb-rank-badge {
+    background: rgba(0,100,180,0.0) !important;
+    background: rgba(0,55,100,0.9) !important;
+    border-color: rgba(0,179,255,0.4) !important;
+    color: #00B3FF !important;
+}
+.sb-rank-badge svg { color: #00B3FF; }
+
+/* cp-nft-rank-badge : même style que sb-rank-badge */
+.cp-nft-rank-badge {
+    background: rgba(0,55,100,0.9) !important;
+    backdrop-filter: blur(4px);
+    color: #00B3FF !important;
+    font-size: 9px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    padding: 2px 6px 2px 5px;
+    border-radius: 5px;
+    border: 1px solid rgba(0,179,255,0.35) !important;
+    line-height: 1.4;
+    pointer-events: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+/* ── Bot : Buyer / Seller plus lisibles ── */
+.sb-card-trade--sale {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.sb-trade-party {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    flex: 1;
+}
+.sb-trade-label {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+.sb-trade-label--seller { color: rgba(255,100,80,0.7); }
+.sb-trade-label--buyer  { color: rgba(74,222,128,0.7); }
+.sb-trade-arrow {
+    color: rgba(255,255,255,0.2);
+    flex-shrink: 0;
+}
+
+/* ── Rank badge : position bas-gauche + étoile (profil + collection) ── */
+.cp-nft-rank-badge {
+    position: absolute !important;
+    top: auto !important;
+    bottom: 6px !important;
+    left: 6px !important;
+    right: auto !important;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 3px;
+}
+
+/* Prix sous le nom (profil + collection) */
+.cp-nft-price-below {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    color: #00B3FF;
+    letter-spacing: 0.04em;
+    padding: 0 4px 2px;
+}
+
+/* Badge prix overlay (masqué — remplacé par cp-nft-price-below) */
+.cp-nft-price-badge {
+    display: none !important;
+}
+
+/* ── Bot : seller / buyer sur lignes séparées, texte plus grand ── */
+.sb-card-trade--sale {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.sb-trade-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+}
+.sb-trade-label {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    width: 38px;
+}
+.sb-trade-label--seller { color: rgba(255,100,80,0.75); }
+.sb-trade-label--buyer  { color: rgba(74,222,128,0.75); }
+.sb-card-user {
+    font-size: 12px !important;
+    color: rgba(255,255,255,0.8) !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+}
+.sb-card-seller { color: rgba(255,255,255,0.65) !important; }
+.sb-card-buyer  { color: rgba(255,255,255,0.9) !important; }
+
+/* Prix + date bot plus grands */
+.sb-card-price {
+    font-size: 14px !important;
+}
+.sb-card-time {
+    font-size: 11px !important;
+    color: rgba(255,255,255,0.4) !important;
+}
+
+/* ── Rank badge : fond blanc, texte foncé ── */
+.cp-nft-rank-badge,
+.sb-rank-badge {
+    background: rgba(255,255,255,0.95) !important;
+    color: #0a1428 !important;
+    border: 1.5px solid #00B3FF !important;
+}
+.cp-nft-rank-badge svg,
+.sb-rank-badge svg { color: #00B3FF !important; fill: #00B3FF !important; }
+
+/* ── Bot : seller/buyer alignés gauche, couleurs vives ── */
+.sb-card-seller { color: #ff6b6b !important; }
+.sb-card-buyer  { color: #4ade80 !important; }
+.sb-trade-label--seller { color: rgba(255,107,107,0.8) !important; }
+.sb-trade-label--buyer  { color: rgba(74,222,128,0.8) !important; }
+.sb-trade-label--listing { color: rgba(255,255,255,0.4) !important; font-weight:800; font-family:'Geomanist-Bold',sans-serif; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; }
+
+.sb-card-trade, .sb-card-trade--sale {
+    align-items: flex-start !important;
+    text-align: left !important;
+}
+.sb-card-trade--listing {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 6px !important;
+    text-align: left;
+}
+.sb-trade-row { text-align: left; }
+
+/* ── Type badge (Sale/Listing) plus visible ── */
+.sb-type-badge {
+    font-size: 11px !important;
+    padding: 3px 8px !important;
+    border-radius: 6px !important;
+    font-weight: 800 !important;
+}
+.sb-type-badge--sale {
+    background: rgba(74,222,128,0.18) !important;
+    border: 1px solid rgba(74,222,128,0.4) !important;
+    color: #4ade80 !important;
+}
+.sb-type-badge--listing {
+    background: rgba(0,179,255,0.12) !important;
+    border: 1px solid rgba(0,179,255,0.35) !important;
+    color: #00B3FF !important;
+}
+.sb-type-badge--auction {
+    background: rgba(251,191,36,0.15) !important;
+    border: 1px solid rgba(251,191,36,0.4) !important;
+    color: #fbbf24 !important;
+}
+
+/* ── Alarme : sélecteur son + par collection ── */
+.sb-alarm-sound-row {
+    display: flex; align-items: center; gap: 8px;
+    margin: 10px 0 6px;
+}
+.sb-alarm-sound-lbl {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px; font-weight: 800;
+    letter-spacing: 0.1em; color: rgba(255,255,255,0.4);
+    text-transform: uppercase; flex-shrink: 0;
+}
+.sb-alarm-sound-select {
+    flex: 1; background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.8); border-radius: 6px;
+    padding: 4px 8px; font-size: 11px; cursor: pointer;
+}
+.sb-alarm-test {
+    background: rgba(0,179,255,0.1); border: 1px solid rgba(0,179,255,0.3);
+    color: #00B3FF; border-radius: 6px; padding: 4px 8px;
+    font-size: 11px; cursor: pointer; transition: background 0.15s; flex-shrink:0;
+}
+.sb-alarm-test:hover { background: rgba(0,179,255,0.2); }
+.sb-alarm-col-section { margin-top: 10px; }
+.sb-alarm-col-title {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.16em;
+    color: rgba(255,255,255,0.35); text-transform: uppercase; margin-bottom: 8px;
+}
+.sb-alarm-col-row {
+    display: flex; align-items: center; gap: 6px; margin-bottom: 6px;
+}
+.sb-alarm-col-name {
+    font-size: 11px; color: rgba(255,255,255,0.65); flex: 1; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sb-alarm-col-sound {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.7); border-radius: 5px; padding: 3px 6px; font-size: 10px;
+    cursor: pointer; flex: 1;
+}
+.sb-alarm-col-empty {
+    font-size: 11px; color: rgba(255,255,255,0.3); font-style: italic;
+}
+
+/* ── Carousel sur home : contenu centré + pleine largeur ── */
+.drops-hero--home {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+}
+.drops-hero--home .drops-hero-content {
+    max-width: 100%;
+    align-items: center;
+    text-align: center;
+    padding: 40px 60px;
+}
+.drops-hero--home .drops-hero-badges { justify-content: center; }
+.drops-hero--home .drops-hero-creator { justify-content: center; }
+.drops-hero--home .drops-hero-countdown { justify-content: center; }
+.drops-hero--home .drops-hero-cta { align-self: center; }
+.drops-hero--home .drops-hero-overlay {
+    background: linear-gradient(0deg, rgba(5,13,26,0.75) 0%, rgba(5,13,26,0.2) 50%, rgba(5,13,26,0.5) 100%);
+}
+
+/* ── Panel alarme redesigné : collection + prix + son sur 1 ligne ── */
+.sb-alarm-panel {
+    width: 340px !important;
+}
+.sb-alarm-col-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+    max-height: 280px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.08) transparent;
+}
+.sb-alarm-col-row {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 9px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: border-color 0.15s;
+}
+.sb-alarm-col-row--active {
+    border-color: rgba(74,222,128,0.3);
+    background: rgba(74,222,128,0.04);
+}
+.sb-alarm-col-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.75);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sb-alarm-col-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.sb-alarm-col-price {
+    width: 60px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.85);
+    border-radius: 6px;
+    padding: 4px 6px;
+    font-size: 12px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+.sb-alarm-col-price:focus { outline: none; border-color: rgba(0,179,255,0.5); }
+.sb-alarm-col-sound {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.7);
+    border-radius: 6px;
+    padding: 4px 5px;
+    font-size: 10px;
+    cursor: pointer;
+    min-width: 0;
+}
+.sb-alarm-col-set {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: rgba(0,179,255,0.85);
+    background: rgba(0,179,255,0.1);
+    border: 1px solid rgba(0,179,255,0.3);
+    border-radius: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s;
+}
+.sb-alarm-col-set:hover { background: rgba(0,179,255,0.2); }
+.sb-alarm-volume-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    margin-top: 4px;
+}
+.sb-alarm-sound-lbl {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.35);
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+.sb-alarm-currency {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    flex-shrink: 0;
 }
