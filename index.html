@@ -10,12 +10,20 @@
 <link href="icon.png" rel="icon" type="image/png"/>
 <link as="image" href="icon.png" rel="preload"/>
 <link as="font" crossorigin="" href="Geomanist-Bold.otf" rel="preload" type="font/otf"/>
-<link href="styles.css?v=1776556359" rel="stylesheet"/>
+<link href="styles.css?v=1776570336" rel="stylesheet"/>
 <style>
-/* Critical styles — évite le flash si styles.css est en cache */
+/* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
 .login-modal{background:#0d1829;border-radius:20px;padding:40px 36px 32px;width:100%;max-width:400px}
-.home-panel,.collections-panel,.sb-panel,.sup-panel,.stats-panel,.app-main>.profile-section{display:none}
+.home-panel,.collections-panel,.sb-panel,.sup-panel,.stats-panel{display:none}
+#leftSidebar{display:none}
+#pfWelcome{display:none}
+#nftContainer{display:none}
+#timestamp{display:none}
+#noResults{display:none}
+#profileLoadingOverlay{display:none}
+.profile-section{display:none}
+#topnavUserLogout{display:none}
 </style>
 <!-- Librairies JS -->
 <!-- Open Graph (aperçu lien) -->
@@ -111,34 +119,39 @@
         <svg class="topnav-tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,15 7,9 11,12 18,4"/><line x1="2" y1="18" x2="18" y2="18"/></svg>
         <span>Stats</span>
       </button>
-      <button class="topnav-tab" data-tab="collection" role="tab" aria-selected="false" type="button">
-        <svg class="topnav-tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="7" height="7" rx="1.5"/><rect x="11" y="3" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
-        <span>Collection</span>
+      <button class="topnav-tab" data-tab="profil" role="tab" aria-selected="false" type="button">
+        <svg class="topnav-tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.5"/><path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/></svg>
+        <span>Profils</span>
+      </button>
+      <button class="topnav-tab" data-tab="explorer" role="tab" aria-selected="false" type="button">
+        <svg class="topnav-tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="7" height="7" rx="1"/><rect x="11" y="2" width="7" height="7" rx="1"/><rect x="2" y="11" width="7" height="7" rx="1"/><rect x="11" y="11" width="7" height="7" rx="1"/></svg>
+        <span>Collections</span>
       </button>
       <button class="topnav-tab" data-tab="salesbot" role="tab" aria-selected="false" type="button">
         <svg class="topnav-tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="10" rx="2"/><circle cx="7.5" cy="10" r="1"/><circle cx="12.5" cy="10" r="1"/><path d="M8 3.5V5M12 3.5V5"/></svg>
-        <span>Sales Bot</span>
-      </button>
-      <button class="topnav-tab" data-tab="profile" role="tab" aria-selected="false" type="button">
-        <svg class="topnav-tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.5"/><path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/></svg>
-        <span>Profil</span>
+        <span>Sales/Listings Bot</span>
       </button>
       <button class="topnav-tab topnav-tab--support" data-tab="support" role="tab" aria-selected="false" type="button">
         <svg class="topnav-tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17.5s-7-4.5-7-9a4 4 0 0 1 7-2.65A4 4 0 0 1 17 8.5c0 4.5-7 9-7 9z"/></svg>
         <span>Support</span>
       </button>
-      <!-- Login intégré comme tab spécial -->
-      <div class="topnav-login" id="topnavLogin">
-        <button class="topnav-tab topnav-tab--login" id="topnavLoginBtn" type="button">
-          <svg class="topnav-tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.5"/><path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/><path d="M15 10l2 2-2 2M17 12h-5" stroke-linecap="round"/></svg>
+      <button class="topnav-tab topnav-tab--drops" data-tab="drops" role="tab" aria-selected="false" type="button">
+        <svg class="topnav-tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L3 7v4c0 4 3.5 7 7 8 3.5-1 7-4 7-8V7z"/><path d="M7 10l2 2 4-4"/></svg>
+        <span>Drops</span>
+      </button>
+      <!-- Séparateur auth -->
+      <div class="topnav-auth-sep"></div>
+      <!-- Bloc auth -->
+      <div class="topnav-auth" id="topnavLogin">
+        <!-- DÉCONNECTÉ -->
+        <button class="topnav-tab topnav-tab--signin" id="topnavLoginBtn" type="button">
+          <svg class="topnav-tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.5"/><path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/><path d="M15 10l2 2-2 2M17 12h-5"/></svg>
           <span>Sign in</span>
         </button>
-        <div class="topnav-user topnav-tab topnav-tab--user" id="topnavUser" style="display:none;" role="button" tabindex="0">
-          <img class="topnav-user-avatar" id="topnavUserAvatar" src="" alt="" style="display:none;"/>
-          <svg class="topnav-tab-icon topnav-user-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10" cy="7" r="3.5"/><path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/></svg>
-          <span class="topnav-user-name" id="topnavUserName"></span>
-          <button class="topnav-user-logout" id="topnavUserLogout" type="button" title="Sign out">×</button>
-        </div>
+        <!-- Sign out séparé -->
+        <button class="topnav-tab topnav-tab--signout" id="topnavUserLogout" style="display:none;" type="button" title="Sign out">
+          <svg class="topnav-tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 15l4-4-4-4M17 11H8"/><path d="M10 3H5a1 1 0 00-1 1v12a1 1 0 001 1h5"/></svg>
+        </button>
       </div>
     </nav>
 
@@ -228,7 +241,7 @@
 </nav>
 <div class="main-content">
 <div class="app-layout">
-<aside class="left-sidebar" id="leftSidebar">
+<aside class="left-sidebar" id="leftSidebar" style="display:none;">
 <div class="left-sidebar-glass">
 <div class="sidebar-main">
 <div class="sidebar-search" id="sidebarSearchTop" aria-label="Profile search" style="display:none;">
@@ -346,7 +359,44 @@
 </div>
 </aside></div>
 </div>
+<!-- ── EXPLORER WELCOME — overlay plein écran unifié (profils + collections) ── -->
+<div class="pf-welcome-overlay" id="pfWelcome" style="display:none;">
+  <div class="pf-welcome-inner">
+    <div class="cp-welcome-icon">
+      <svg width="28" height="28" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><line x1="13.5" y1="13.5" x2="18" y2="18"/></svg>
+    </div>
+    <h2 class="cp-welcome-title">Explorer</h2>
+    <p class="cp-welcome-sub">Search any Crypto.com NFT <strong>profile</strong> or <strong>collection</strong>. Browse collected NFTs, liked items, floor prices, rarity ranks and more.</p>
+    <div class="cp-welcome-search-row" id="pfWelcomeSearchRow">
+      <div class="cp-welcome-search-icon">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><line x1="13.5" y1="13.5" x2="18" y2="18"/></svg>
+      </div>
+      <input class="cp-welcome-input" id="pfWelcomeInput" type="text" placeholder="Search profiles or collections…" autocomplete="off" spellcheck="false" autocorrect="off"/>
+      <button class="cp-welcome-btn" id="pfWelcomeBtn" type="button">Search</button>
+    </div>
+    <div class="cp-welcome-hint">↑ Start typing to see suggestions — profiles, collections, or individual NFTs</div>
+    <div class="ex-welcome-section">
+      <div class="ex-welcome-section-title">Featured collections</div>
+      <div class="cp-welcome-featured" id="pfWelcomeFeatured">
+        <div class="cp-welcome-col-chip" data-col-id="82421cf8e15df0edcaa200af752a344f">
+          <img src="https://media.nft.crypto.com/273dc24c-5b5f-45d9-83d3-5db578bdce79/original.gif" alt=""/>
+          Loaded Lions
+        </div>
+        <div class="cp-welcome-col-chip" data-col-id="40af4533404b6dc586cf847f46810372">
+          <img src="https://media.nft.crypto.com/e7dc8e5d-5773-4dbb-a5ba-7c69e76e8960/original.gif" alt=""/>
+          Loaded Pixel
+        </div>
+        <div class="cp-welcome-col-chip" data-col-id="5855701d43bc9a7fea90bd254ebd4b6e">
+          <img src="" alt="" id="pfWelcomeDarkChipImg"/>
+          Dark Lions
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <main class="app-main" id="appMain">
+
 <div class="profile-section">
 <div class="group-legend" id="groupLegend" hidden></div>
 <div class="asset-count-bar">
@@ -360,126 +410,206 @@
 <div class="nft-container" id="nftContainer"></div>
 
 <!-- ── COLLECTIONS PANEL ── -->
+<!-- ── DROPS PANEL ── -->
+<div class="drops-panel" id="dropsPanel" style="display:none;">
+  <div class="drops-inner">
+
+    <div class="drops-page-header">
+      <div class="drops-page-header-left">
+        <h1 class="drops-page-title">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L3 7v4c0 4 3.5 7 7 8 3.5-1 7-4 7-8V7z"/><path d="M7 10l2 2 4-4"/></svg>
+          NFT DROPS
+        </h1>
+        <p class="drops-page-sub">Live &amp; upcoming drops on Crypto.com NFT</p>
+      </div>
+      <div class="drops-header-right">
+        <!-- Bouton Get Featured -->
+        <div class="drops-feature-wrap" id="dropsFeatureWrap">
+          <button class="sb-request-btn drops-feature-btn" id="dropsFeatureBtn" type="button">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4v12M4 10h12"/></svg>
+            Get Featured
+          </button>
+          <div class="sb-request-dropdown drops-feature-dropdown" id="dropsFeatureDropdown" style="display:none;">
+            <div class="sb-request-title">Boost your drop's visibility</div>
+            <p class="sb-request-desc">Not yet curated (verified) by Crypto.com NFT? Get your drop in front of the entire CRONOS.WTF community — live countdown, pack details, early access info and a direct link to mint. Reach collectors who are actively looking for the next drop to buy.</p>
+            <div class="sb-request-links">
+              <a class="sb-request-link sb-request-link--discord" href="https://discord.gg/Cronos_WTF" target="_blank" rel="noopener">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+                Discord
+              </a>
+              <a class="sb-request-link sb-request-link--x" href="https://twitter.com/Cronos_WTF" target="_blank" rel="noopener">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932L18.9 1.153zm-1.653 19.57h2.04L6.486 3.24H4.298z"/></svg>
+                X (Twitter)
+              </a>
+            </div>
+          </div>
+        </div>
+        <a class="drops-all-link" href="https://crypto.com/nft/drops" target="_blank" rel="noopener">View all on Crypto.com ↗</a>
+      </div>
+    </div>
+
+    <!-- Timeline horizontale -->
+    <div class="drops-timeline-wrap" id="dropsTimelineWrap" style="display:none;">
+      <div class="drops-timeline" id="dropsTimeline"></div>
+    </div>
+
+    <!-- Loading -->
+    <div class="drops-loading" id="dropsLoading">
+      <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
+    </div>
+
+    <!-- LIVE -->
+    <div class="drops-section" id="dropsLiveSection" style="display:none;">
+      <div class="drops-section-label">
+        <span class="drops-live-pulse"></span> LIVE NOW
+      </div>
+      <div class="drops-live-grid" id="dropsLiveGrid"></div>
+    </div>
+
+    <!-- UPCOMING -->
+    <div class="drops-section" id="dropsUpcomingSection" style="display:none;">
+      <div class="drops-section-label">UPCOMING</div>
+      <div class="drops-grid drops-grid--upcoming" id="dropsUpcomingGrid"></div>
+    </div>
+
+    <!-- ENDED -->
+    <div class="drops-section drops-section--ended" id="dropsEndedSection" style="display:none;">
+      <div class="drops-section-label drops-section-label--muted">RECENTLY ENDED</div>
+      <div class="drops-grid drops-grid--ended" id="dropsEndedGrid"></div>
+    </div>
+
+  </div>
+</div>
+
 <!-- ── SUPPORT PANEL ── -->
 <div class="sup-panel" id="supportPanel" style="display:none;">
-  <div class="sup-inner">
 
-    <!-- Hero -->
-    <div class="sup-hero">
-      <div class="sup-hero-glow"></div>
-      <div class="sup-heart-wrap">
-        <svg class="sup-heart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-        </svg>
-      </div>
-      <div class="sup-hero-text">
-        <div class="sup-eyebrow">Built with passion, for the community</div>
-        <h1 class="sup-title">Support CRONOS.WTF</h1>
-        <p class="sup-tagline">A small gesture can change a lot.</p>
-      </div>
+  <!-- ── HERO SECTION ── -->
+  <div class="sup2-hero">
+    <div class="sup2-hero-bg">
+      <div class="sup2-orb sup2-orb--1"></div>
+      <div class="sup2-orb sup2-orb--2"></div>
+      <div class="sup2-orb sup2-orb--3"></div>
     </div>
-
-    <!-- Story -->
-    <div class="sup-story">
-      <div class="sup-story-card">
-        <p class="sup-story-text">
-          CRONOS.WTF was born from a simple desire: give the Cronos NFT community a tool that actually works. No ads. No paywall. No token. Just a clean, fast, and honest explorer — built and maintained over many months, entirely for free.
-        </p>
-        <p class="sup-story-text">
-          Every feature — the profile explorer, the live stats, the collection browser, the sales bot — was built from scratch, tested, and refined. It costs real money (servers, API calls, development time) and a lot of personal hours.
-        </p>
-        <p class="sup-story-text sup-story-text--highlight">
-          If CRONOS.WTF has ever helped you find a deal, track a collection, or simply understand the market better — consider supporting its future. Even the smallest contribution keeps the lights on.
-        </p>
-      </div>
+    <div class="sup2-hero-inner">
+      <div class="sup2-badge">Built with ❤️ for the Cronos community</div>
+      <h1 class="sup2-title">Support<br><span class="sup2-title-accent">CRONOS.WTF</span></h1>
+      <p class="sup2-subtitle">Months of work. Zero ads. Zero paywall.<br>One tool, entirely free — kept alive by people like you.</p>
     </div>
+  </div>
 
-    <!-- Donation cards -->
-    <div class="sup-donate-section">
-      <h2 class="sup-section-title">Choose your network</h2>
-      <div class="sup-cards-grid">
+  <!-- ── BODY ── -->
+  <div class="sup2-body">
 
-        <!-- Cronos card -->
-        <div class="sup-card sup-card--cronos">
-          <div class="sup-card-header">
-            <div class="sup-card-network-badge sup-card-network-badge--cronos">CRONOS</div>
-            <div class="sup-card-logo">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" opacity="0.9"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            </div>
-          </div>
-          <div class="sup-card-body">
-            <div class="sup-card-label">CRO Domain</div>
-            <div class="sup-card-address sup-card-address--domain" id="supCroDomain">Unscoop.cro</div>
-            <div class="sup-card-divider">or wallet address</div>
-            <div class="sup-card-address-wrap">
-              <code class="sup-card-address" id="supCroAddr">0x9829e44fd04f3788F27096875Df0D2772173Ab3d</code>
-              <button class="sup-copy-btn" data-copy="0x9829e44fd04f3788F27096875Df0D2772173Ab3d" type="button">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                <span>Copy</span>
-              </button>
-            </div>
-            <p class="sup-card-note">Send CRO, USDC, or any CRC-20 token on the Cronos network.</p>
-          </div>
+    <!-- ROW 1 : Story + Goal -->
+    <div class="sup2-row sup2-row--top">
+
+      <!-- Story -->
+      <div class="sup2-story-block">
+        <div class="sup2-story-line"></div>
+        <div class="sup2-story-content">
+          <p>CRONOS.WTF was born from a simple desire: give the Cronos NFT community a tool that actually works. Profile explorer, live stats, collection browser, real-time sales &amp; listing bots — every single feature was crafted from scratch, tested, and refined over many months.</p>
+          <p>It costs real money — servers, API calls, development time — and a huge amount of personal hours. There's no monetisation, no VC funding, no token. Just someone who cares about the ecosystem enough to keep building.</p>
+          <p class="sup2-story-cta-text">If this platform has ever helped you find a deal, track a collection, or simply understand the market better — a small contribution keeps it alive and lets it grow.</p>
         </div>
-
-        <!-- Ethereum card -->
-        <div class="sup-card sup-card--eth">
-          <div class="sup-card-header">
-            <div class="sup-card-network-badge sup-card-network-badge--eth">ETHEREUM</div>
-            <div class="sup-card-logo">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" opacity="0.9"><path d="M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35h.003zM12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z"/></svg>
-            </div>
-          </div>
-          <div class="sup-card-body">
-            <div class="sup-card-label">EVM Address (ETH / ERC-20)</div>
-            <div class="sup-card-address-wrap">
-              <code class="sup-card-address" id="supEthAddr">0x9829e44fd04f3788F27096875Df0D2772173Ab3d</code>
-              <button class="sup-copy-btn" data-copy="0x9829e44fd04f3788F27096875Df0D2772173Ab3d" type="button">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                <span>Copy</span>
-              </button>
-            </div>
-            <p class="sup-card-note">Same address works on Ethereum, Polygon, BSC, Base and other EVM networks.</p>
-          </div>
-        </div>
-
       </div>
-    </div>
 
-    <!-- Impact section -->
-    <div class="sup-impact">
-      <h2 class="sup-section-title">What your support enables</h2>
-      <div class="sup-impact-grid">
-        <div class="sup-impact-item">
-          <span class="sup-impact-icon">⚡</span>
-          <h3 class="sup-impact-title">Faster updates</h3>
-          <p class="sup-impact-desc">New features, bug fixes, and improvements shipped more frequently.</p>
+      <!-- Monthly goal -->
+      <div class="sup2-goal-block">
+        <div class="sup2-goal-header">
+          <span class="sup2-goal-label">Monthly goal</span>
+          <span class="sup2-goal-pct" id="supProgressPct">0%</span>
         </div>
-        <div class="sup-impact-item">
-          <span class="sup-impact-icon">🛡️</span>
-          <h3 class="sup-impact-title">Reliable hosting</h3>
-          <p class="sup-impact-desc">Better infrastructure, zero downtime, and faster API responses.</p>
+        <div class="sup2-goal-bar-wrap">
+          <div class="sup2-goal-bar" id="supProgressBar" style="width:0%">
+            <div class="sup2-goal-bar-shine"></div>
+          </div>
         </div>
-        <div class="sup-impact-item">
-          <span class="sup-impact-icon">🔭</span>
-          <h3 class="sup-impact-title">New tools</h3>
-          <p class="sup-impact-desc">Portfolio tracking, price alerts, rarity tools and more on the roadmap.</p>
+        <div class="sup2-goal-amounts">
+          <span class="sup2-goal-raised" id="supProgressRaised">$0 raised</span>
+          <span class="sup2-goal-target">$150 / month</span>
         </div>
-        <div class="sup-impact-item">
-          <span class="sup-impact-icon">🌱</span>
-          <h3 class="sup-impact-title">Free forever</h3>
-          <p class="sup-impact-desc">Your support keeps CRONOS.WTF free, open and ad-free for everyone.</p>
+        <p class="sup2-goal-note">Covers hosting, API costs &amp; monthly maintenance.</p>
+
+        <!-- Impact pills -->
+        <div class="sup2-impact-pills">
+          <div class="sup2-pill"><span class="sup2-pill-icon">⚡</span><span>Faster updates</span></div>
+          <div class="sup2-pill"><span class="sup2-pill-icon">🛡️</span><span>Better hosting</span></div>
+          <div class="sup2-pill"><span class="sup2-pill-icon">🔭</span><span>New tools</span></div>
+          <div class="sup2-pill"><span class="sup2-pill-icon">🌱</span><span>Free forever</span></div>
         </div>
       </div>
     </div>
 
-    <!-- Thank you note -->
-    <div class="sup-thankyou">
-      <div class="sup-thankyou-inner">
-        <div class="sup-thankyou-emoji">🙏</div>
-        <p class="sup-thankyou-text">Whether you contribute or not, thank you for being part of the Cronos community and for using CRONOS.WTF. This platform exists because of people like you.</p>
-        <div class="sup-thankyou-sig">— Unscoop, creator of CRONOS.WTF</div>
+    <!-- ROW 2 : Donation cards -->
+    <div class="sup2-donate-row">
+      <h2 class="sup2-section-label">Send a contribution</h2>
+      <div class="sup2-donate-grid">
+
+        <!-- Cronos -->
+        <div class="sup2-donate-card sup2-donate-card--cro">
+          <div class="sup2-donate-card-glow"></div>
+          <div class="sup2-donate-card-top">
+            <div class="sup2-donate-network">
+              <div class="sup2-donate-network-dot sup2-donate-network-dot--cro"></div>
+              <span>Cronos Network</span>
+            </div>
+            <span class="sup2-donate-badge">CRO · USDC · CRC-20</span>
+          </div>
+          <div class="sup2-donate-domain">Unscoop.cro</div>
+          <div class="sup2-donate-or">— or paste the address —</div>
+          <div class="sup2-donate-addr-row">
+            <code class="sup2-donate-addr">0x9829e44fd04f3788F27096875Df0D2772173Ab3d</code>
+            <button class="sup2-copy-btn" data-copy="0x9829e44fd04f3788F27096875Df0D2772173Ab3d" type="button">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              <span class="sup2-copy-label">Copy</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Ethereum -->
+        <div class="sup2-donate-card sup2-donate-card--eth">
+          <div class="sup2-donate-card-glow"></div>
+          <div class="sup2-donate-card-top">
+            <div class="sup2-donate-network">
+              <div class="sup2-donate-network-dot sup2-donate-network-dot--eth"></div>
+              <span>Ethereum / EVM</span>
+            </div>
+            <span class="sup2-donate-badge">ETH · ERC-20 · Polygon · Base</span>
+          </div>
+          <div class="sup2-donate-domain" style="opacity:0.4; font-size:13px; letter-spacing:0.02em;">Same address, any EVM chain</div>
+          <div class="sup2-donate-or">— wallet address —</div>
+          <div class="sup2-donate-addr-row">
+            <code class="sup2-donate-addr">0x9829e44fd04f3788F27096875Df0D2772173Ab3d</code>
+            <button class="sup2-copy-btn" data-copy="0x9829e44fd04f3788F27096875Df0D2772173Ab3d" type="button">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              <span class="sup2-copy-label">Copy</span>
+            </button>
+          </div>
+        </div>
+
       </div>
+    </div>
+
+    <!-- ROW 3 : Supporters -->
+    <div class="sup2-supporters-row">
+      <div class="sup2-supporters-header">
+        <h2 class="sup2-section-label">Supporters</h2>
+        <button class="sup2-add-btn" id="supAddDonorBtn" type="button">
+          <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 4v12M4 10h12"/></svg>
+          I contributed
+        </button>
+      </div>
+      <div class="sup2-supporters-list" id="supDonorsList"></div>
+    </div>
+
+    <!-- Thank you -->
+    <div class="sup2-footer">
+      <div class="sup2-footer-heart">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      </div>
+      <p class="sup2-footer-text">Whether you contribute or not — thank you for using CRONOS.WTF and being part of this community. This platform exists because of people like you.</p>
+      <div class="sup2-footer-sig">— Unscoop</div>
     </div>
 
   </div>
@@ -499,18 +629,30 @@
     <div class="home-hero-content">
       <div class="home-hero-eyebrow">CRONOS.WTF</div>
       <h1 class="home-hero-title">Browse smarter.<br><span class="home-hero-accent">Collect better.</span></h1>
-      <p class="home-hero-sub">The ultimate NFT explorer for the Cronos ecosystem. Search profiles, browse collections, track market stats.</p>
+      <p class="home-hero-sub">The ultimate NFT explorer for the Cronos ecosystem — profiles, collections, live drops, market stats and real-time sales.</p>
       <div class="home-hero-actions">
         <button class="home-btn home-btn--primary" id="homeGoStats" type="button">
           <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2,15 7,9 11,12 18,4"/><line x1="2" y1="18" x2="18" y2="18"/></svg>
-          Top Collections Stats
+          Top Stats
+        </button>
+        <button class="home-btn home-btn--secondary" id="homeGoDrops" type="button">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 2L3 7v4c0 4 3.5 7 7 8 3.5-1 7-4 7-8V7z"/><path d="M7 10l2 2 4-4"/></svg>
+          Live Drops
         </button>
         <button class="home-btn home-btn--secondary" id="homeGoProfile" type="button">
-          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="7" r="3.5"/><path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/></svg>
-          Search a Profile
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="6"/><line x1="13.5" y1="13.5" x2="18" y2="18"/></svg>
+          Explore a Profile
         </button>
       </div>
     </div>
+  </div>
+
+  <!-- Hero carousel drops (injecté par le module Drops) -->
+  <div class="drops-hero drops-hero--home" id="dropsHero" style="display:none;">
+    <div class="drops-hero-track" id="dropsHeroTrack"></div>
+    <button class="drops-hero-nav drops-hero-nav--prev" id="dropsHeroPrev" type="button">‹</button>
+    <button class="drops-hero-nav drops-hero-nav--next" id="dropsHeroNext" type="button">›</button>
+    <div class="drops-hero-dots" id="dropsHeroDots"></div>
   </div>
 
   <!-- Quick stats bar -->
@@ -564,30 +706,54 @@
     <section class="home-section">
       <h2 class="home-section-title">What you can do</h2>
       <div class="home-features-grid">
-        <div class="home-feature" data-tab-target="profile">
+
+        <div class="home-feature home-feature--new" data-tab-target="drops">
+          <div class="home-feature-icon">
+            <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 2L3 7v4c0 4 3.5 7 7 8 3.5-1 7-4 7-8V7z"/><path d="M7 10l2 2 4-4"/></svg>
+          </div>
+          <div class="home-feature-new-badge">NEW</div>
+          <h3 class="home-feature-title">NFT Drops</h3>
+          <p class="home-feature-desc">Live and upcoming drops on Crypto.com NFT — video previews, pack prices, availability, early access conditions and a visual timeline of all recent drops.</p>
+          <span class="home-feature-cta">View Drops →</span>
+        </div>
+
+        <div class="home-feature home-feature--new" data-tab-target="salesbot">
+          <div class="home-feature-icon">
+            <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="4,14 8,10 11,13 16,7"/><rect x="2" y="2" width="16" height="16" rx="2"/></svg>
+          </div>
+          <div class="home-feature-new-badge">LIVE</div>
+          <h3 class="home-feature-title">Sales &amp; Listings Bot</h3>
+          <p class="home-feature-desc">Real-time feed of sales and new listings across tracked Cronos collections — floor price, last sale, and instant alerts for the market you follow.</p>
+          <span class="home-feature-cta">Open Bot →</span>
+        </div>
+
+        <div class="home-feature" data-tab-target="profil">
           <div class="home-feature-icon">
             <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10" cy="7" r="3.5"/><path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/></svg>
           </div>
           <h3 class="home-feature-title">Profile Explorer</h3>
-          <p class="home-feature-desc">Browse any Crypto.com NFT profile — collected NFTs, liked items, stats, favorite collections and artists.</p>
-          <span class="home-feature-cta">Open Profil →</span>
+          <p class="home-feature-desc">Browse any Crypto.com NFT profile — collected NFTs grouped by collection or artist, liked items, stats and filters by size, sort and overlay.</p>
+          <span class="home-feature-cta">Explore a Profile →</span>
         </div>
+
+        <div class="home-feature" data-tab-target="explorer">
+          <div class="home-feature-icon">
+            <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="7" height="7" rx="1.5"/><rect x="11" y="3" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
+          </div>
+          <h3 class="home-feature-title">Collection Explorer</h3>
+          <p class="home-feature-desc">Deep-dive into any collection — all NFTs with rarity ranks, floor prices, sort and overlay filters, and a full market overview.</p>
+          <span class="home-feature-cta">Explore a Collection →</span>
+        </div>
+
         <div class="home-feature" data-tab-target="stats">
           <div class="home-feature-icon">
             <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="2,15 7,9 11,12 18,4"/><line x1="2" y1="18" x2="18" y2="18"/></svg>
           </div>
           <h3 class="home-feature-title">Market Statistics</h3>
-          <p class="home-feature-desc">Real-time rankings across all Cronos collections — volume, floor price, buyers, supply, distribution and more.</p>
+          <p class="home-feature-desc">Real-time rankings across all Cronos collections — volume, floor price, buyers, supply and market distribution for the past 24H, 7D or 30D.</p>
           <span class="home-feature-cta">View Stats →</span>
         </div>
-        <div class="home-feature" data-tab-target="collections">
-          <div class="home-feature-icon">
-            <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="7" height="7" rx="1.5"/><rect x="11" y="3" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
-          </div>
-          <h3 class="home-feature-title">Collection Browser</h3>
-          <p class="home-feature-desc">Deep-dive into any collection — all NFTs with rarity ranks, floor prices, filters and sort options.</p>
-          <span class="home-feature-cta">Browse →</span>
-        </div>
+
       </div>
     </section>
 
@@ -643,14 +809,45 @@
 <div class="collections-panel" id="collectionsPanel" style="display:none;">
   <div class="cp-inner">
 
+    <!-- ── ÉCRAN D'ACCUEIL (quand aucune collection chargée) ── -->
+    <div class="cp-welcome" id="cpWelcome">
+      <div class="cp-welcome-icon">
+        <svg width="28" height="28" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="7" height="7" rx="1.5"/><rect x="11" y="3" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
+      </div>
+      <h2 class="cp-welcome-title">Explore a Collection</h2>
+      <p class="cp-welcome-sub">Browse every NFT in a collection with rarity ranks, floor prices and advanced filters. Search by name below or pick one from the suggestions.</p>
+      <div class="cp-welcome-search-row" id="cpWelcomeSearchRow">
+        <div class="cp-welcome-search-icon">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><line x1="13.5" y1="13.5" x2="18" y2="18"/></svg>
+        </div>
+        <input class="cp-welcome-input" id="cpWelcomeInput" type="text" placeholder="e.g. Loaded Lions, Dark Lions…" autocomplete="off" spellcheck="false" autocorrect="off"/>
+        <button class="cp-welcome-btn" id="cpWelcomeBtn" type="button">Search</button>
+      </div>
+      <div class="cp-welcome-hint">↑ Type a collection name and press Search</div>
+      <div class="cp-welcome-featured" id="cpWelcomeFeatured">
+        <div class="cp-welcome-col-chip" data-col-id="82421cf8e15df0edcaa200af752a344f">
+          <img src="https://media.nft.crypto.com/273dc24c-5b5f-45d9-83d3-5db578bdce79/original.gif" alt=""/>
+          Loaded Lions
+        </div>
+        <div class="cp-welcome-col-chip" data-col-id="40af4533404b6dc586cf847f46810372">
+          <img src="https://media.nft.crypto.com/e7dc8e5d-5773-4dbb-a5ba-7c69e76e8960/original.gif" alt=""/>
+          Loaded Pixel
+        </div>
+        <div class="cp-welcome-col-chip" data-col-id="5855701d43bc9a7fea90bd254ebd4b6e">
+          <img src="" alt="" id="cpWelcomeDarkChipImg"/>
+          Dark Lions
+        </div>
+      </div>
+    </div>
+
     <!-- ── BANNIÈRE pleine largeur ── -->
-    <div class="cp-banner-full" id="cpHeader">
+    <div class="cp-banner-full" id="cpHeader" style="display:none;">
       <img class="cp-hero-banner" id="cpBanner" src="" alt="" style="display:none;"/>
       <div class="cp-hero-placeholder" id="cpBannerPlaceholder"></div>
     </div>
 
     <!-- ── TITRE + LOGO sous la bannière ── -->
-    <div class="cp-title-block">
+    <div class="cp-title-block" id="cpTitleBlock" style="display:none;">
       <img class="cp-hero-logo" id="cpLogo" src="" alt="" style="display:none;"/>
       <div class="cp-title-info">
         <div class="cp-hero-title-row">
@@ -669,7 +866,7 @@
     </div>
 
     <!-- ── FILTRES ── -->
-    <div class="cp-filters-bar">
+    <div class="cp-filters-bar" id="cpFiltersBar" style="display:none;">
       <div class="cp-filters-left">
         <div class="stats-search-wrap cp-search-wrap">
           <svg class="stats-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="5.5"/><line x1="13" y1="13" x2="17" y2="17"/></svg>
@@ -693,20 +890,20 @@
         </div>
         <!-- Info overlay sur les cards -->
         <div class="stats-chain-filter cp-overlay-group" id="cpOverlayGroup">
-          <button class="stats-cf-btn stats-cf-btn--active" data-cpoverlay="both"  type="button">Rank + Price</button>
+          <button class="stats-cf-btn stats-cf-btn--active" data-cpoverlay="both"  type="button">All</button>
           <button class="stats-cf-btn" data-cpoverlay="rank"  type="button">Rank</button>
           <button class="stats-cf-btn" data-cpoverlay="price" type="button">Price</button>
           <button class="stats-cf-btn" data-cpoverlay="none"  type="button">None</button>
         </div>
         <!-- Taille -->
-        <div class="cp-view-toggle" id="cpSizeToggle">
-          <button class="cp-view-btn is-active" data-cpsize="small" title="Small" type="button">
+        <div class="stats-timerange cp-size-toggle" id="cpSizeToggle">
+          <button class="stats-tr-btn cp-size-btn stats-tr-btn--active" data-cpsize="small" title="Small" type="button">
             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect height="5" rx="1" width="5" x="3" y="3"/><rect height="5" rx="1" width="5" x="9.5" y="3"/><rect height="5" rx="1" width="5" x="16" y="3"/><rect height="5" rx="1" width="5" x="3" y="9.5"/><rect height="5" rx="1" width="5" x="9.5" y="9.5"/><rect height="5" rx="1" width="5" x="16" y="9.5"/><rect height="5" rx="1" width="5" x="3" y="16"/><rect height="5" rx="1" width="5" x="9.5" y="16"/><rect height="5" rx="1" width="5" x="16" y="16"/></svg>
           </button>
-          <button class="cp-view-btn" data-cpsize="medium" title="Medium" type="button">
+          <button class="stats-tr-btn cp-size-btn" data-cpsize="medium" title="Medium" type="button">
             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect height="8.5" rx="1.5" width="8.5" x="3" y="3"/><rect height="8.5" rx="1.5" width="8.5" x="12.5" y="3"/><rect height="8.5" rx="1.5" width="8.5" x="3" y="12.5"/><rect height="8.5" rx="1.5" width="8.5" x="12.5" y="12.5"/></svg>
           </button>
-          <button class="cp-view-btn" data-cpsize="large" title="Large" type="button">
+          <button class="stats-tr-btn cp-size-btn" data-cpsize="large" title="Large" type="button">
             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect height="16" rx="2" width="16" x="4" y="4"/></svg>
           </button>
         </div>
@@ -714,7 +911,7 @@
     </div>
 
     <!-- ── GRILLE NFTs ── -->
-    <div class="cp-nft-section">
+    <div class="cp-nft-section" id="cpNftSection" style="display:none;">
       <div class="cp-loading" id="cpLoading">
         <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
       </div>
@@ -731,15 +928,35 @@
     <!-- Header -->
     <div class="sb-header">
       <div class="sb-header-left">
-        <h2 class="sb-title">SALES BOT</h2>
-        <span class="sb-subtitle">Live transfer tracker</span>
+        <h2 class="sb-title">MARKET BOT</h2>
+        <span class="sb-subtitle">Live sales &amp; listings tracker</span>
       </div>
       <div class="sb-header-controls">
-        <!-- Collection selector -->
-        <div class="sb-col-selector" id="sbColSelector">
+        <!-- Indicateur collection active (affichage seul) -->
+        <div class="sb-col-current">
           <img class="sb-col-logo" id="sbColLogo" src="" alt="" style="display:none;"/>
           <span class="sb-col-name" id="sbColName">Loaded Lions</span>
-          <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l5 5 5-5"/></svg>
+        </div>
+        <!-- Add collection -->
+        <div class="sb-request-wrap">
+          <button class="sb-request-btn" id="sbRequestBtn" type="button">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4v12M4 10h12"/></svg>
+            Add a collection
+          </button>
+          <div class="sb-request-dropdown" id="sbRequestDropdown" style="display:none;">
+            <div class="sb-request-title">Request to add your collection</div>
+            <p class="sb-request-desc">Contact Unscoop on Discord or X to have your collection added to the bot.</p>
+            <div class="sb-request-links">
+              <a class="sb-request-link sb-request-link--discord" href="https://discord.gg/Cronos_WTF" target="_blank" rel="noopener">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+                Discord
+              </a>
+              <a class="sb-request-link sb-request-link--x" href="https://twitter.com/Cronos_WTF" target="_blank" rel="noopener">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932L18.9 1.153zm-1.653 19.57h2.04L6.486 3.24H4.298z"/></svg>
+                X (Twitter)
+              </a>
+            </div>
+          </div>
         </div>
         <!-- Live indicator -->
         <div class="sb-live" id="sbLive">
@@ -779,13 +996,71 @@
           <button class="stats-tr-btn" data-sbsort="price-desc" type="button">Price ↓</button>
           <button class="stats-tr-btn" data-sbsort="price-asc"  type="button">Price ↑</button>
         </div>
+        <!-- Filtre mode Sales / Listings / All -->
+        <div class="stats-chain-filter sb-mode-group" id="sbModeGroup">
+          <button class="stats-cf-btn stats-cf-btn--active" data-sbmode="transferred" type="button">Sales</button>
+          <button class="stats-cf-btn" data-sbmode="listed" type="button">Listings</button>
+          <button class="stats-cf-btn" data-sbmode="all" type="button">All</button>
+        </div>
+        <!-- Alarme sonore -->
+        <div class="sb-alarm-wrap" id="sbAlarmWrap">
+          <button class="sb-alarm-btn" id="sbAlarmBtn" type="button" title="Price alert">
+            <svg class="sb-alarm-icon" id="sbAlarmIcon" width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2a6 6 0 016 6c0 3.5 1.5 5 1.5 5h-15S4 11.5 4 8a6 6 0 016-6z"/><path d="M8.5 17a1.5 1.5 0 003 0"/></svg>
+            <span class="sb-alarm-label" id="sbAlarmLabel">Alert</span>
+          </button>
+          <div class="sb-alarm-panel" id="sbAlarmPanel" style="display:none;">
+            <div class="sb-alarm-panel-title">Sound Alerts</div>
+            <p class="sb-alarm-panel-desc">Set a price threshold and sound for each collection. An alert fires when a sale or listing is detected below the price.</p>
+
+            <!-- Volume global -->
+            <div class="sb-alarm-volume-row">
+              <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3,7 8,7 13,2 13,18 8,13 3,13"/><path d="M16 7a4 4 0 010 6"/></svg>
+              <span class="sb-alarm-sound-lbl">Volume</span>
+              <input class="sb-alarm-volume" id="sbAlarmVolume" type="range" min="0" max="100" value="70"/>
+            </div>
+
+            <!-- Par collection -->
+            <div class="sb-alarm-col-list" id="sbAlarmColList">
+              <!-- Injecté par JS -->
+            </div>
+          </div>
+        </div>
+        <!-- Sélecteur de collection (style Columns) -->
+        <div class="stats-col-selector-wrap" id="sbColSelectorWrap">
+          <button class="stats-col-selector-btn" id="sbColSelectorBtn" type="button">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 2.5"/></svg>
+            Collection
+          </button>
+          <div class="stats-col-dropdown sb-col-dropdown-rich" id="sbColDropdown" style="display:none;">
+            <div class="sb-col-rich-list" id="sbColList">
+              <label class="sb-col-rich-item">
+                <input class="sb-col-cb" type="checkbox" value="82421cf8e15df0edcaa200af752a344f" checked/>
+                <img class="sb-col-rich-logo" src="" alt="" data-logo-id="82421cf8e15df0edcaa200af752a344f"/>
+                <span class="sb-col-rich-name">Loaded Lions</span>
+                <span class="sb-col-rich-check">✓</span>
+              </label>
+              <label class="sb-col-rich-item">
+                <input class="sb-col-cb" type="checkbox" value="40af4533404b6dc586cf847f46810372"/>
+                <img class="sb-col-rich-logo" src="" alt="" data-logo-id="40af4533404b6dc586cf847f46810372"/>
+                <span class="sb-col-rich-name">Loaded Pixel</span>
+                <span class="sb-col-rich-check">✓</span>
+              </label>
+              <label class="sb-col-rich-item">
+                <input class="sb-col-cb" type="checkbox" value="5855701d43bc9a7fea90bd254ebd4b6e"/>
+                <img class="sb-col-rich-logo" src="" alt="" data-logo-id="5855701d43bc9a7fea90bd254ebd4b6e"/>
+                <span class="sb-col-rich-name">Dark Lions</span>
+                <span class="sb-col-rich-check">✓</span>
+              </label>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
 
     <!-- Stats snapshot -->
     <div class="sb-stats-bar" id="sbStatsBar">
-      <div class="sb-stat"><span class="sb-stat-val" id="sbStatSales">—</span><span class="sb-stat-lbl">Sales shown</span></div>
+      <div class="sb-stat"><span class="sb-stat-val" id="sbStatSales">—</span><span class="sb-stat-lbl">Events shown</span></div>
       <div class="sb-stat-sep"></div>
       <div class="sb-stat"><span class="sb-stat-val" id="sbStatAvg">—</span><span class="sb-stat-lbl">Avg price</span></div>
       <div class="sb-stat-sep"></div>
@@ -811,6 +1086,7 @@
 
   </div>
 </div>
+
 
 <!-- ── STATS PANEL ── -->
 <div class="stats-panel" id="statsPanel" style="display:none;">
@@ -2474,7 +2750,14 @@ async function fetchAndDisplayCollection(collectionData) {
                 profileLoadingOverlay.classList.remove('visible');
                 profileLoadingOverlay.style.display = 'none';
             }
-            elementsToHide.forEach(el => { el.style.visibility = ''; el.style.pointerEvents = ''; });
+            elementsToHide.forEach(el => {
+                el.style.visibility = '';
+                el.style.pointerEvents = '';
+                // S'assurer que display n'est pas none (peut avoir été forcé par _hideAllPanels)
+                // Pour #leftSidebar spécifiquement : forcer block car CSS critique a display:none
+                if (el.id === 'leftSidebar') el.style.setProperty('display', 'block', 'important');
+                else if (el.style.display === 'none') el.style.display = '';
+            });
             document.body.classList.remove('is-profile-loading');
             if (circularFill) circularFill.style.strokeDashoffset = 326.7;
             if (circularPct)  circularPct.textContent = '0%';
@@ -2571,8 +2854,8 @@ function _buildSuggestionItems(dropDown, query) {
         c.metrics?.items ? Number(c.metrics.items).toLocaleString() + ' items' : null,
         () => {
                 clearSuggestions();
-                const collectionTab = document.querySelector('.topnav-tab[data-tab="collection"]');
-                if (collectionTab) collectionTab.click();
+                window._lastExplorerView = 'collection';
+                if (typeof window._markExplorerTabActive === 'function') window._markExplorerTabActive('collection');
                 if (typeof window.loadCollectionById === 'function') window.loadCollectionById(c.id);
             },
         c.verified
@@ -2583,7 +2866,14 @@ function _buildSuggestionItems(dropDown, query) {
         u.avatar?.url || '', false,
         u.username || '',
         (u.displayName && u.displayName !== u.username) ? u.displayName : null,
-        () => selectSuggestion(u.username),
+        () => {
+            // Explorer route : set state explorer-specific
+            window._explorerUsername = u.username;
+            window._pfHasExplorerProfile = true;
+            window._lastExplorerView = 'profile';
+            if (typeof window._markExplorerTabActive === 'function') window._markExplorerTabActive();
+            selectSuggestion(u.username);
+        },
         u.verified
     ));
 
@@ -2701,17 +2991,20 @@ function selectSuggestion(username) {
     if (usernameInput) {
         usernameInput.value = username;
         clearSuggestions();
-        // Basculer sur l'onglet Profil avant de charger
-        const profileTab = document.querySelector('.topnav-tab[data-tab="profile"]');
-        if (profileTab && !profileTab.classList.contains('topnav-tab--active')) {
-            profileTab.click();
-        }
+        // Pré-set pour éviter le flicker du welcome pendant le fetch
+        window._pfHasProfile = true;
+        // NOTE : _lastExplorerView et _pfHasExplorerProfile sont set par le caller
+        // (Explorer route) — selectSuggestion ne sait pas dans quel contexte il est appelé
+        if (typeof window.showProfileView === 'function') window.showProfileView();
         fetchProfileAndNFTs();
         resetSearchBar();
     }
 }
 
 function updateProfileUI(profileData, profileTotals = null) {
+    // Expose pour la TEST view (cover URL, etc.)
+    window._currentProfileData = profileData || null;
+    window._currentProfileTotals = profileTotals || null;
     const profileHeader = document.getElementById('profileHeader');
     const profilePicture = document.getElementById('profilePicture');
     const username = document.getElementById('username');
@@ -3365,6 +3658,12 @@ function displayNFTs(assets, selectedCollection) {
     container.style.height = '';
     container.style.overflow = '';
 
+    // Restaurer les contrôles flottants (masqués en mode groupé)
+    const navbarControls = document.getElementById('navbarControls');
+    if (navbarControls) navbarControls.classList.remove('controls-in-groups');
+    // Réinitialiser les filtres de groupe pour le nouveau profil
+    window._gFilters = null;
+
 
         applyCollectionTitleBreadcrumb();
 
@@ -3883,11 +4182,8 @@ const renderGrouped = (groupBy) => {
 
         const groupMap = new Map();
         uniqueAssets.forEach((asset, idx) => {
-            const fallbackKey = groupBy === 'artist'
-                ? 'Unknown Artist'
-                : groupBy === 'all'
-                    ? 'ALL COLLECTIONS'
-                    : 'Unknown Collection';
+            const fallbackKey = groupBy === 'artist' ? 'Unknown Artist'
+                : groupBy === 'all' ? 'ALL COLLECTIONS' : 'Unknown Collection';
             const key = (getKey(asset) || '').trim() || fallbackKey;
             const entry = groupMap.get(key) || { key, assets: [], firstIndex: idx };
             entry.assets.push({ asset, idx });
@@ -3902,9 +4198,116 @@ const renderGrouped = (groupBy) => {
         });
 
         container.classList.add('nft-container--grouped');
+        const navbarControls = document.getElementById('navbarControls');
+        if (navbarControls) navbarControls.classList.add('controls-in-groups');
 
         renderGroupLegend(groups, groupBy);
 
+        // ── État global persistant ────────────────────────────────────────
+        if (!window._gFilters) window._gFilters = {
+            sort: 'newest',
+            size: 'small',
+            overlay: 'none'   // NONE par défaut : vue images pures
+        };
+
+        // Helper : builder de carte profil style Collection
+        const buildProfileCard = (asset) => {
+            const card = document.createElement('div');
+            card.className = 'cp-nft-card';
+
+            const imgWrap = document.createElement('div');
+            imgWrap.className = 'cp-nft-img-wrap';
+
+            const img = document.createElement('img');
+            img.className = 'cp-nft-img';
+            img.src = asset.cover?.url || '';
+            img.alt = asset.name || '';
+            img.loading = 'lazy';
+            imgWrap.appendChild(img);
+
+            const ov = window._gFilters.overlay;
+            const showRank  = ov === 'both' || ov === 'rank';
+            const showPrice = ov === 'both' || ov === 'price';
+
+            if (asset.defaultRarityRank && showRank) {
+                const badge = document.createElement('div');
+                badge.className = 'cp-nft-rank-badge';
+                badge.innerHTML = '<svg width="9" height="9" viewBox="0 0 20 20" fill="currentColor" style="flex-shrink:0"><path d="M10 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L10 14.3l-4.8 2.5.9-5.4L2.2 7.7l5.4-.8z"/></svg>' + asset.defaultRarityRank;
+                imgWrap.appendChild(badge);
+            }
+
+            const price = asset.defaultListingV2?.salePriceDecimalUSD;
+            const priceVal = price ? '$' + parseFloat(price).toFixed(0) : null;
+
+            card.appendChild(imgWrap);
+
+            if (ov !== 'none') {
+                const info = document.createElement('div');
+                info.className = 'cp-nft-info';
+                const name = document.createElement('div');
+                name.className = 'cp-nft-name';
+                name.textContent = asset.name || '—';
+                info.appendChild(name);
+                if (priceVal && showPrice) {
+                    const priceEl = document.createElement('div');
+                    priceEl.className = 'cp-nft-price-below';
+                    priceEl.textContent = priceVal;
+                    info.appendChild(priceEl);
+                }
+                card.appendChild(info);
+            }
+
+            card.addEventListener('click', () => {
+                const id = asset.defaultListingV2?.editionId || asset.id;
+                if (id) window.open('https://crypto.com/nft/marketplace/asset/' + id, '_blank', 'noopener');
+            });
+
+            return card;
+        };
+
+        const sortGroupAssets = (assets, sortVal) => {
+            const arr = [...assets];
+            if (sortVal === 'rank')   arr.sort((a, b) => (a.asset.defaultRarityRank || Infinity) - (b.asset.defaultRarityRank || Infinity));
+            else if (sortVal === 'oldest') arr.sort((a, b) => new Date(a.asset.createdAt) - new Date(b.asset.createdAt));
+            else arr.sort((a, b) => new Date(b.asset.createdAt) - new Date(a.asset.createdAt));
+            return arr;
+        };
+
+        const applySize = (size) => {
+            window._gFilters.size = size;
+            const minMap = { small: '115px', medium: '175px', large: '260px' };
+            container.style.setProperty('--g-card-min', minMap[size] || '115px');
+            document.querySelectorAll('.nft-group-size-btns .stats-tr-btn').forEach(b =>
+                b.classList.toggle('stats-tr-btn--active', b.dataset.gsize === size));
+        };
+
+        const applySort = (sortVal) => {
+            window._gFilters.sort = sortVal;
+            // NE PAS modifier #sortBy DOM global — isolation des filtres par vue
+            document.querySelectorAll('.nft-group-sort-btns .stats-tr-btn').forEach(b =>
+                b.classList.toggle('stats-tr-btn--active', b.dataset.gsort === sortVal));
+            document.querySelectorAll('.nft-group-cards[data-group-key]').forEach(cardsEl => {
+                const grp = groups.find(g => g.key === cardsEl.dataset.groupKey);
+                if (!grp) return;
+                cardsEl.innerHTML = '';
+                sortGroupAssets(grp.assets, sortVal).forEach(({ asset }) => cardsEl.appendChild(buildProfileCard(asset)));
+            });
+        };
+
+        const applyOverlay = (ov) => {
+            window._gFilters.overlay = ov;
+            document.querySelectorAll('.nft-group-overlay-btns .stats-cf-btn').forEach(b =>
+                b.classList.toggle('stats-cf-btn--active', b.dataset.gov === ov));
+            // Re-render toutes les cartes avec le nouvel overlay
+            document.querySelectorAll('.nft-group-cards[data-group-key]').forEach(cardsEl => {
+                const grp = groups.find(g => g.key === cardsEl.dataset.groupKey);
+                if (!grp) return;
+                cardsEl.innerHTML = '';
+                sortGroupAssets(grp.assets, window._gFilters.sort).forEach(({ asset }) => cardsEl.appendChild(buildProfileCard(asset)));
+            });
+        };
+
+        // ── Construire les groupes ─────────────────────────────────────────
         groups.forEach((group, groupIndex) => {
             const header = document.createElement('div');
             header.className = 'nft-group-header';
@@ -3913,33 +4316,14 @@ const renderGrouped = (groupBy) => {
 
             const titleEl = document.createElement('div');
             titleEl.className = 'nft-group-title';
-
             if (groupBy === 'collection' || groupBy === 'artist') {
-
-
                 header.setAttribute('data-group-by', groupBy);
-
-
                 header.setAttribute('data-rank', String(groupIndex + 1));
-
-
-            
-
-
                 const rankEl = document.createElement('span');
-
-
                 rankEl.className = 'group-legend-tip group-legend-tip--result';
-
-
                 rankEl.textContent = String(groupIndex + 1);
-
-
                 titleEl.appendChild(rankEl);
-
-
             }
-
             const nameEl = document.createElement('span');
             nameEl.className = 'nft-group-name';
             nameEl.textContent = group.key;
@@ -3947,66 +4331,83 @@ const renderGrouped = (groupBy) => {
 
             const countEl = document.createElement('span');
             countEl.className = 'nft-group-count';
+            const numEl = document.createElement('span'); numEl.className = 'nft-count-num'; numEl.textContent = String(group.assets.length);
+            const lblEl = document.createElement('span'); lblEl.className = 'nft-count-label'; lblEl.textContent = 'NFTs';
+            countEl.appendChild(numEl); countEl.appendChild(lblEl);
 
-            const numEl = document.createElement('span');
-            numEl.className = 'nft-count-num';
-            numEl.textContent = String(group.assets.length);
-
-            const labelEl = document.createElement('span');
-            labelEl.className = 'nft-count-label';
-            labelEl.textContent = 'NFTs';
-
-            countEl.appendChild(numEl);
-            countEl.appendChild(labelEl);
-
-            if (currentGroupingMode === 'collection' || currentGroupingMode === 'artist' || currentGroupingMode === 'all') {
-                const downloadBtn = document.createElement('button');
-                downloadBtn.type = 'button';
-                downloadBtn.className = 'nft-group-download';
-                downloadBtn.title = 'DOWNLOAD PACK';
-                downloadBtn.setAttribute('aria-label', `DOWNLOAD PACK — ${group.key}`);
-                downloadBtn.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-download" xlink:href="#icon-download"></use></svg>`;
-                downloadBtn.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    downloadGroupAssetsAsZip(group.key, group.assets.map(({ asset }) => asset));
-                });
-                if (!forcedAssetIdFilter) countEl.appendChild(downloadBtn);
+            if (!forcedAssetIdFilter && (currentGroupingMode === 'collection' || currentGroupingMode === 'artist' || currentGroupingMode === 'all')) {
+                const dlBtn = document.createElement('button');
+                dlBtn.type = 'button'; dlBtn.className = 'nft-group-download'; dlBtn.title = 'DOWNLOAD PACK';
+                dlBtn.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-download" xlink:href="#icon-download"></use></svg>`;
+                dlBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); downloadGroupAssetsAsZip(group.key, group.assets.map(({ asset }) => asset)); });
+                countEl.appendChild(dlBtn);
+                const colBtn = document.createElement('button');
+                colBtn.type = 'button'; colBtn.className = 'nft-group-download nft-group-download--collage'; colBtn.title = 'DOWNLOAD COLLAGE';
+                colBtn.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-collage" xlink:href="#icon-collage"></use></svg>`;
+                colBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); downloadGroupCollagePng(group.key, group.assets.map(({ asset }) => asset)); });
+                countEl.appendChild(colBtn);
             }
-                if (currentGroupingMode === 'collection' || currentGroupingMode === 'artist' || currentGroupingMode === 'all') {
-                    const collageBtn = document.createElement('button');
-                    collageBtn.type = 'button';
-                    collageBtn.className = 'nft-group-download nft-group-download--collage';
-                    collageBtn.title = 'DOWNLOAD COLLAGE';
-                    collageBtn.setAttribute('aria-label', `DOWNLOAD COLLAGE — ${group.key}`);
-                    collageBtn.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-collage" xlink:href="#icon-collage"></use></svg>`;
-                    collageBtn.addEventListener('click', (event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        downloadGroupCollagePng(group.key, group.assets.map(({ asset }) => asset));
-                    });
-                    if (!forcedAssetIdFilter) countEl.appendChild(collageBtn);
-                }
 
+            const sep = document.createElement('span'); sep.className = 'nft-group-controls-sep'; countEl.appendChild(sep);
 
-            header.appendChild(titleEl);
-            header.appendChild(countEl);
-            container.appendChild(header);
-const groupAssetList = group.assets.map(({ asset }) => asset);
-            group.assets.forEach(({ asset }, groupAssetIndex) => {
-                if (forcedAssetIdFilter && groupAssetList.length === 1) {
-                    // Recent NFT: large centered card
-                    const card = createNFTCard(asset, groupAssetIndex, groupAssetList);
-                    card.style.cssText = 'width:min(100%, calc(100vh - 260px));aspect-ratio:1/1;margin:0 auto;display:block;';
-                    container.style.display = 'flex';
-                    container.style.justifyContent = 'center';
-                    container.appendChild(card);
-                } else {
-                    container.appendChild(createNFTCard(asset, groupAssetIndex, groupAssetList));
-                }
+            // Sort global
+            const sortGrp = document.createElement('div'); sortGrp.className = 'stats-timerange nft-group-sort-btns';
+            [{ v: 'newest', l: 'NEWEST' }, { v: 'oldest', l: 'OLDEST' }, { v: 'rank', l: 'RANK' }].forEach(({ v, l }) => {
+                const btn = document.createElement('button'); btn.type = 'button';
+                btn.className = 'stats-tr-btn' + (window._gFilters.sort === v ? ' stats-tr-btn--active' : '');
+                btn.dataset.gsort = v; btn.textContent = l;
+                btn.addEventListener('click', (e) => { e.stopPropagation(); applySort(v); });
+                sortGrp.appendChild(btn);
             });
+            countEl.appendChild(sortGrp);
+
+            // Overlay global (Rank+Price / Rank / Price / None)
+            const overlayGrp = document.createElement('div'); overlayGrp.className = 'stats-chain-filter nft-group-overlay-btns';
+            [{ v: 'both', l: 'All' }, { v: 'rank', l: 'Rank' }, { v: 'price', l: 'Price' }, { v: 'none', l: 'None' }].forEach(({ v, l }) => {
+                const btn = document.createElement('button'); btn.type = 'button';
+                btn.className = 'stats-cf-btn' + (window._gFilters.overlay === v ? ' stats-cf-btn--active' : '');
+                btn.dataset.gov = v; btn.textContent = l;
+                btn.addEventListener('click', (e) => { e.stopPropagation(); applyOverlay(v); });
+                overlayGrp.appendChild(btn);
+            });
+            countEl.appendChild(overlayGrp);
+
+            // Size global — style stats-timerange avec icônes SVG (séparateurs + hauteur 32px)
+            const sizeGrp = document.createElement('div'); sizeGrp.className = 'stats-timerange nft-group-size-btns';
+            [
+                { v: 'small',  s: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect height="5" rx="1" width="5" x="3" y="3"/><rect height="5" rx="1" width="5" x="9.5" y="3"/><rect height="5" rx="1" width="5" x="16" y="3"/><rect height="5" rx="1" width="5" x="3" y="9.5"/><rect height="5" rx="1" width="5" x="9.5" y="9.5"/><rect height="5" rx="1" width="5" x="16" y="9.5"/><rect height="5" rx="1" width="5" x="3" y="16"/><rect height="5" rx="1" width="5" x="9.5" y="16"/><rect height="5" rx="1" width="5" x="16" y="16"/></svg>' },
+                { v: 'medium', s: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect height="8.5" rx="1.5" width="8.5" x="3" y="3"/><rect height="8.5" rx="1.5" width="8.5" x="12.5" y="3"/><rect height="8.5" rx="1.5" width="8.5" x="3" y="12.5"/><rect height="8.5" rx="1.5" width="8.5" x="12.5" y="12.5"/></svg>' },
+                { v: 'large',  s: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect height="16" rx="2" width="16" x="4" y="4"/></svg>' },
+            ].forEach(({ v, s }) => {
+                const btn = document.createElement('button'); btn.type = 'button';
+                btn.className = 'stats-tr-btn nft-group-size-btn' + (window._gFilters.size === v ? ' stats-tr-btn--active' : '');
+                btn.dataset.gsize = v; btn.title = v; btn.innerHTML = s;
+                btn.addEventListener('click', (e) => { e.stopPropagation(); applySize(v); });
+                sizeGrp.appendChild(btn);
+            });
+            countEl.appendChild(sizeGrp);
+
+            header.appendChild(titleEl); header.appendChild(countEl);
+            container.appendChild(header);
+
+            // Cartes (display:contents — restent dans la grille parente)
+            const cardsEl = document.createElement('div');
+            cardsEl.className = 'nft-group-cards'; cardsEl.dataset.groupKey = group.key;
+            sortGroupAssets(group.assets, window._gFilters.sort).forEach(({ asset }) => {
+                if (forcedAssetIdFilter && group.assets.length === 1) {
+                    const card = buildProfileCard(asset);
+                    card.style.cssText = 'width:min(100%, calc(100vh - 260px));aspect-ratio:1/1;margin:0 auto;display:block;';
+                    container.style.display = 'flex'; container.style.justifyContent = 'center';
+                }
+                cardsEl.appendChild(buildProfileCard(asset));
+            });
+            container.appendChild(cardsEl);
         });
+
+        applySize(window._gFilters.size);
     };
+
+
 
     if (currentGroupingMode === 'artist' || currentGroupingMode === 'collection' || currentGroupingMode === 'all') {
         renderGrouped(currentGroupingMode);
@@ -5062,6 +5463,11 @@ function updateDisplay() {
         return;
     }
 
+    // En mode groupé, la taille est gérée par --g-card-min via applySize() → ne pas interférer
+    if (nftContainer.classList.contains('nft-container--grouped')) {
+        return;
+    }
+
     const enableCollage = cardSize === 'collage';
     document.body.classList.toggle('is-collage-view', enableCollage);
     if (appMain) appMain.classList.toggle('is-collage-view', enableCollage);
@@ -6032,9 +6438,13 @@ function initialize() {
         const usernameInput = document.getElementById('usernameInput');
         if (usernameInput) {
             usernameInput.value = username;
-            // Basculer sur l'onglet Profil
-            const profileTab = document.querySelector('.topnav-tab[data-tab="profile"]');
-            if (profileTab) profileTab.click();
+            // Hash URL = contexte Explorer (le user navigue vers un profil arbitraire)
+            window._pfHasProfile = true;
+            window._explorerUsername = username;
+            window._pfHasExplorerProfile = true;
+            window._lastExplorerView = 'profile';
+            const profilTab = document.querySelector('.topnav-tab[data-tab="profil"]');
+            if (profilTab) profilTab.click();
             fetchProfileAndNFTs();
         }
     }
@@ -6059,8 +6469,12 @@ function initialize() {
             const usernameInput = document.getElementById('usernameInput');
             if (usernameInput) {
                 usernameInput.value = username;
-                const profileTab = document.querySelector('.topnav-tab[data-tab="profile"]');
-                if (profileTab && !profileTab.classList.contains('topnav-tab--active')) profileTab.click();
+                window._pfHasProfile = true;
+                window._explorerUsername = username;
+                window._pfHasExplorerProfile = true;
+                window._lastExplorerView = 'profile';
+                const profilTab = document.querySelector('.topnav-tab[data-tab="profil"]');
+                if (profilTab && !profilTab.classList.contains('topnav-tab--active')) profilTab.click();
                 fetchProfileAndNFTs();
             }
         }
@@ -6271,9 +6685,9 @@ document.addEventListener('DOMContentLoaded', initialize);
         grid.style.gap = gap + 'px';
         // Activer bouton
         document.querySelectorAll('#cpSizeToggle [data-cpsize]').forEach(b =>
-            b.classList.toggle('is-active', b.dataset.cpsize === _cpSize));
+            b.classList.toggle('stats-tr-btn--active', b.dataset.cpsize === _cpSize));
         document.querySelectorAll('#cpSizeToggle [data-cpsize]').forEach(b =>
-            b.classList.toggle('cp-view-btn--active', b.dataset.cpsize === _cpSize));
+            b.classList.toggle('stats-tr-btn--active', b.dataset.cpsize === _cpSize));
     }
 
     function initFilters() {
@@ -6503,25 +6917,17 @@ document.addEventListener('DOMContentLoaded', initialize);
         const showRank  = _cpOverlay === 'both' || _cpOverlay === 'rank';
         const showPrice = _cpOverlay === 'both' || _cpOverlay === 'price';
 
-        // Badge rank superposé
+        // Badge rank superposé (étoile + chiffre, bas-gauche comme le bot)
         if (a.defaultRarityRank && showRank) {
-            const badge = document.createElement('span');
+            const badge = document.createElement('div');
             badge.className = 'cp-nft-rank-badge';
-            badge.textContent = '#' + a.defaultRarityRank;
+            badge.innerHTML = '<svg width="9" height="9" viewBox="0 0 20 20" fill="currentColor" style="flex-shrink:0"><path d="M10 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L10 14.3l-4.8 2.5.9-5.4L2.2 7.7l5.4-.8z"/></svg>' + a.defaultRarityRank;
             imgWrap.appendChild(badge);
-        }
-
-        // Badge prix superposé
-        if (price && showPrice) {
-            const priceBadge = document.createElement('span');
-            priceBadge.className = 'cp-nft-price-badge';
-            priceBadge.textContent = price;
-            imgWrap.appendChild(priceBadge);
         }
 
         card.appendChild(imgWrap);
 
-        // Footer nom — masqué si overlay=none pour une grille 100% images
+        // Footer nom + prix sous le nom
         if (_cpOverlay !== 'none') {
             const info = document.createElement('div');
             info.className = 'cp-nft-info';
@@ -6529,6 +6935,12 @@ document.addEventListener('DOMContentLoaded', initialize);
             name.className = 'cp-nft-name';
             name.textContent = a.name || '—';
             info.appendChild(name);
+            if (price && showPrice) {
+                const priceEl = document.createElement('div');
+                priceEl.className = 'cp-nft-price-below';
+                priceEl.textContent = price;
+                info.appendChild(priceEl);
+            }
             card.appendChild(info);
         }
 
@@ -6546,6 +6958,7 @@ document.addEventListener('DOMContentLoaded', initialize);
         _cpSort = 'price-asc';
         _cpListed = 'all';
         _cpOverlay = 'both';
+        _cpSize = 'small';
         // Reset boutons de filtre
         document.querySelectorAll('#cpSortGroup [data-cpsort]').forEach(b =>
             b.classList.toggle('stats-tr-btn--active', b.dataset.cpsort === 'price-asc'));
@@ -6553,6 +6966,8 @@ document.addEventListener('DOMContentLoaded', initialize);
             b.classList.toggle('stats-cf-btn--active', b.dataset.cplisted === 'all'));
         document.querySelectorAll('#cpOverlayGroup [data-cpoverlay]').forEach(b =>
             b.classList.toggle('stats-cf-btn--active', b.dataset.cpoverlay === 'both'));
+        document.querySelectorAll('#cpSizeToggle [data-cpsize]').forEach(b =>
+            b.classList.toggle('stats-tr-btn--active', b.dataset.cpsize === 'small'));
 
         // Reset UI
         const titleEl = document.getElementById('cpTitle');
@@ -6599,7 +7014,8 @@ document.addEventListener('DOMContentLoaded', initialize);
     // Appelé depuis la search bar quand une collection est sélectionnée
     window.loadCollectionById = async function(id) {
         _loaded = false;
-        window.showCollectionPanel();
+        window.showCollectionPanel(true); // skipWelcome
+        if (typeof window._hideCpWelcome === 'function') window._hideCpWelcome();
         await loadCollection(id);
     };
 })();
@@ -6762,8 +7178,14 @@ document.addEventListener('DOMContentLoaded', initialize);
         document.getElementById('homeGoStats2')?.addEventListener('click', () => {
             document.querySelector('.topnav-tab[data-tab="stats"]')?.click();
         });
+        document.getElementById('homeGoDrops')?.addEventListener('click', () => {
+            document.querySelector('.topnav-tab[data-tab="drops"]')?.click();
+        });
+        document.getElementById('homeGoCollection')?.addEventListener('click', () => {
+            document.querySelector('.topnav-tab[data-tab="explorer"]')?.click();
+        });
         document.getElementById('homeGoProfile')?.addEventListener('click', () => {
-            document.querySelector('.topnav-tab[data-tab="profile"]')?.click();
+            document.querySelector('.topnav-tab[data-tab="profil"]')?.click();
             setTimeout(() => document.getElementById('topnavSearchInput')?.focus(), 100);
         });
         document.getElementById('homeBrowseAll')?.addEventListener('click', () => {
@@ -6799,6 +7221,8 @@ document.addEventListener('DOMContentLoaded', initialize);
 
     const DEFAULT_COL = { id: '82421cf8e15df0edcaa200af752a344f', name: 'Loaded Lions' };
     let _currentCol = { ...DEFAULT_COL };
+    window._sbCurrentColId = DEFAULT_COL.id;
+    let _sbMode = 'transferred'; // 'transferred' | 'listed' | 'all'
     let _cursor = null;
     let _hasMore = false;
     let _sales = [];
@@ -6807,9 +7231,9 @@ document.addEventListener('DOMContentLoaded', initialize);
 
     const Q = `query getCollectionEventHistory($collectionId:ID!,$first:Int!,$after:String,$naturesIn:[String!]){
         public{collection(id:$collectionId){id eventHistory(first:$first,after:$after,naturesIn:$naturesIn){
-            edges{node{id asset{id name cover{url}}listing{currency salePriceDecimalUSD}
+            edges{node{id asset{id name cover{url} defaultRarityRank}listing{currency salePriceDecimalUSD}
             user{username displayName} toUser{username displayName}
-            amountDecimal createdAt nature}}
+            amountDecimal createdAt nature mode}}
             pageInfo{endCursor hasNextPage}}}}}`;
 
     async function fetchSales(after) {
@@ -6818,7 +7242,7 @@ document.addEventListener('DOMContentLoaded', initialize);
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 operationName: 'getCollectionEventHistory',
-                variables: { collectionId: _currentCol.id, first: 20, after: after || null, naturesIn: ['transferred'] },
+                variables: { collectionId: _currentCol.id, first: 50, after: after || null, naturesIn: _sbMode === 'all' ? ['transferred','listed'] : [_sbMode] },
                 query: Q
             })
         });
@@ -6859,21 +7283,42 @@ document.addEventListener('DOMContentLoaded', initialize);
         const date   = node.createdAt ? timeAgo(node.createdAt) : '';
         const pClass = priceClass(price);
         const isHighlight = price >= 1000;
+        const rank = node.asset?.defaultRarityRank;
+        const isListing = node.nature === 'listed';
+        const isAuction = node.mode === 'auction';
+        const typeBadge = isListing
+            ? (isAuction ? '<span class="sb-type-badge sb-type-badge--auction">🔨 Auction</span>'
+                         : '<span class="sb-type-badge sb-type-badge--listing">📋 Listing</span>')
+            : '<span class="sb-type-badge sb-type-badge--sale">💰 Sale</span>';
 
         const card = document.createElement('div');
         card.className = 'sb-card' + (isHighlight ? ' sb-card--highlight' : '');
         card.innerHTML = `
             <div class="sb-card-img-wrap">
                 <img class="sb-card-img" src="${imgUrl}" alt="${name}" loading="lazy"/>
+                ${rank ? `<div class="sb-rank-badge"><svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor" style="flex-shrink:0;opacity:0.85"><path d="M10 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L10 14.3l-4.8 2.5.9-5.4L2.2 7.7l5.4-.8z"/></svg>${rank}</div>` : ''}
                 ${isHighlight ? '<span class="sb-card-hot">🔥</span>' : ''}
             </div>
             <div class="sb-card-body">
-                <div class="sb-card-name">${name}</div>
-                <div class="sb-card-trade">
-                    <span class="sb-card-user sb-card-seller" title="${seller}">${seller}</span>
-                    <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 10h12M12 5l5 5-5 5"/></svg>
-                    <span class="sb-card-user sb-card-buyer" title="${buyer}">${buyer}</span>
+                <div class="sb-card-name-row">
+                    <span class="sb-card-name">${name}</span>
+                    ${typeBadge}
                 </div>
+                ${isListing ? `
+                <div class="sb-card-trade sb-card-trade--listing">
+                    <span class="sb-trade-label sb-trade-label--listing">Listed by</span>
+                    <span class="sb-card-user sb-card-seller" title="${seller}">${seller}</span>
+                </div>` : `
+                <div class="sb-card-trade sb-card-trade--sale">
+                    <div class="sb-trade-row">
+                        <span class="sb-trade-label sb-trade-label--seller">Seller</span>
+                        <span class="sb-card-user sb-card-seller" title="${seller}">${seller}</span>
+                    </div>
+                    <div class="sb-trade-row">
+                        <span class="sb-trade-label sb-trade-label--buyer">Buyer</span>
+                        <span class="sb-card-user sb-card-buyer" title="${buyer}">${buyer}</span>
+                    </div>
+                </div>`}
                 <div class="sb-card-footer">
                     <span class="sb-card-price ${pClass}">${priceUsd}</span>
                     <span class="sb-card-time">${date}</span>
@@ -6883,6 +7328,8 @@ document.addEventListener('DOMContentLoaded', initialize);
             const url = `https://crypto.com/nft/asset/${node.asset?.id}`;
             window.open(url, '_blank', 'noopener');
         });
+        // Vérifier alarme prix
+        if (typeof window._sbCheckAlarm === 'function') window._sbCheckAlarm(price, window._sbCurrentColId);
         return card;
     }
 
@@ -6972,29 +7419,168 @@ document.addEventListener('DOMContentLoaded', initialize);
         }
     }
 
+    async function fetchColLogo(id) {
+        try {
+            const res = await fetch(graphqlEndpoint, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ operationName: 'GetColLogo', variables: { id },
+                    query: 'query GetColLogo($id:ID!){public{collection(id:$id){name logo{url}}}}' })
+            });
+            const j = await res.json();
+            return j?.data?.public?.collection || null;
+        } catch(e) { return null; }
+    }
+
+    function updateHeaderCol(name, logoUrl) {
+        const logo = document.getElementById('sbColLogo');
+        const nameEl = document.getElementById('sbColName');
+        if (nameEl) nameEl.textContent = name;
+        if (logo) {
+            if (logoUrl) { logo.src = logoUrl; logo.style.display = 'block'; }
+            else logo.style.display = 'none';
+        }
+    }
+
+    // Charge logos dans le dropdown
+    async function loadDropdownLogos(listId) {
+        document.querySelectorAll(`#${listId} [data-logo-id]`).forEach(async img => {
+            if (img.classList.contains('loaded')) return; // déjà chargé
+            const col = await fetchColLogo(img.dataset.logoId);
+            if (col?.logo?.url) { img.src = col.logo.url; img.classList.add('loaded'); }
+        });
+    }
+
+    // _selectedIds : set des IDs cochés
+    let _selectedIds = new Set(['82421cf8e15df0edcaa200af752a344f']); // Loaded Lions par défaut
+
+    function getSelectedIds() { return Array.from(_selectedIds); }
+
+    // Curseurs par collection pour le load more
+    let _cursors = {}; // { colId: cursor }
+    let _hasMoreMap = {}; // { colId: bool }
+
+    async function loadInitialMulti() {
+        const ids = getSelectedIds();
+        if (!ids.length) return;
+        const feed = document.getElementById('sbFeed');
+        const loader = document.getElementById('sbLoading');
+        const lmWrap = document.getElementById('sbLoadMoreWrap');
+        _sales = []; _cursors = {}; _hasMoreMap = {};
+        if (feed) feed.innerHTML = '';
+        if (loader) loader.style.display = 'flex';
+        if (lmWrap) lmWrap.style.display = 'none';
+        try {
+            const results = await Promise.all(ids.map(async id => {
+                const saved = _currentCol;
+                _currentCol = { id, name: '' };
+                const r = await fetchSales(null);
+                _currentCol = saved;
+                return { id, ...r };
+            }));
+            if (loader) loader.style.display = 'none';
+            let allEdges = [];
+            results.forEach(r => {
+                _cursors[r.id] = r.pageInfo?.endCursor || null;
+                _hasMoreMap[r.id] = r.pageInfo?.hasNextPage || false;
+                allEdges = allEdges.concat(r.edges || []);
+            });
+            allEdges.sort((a, b) => new Date(b.node.createdAt) - new Date(a.node.createdAt));
+            allEdges.forEach(e => _sales.push(e.node));
+            updateStats();
+            if (typeof window._sbApplyClientFilters === 'function') window._sbApplyClientFilters();
+            const anyMore = Object.values(_hasMoreMap).some(Boolean);
+            if (anyMore && lmWrap) lmWrap.style.display = 'flex';
+        } catch(err) {
+            if (loader) loader.style.display = 'none';
+            if (feed) feed.innerHTML = '<div class="sb-empty">Error loading sales.</div>';
+        }
+    }
+
+    async function loadMoreMulti() {
+        const ids = getSelectedIds().filter(id => _hasMoreMap[id] && _cursors[id]);
+        if (!ids.length) return;
+        const btn = document.getElementById('sbLoadMoreBtn');
+        const lmWrap = document.getElementById('sbLoadMoreWrap');
+        if (btn) btn.disabled = true;
+        try {
+            const results = await Promise.all(ids.map(async id => {
+                _currentCol = { id, name: '' };
+                const r = await fetchSales(_cursors[id]);
+                return { id, ...r };
+            }));
+            results.forEach(r => {
+                _cursors[r.id] = r.pageInfo?.endCursor || null;
+                _hasMoreMap[r.id] = r.pageInfo?.hasNextPage || false;
+                (r.edges || []).forEach(e => _sales.push(e.node));
+            });
+            updateStats();
+            if (typeof window._sbApplyClientFilters === 'function') window._sbApplyClientFilters();
+            const anyMore = Object.values(_hasMoreMap).some(Boolean);
+            if (!anyMore && lmWrap) lmWrap.style.display = 'none';
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
     window.initSalesBotPanel = function() {
         if (_sbInit) return;
         _sbInit = true;
-        loadInitial();
-        // Collection logo via JS si dispo
-        fetch(graphqlEndpoint, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ operationName: 'GetColLogo', variables: { id: _currentCol.id },
-                query: 'query GetColLogo($id:ID!){public{collection(id:$id){name logo{url}}}}' })
-        }).then(r => r.json()).then(j => {
-            const col = j?.data?.public?.collection;
-            if (!col) return;
-            const logo = document.getElementById('sbColLogo');
-            const name = document.getElementById('sbColName');
-            if (logo && col.logo?.url) { logo.src = col.logo.url; logo.style.display = 'block'; }
-            if (name && col.name) name.textContent = col.name;
-        }).catch(() => {});
-        // Listeners
-        document.getElementById('sbRefreshBtn')?.addEventListener('click', loadInitial);
-        document.getElementById('sbLoadMoreBtn')?.addEventListener('click', loadMore);
-        // Auto-refresh toutes les 30s
+        loadInitialMulti();
+        loadDropdownLogos('sbColList');
+
+        // Charger logo de la 1ère collection dans le header
+        fetchColLogo('82421cf8e15df0edcaa200af752a344f').then(col => {
+            if (col) updateHeaderCol(col.name || 'Loaded Lions', col.logo?.url || '');
+        });
+
+        // Dropdown toggle
+        const colBtn = document.getElementById('sbColSelectorBtn');
+        const colDropdown = document.getElementById('sbColDropdown');
+        colBtn?.addEventListener('click', e => {
+            e.stopPropagation();
+            const isOpen = colDropdown.style.display !== 'none';
+            colDropdown.style.display = isOpen ? 'none' : 'block';
+        });
+        document.addEventListener('click', e => {
+            if (!colBtn?.contains(e.target) && !colDropdown?.contains(e.target))
+                if (colDropdown) colDropdown.style.display = 'none';
+        });
+
+        // Checkboxes multi-sélection
+        document.querySelectorAll('.sb-col-cb').forEach(cb => {
+            cb.addEventListener('change', () => {
+                if (cb.checked) _selectedIds.add(cb.value);
+                else _selectedIds.delete(cb.value);
+                // Forcer au moins 1
+                if (_selectedIds.size === 0) { cb.checked = true; _selectedIds.add(cb.value); }
+                // Nom dans le header
+                const names = [];
+                document.querySelectorAll('.sb-col-cb:checked').forEach(c => {
+                    names.push(c.closest('label')?.querySelector('.sb-col-rich-name')?.textContent || '');
+                });
+                updateHeaderCol(names.join(', '), '');
+                loadInitialMulti();
+            });
+        });
+
+        // Mode filter (Sales / Listings / All)
+        document.getElementById('sbModeGroup')?.addEventListener('click', e => {
+            const btn = e.target.closest('[data-sbmode]');
+            if (!btn) return;
+            _sbMode = btn.dataset.sbmode;
+            document.querySelectorAll('#sbModeGroup [data-sbmode]').forEach(b =>
+                b.classList.toggle('stats-cf-btn--active', b === btn));
+            // Mise à jour subtitle
+            const sub = document.querySelector('#salesBotPanel .sb-subtitle');
+            if (sub) sub.textContent = _sbMode === 'transferred' ? 'Live sales tracker'
+                : _sbMode === 'listed' ? 'Live listings tracker' : 'Sales & listings tracker';
+            loadInitialMulti();
+        });
+
+        document.getElementById('sbRefreshBtn')?.addEventListener('click', loadInitialMulti);
+        document.getElementById('sbLoadMoreBtn')?.addEventListener('click', loadMoreMulti);
         _autoRefreshTimer = setInterval(() => {
-            if (document.getElementById('salesBotPanel')?.style.display !== 'none') loadInitial();
+            if (document.getElementById('salesBotPanel')?.style.display !== 'none') loadInitialMulti();
         }, 30000);
     };
 })();
@@ -7008,6 +7594,135 @@ document.addEventListener('DOMContentLoaded', initialize);
     const homeTab = document.querySelector('.topnav-tab[data-tab="collections"]');
     brand.addEventListener('click', () => homeTab?.click());
     brand.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') homeTab?.click(); });
+})();
+
+/* ── PROFILE WELCOME SCREEN ── */
+(function() {
+    // true = un profil a déjà été chargé dans cette session
+    window._pfHasProfile = false;
+
+    function _profileEls() {
+        return document.querySelectorAll(
+            '.profile-section, #nftContainer, #timestamp, #error, #noResults, #profileLoadingOverlay'
+        );
+    }
+
+    // Force l'affichage des éléments du contenu profil avec des valeurs explicites
+    // (nécessaire car le CSS critique en <head> est chargé après styles.css et gagne
+    //  sur la spécificité pour .profile-section{display:none} et #nftContainer{display:none})
+    function _showProfileContent() {
+        const ps = document.querySelector('.profile-section');
+        if (ps) ps.style.display = 'flex';
+        const nc = document.getElementById('nftContainer');
+        if (nc) nc.style.display = 'grid';
+        // Éléments conditionnels (error, noResults, profileLoadingOverlay, timestamp) :
+        // leur logique propre les affichera au besoin — on retire juste le display:none
+        // inline posé par _hideAllPanels pour ne pas bloquer
+        ['timestamp', 'error', 'noResults', 'profileLoadingOverlay'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.removeProperty('display');
+        });
+        const gl = document.getElementById('groupLegend');
+        if (gl) gl.removeAttribute('hidden');
+    }
+    window._showProfileContent = _showProfileContent;
+
+    function showPfWelcome() {
+        // Page vierge : on cache tout — l'utilisateur utilise la barre de recherche topnav
+        const w = document.getElementById('pfWelcome');
+        if (w) w.style.display = 'none';
+        const ls = document.getElementById('leftSidebar');
+        if (ls) ls.style.setProperty('display', 'none', 'important');
+        const am = document.getElementById('appMain');
+        if (am) { am.style.visibility = 'hidden'; am.style.pointerEvents = 'none'; }
+    }
+
+    function hidePfWelcome() {
+        const w = document.getElementById('pfWelcome');
+        if (w) w.style.display = 'none';
+        window._pfHasProfile = true;
+        // Remettre la sidebar et appMain visibles
+        const ls = document.getElementById('leftSidebar');
+        if (ls) ls.style.setProperty('display', 'block', 'important');
+        const am = document.getElementById('appMain');
+        if (am) { am.style.visibility = ''; am.style.pointerEvents = ''; }
+        // Restaurer les éléments de contenu profil (cachés par _hideAllPanels + CSS critique)
+        _showProfileContent();
+    }
+    window.hidePfWelcome = hidePfWelcome;
+
+    // showProfileView envoie cet événement — on décide ici quoi montrer
+    window.addEventListener('cronos:showProfile', () => {
+        if (window._pfHasProfile) {
+            // Profil déjà chargé : s'assurer que tout est visible
+            const w = document.getElementById('pfWelcome');
+            if (w) w.style.display = 'none';
+            const ls = document.getElementById('leftSidebar');
+            if (ls) ls.style.setProperty('display', 'block', 'important');
+            const am = document.getElementById('appMain');
+            if (am) { am.style.visibility = ''; am.style.pointerEvents = ''; }
+            // Restaurer profile-section + nftContainer avec valeurs explicites
+            _showProfileContent();
+        } else {
+            // Pas encore de profil : montrer le welcome
+            showPfWelcome();
+        }
+    });
+
+    // Recherche depuis le welcome unifié : forwarde vers topnav search
+    // → l'utilisateur voit les suggestions (profils / collections / collectibles)
+    function doPfSearch(query) {
+        if (!query.trim()) return;
+        const bar = document.getElementById('topnavSearchInput');
+        if (bar) {
+            bar.value = query.trim();
+            bar.dispatchEvent(new Event('input', { bubbles: true }));
+            bar.focus();
+        }
+    }
+
+    document.getElementById('pfWelcomeBtn')?.addEventListener('click', () => {
+        doPfSearch(document.getElementById('pfWelcomeInput')?.value || '');
+    });
+    document.getElementById('pfWelcomeInput')?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') doPfSearch(e.target.value);
+    });
+    // Input live → mirroir vers topnav pour afficher les suggestions en temps réel
+    document.getElementById('pfWelcomeInput')?.addEventListener('input', e => {
+        const bar = document.getElementById('topnavSearchInput');
+        if (bar) {
+            bar.value = e.target.value;
+            bar.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
+
+
+    // Détecter quand un profil est effectivement chargé (image de profil mise à jour)
+    const profilePic = document.getElementById('profilePicture');
+    if (profilePic) {
+        const obs = new MutationObserver(() => {
+            const src = profilePic.getAttribute('src');
+            if (src && src !== '' && src !== window.location.href) {
+                hidePfWelcome();
+            }
+        });
+        obs.observe(profilePic, { attributes: true, attributeFilter: ['src'] });
+    }
+})();
+
+/* ── BOT REQUEST DROPDOWN ── */
+(function() {
+    const btn = document.getElementById('sbRequestBtn');
+    const drop = document.getElementById('sbRequestDropdown');
+    if (!btn || !drop) return;
+    btn.addEventListener('click', e => {
+        e.stopPropagation();
+        drop.style.display = drop.style.display === 'none' ? 'block' : 'none';
+    });
+    document.addEventListener('click', e => {
+        if (!btn.contains(e.target) && !drop.contains(e.target))
+            drop.style.display = 'none';
+    });
 })();
 
 /* ── LOGIN MODULE ── */
@@ -7041,7 +7756,8 @@ document.addEventListener('DOMContentLoaded', initialize);
 
     function showUser(username, avatarUrl) {
         if (loginBtn) loginBtn.style.display = 'none';
-        if (userEl)   userEl.style.display = 'flex';
+        const outBtn = document.getElementById('topnavUserLogout');
+        if (outBtn) outBtn.style.display = 'flex';
         if (nameEl)   nameEl.textContent = username;
         if (avatarEl) {
             avatarEl.src = avatarUrl || '';
@@ -7049,10 +7765,15 @@ document.addEventListener('DOMContentLoaded', initialize);
         }
     }
 
+    function hideUser() {
+        if (loginBtn) loginBtn.style.display = 'flex';
+        const outBtn = document.getElementById('topnavUserLogout');
+        if (outBtn) outBtn.style.display = 'none';
+    }
+
     function logout() {
         localStorage.removeItem(LS_KEY);
-        if (loginBtn) loginBtn.style.display = 'flex';
-        if (userEl)   userEl.style.display = 'none';
+        hideUser();
     }
 
     async function doLogin(username) {
@@ -7073,12 +7794,11 @@ document.addEventListener('DOMContentLoaded', initialize);
             localStorage.setItem(LS_KEY, JSON.stringify(data));
             showUser(user.displayName || user.username, user.avatar?.url);
             closeModal();
-            // Naviguer via selectSuggestion qui gère tout (tab profil + fetch)
+            // Naviguer après login
+            window._pfHasProfile = true;
             if (typeof selectSuggestion === 'function') {
                 selectSuggestion(user.username);
             } else {
-                const profileTab = document.querySelector('.topnav-tab[data-tab="profile"]');
-                if (profileTab) profileTab.click();
                 const usernameInput = document.getElementById('usernameInput');
                 if (usernameInput) {
                     usernameInput.value = user.username;
@@ -7104,6 +7824,12 @@ document.addEventListener('DOMContentLoaded', initialize);
     backdrop?.addEventListener('click', e => { if (e.target === backdrop) closeModal(); });
     submitBtn?.addEventListener('click', () => doLogin(input?.value?.trim() || ''));
     input?.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(input.value.trim()); });
+
+    // Init auth state — restaurer si connecté
+    try {
+        const saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+        if (saved?.username) showUser(saved.displayName || saved.username, saved.avatarUrl);
+    } catch(e) {}
 })();
 
 /* ── SALES BOT FILTERS ── */
@@ -7183,7 +7909,7 @@ document.addEventListener('DOMContentLoaded', initialize);
 (function() {
     // Copy to clipboard
     document.addEventListener('click', e => {
-        const btn = e.target.closest('.sup-copy-btn');
+        const btn = e.target.closest('.sup-copy-btn, .sup2-copy-btn');
         if (!btn) return;
         const text = btn.dataset.copy;
         if (!text) return;
@@ -7191,10 +7917,10 @@ document.addEventListener('DOMContentLoaded', initialize);
             const span = btn.querySelector('span');
             if (span) {
                 span.textContent = 'Copied!';
-                btn.classList.add('sup-copy-btn--done');
+                btn.classList.add('sup-copy-btn--done', 'sup2-copy-btn--done');
                 setTimeout(() => {
                     span.textContent = 'Copy';
-                    btn.classList.remove('sup-copy-btn--done');
+                    btn.classList.remove('sup-copy-btn--done', 'sup2-copy-btn--done');
                 }, 2000);
             }
         }).catch(() => {
@@ -7208,6 +7934,343 @@ document.addEventListener('DOMContentLoaded', initialize);
             if (span) { span.textContent = 'Copied!'; setTimeout(() => span.textContent = 'Copy', 2000); }
         });
     });
+})();
+</script>
+
+
+
+<script>
+/* ── SUPPORT PAGE : progress + donors ── */
+(function() {
+    const GOAL = 150;
+    const LS_DONORS = 'cronos_donors_v1';
+
+    // Données hardcodées initiales — Unscoop peut les mettre à jour ici
+    const SEED_DONORS = [
+        // { name: 'CroWhale', amount: 50, date: '2026-04-01' },
+    ];
+
+    function getDonors() {
+        try {
+            const d = JSON.parse(localStorage.getItem(LS_DONORS) || 'null');
+            return Array.isArray(d) ? d : [...SEED_DONORS];
+        } catch(e) { return [...SEED_DONORS]; }
+    }
+
+    function saveDonors(donors) {
+        localStorage.setItem(LS_DONORS, JSON.stringify(donors));
+    }
+
+    function totalRaised(donors) {
+        return donors.reduce((s, d) => s + (Number(d.amount) || 0), 0);
+    }
+
+    function renderProgress(donors) {
+        const raised = totalRaised(donors);
+        const pct = Math.min(100, Math.round((raised / GOAL) * 100));
+        const bar = document.getElementById('supProgressBar');
+        const pctEl = document.getElementById('supProgressPct');
+        const raisedEl = document.getElementById('supProgressRaised');
+        if (bar) { setTimeout(() => bar.style.width = pct + '%', 80); bar.dataset.pct = pct; }
+        if (pctEl) pctEl.textContent = pct + '%';
+        if (raisedEl) raisedEl.textContent = '$' + raised + ' raised';
+    }
+
+    function renderDonors(donors) {
+        const list = document.getElementById('supDonorsList');
+        if (!list) return;
+        if (!donors.length) {
+            list.innerHTML = '<div class="sup2-no-donors">Be the first to appear here 🌟</div>';
+            return;
+        }
+        const sorted = [...donors].sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0));
+        list.innerHTML = sorted.map((d, i) => `
+            <div class="sup2-supporter-item">
+                <div class="sup2-supporter-rank">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#' + (i+1)}</div>
+                <div class="sup2-supporter-avatar">${(d.name || '?')[0].toUpperCase()}</div>
+                <div class="sup2-supporter-info">
+                    <span class="sup2-supporter-name">${d.name || 'Anonymous'}</span>
+                    ${d.message ? `<span class="sup2-supporter-msg">"${d.message}"</span>` : ''}
+                </div>
+                <div class="sup2-supporter-amount">$${Number(d.amount).toFixed(0)}</div>
+            </div>`).join('');
+    }
+
+    function initSupport() {
+        const donors = getDonors();
+        renderProgress(donors);
+        renderDonors(donors);
+
+        // Modal "I contributed"
+        const addBtn = document.getElementById('supAddDonorBtn');
+        addBtn?.addEventListener('click', () => {
+            const existing = document.getElementById('supDonorModal');
+            if (existing) { existing.style.display = 'flex'; return; }
+
+            const modal = document.createElement('div');
+            modal.id = 'supDonorModal';
+            modal.className = 'sup-donor-modal-backdrop';
+            modal.innerHTML = `
+                <div class="sup-donor-modal">
+                    <button class="login-modal-close" id="supDonorClose" type="button">×</button>
+                    <div class="login-modal-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    </div>
+                    <h3 class="login-modal-title">Thank you!</h3>
+                    <p class="login-modal-sub">Let us know about your contribution and appear in the supporters list.</p>
+                    <input class="login-modal-input" id="sdName" placeholder="Your name / username" style="margin-bottom:8px;"/>
+                    <input class="login-modal-input" id="sdAmount" type="number" placeholder="Amount donated ($)" style="margin-bottom:8px;"/>
+                    <input class="login-modal-input" id="sdMsg" placeholder="A message (optional)" style="margin-bottom:12px;"/>
+                    <button class="login-modal-btn" id="sdSubmit" type="button">Add me to the list</button>
+                    <p class="login-modal-note">This is stored locally. Unscoop will verify and validate contributions.</p>
+                </div>`;
+            document.body.appendChild(modal);
+
+            document.getElementById('supDonorClose').addEventListener('click', () => modal.style.display = 'none');
+            modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
+            document.getElementById('sdSubmit').addEventListener('click', () => {
+                const name = document.getElementById('sdName').value.trim();
+                const amount = parseFloat(document.getElementById('sdAmount').value) || 0;
+                const msg = document.getElementById('sdMsg').value.trim();
+                if (!name || amount <= 0) return;
+                const donors2 = getDonors();
+                donors2.push({ name, amount, message: msg, date: new Date().toISOString().slice(0,10) });
+                saveDonors(donors2);
+                renderProgress(donors2);
+                renderDonors(donors2);
+                modal.style.display = 'none';
+            });
+        });
+    }
+
+    // Init quand le panel support est affiché
+    const obs = new MutationObserver(() => {
+        const panel = document.getElementById('supportPanel');
+        if (panel && panel.style.display !== 'none') initSupport();
+    });
+    const panel = document.getElementById('supportPanel');
+    if (panel) obs.observe(panel, { attributes: true, attributeFilter: ['style'] });
+    // Init immédiat si déjà visible
+    if (panel && panel.style.display !== 'none') initSupport();
+})();
+</script>
+
+<script>
+/* ── BOT PRICE ALARM ── */
+(function() {
+    let _colAlarms = {};
+    let _alarmVolume = 0.7;
+    let _alarmLastTriggered = 0;
+    const COOLDOWN = 8000;
+    // Sons par collection : { collectionId: soundType }
+    const SOUND_OPTIONS = {
+        'double': { label: '🔔 Double beep',  freqs: [880, 1100], delays: [0, 0.22], dur: 0.18 },
+        'high':   { label: '🎵 High tone',    freqs: [1400, 1400], delays: [0], dur: 0.3 },
+        'low':    { label: '🔊 Low tone',     freqs: [440, 440], delays: [0], dur: 0.3 },
+        'triple': { label: '🔔🔔 Triple beep', freqs: [880, 1100, 1320], delays: [0, 0.2, 0.4], dur: 0.15 },
+        'chime':  { label: '✨ Chime',         freqs: [523, 659, 784], delays: [0, 0.15, 0.3], dur: 0.2 },
+    };
+
+    function playSound(type, vol) {
+        const now = Date.now();
+        if (now - _alarmLastTriggered < COOLDOWN) return;
+        _alarmLastTriggered = now;
+        try {
+            const def = SOUND_OPTIONS[type] || SOUND_OPTIONS['double'];
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const gain = ctx.createGain();
+            gain.gain.value = vol ?? _alarmVolume;
+            gain.connect(ctx.destination);
+            def.freqs.forEach((freq, i) => {
+                const delay = def.delays[i] ?? 0;
+                const osc = ctx.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                osc.connect(gain);
+                osc.start(ctx.currentTime + delay);
+                osc.stop(ctx.currentTime + delay + def.dur);
+            });
+            setTimeout(() => ctx.close(), 1500);
+        } catch(e) {}
+    }
+
+    window._sbCheckAlarm = function(price, collectionId) {
+        const alarm = collectionId ? _colAlarms[collectionId] : null;
+        if (!alarm?.active) return;
+        if (price > 0 && price <= alarm.price) {
+            _alarmLastTriggered = 0;
+            playSound(alarm.sound);
+        }
+    };
+
+    // Construire la liste des sons par collection dans le panel
+    function buildColSoundList() {
+        const listEl = document.getElementById('sbAlarmColList');
+        if (!listEl) return;
+        // Récupérer les collections disponibles dans le bot
+        const colOptions = document.querySelectorAll('#sbColList [data-col-id], #sbColSelector option');
+        const cols = [];
+        const seen = new Set();
+        colOptions.forEach(el => {
+            const id = el.dataset?.colId || el.value;
+            const name = (el.dataset?.colName || el.textContent || '').trim();
+            if (id && !seen.has(id) && id !== '' && name) { seen.add(id); cols.push({ id, name }); }
+        });
+        // Toujours inclure la collection active
+        if (_currentColRef && !seen.has(_currentColRef.id)) cols.unshift(_currentColRef);
+        if (cols.length === 0) {
+            listEl.innerHTML = '<div class="sb-alarm-col-empty">Load a collection to configure alerts.</div>';
+            return;
+        }
+        listEl.innerHTML = '';
+        const soundKeys = Object.keys(SOUND_OPTIONS);
+        cols.slice(0, 10).forEach(col => {
+            const saved = _colAlarms[col.id] || { price: '', sound: 'double', active: false };
+            const row = document.createElement('div');
+            row.className = 'sb-alarm-col-row' + (saved.active ? ' sb-alarm-col-row--active' : '');
+            row.dataset.colId = col.id;
+            row.innerHTML = `
+                <div class="sb-alarm-col-name" title="${col.name}">${col.name}</div>
+                <div class="sb-alarm-col-controls">
+                    <span class="sb-alarm-currency">$</span>
+                    <input class="sb-alarm-col-price" type="number" placeholder="Price" min="0" value="${saved.price}" inputmode="numeric"/>
+                    <select class="sb-alarm-col-sound">
+                        ${soundKeys.map(k => `<option value="${k}" ${saved.sound===k?'selected':''}>${SOUND_OPTIONS[k].label}</option>`).join('')}
+                    </select>
+                    <button class="sb-alarm-col-set" type="button">${saved.active ? '✓' : 'Set'}</button>
+                    <button class="sb-alarm-test" type="button" title="Test sound">▶</button>
+                </div>`;
+            const priceEl = row.querySelector('.sb-alarm-col-price');
+            const soundEl = row.querySelector('.sb-alarm-col-sound');
+            const setEl   = row.querySelector('.sb-alarm-col-set');
+            const testEl  = row.querySelector('.sb-alarm-test');
+            setEl.addEventListener('click', () => {
+                const v = parseFloat(priceEl.value);
+                if (v > 0) {
+                    _colAlarms[col.id] = { price: v, sound: soundEl.value, active: true };
+                    row.classList.add('sb-alarm-col-row--active');
+                    setEl.textContent = '✓';
+                    // Mettre à jour le bouton global si collection active
+                    if (_currentColRef?.id === col.id) _syncAlarmBtn();
+                } else {
+                    delete _colAlarms[col.id];
+                    row.classList.remove('sb-alarm-col-row--active');
+                    setEl.textContent = 'Set';
+                }
+            });
+            testEl.addEventListener('click', () => {
+                _alarmLastTriggered = 0;
+                playSound(soundEl.value);
+            });
+            listEl.appendChild(row);
+        });
+    }
+
+    let _currentColRef = null;
+
+    // Exposer pour que le bot puisse notifier le changement de collection
+    window._sbSetCurrentCol = function(col) { _currentColRef = col; };
+
+    function _syncAlarmBtn() {
+        const col = _currentColRef;
+        const alarm = col ? _colAlarms[col.id] : null;
+        if (alarm?.active) {
+            if (label) label.textContent = `< $${alarm.price}`;
+            if (icon)  icon.style.stroke = '#4ade80';
+            if (btn)   btn.classList.add('sb-alarm-btn--active');
+        } else {
+            if (label) label.textContent = 'Alert';
+            if (icon)  icon.style.stroke = '';
+            if (btn)   btn.classList.remove('sb-alarm-btn--active');
+        }
+    }
+
+    // UI
+    const btn    = document.getElementById('sbAlarmBtn');
+    const panel  = document.getElementById('sbAlarmPanel');
+    const volSlider = document.getElementById('sbAlarmVolume');
+    const label  = document.getElementById('sbAlarmLabel');
+    const icon   = document.getElementById('sbAlarmIcon');
+
+    btn?.addEventListener('click', e => {
+        e.stopPropagation();
+        const open = panel?.style.display !== 'none';
+        if (panel) panel.style.display = open ? 'none' : 'block';
+        if (!open) buildColSoundList();
+    });
+    document.addEventListener('click', e => {
+        if (!btn?.contains(e.target) && !panel?.contains(e.target))
+            if (panel) panel.style.display = 'none';
+    });
+    clearBtn?.addEventListener('click', clearAlarm);
+    volSlider?.addEventListener('input', () => {
+        _alarmVolume = parseInt(volSlider.value) / 100;
+    });
+})();
+</script>
+
+<script>
+/* ── COLLECTION WELCOME SCREEN ── */
+(function() {
+    const FEATURED = [
+        { id: '82421cf8e15df0edcaa200af752a344f', name: 'Loaded Lions', logo: 'https://media.nft.crypto.com/273dc24c-5b5f-45d9-83d3-5db578bdce79/original.gif' },
+        { id: '40af4533404b6dc586cf847f46810372', name: 'Loaded Pixel', logo: 'https://media.nft.crypto.com/e7dc8e5d-5773-4dbb-a5ba-7c69e76e8960/original.gif' },
+        { id: '5855701d43bc9a7fea90bd254ebd4b6e', name: 'Dark Lions',   logo: '' },
+    ];
+
+    // Charger logo Dark Lions
+    async function loadDarkLionsLogo() {
+        try {
+            const res = await fetch(graphqlEndpoint, {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({operationName:'GetColLogo', variables:{id:'5855701d43bc9a7fea90bd254ebd4b6e'},
+                    query:'query GetColLogo($id:ID!){public{collection(id:$id){logo{url}}}}'})
+            });
+            const j = await res.json();
+            const url = j?.data?.public?.collection?.logo?.url;
+            if (!url) return;
+            ['cpWelcomeDarkChipImg', 'pfWelcomeDarkChipImg'].forEach(id => {
+                const img = document.getElementById(id);
+                if (img) img.src = url;
+            });
+        } catch(e) {}
+    }
+
+    // Chips → charger directement
+    document.querySelectorAll('.cp-welcome-col-chip[data-col-id]').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const id = chip.dataset.colId;
+            if (typeof window.loadCollectionById === 'function') window.loadCollectionById(id);
+        });
+    });
+
+    // Recherche dans le welcome : utiliser la search bar principale
+    function doWelcomeSearch(query) {
+        if (!query.trim()) return;
+        const bar = document.getElementById('topnavSearchInput');
+        if (bar) {
+            bar.value = query;
+            bar.dispatchEvent(new Event('input', { bubbles: true }));
+            bar.focus();
+        }
+    }
+
+    document.getElementById('cpWelcomeBtn')?.addEventListener('click', () => {
+        doWelcomeSearch(document.getElementById('cpWelcomeInput')?.value || '');
+    });
+    document.getElementById('cpWelcomeInput')?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') doWelcomeSearch(e.target.value);
+    });
+
+    // Init logos Dark Lions quand le panel OU le welcome unifié s'ouvre
+    const panel = document.getElementById('collectionsPanel');
+    const pfw   = document.getElementById('pfWelcome');
+    const obs = new MutationObserver(() => {
+        if (panel?.style.display !== 'none') loadDarkLionsLogo();
+        if (pfw?.style.display !== 'none')   loadDarkLionsLogo();
+    });
+    if (panel) obs.observe(panel, { attributes: true, attributeFilter: ['style'] });
+    if (pfw)   obs.observe(pfw,   { attributes: true, attributeFilter: ['style'] });
 })();
 </script>
 </body>
@@ -7236,6 +8299,13 @@ document.addEventListener('DOMContentLoaded', initialize);
         if (salesBotPanel) salesBotPanel.style.display = 'none';
         const supportPanel = document.getElementById('supportPanel');
         if (supportPanel) supportPanel.style.display = 'none';
+        const dropsPanel = document.getElementById('dropsPanel');
+        if (dropsPanel) dropsPanel.style.display = 'none';
+        // Cacher sidebar + welcome profil à chaque changement d'onglet
+        const ls = document.getElementById('leftSidebar');
+        if (ls) ls.style.display = 'none';
+        const pfw = document.getElementById('pfWelcome');
+        if (pfw) pfw.style.display = 'none';
         document.querySelectorAll('.profile-section, #nftContainer, #timestamp, #error, #noResults, #profileLoadingOverlay').forEach(el => {
             if (el) el.style.display = 'none';
         });
@@ -7288,12 +8358,87 @@ document.addEventListener('DOMContentLoaded', initialize);
         });
     }
 
+    // ── Vue EXPLORER ─────────────────────────────────────────────────────────
+    // Un seul onglet qui restaure la dernière vue Explorer (profil ou collection)
+    // ── Vue PROFILS (onglet "Profils") ────────────────────────────────────────
+    function showProfilExplorerView() {
+        // Si un profil est chargé (peu importe la source), le conserver
+        if (window._pfHasProfile || window._pfHasExplorerProfile) {
+            window._pfHasProfile = true;
+            showProfileView();
+            // Re-fetch si le username en DOM ne correspond pas
+            if (window._explorerUsername) {
+                const domUsername = (document.getElementById('username')?.textContent || '').trim();
+                if (domUsername && domUsername.toLowerCase() !== window._explorerUsername.toLowerCase()) {
+                    const usernameInput = document.getElementById('usernameInput');
+                    if (usernameInput) usernameInput.value = window._explorerUsername;
+                    if (typeof fetchProfileAndNFTs === 'function') fetchProfileAndNFTs();
+                }
+            }
+            return;
+        }
+        // Aucun profil → welcome
+        window._pfHasProfile = false;
+        showProfileView();
+    }
+
+    // ── Vue COLLECTIONS (onglet "Collections") ────────────────────────────────
+    function showCollectionExplorerView() {
+        const last = window._lastExplorerView;
+        // Collection déjà chargée → restaurer
+        if (last === 'collection' && window._cpHasCollection) {
+            window.showCollectionPanel(true);
+            return;
+        }
+        // Aucune collection → welcome de la collection
+        window.showCollectionPanel(false);
+    }
+
+    // ── (Ancienne fonction, gardée pour compatibilité) ────────────────────────
+    function showExplorerView() {
+        showProfilExplorerView();
+    }
+
     // ── Vue COLLECTION (chargée depuis search ou featured) ────────────────────
-    window.showCollectionPanel = function() {
+    window.showCollectionPanel = function(skipWelcome) {
+        window._lastExplorerView = 'collection';
+        if (typeof window._markExplorerTabActive === 'function') window._markExplorerTabActive('collection');
         _showFullscreenPanel(document.getElementById('collectionsPanel'), () => {
             if (typeof initCollectionsPanel === 'function') initCollectionsPanel();
+            if (!skipWelcome && !window._cpHasCollection) {
+                _showCpWelcome();
+            }
         });
     };
+
+    function _showCpWelcome() {
+        // Page vierge : cacher tout le contenu de la collection
+        const welcome = document.getElementById('cpWelcome');
+        const banner  = document.getElementById('cpHeader');
+        const titleBl = document.getElementById('cpTitleBlock');
+        const filters = document.getElementById('cpFiltersBar');
+        const nftSec  = document.getElementById('cpNftSection');
+        if (welcome) welcome.style.display = 'none';
+        if (banner)  banner.style.display = 'none';
+        if (titleBl) titleBl.style.display = 'none';
+        if (filters) filters.style.display = 'none';
+        if (nftSec)  nftSec.style.display = 'none';
+    }
+
+    function _hideCpWelcome() {
+        const welcome = document.getElementById('cpWelcome');
+        const banner  = document.getElementById('cpHeader');
+        const titleBl = document.getElementById('cpTitleBlock');
+        const filters = document.getElementById('cpFiltersBar');
+        const nftSec  = document.getElementById('cpNftSection');
+        if (welcome) welcome.style.display = 'none';
+        if (banner)  banner.style.display = 'block';
+        if (titleBl) titleBl.style.display = 'flex';
+        if (filters) filters.style.display = 'flex';
+        if (nftSec)  nftSec.style.display = 'block';
+        window._cpHasCollection = true;
+    }
+    window._hideCpWelcome = _hideCpWelcome;
 
     // ── Vue SALES BOT ────────────────────────────────────────────────────────
     function showSalesBotView() {
@@ -7307,20 +8452,44 @@ document.addEventListener('DOMContentLoaded', initialize);
         _showFullscreenPanel(document.getElementById('supportPanel'), null);
     }
 
+    function showDropsView() {
+        _showFullscreenPanel(document.getElementById('dropsPanel'), () => {
+            if (typeof window.initDropsPanel === 'function') window.initDropsPanel();
+        });
+    }
+
+
     // ── Vue PROFIL ────────────────────────────────────────────────────────────
-    // Sidebar + navbar sort/taille + profil header + légende + NFTs
     function showProfileView() {
+        // NOTE : _lastExplorerView n'est PAS set ici — showProfileView est appelé
+        // Les callers Explorer
+        // doivent set _lastExplorerView eux-mêmes avant d'appeler.
         _hideAllPanels();
         _restoreMainContent();
+
+        // Sidebar : display:block !important pour écraser le CSS critique (#leftSidebar{display:none})
         const leftSidebar = document.getElementById('leftSidebar');
-        if (leftSidebar) leftSidebar.style.removeProperty('display');
+        if (leftSidebar) {
+            leftSidebar.style.setProperty('display', 'block', 'important');
+            leftSidebar.style.visibility = '';
+            leftSidebar.style.pointerEvents = '';
+        }
+
+        // appMain : retirer le margin-left:0 imposé par les autres vues
+        if (appMain) {
+            appMain.style.removeProperty('margin-left'); // laisse var(--sidebar-width) du CSS
+            appMain.style.visibility = '';
+            appMain.style.pointerEvents = '';
+        }
+
+        // Navbar flottante
         const navbar = document.querySelector('.navbar--floating-controls');
         if (navbar) navbar.style.removeProperty('display');
-        document.querySelectorAll('.profile-section, #nftContainer, #timestamp, #error, #noResults, #profileLoadingOverlay').forEach(el => {
-            if (el) el.style.removeProperty('display');
-        });
-        if (appMain) appMain.style.removeProperty('margin-left');
+
+        // Dispatcher → IIFE profile-welcome décide quoi montrer
+        window.dispatchEvent(new CustomEvent('cronos:showProfile'));
     }
+    window.showProfileView = showProfileView;
 
     // ── Vue STATS ─────────────────────────────────────────────────────────────
     function showStatsView() {
@@ -7374,18 +8543,37 @@ document.addEventListener('DOMContentLoaded', initialize);
         const tabName = tab.dataset.tab;
         if (tabName === 'stats') {
             showStatsView();
-        } else if (tabName === 'profile') {
-            showProfileView();
-        } else if (tabName === 'collection') {
-            window.showCollectionPanel();
+        } else if (tabName === 'profil') {
+            showProfilExplorerView();
+        } else if (tabName === 'explorer') {
+            showCollectionExplorerView();
         } else if (tabName === 'salesbot') {
             showSalesBotView();
         } else if (tabName === 'support') {
             showSupportView();
+        } else if (tabName === 'drops') {
+            showDropsView();
         } else {
             showCollectionsView();
         }
     }
+
+    // Marque l'onglet actif visuellement (profil ou collection selon contexte)
+    window._markExplorerTabActive = function(type) {
+        document.querySelectorAll('.topnav-tab').forEach(t => {
+            t.classList.remove('topnav-tab--active');
+            t.setAttribute('aria-selected', 'false');
+        });
+        // type='collection' → onglet Collections, sinon → onglet Profils
+        const tabSelector = (type === 'collection')
+            ? '.topnav-tab[data-tab="explorer"]'
+            : '.topnav-tab[data-tab="profil"]';
+        const tab = document.querySelector(tabSelector);
+        if (tab) {
+            tab.classList.add('topnav-tab--active');
+            tab.setAttribute('aria-selected', 'true');
+        }
+    };
 
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
@@ -7395,14 +8583,18 @@ document.addEventListener('DOMContentLoaded', initialize);
     });
 
     // ── Init : appliquer la vue correspondant à l'onglet actif au chargement ──
-    // Si un username est dans le hash, activer directement l'onglet Profil
+    // Si un username est dans le hash, activer directement l'onglet Explorer
     (function initActiveTab() {
         const hash = window.location.hash || '';
-        const hasUsername = hash.replace('#', '').trim().length > 0;
-        if (hasUsername) {
-            const profileTab = document.querySelector('.topnav-tab[data-tab="profile"]');
-            if (profileTab) {
-                activateTab(profileTab);
+        const username = hash.replace('#', '').trim();
+        if (username.length > 0) {
+            window._pfHasProfile = true;
+            window._explorerUsername = username;
+            window._pfHasExplorerProfile = true;
+            window._lastExplorerView = 'profile';
+            const explorerTab = document.querySelector('.topnav-tab[data-tab="explorer"]');
+            if (explorerTab) {
+                activateTab(explorerTab);
                 return;
             }
         }
@@ -8089,11 +9281,12 @@ fragment CollectionStatsData on Collection {
         }
     }
 
-    // Time range buttons
+    // Time range buttons — scoped to statsPanel only
     document.addEventListener('click', e => {
         const btn = e.target.closest('.stats-tr-btn');
         if (!btn) return;
-        document.querySelectorAll('.stats-tr-btn').forEach(b => b.classList.remove('stats-tr-btn--active'));
+        if (!btn.closest('#statsPanel')) return; // ne pas interférer avec les autres panels
+        document.querySelectorAll('#statsPanel .stats-tr-btn').forEach(b => b.classList.remove('stats-tr-btn--active'));
         btn.classList.add('stats-tr-btn--active');
         currentTimeRange = btn.dataset.range;
         // Conserver le tri actif au changement de période
@@ -8137,10 +9330,12 @@ fragment CollectionStatsData on Collection {
         loadStats();
     });
 
-    // Standard 2-state sort for all columns
+    // Standard 2-state sort for all columns — scoped to statsPanel only
     document.addEventListener('click', e => {
         const th = e.target.closest('.stats-th--sortable');
         if (!th) return;
+        // S'assurer que le th appartient bien au tableau stats et pas à un autre panel
+        if (!th.closest('#statsPanel, #statsTable')) return;
         const col = th.dataset.col;
         if (currentSort.col === col) {
             currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
@@ -8336,6 +9531,692 @@ fragment CollectionStatsData on Collection {
     // Init
     buildColList();
     applyColVisibility();
+
+})();
+</script>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════════
+   DROPS PANEL — Live & Upcoming NFT Drops on Crypto.com
+   ════════════════════════════════════════════════════════════════════════ */
+(function() {
+'use strict';
+
+// ── Données hardcodées (fallback si l'API ne répond pas) ─────────────────
+const DROPS_FALLBACK = {
+  live: [
+    {
+      id: '718c192adc9c103b8191c052f08df249',
+      name: 'Legendary Cryptonauts™ Vol. 2',
+      cover: 'https://media.nft.crypto.com/fe6a3456-df00-4c91-bd30-15e15f52bd69/original.jpg',
+      video: 'https://media.nft.crypto.com/df8de6d7-0eac-4e15-97e2-13ccff431d9b/original.mp4',
+      creator: {
+        displayName: 'Fran Rodriguez', username: 'cabezaenlasnubes',
+        avatar: 'https://media.nft.crypto.com/e5949512-2bf5-4496-bff7-91aabbd02eef/original.jpeg',
+        verified: true,
+        bio: 'Digital artist based in Spain. Founder of the Cryptonauts™ saga. Worked with Weezer, Tame Impala and Tycho. 20+ years career in surrealism and psychedelia.'
+      },
+      startAt: '2026-04-15T13:00:00.000Z',
+      endAt:   '2026-05-06T13:00:00.000Z',
+      earlyAccess: true,
+      eaStartAt: '2026-04-15T12:00:00.000Z',
+      eaEligibility: 'Hold at least 1 asset from Fran Rodriguez collections: OG Cryptonauts, Legendary Cryptonauts, TIME TRAVEL Cryptonauts, Quantum Cryptonauts V2…',
+      description: 'The legend continues. The Quantum Spacetime Travelers are back. Over 300 new 1/1 avatars full of psychedelia and cosmic epicness. Holders get full IP rights, airdrops and lots of rewards!',
+      packs: [
+        { name: 'Pack', price: '$39', available: 132, total: 168, perPack: 1, soldOut: false, cover: 'https://media.nft.crypto.com/c0b84dcd-ea4a-4e71-8a82-e8e268fcd0f1/original.png' },
+        { name: 'Mega Pack', price: '$99', available: 0, total: 50, perPack: 3, soldOut: true, cover: 'https://media.nft.crypto.com/8c02b911-5628-473f-bd22-717ed673fb20/original.png' }
+      ]
+    }
+  ],
+  upcoming: [
+    {
+      id: 'f21caaba579eb60dcd21db69f0b7501e',
+      name: 'SYNTHTOPIA: THE WORLD OF MUSES',
+      cover: 'https://media.nft.crypto.com/730534d7-53f1-46a7-9184-0a02c5b2d581/original.png',
+      video: 'https://media.nft.crypto.com/24a72239-c604-411f-a30b-296d306598ef/original.mp4',
+      creator: {
+        displayName: 'SYNTHTOPIA', username: 'synthtopia',
+        avatar: 'https://media.nft.crypto.com/3a09d945-7f7d-41c7-aa7a-9ff919b09d05/original.gif',
+        verified: true,
+        bio: '$2.9M+ trading volume, 42,000+ trades. Backed by Netflix Originals, Pink Floyd, Xbox veterans. A decentralized media franchise at the frontier of Web3 culture.'
+      },
+      startAt: '2026-04-22T13:00:00.000Z',
+      endAt:   '2026-05-22T13:00:00.000Z',
+      earlyAccess: true,
+      eaStartAt: '2026-04-22T10:00:00.000Z',
+      eaTitle: 'Early access starts 3 hours before the scheduled drop time.',
+      eaEligibility: 'Holders of: LOADED LIONS, SYNTHTOPIA, SYNTHTOPIA: THE LEGENDS, SYNTHKIDDOS, THE IMMORTALS, SYNTHKIDDOS VIP, SYNTHRELIX, SYNTHETIX, INTO THE BIOSPHERE.',
+      description: '999 ceremonial 1/1 collectibles. The World of Muses honors the primordial feminine force. 999 primordial Muses emerge as living frequencies — archetypes of attraction, intuition, harmony, memory, creation and transcendence.',
+      priceTiers: [
+        { label: 'Ritual Gate', qty: 99, price: '$1' },
+        { label: 'The Chorus', qty: 801, price: '$69' },
+        { label: 'Synthesis Rewards', qty: 99, price: 'Reserved' }
+      ],
+    }
+  ],
+  ended: [
+    { id: 'f20dd12f3929529eebe2917c19f8a057', name: 'Celestial Signs', cover: 'https://media.nft.crypto.com/1232970c-897d-4351-bb0f-47de1a3eb78c/original.jpg', creator: { displayName: 'morysetta', verified: true }, endAt: '2026-04-15T13:00:00.000Z' },
+    { id: '1c8a10b48a3d9e9d175830524b8870d8', name: 'Genesis Tigers: The First Eight', cover: 'https://media.nft.crypto.com/79476699-69c0-4d39-8b1e-2f3b52cc0a0f/original.jpg', creator: { displayName: 'Sascha', verified: true }, endAt: '2026-04-10T13:00:00.000Z' },
+    { id: '0244dd60bd3306ad3652d5b6bf51e33c', name: 'CYBR', cover: 'https://media.nft.crypto.com/b2f01440-746c-4079-97f5-f45fa328896e/original.png', creator: { displayName: 'Graffiti On Grave', verified: true }, endAt: '2026-04-01T13:00:00.000Z' },
+    { id: '50be75cf3b630e62f508ea949941b99f', name: 'PICASSOPIA', cover: 'https://media.nft.crypto.com/4995fea5-889c-4525-be34-b99c71ea77b2/original.png', creator: { displayName: 'SANDBANG', verified: true }, endAt: '2026-03-25T14:00:00.000Z' },
+    { id: '63d77ae6fcd9ce15af4faf3f5d659d40', name: 'The Bold Tigers - Tigers On The Hunt', cover: 'https://media.nft.crypto.com/5b75c436-f7da-4671-b0c6-d65fadeacd91/original.png', creator: { displayName: 'The Bold Tigers', verified: true }, endAt: '2026-03-18T14:00:00.000Z' },
+    { id: '256cfb9f5691bdea825f75ea1c5ca33e', name: 'Magic Universe', cover: 'https://media.nft.crypto.com/dd65ab34-1c0d-45dd-81e2-663e176fe8b9/original.jpg', creator: { displayName: 'The Fafi', verified: true }, endAt: '2026-03-14T14:00:00.000Z' },
+    { id: '4de9955eda70cb8e981e173bec56120a', name: 'OG Cryptonauts', cover: 'https://media.nft.crypto.com/37c6fd68-7d73-4a41-b990-d31d7be07a22/original.jpg', creator: { displayName: 'Fran Rodriguez', verified: true }, endAt: '2026-03-11T14:00:00.000Z' },
+    { id: '90a090b0a1a82583c736abde9dbd796e', name: 'Legends of Luxor: Rise of the Gods', cover: 'https://media.nft.crypto.com/37d0fcc3-240e-4790-9172-f8d6ab56e15f/original.png', creator: { displayName: 'Sascha', verified: true }, endAt: '2026-03-04T14:00:00.000Z' },
+    { id: 'e45a0b0152975c77cab2243c16b37cf3', name: 'Jak n JiI The Mad Hare Revolution', cover: 'https://media.nft.crypto.com/35f41074-4106-4bfa-ad10-7539415e5752/original.png', creator: { displayName: 'DaRealGenius', verified: true }, endAt: '2026-02-20T14:00:00.000Z' }
+  ]
+};
+
+// ── Formatage ─────────────────────────────────────────────────────────────
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function fmtTime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
+}
+function fmtCountdown(targetIso) {
+  const diff = new Date(targetIso) - Date.now();
+  if (diff <= 0) return null;
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  if (d > 0)  return `${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m`;
+  if (h > 0)  return `${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+  return `${m}m ${String(s).padStart(2,'0')}s`;
+}
+
+// Extraire les lignes d'utilité (commençant par un emoji) de la description
+function extractUtilities(desc) {
+  if (!desc) return [];
+  const lines = desc.split('\n');
+  const emojiRegex = /^[\u{1F300}-\u{1FFFF}\u{2600}-\u{27BF}\u{2300}-\u{23FF}⚡🏆💎🪂🎁🌟💵💰👑🥇🎨🧬🎮🎵🎙📚🎬🗝️🎰🚀⚔️✨🔑🤖📜🔷💠🧿💡🌍]/u;
+  return lines.filter(l => emojiRegex.test(l.trim())).map(l => l.trim()).slice(0, 5);
+}
+
+// Extraire les tiers de prix mentionnés dans la description
+function extractPrices(desc) {
+  if (!desc) return [];
+  const matches = [...(desc.matchAll(/(\d+)\s*NFTs?\s*at\s*\$(\d+)/gi))];
+  return matches.slice(0, 3).map(m => `${Number(m[1]).toLocaleString()} × $${m[2]}`);
+}
+
+// Badge creator (avatar + nom + verified)
+function creatorHtml(creator) {
+  return `
+    <div class="drop-card-creator">
+      ${creator.avatar ? `<img class="drop-card-avatar" src="${creator.avatar}" alt="" loading="lazy"/>` : ''}
+      <span class="drop-card-creator-name">${creator.displayName}</span>
+      ${creator.verified ? '<svg class="drop-card-verified" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+    </div>`;
+}
+
+// ── Construire une carte LIVE — layout 2 colonnes (image + infos) ─────────
+function buildLiveCard(drop) {
+  const utils = extractUtilities(drop.description);
+  const card = document.createElement('a');
+  card.className = 'drop-card drop-card--live';
+  card.href = `https://crypto.com/nft/drops-event/${drop.id}?tab=shop`;
+  card.target = '_blank'; card.rel = 'noopener';
+
+  let totalAvail = 0, totalAll = 0;
+  (drop.packs || []).forEach(p => { totalAvail += p.available; totalAll += p.total; });
+  const sold = totalAll - totalAvail;
+  const soldPct = totalAll > 0 ? Math.round((sold / totalAll) * 100) : 0;
+
+  card.innerHTML = `
+    <div class="drop-live-layout">
+      <!-- Colonne gauche : image / vidéo -->
+      <div class="drop-live-media">
+        <div class="drop-live-media-overlay"></div>
+        <img class="drop-card-img drop-card-img--static" src="${drop.cover}" alt="${drop.name}" loading="lazy"/>
+        ${drop.video ? `<video class="drop-card-video" src="${drop.video}" loop muted playsinline preload="metadata"></video>` : ''}
+        <div class="drop-card-badges drop-card-badges--media">
+          <span class="drop-badge drop-badge--live"><span class="drop-badge-dot"></span>LIVE</span>
+          ${drop.earlyAccess ? '<span class="drop-badge drop-badge--ea">EARLY ACCESS</span>' : ''}
+        </div>
+        ${drop.video ? '<div class="drop-live-play-hint">▶ Hover to preview</div>' : ''}
+      </div>
+
+      <!-- Colonne droite — redesign premium -->
+      <div class="drop-live-info">
+
+        <!-- 1. CREATOR + TITRE -->
+        <div class="dli-header">
+          ${creatorHtml(drop.creator)}
+          <h2 class="dli-title">${drop.name}</h2>
+          ${drop.description ? `<p class="dli-desc">${drop.description.replace(/\*\*/g,'').replace(/\*/g,'').replace(/#+ /g,'').replace(/\[.*?\]\(.*?\)/g,'').replace(/https?:\/\/\S+/g,'').trim()}</p>` : ''}
+        </div>
+
+        <!-- 2. AVAILABLE PACKS -->
+        ${drop.packs && drop.packs.length > 0 ? `
+        <div class="dli-section">
+          <div class="dli-section-label">AVAILABLE PACKS</div>
+          <div class="dli-packs">
+            ${drop.packs.map(p => `
+            <div class="dli-pack${p.soldOut ? ' dli-pack--sold' : ''}">
+              <img class="dli-pack-img" src="${p.cover}" alt="${p.name}" loading="lazy"/>
+              <div class="dli-pack-meta">
+                <span class="dli-pack-name">${p.name}</span>
+                <span class="dli-pack-nfts">${p.perPack} NFT${p.perPack > 1 ? 's' : ''} / pack</span>
+              </div>
+              <div class="dli-pack-price-block">
+                ${p.soldOut
+                  ? '<span class="dli-pack-sold">SOLD OUT</span>'
+                  : `<span class="dli-pack-price">${p.price}</span>
+                     <span class="dli-pack-left">${p.available} left</span>`}
+              </div>
+            </div>`).join('')}
+          </div>
+          ${totalAll > 0 ? `
+          <div class="dli-progress">
+            <div class="dli-progress-track"><div class="dli-progress-fill" style="width:${soldPct}%"></div></div>
+            <div class="dli-progress-info">
+              <span class="dli-progress-sold">${sold} sold <span class="dli-progress-pct">${soldPct}%</span></span>
+              <span class="dli-progress-rem">${totalAvail} remaining</span>
+            </div>
+          </div>` : ''}
+        </div>` : ''}
+
+        <!-- 3. UTILITIES -->
+        ${utils.length > 0 ? `
+        <div class="dli-section">
+          <div class="dli-section-label">UTILITIES</div>
+          <div class="dli-utils">${utils.map(u=>`<span class="dli-util">${u}</span>`).join('')}</div>
+        </div>` : ''}
+
+        <!-- 4. EARLY ACCESS (uniquement si le drop n'a pas encore commencé) -->
+        ${drop.earlyAccess && drop.eaEligibility && new Date(drop.startAt) > new Date() ? `
+        <div class="dli-ea">
+          <div class="dli-ea-header">
+            <span class="dli-ea-badge">⚡ EARLY ACCESS</span>
+            ${drop.eaStartAt ? `<span class="dli-ea-date">${fmtDate(drop.eaStartAt)}</span>` : ''}
+          </div>
+          <p class="dli-ea-text">${drop.eaEligibility}</p>
+        </div>` : ''}
+
+        <!-- 5. COUNTDOWN + CTA (sticky bottom) -->
+        <div class="dli-footer">
+          <div class="dli-footer-dates">
+            <div class="dli-footer-date">
+              <span class="dli-footer-date-lbl">Start</span>
+              <span class="dli-footer-date-val">${fmtDate(drop.startAt)}</span>
+            </div>
+            <span class="dli-footer-arrow">→</span>
+            <div class="dli-footer-date">
+              <span class="dli-footer-date-lbl">End</span>
+              <span class="dli-footer-date-val">${fmtDate(drop.endAt)}</span>
+            </div>
+            <div class="dli-countdown">
+              <span class="dli-countdown-lbl">Ends in</span>
+              <span class="dli-countdown-val drop-card-countdown" data-end="${drop.endAt}"></span>
+            </div>
+          </div>
+          <a class="dli-cta" href="https://crypto.com/nft/drops-event/${drop.id}?tab=shop" target="_blank" rel="noopener">
+            View Drop ↗
+          </a>
+        </div>
+
+      </div>
+    </div>`;
+
+  if (drop.video) {
+    const video = card.querySelector('.drop-card-video');
+    const staticImg = card.querySelector('.drop-card-img--static');
+    const hint = card.querySelector('.drop-live-play-hint');
+    if (video) {
+      card.querySelector('.drop-live-media').addEventListener('mouseenter', () => {
+        video.play().catch(()=>{});
+        video.style.opacity = '1';
+        if (staticImg) staticImg.style.opacity = '0';
+        if (hint) hint.style.opacity = '0';
+      });
+      card.querySelector('.drop-live-media').addEventListener('mouseleave', () => {
+        video.pause(); video.currentTime = 0;
+        video.style.opacity = '0';
+        if (staticImg) staticImg.style.opacity = '1';
+        if (hint) hint.style.opacity = '1';
+      });
+    }
+  }
+  return card;
+}
+
+// ── Construire une carte UPCOMING — layout 2 colonnes comme LIVE ─────────
+function buildUpcomingCard(drop) {
+  const utils = extractUtilities(drop.description);
+  const tiers = drop.priceTiers || [];
+  const card = document.createElement('a');
+  card.className = 'drop-card drop-card--upcoming';
+  card.href = `https://crypto.com/nft/drops-event/${drop.id}?tab=info`;
+  card.target = '_blank'; card.rel = 'noopener';
+
+  card.innerHTML = `
+    <div class="drop-live-layout">
+      <!-- Colonne image / vidéo -->
+      <div class="drop-live-media">
+        <div class="drop-live-media-overlay"></div>
+        <img class="drop-card-img drop-card-img--static" src="${drop.cover}" alt="${drop.name}" loading="lazy"/>
+        ${drop.video ? `<video class="drop-card-video" src="${drop.video}" loop muted playsinline preload="metadata"></video>` : ''}
+        <div class="drop-card-badges drop-card-badges--media">
+          <span class="drop-badge drop-badge--upcoming">UPCOMING</span>
+          ${drop.earlyAccess ? '<span class="drop-badge drop-badge--ea">EARLY ACCESS</span>' : ''}
+        </div>
+        ${drop.video ? '<div class="drop-live-play-hint">▶ Hover to preview</div>' : ''}
+      </div>
+
+      <!-- Colonne droite — même structure dli-* que LIVE -->
+      <div class="drop-live-info">
+
+        <!-- 1. CREATOR + TITRE -->
+        <div class="dli-header">
+          ${creatorHtml(drop.creator)}
+          <h2 class="dli-title">${drop.name}</h2>
+          ${drop.description ? `<p class="dli-desc">${drop.description.replace(/\*\*/g,'').replace(/\*/g,'').replace(/#+ /g,'').replace(/\[.*?\]\(.*?\)/g,'').replace(/https?:\/\/\S+/g,'').trim()}</p>` : ''}
+        </div>
+
+        <!-- 2. PRICING TIERS -->
+        ${tiers.length > 0 ? `
+        <div class="dli-section">
+          <div class="dli-section-label">PRICING TIERS</div>
+          <div class="dli-tiers">
+            ${tiers.map(t => `
+            <div class="dli-tier">
+              <div class="dli-tier-left">
+                <span class="dli-tier-label">${t.label}</span>
+                <span class="dli-tier-qty">${t.qty.toLocaleString()} NFTs</span>
+              </div>
+              <span class="dli-tier-price">${t.price}</span>
+            </div>`).join('')}
+          </div>
+        </div>` : ''}
+
+        <!-- 3. UTILITIES -->
+        ${utils.length > 0 ? `
+        <div class="dli-section">
+          <div class="dli-section-label">UTILITIES</div>
+          <div class="dli-utils">${utils.map(u=>`<span class="dli-util">${u}</span>`).join('')}</div>
+        </div>` : ''}
+
+        <!-- 4. EARLY ACCESS -->
+        ${drop.earlyAccess && drop.eaEligibility ? `
+        <div class="dli-ea">
+          <div class="dli-ea-header">
+            <span class="dli-ea-badge">⚡ EARLY ACCESS</span>
+            ${drop.eaStartAt ? `<span class="dli-ea-date">${fmtDate(drop.eaStartAt)}</span>` : ''}
+          </div>
+          <p class="dli-ea-text">${drop.eaTitle ? drop.eaTitle + ' — ' : ''}${drop.eaEligibility}</p>
+        </div>` : ''}
+
+        <!-- 5. FOOTER : dates + countdown + CTA -->
+        <div class="dli-footer">
+          <div class="dli-footer-dates">
+            <div class="dli-footer-date">
+              <span class="dli-footer-date-lbl">Drop Date</span>
+              <span class="dli-footer-date-val">${fmtDate(drop.startAt)}</span>
+            </div>
+            <span class="dli-footer-arrow">→</span>
+            <div class="dli-footer-date">
+              <span class="dli-footer-date-lbl">End Date</span>
+              <span class="dli-footer-date-val">${fmtDate(drop.endAt)}</span>
+            </div>
+            <div class="dli-countdown">
+              <span class="dli-countdown-lbl">Starts in</span>
+              <span class="dli-countdown-val" data-start="${drop.startAt}"></span>
+            </div>
+          </div>
+          <a class="dli-cta dli-cta--upcoming" href="https://crypto.com/nft/drops-event/${drop.id}?tab=info" target="_blank" rel="noopener">
+            Preview Drop ↗
+          </a>
+        </div>
+
+      </div>
+    </div>`;
+
+  if (drop.video) {
+    const video = card.querySelector('.drop-card-video');
+    const staticImg = card.querySelector('.drop-card-img--static');
+    const hint = card.querySelector('.drop-live-play-hint');
+    if (video) {
+      card.querySelector('.drop-live-media').addEventListener('mouseenter', () => {
+        video.play().catch(()=>{});
+        video.style.opacity = '1';
+        if (staticImg) staticImg.style.opacity = '0';
+        if (hint) hint.style.opacity = '0';
+      });
+      card.querySelector('.drop-live-media').addEventListener('mouseleave', () => {
+        video.pause(); video.currentTime = 0;
+        video.style.opacity = '0';
+        if (staticImg) staticImg.style.opacity = '1';
+        if (hint) hint.style.opacity = '1';
+      });
+    }
+  }
+  return card;
+}
+
+// ── Construire une carte ENDED (compacte) ────────────────────────────────
+function buildEndedCard(drop) {
+  const card = document.createElement('a');
+  card.className = 'drop-card drop-card--ended';
+  card.href = drop.collectionId
+    ? `https://crypto.com/nft/collection/${drop.collectionId}`
+    : `https://crypto.com/nft/drops-event/${drop.id}?tab=info`;
+  card.target = '_blank';
+  card.rel = 'noopener';
+  card.innerHTML = `
+    <div class="drop-card-img-wrap">
+      <img class="drop-card-img" src="${drop.cover}" alt="${drop.name}" loading="lazy"/>
+      <div class="drop-card-gradient drop-card-gradient--ended"></div>
+      <span class="drop-badge drop-badge--ended">ENDED</span>
+    </div>
+    <div class="drop-card-body drop-card-body--compact">
+      <h3 class="drop-card-name drop-card-name--sm">${drop.name}</h3>
+      <span class="drop-card-creator-name drop-card-creator-name--sm">${drop.creator.displayName}</span>
+    </div>
+  `;
+  return card;
+}
+
+// ── Tick des compteurs ───────────────────────────────────────────────────
+let _dropsTickInterval = null;
+function startTick() {
+  if (_dropsTickInterval) return;
+  _dropsTickInterval = setInterval(() => {
+    const panel = document.getElementById('dropsPanel');
+    if (!panel || panel.style.display === 'none') { clearInterval(_dropsTickInterval); _dropsTickInterval = null; return; }
+    // Countdown end (LIVE)
+    panel.querySelectorAll('.drop-card-countdown[data-end]').forEach(el => {
+      const c = fmtCountdown(el.dataset.end);
+      el.textContent = c ? `— ${c} left` : 'Ended';
+    });
+    // Countdown start (UPCOMING)
+    panel.querySelectorAll('[data-start]').forEach(el => {
+      const t = fmtCountdown(el.dataset.start);
+      el.textContent = t ? t : 'Started';
+    });
+  }, 1000);
+}
+
+// ── Hero Carousel (live + upcoming) ──────────────────────────────────────
+function buildHeroCarousel(data) {
+  const hero  = document.getElementById('dropsHero');
+  const track = document.getElementById('dropsHeroTrack');
+  const dotsEl = document.getElementById('dropsHeroDots');
+  if (!hero || !track) return;
+
+  const slides = [
+    ...(data.live || []).map(d => ({ ...d, status: 'live' })),
+    ...(data.upcoming || []).map(d => ({ ...d, status: 'upcoming' })),
+  ];
+  if (slides.length === 0) return;
+
+  track.innerHTML = '';
+  dotsEl.innerHTML = '';
+  let current = 0;
+
+  slides.forEach((drop, i) => {
+    const slide = document.createElement('div');
+    slide.className = 'drops-hero-slide';
+    const isLive = drop.status === 'live';
+    const dateLabel = isLive ? `Ends ${fmtDate(drop.endAt)}` : `Wed, ${fmtDate(drop.startAt)}`;
+    const ctaUrl = isLive
+      ? `https://crypto.com/nft/drops-event/${drop.id}?tab=shop`
+      : `https://crypto.com/nft/drops-event/${drop.id}?tab=info`;
+    const ctaLabel = isLive ? 'Buy Now' : 'View Drop';
+    const countdownAttr = isLive ? `data-end="${drop.endAt}"` : `data-start="${drop.startAt}"`;
+    const countdownClass = isLive ? 'drop-card-countdown' : 'drop-card-countdown--start';
+    const countdownPrefix = isLive ? 'Ends in' : 'Starts in';
+
+    slide.innerHTML = `
+      <div class="drops-hero-bg">
+        <img class="drops-hero-img" src="${drop.cover}" alt="${drop.name}" loading="${i===0?'eager':'lazy'}"/>
+        ${drop.video ? `<video class="drops-hero-video" src="${drop.video}" autoplay loop muted playsinline preload="metadata"></video>` : ''}
+        <div class="drops-hero-overlay"></div>
+      </div>
+      <div class="drops-hero-content">
+        <div class="drops-hero-badges">
+          ${isLive
+            ? '<span class="drop-badge drop-badge--live"><span class="drop-badge-dot"></span>LIVE NOW</span>'
+            : '<span class="drop-badge drop-badge--upcoming">UPCOMING</span>'}
+          ${drop.earlyAccess ? '<span class="drop-badge drop-badge--ea">EARLY ACCESS</span>' : ''}
+        </div>
+        <div class="drops-hero-date">${dateLabel}</div>
+        <h2 class="drops-hero-title">${drop.name}</h2>
+        <div class="drops-hero-creator">
+          ${drop.creator.avatar ? `<img class="drops-hero-avatar" src="${drop.creator.avatar}" alt=""/>` : ''}
+          <span class="drops-hero-creator-name">${drop.creator.displayName}</span>
+          ${drop.creator.verified ? '<svg class="drops-hero-verified" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+        </div>
+        <div class="drops-hero-countdown">
+          <span class="drops-hero-countdown-lbl">${countdownPrefix}</span>
+          <span class="drops-hero-countdown-val ${countdownClass}" ${countdownAttr}></span>
+        </div>
+        <a class="drops-hero-cta" href="${ctaUrl}" target="_blank" rel="noopener">${ctaLabel} ↗</a>
+      </div>`;
+    track.appendChild(slide);
+
+    const dot = document.createElement('button');
+    dot.className = 'drops-hero-dot' + (i === 0 ? ' drops-hero-dot--active' : '');
+    dot.type = 'button';
+    dot.addEventListener('click', () => goTo(i));
+    dotsEl.appendChild(dot);
+  });
+
+  const goTo = (idx) => {
+    current = (idx + slides.length) % slides.length;
+    track.style.transform = `translateX(-${current * 100}%)`;
+    dotsEl.querySelectorAll('.drops-hero-dot').forEach((d, i) =>
+      d.classList.toggle('drops-hero-dot--active', i === current));
+  };
+
+  document.getElementById('dropsHeroPrev')?.addEventListener('click', () => goTo(current - 1));
+  document.getElementById('dropsHeroNext')?.addEventListener('click', () => goTo(current + 1));
+
+  // Auto-slide toutes les 6s si plusieurs slides
+  if (slides.length > 1) {
+    let timer = setInterval(() => {
+      if (document.getElementById('dropsHero')?.style.display === 'none') { clearInterval(timer); return; }
+      goTo(current + 1);
+    }, 6000);
+  }
+
+  hero.style.display = '';
+}
+
+// ── Timeline horizontale (ended → live → upcoming) ──────────────────────
+function buildTimeline(data) {
+  const wrap = document.getElementById('dropsTimelineWrap');
+  const tl   = document.getElementById('dropsTimeline');
+  if (!wrap || !tl) return;
+
+  tl.innerHTML = '';
+
+  const allDrops = [
+    ...(data.ended || []).slice(0, 6).reverse().map(d => ({ ...d, status: 'ended' })),
+    ...(data.live  || []).map(d => ({ ...d, status: 'live' })),
+    ...(data.upcoming || []).map(d => ({ ...d, status: 'upcoming' })),
+  ];
+
+  if (allDrops.length === 0) return;
+
+  const dropUrl = (drop) => {
+    if (drop.status === 'live') return `https://crypto.com/nft/drops-event/${drop.id}?tab=shop`;
+    return `https://crypto.com/nft/drops-event/${drop.id}?tab=info`;
+  };
+
+  allDrops.forEach((drop, idx) => {
+    // Ligne de connexion (sauf avant le premier)
+    if (idx > 0) {
+      const line = document.createElement('div');
+      line.className = 'tl-line';
+      if (allDrops[idx - 1].status === 'live' || drop.status === 'live') {
+        line.className += ' tl-line--accent';
+      }
+      tl.appendChild(line);
+    }
+
+    const node = document.createElement('a');
+    node.className = `tl-node tl-node--${drop.status}`;
+    node.href = dropUrl(drop);
+    node.target = '_blank'; node.rel = 'noopener';
+
+    const dateStr = drop.status === 'ended'   ? fmtDate(drop.endAt) :
+                    drop.status === 'live'     ? `Ends ${fmtDate(drop.endAt)}` :
+                                                 `Starts ${fmtDate(drop.startAt)}`;
+    node.innerHTML = `
+      <div class="tl-img-wrap">
+        <img class="tl-img" src="${drop.cover}" alt="${drop.name}" loading="lazy"/>
+        ${drop.status === 'live' ? '<span class="tl-live-ring"></span>' : ''}
+      </div>
+      <div class="tl-dot tl-dot--${drop.status}"></div>
+      <div class="tl-info">
+        <span class="tl-name">${drop.name}</span>
+        ${drop.creator ? `<span class="tl-artist">
+          ${drop.creator.displayName || ''}
+          ${drop.creator.verified ? '<svg class="tl-verified" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+        </span>` : ''}
+        <span class="tl-date">${dateStr}</span>
+      </div>
+    `;
+    tl.appendChild(node);
+  });
+
+  wrap.style.display = '';
+
+  // Centrer le drop LIVE
+  requestAnimationFrame(() => {
+    const liveNode = tl.querySelector('.tl-node--live');
+    if (liveNode) {
+      const wrapRect = wrap.getBoundingClientRect();
+      const nodeRect = liveNode.getBoundingClientRect();
+      wrap.scrollLeft = liveNode.offsetLeft - wrap.clientWidth / 2 + liveNode.offsetWidth / 2;
+    }
+  });
+}
+
+// ── Rendu principal ──────────────────────────────────────────────────────
+function renderDrops(data) {
+  const loading = document.getElementById('dropsLoading');
+  if (loading) loading.style.display = 'none';
+
+  // Hero carousel
+  buildHeroCarousel(data);
+
+  // Timeline
+  buildTimeline(data);
+
+  // LIVE
+  if (data.live && data.live.length > 0) {
+    const sec = document.getElementById('dropsLiveSection');
+    const grid = document.getElementById('dropsLiveGrid');
+    if (sec && grid) {
+      grid.innerHTML = '';
+      data.live.forEach(d => grid.appendChild(buildLiveCard(d)));
+      sec.style.display = '';
+    }
+  }
+
+  // UPCOMING
+  if (data.upcoming && data.upcoming.length > 0) {
+    const sec = document.getElementById('dropsUpcomingSection');
+    const grid = document.getElementById('dropsUpcomingGrid');
+    if (sec && grid) {
+      grid.innerHTML = '';
+      data.upcoming.forEach(d => grid.appendChild(buildUpcomingCard(d)));
+      sec.style.display = '';
+    }
+  }
+
+  // ENDED
+  if (data.ended && data.ended.length > 0) {
+    const sec = document.getElementById('dropsEndedSection');
+    const grid = document.getElementById('dropsEndedGrid');
+    if (sec && grid) {
+      grid.innerHTML = '';
+      data.ended.forEach(d => grid.appendChild(buildEndedCard(d)));
+      sec.style.display = '';
+    }
+  }
+
+  startTick();
+}
+
+// ── Fetch live depuis l'API Crypto.com ───────────────────────────────────
+async function fetchDropsData() {
+  const GQL = 'https://crypto.com/nft/api/v2/graphql';
+  try {
+    const [liveRes, endedRes, statusRes] = await Promise.all([
+      fetch(GQL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ operationName: 'LiveAndUpcomingDrops', variables: { first: 100 },
+          query: 'query LiveAndUpcomingDrops($first:Int){public{liveAndUpcomingDrops(first:$first){id name description cover{url} creator{displayName username avatar{url} verified} startAt endAt premiumDropConfig{type startAt endAt}}}}' }) }),
+      fetch(GQL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ operationName: 'EndedDrops', variables: { first: 9, skip: 0 },
+          query: 'query EndedDrops($first:Int,$skip:Int){public{endedDrops(first:$first,skip:$skip){id name cover{url} creator{displayName verified} endAt}}}' }) }),
+      fetch(GQL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ operationName: 'getDropStatuses', variables: { ids: DROPS_FALLBACK.live.map(d=>d.id).concat(DROPS_FALLBACK.upcoming.map(d=>d.id)) },
+          query: 'query getDropStatuses($ids:[ID!]!){public{dropStatuses(ids:$ids){dropId status}}}' }) })
+    ]);
+
+    const liveData   = await liveRes.json();
+    const endedData  = await endedRes.json();
+    const statusData = await statusRes.json();
+
+    const drops    = liveData?.data?.public?.liveAndUpcomingDrops || [];
+    const ended    = endedData?.data?.public?.endedDrops || [];
+    const statuses = statusData?.data?.public?.dropStatuses || [];
+    const statusMap = {};
+    statuses.forEach(s => { statusMap[s.dropId] = s.status; });
+
+    const live = [], upcoming = [];
+    drops.forEach(d => {
+      const s = statusMap[d.id];
+      const obj = { id: d.id, name: d.name, cover: d.cover?.url, description: d.description,
+        creator: { displayName: d.creator?.displayName, avatar: d.creator?.avatar?.url, verified: d.creator?.verified },
+        startAt: d.startAt, endAt: d.endAt,
+        earlyAccess: d.premiumDropConfig?.type === 'EARLY_ACCESS' };
+      if (s === 'LIVE') live.push(obj);
+      else upcoming.push(obj);
+    });
+
+    return { live, upcoming, ended: ended.map(d => ({
+      id: d.id, name: d.name, cover: d.cover?.url,
+      creator: { displayName: d.creator?.displayName, verified: d.creator?.verified },
+      endAt: d.endAt
+    })) };
+  } catch(e) {
+    console.log('[Drops] API unreachable, using fallback data', e.message);
+    return null;
+  }
+}
+
+// ── Point d'entrée ───────────────────────────────────────────────────────
+let _initialized = false;
+window.initDropsPanel = async function() {
+  if (_initialized) { startTick(); return; }
+  _initialized = true;
+
+  // Toggle bouton Get Featured
+  const featureBtn = document.getElementById('dropsFeatureBtn');
+  const featureDd  = document.getElementById('dropsFeatureDropdown');
+  if (featureBtn && featureDd) {
+    featureBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = featureDd.style.display !== 'none';
+      featureDd.style.display = open ? 'none' : 'block';
+      featureBtn.classList.toggle('drops-feature-btn--open', !open);
+    });
+    document.addEventListener('click', () => {
+      featureDd.style.display = 'none';
+      featureBtn.classList.remove('drops-feature-btn--open');
+    });
+  }
+
+  const liveData = await fetchDropsData();
+  renderDrops(liveData || DROPS_FALLBACK);
+};
 
 })();
 </script>
