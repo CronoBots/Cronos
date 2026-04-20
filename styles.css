@@ -12749,20 +12749,22 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 .cp-nft-rank-badge {
     position: absolute;
-    top: 6px;
+    bottom: 6px;
     left: 6px;
-    background: rgba(0,0,0,0.65);
+    top: auto;
+    background: rgba(255,255,255,0.95);
     backdrop-filter: blur(4px);
-    color: rgba(255,255,255,0.75);
+    color: #0a1428;
     font-size: 9px;
     font-family: 'Geomanist-Bold', sans-serif;
     font-weight: 800;
     letter-spacing: 0.05em;
     padding: 2px 6px;
-    border-radius: 4px;
-    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 5px;
+    border: 1.5px solid #00B3FF;
     line-height: 1.4;
     pointer-events: none;
+    display: flex; align-items: center; gap: 3px;
 }
 .cp-nft-price-badge {
     position: absolute;
@@ -14177,16 +14179,15 @@ code.sup-card-address {
     position: absolute;
     bottom: 6px; left: 6px;
     display: flex; align-items: center; gap: 3px;
-    background: rgba(0,90,200,0.88);
+    background: rgba(255,255,255,0.95);
     backdrop-filter: blur(4px);
-    color: #fff;
+    color: #0a1428;
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 10px; font-weight: 800;
     letter-spacing: 0.04em;
     padding: 3px 7px 3px 5px; border-radius: 6px;
-    border: 1px solid rgba(100,180,255,0.3);
+    border: 1.5px solid #00B3FF;
     pointer-events: none; line-height: 1.3;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 
 /* ── Market Bot : row nom + type badge ── */
@@ -16943,552 +16944,230 @@ code.sup-card-address {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   DROPS HERO CAROUSEL
+   SNAPSHOT PANEL
    ══════════════════════════════════════════════════════════════════════════ */
-.drops-hero {
-    position: relative;
-    width: calc(100% + 40px);
-    margin-left: -20px;
-    margin-right: -20px;
-    height: 480px;
+.snapshot-panel { min-height:100%; box-sizing:border-box; }
+.snapshot-inner { padding:clamp(20px,3vh,40px) 20px 80px; display:flex; flex-direction:column; gap:28px; }
+.snapshot-page-header { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.snapshot-page-title { font-family:'Geomanist-Bold',sans-serif; font-size:clamp(28px,4vw,52px); font-weight:800; color:#fff; letter-spacing:0.06em; text-transform:uppercase; margin:0; line-height:1; display:flex; align-items:center; gap:14px; }
+.snapshot-page-title svg { width:clamp(22px,3vw,36px); height:clamp(22px,3vw,36px); color:#00B3FF; flex-shrink:0; }
+.snapshot-page-sub { font-family:'Geomanist-Bold',sans-serif; font-size:12px; color:rgba(255,255,255,0.4); letter-spacing:0.1em; text-transform:uppercase; margin:8px 0 0; }
+.snapshot-header-right { display:flex; align-items:center; gap:16px; flex-shrink:0; }
+.snapshot-controls { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.snapshot-col-select-wrap { flex:1; min-width:240px; max-width:480px; }
+.snapshot-col-select { width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:#fff; border-radius:9px; padding:10px 14px; font-family:'Geomanist-Bold',sans-serif; font-size:13px; font-weight:800; cursor:pointer; }
+.snapshot-run-btn { display:inline-flex; align-items:center; gap:8px; font-family:'Geomanist-Bold',sans-serif; font-size:12px; font-weight:800; letter-spacing:0.1em; text-transform:uppercase; color:#00B3FF; background:rgba(0,179,255,0.12); border:1px solid rgba(0,179,255,0.35); border-radius:9px; padding:10px 20px; cursor:pointer; transition:background 0.15s; white-space:nowrap; }
+.snapshot-run-btn:hover:not(:disabled) { background:rgba(0,179,255,0.22); border-color:#00B3FF; }
+.snapshot-run-btn:disabled { opacity:0.5; cursor:not-allowed; }
+.snapshot-export-btn { display:inline-flex; align-items:center; gap:8px; font-family:'Geomanist-Bold',sans-serif; font-size:12px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.55); background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:9px; padding:10px 18px; cursor:pointer; transition:background 0.15s; white-space:nowrap; }
+.snapshot-export-btn:hover { background:rgba(255,255,255,0.1); color:#fff; }
+.snapshot-progress-wrap { display:flex; flex-direction:column; gap:8px; }
+.snapshot-progress-bar-track { width:100%; height:4px; background:rgba(255,255,255,0.07); border-radius:2px; overflow:hidden; }
+.snapshot-progress-bar-fill { height:100%; background:linear-gradient(90deg,#00B3FF,#4ade80); border-radius:2px; transition:width 0.4s ease; }
+.snapshot-progress-info { display:flex; justify-content:space-between; font-family:'Geomanist-Bold',sans-serif; font-size:11px; color:rgba(255,255,255,0.45); font-weight:800; letter-spacing:0.06em; }
+.snapshot-summary {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
     overflow: hidden;
-    border-radius: 0;
 }
-.drops-hero-track {
-    display: flex;
-    height: 100%;
-    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: transform;
-}
-.drops-hero-slide {
-    position: relative;
-    flex: 0 0 100%;
-    height: 100%;
-    overflow: hidden;
-}
-.drops-hero-bg {
-    position: absolute; inset: 0;
-}
-.drops-hero-img {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    display: block;
-    transition: opacity 0.4s;
-}
-.drops-hero-video {
-    position: absolute; inset: 0;
-    width: 100%; height: 100%;
-    object-fit: cover;
-    opacity: 1;
-    z-index: 1;
-}
-.drops-hero-overlay {
-    position: absolute; inset: 0;
-    background: linear-gradient(
-        90deg,
-        rgba(5,13,26,0.92) 0%,
-        rgba(5,13,26,0.7) 45%,
-        rgba(5,13,26,0.15) 100%
-    ), linear-gradient(
-        0deg,
-        rgba(5,13,26,0.6) 0%,
-        transparent 50%
-    );
-    z-index: 2;
-}
-.drops-hero-content {
-    position: absolute;
-    inset: 0;
-    z-index: 3;
+.snapshot-stat {
+    flex: 1;
+    padding: 20px 16px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    padding: 40px 48px;
-    max-width: 560px;
+    align-items: center;
+    gap: 6px;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    text-align: center;
 }
-.drops-hero-badges {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
+.snapshot-stat:last-child { border-right: none; }
+.snapshot-stat-lbl {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    order: -1; /* label AU DESSUS de la valeur */
+    white-space: nowrap;
 }
-.drops-hero-date {
+.snapshot-stat-val {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: clamp(22px, 2.5vw, 36px);
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+    letter-spacing: -0.01em;
+}
+.snapshot-table-wrap { background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.07); border-radius:14px; overflow:hidden; }
+.snapshot-table { width:100%; border-collapse:collapse; }
+.snapshot-th { font-family:'Geomanist-Bold',sans-serif; font-size:9px; font-weight:800; letter-spacing:0.18em; text-transform:uppercase; color:rgba(255,255,255,0.3); padding:12px 16px; text-align:left; background:rgba(255,255,255,0.03); border-bottom:1px solid rgba(255,255,255,0.06); }
+.snapshot-th--rank { width:60px; text-align:center; }
+.snapshot-th--count,.snapshot-th--pct { text-align:right; }
+.snapshot-th--link { width:60px; }
+.snapshot-td { padding:11px 16px; border-bottom:1px solid rgba(255,255,255,0.04); vertical-align:middle; }
+.snapshot-tr:last-child .snapshot-td { border-bottom:none; }
+.snapshot-tr:hover .snapshot-td { background:rgba(255,255,255,0.02); }
+.snapshot-tr--top1 .snapshot-td { background:rgba(251,191,36,0.04); }
+.snapshot-tr--top2 .snapshot-td { background:rgba(200,200,220,0.03); }
+.snapshot-tr--top3 .snapshot-td { background:rgba(180,120,60,0.04); }
+.snapshot-td--rank { text-align:center; }
+.snapshot-rank-num { font-family:'Geomanist-Bold',sans-serif; font-size:12px; font-weight:800; color:rgba(255,255,255,0.35); }
+.snapshot-medal { font-size:18px; line-height:1; }
+.snapshot-username { font-family:'Geomanist-Bold',sans-serif; font-size:13px; font-weight:800; color:rgba(255,255,255,0.85); }
+.snapshot-count { font-family:'Geomanist-Bold',sans-serif; font-size:14px; font-weight:800; color:#00B3FF; display:block; text-align:right; }
+.snapshot-td--pct { text-align:right; }
+.snapshot-pct-wrap { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+.snapshot-pct-val { font-family:'Geomanist-Bold',sans-serif; font-size:12px; font-weight:800; color:rgba(255,255,255,0.55); }
+.snapshot-pct-bar { width:80px; height:3px; background:rgba(255,255,255,0.07); border-radius:2px; overflow:hidden; }
+.snapshot-pct-fill { height:100%; background:linear-gradient(90deg,#00B3FF,#4ade80); border-radius:2px; }
+.snapshot-profile-link { font-family:'Geomanist-Bold',sans-serif; font-size:10px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; color:rgba(0,179,255,0.6); text-decoration:none; transition:color 0.15s; }
+.snapshot-profile-link:hover { color:#00B3FF; text-decoration:none; }
+
+/* Snapshot : note de limitation API */
+.snapshot-note {
+    font-size: 11px;
+    color: rgba(255,179,0,0.6);
+    background: rgba(255,179,0,0.06);
+    border: 1px solid rgba(255,179,0,0.15);
+    border-radius: 8px;
+    padding: 10px 14px;
+    line-height: 1.55;
+    margin: 0;
+}
+
+/* ── Badge BETA sur l'onglet Snapshot ── */
+.topnav-beta-badge {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: #fbbf24;
+    background: rgba(251,191,36,0.12);
+    border: 1px solid rgba(251,191,36,0.35);
+    border-radius: 4px;
+    padding: 1px 5px;
+    text-transform: uppercase;
+    margin-left: 4px;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+/* ── Snapshot : input collection ID ── */
+.snapshot-or {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.25);
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+.snapshot-id-wrap { flex: 1; min-width: 200px; max-width: 360px; }
+.snapshot-id-input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.8);
+    border-radius: 9px;
+    padding: 10px 14px;
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 12px;
     font-weight: 800;
-    letter-spacing: 0.14em;
-    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.03em;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+}
+.snapshot-id-input:focus {
+    outline: none;
+    border-color: rgba(0,179,255,0.5);
+    background: rgba(0,179,255,0.04);
+}
+.snapshot-id-input::placeholder { color: rgba(255,255,255,0.25); font-weight: 400; }
+
+/* ══════════════════════════════════════════════════════════════════
+   MARKET BOT — Carte redesignée
+   ══════════════════════════════════════════════════════════════════ */
+.sb-card-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 5px;
+}
+.sb-card-time {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.28);
     text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.sb-card-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: 0.02em;
+    line-height: 1.3;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sb-card-price-row {
     margin-bottom: 8px;
 }
-.drops-hero-title {
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: clamp(22px, 3vw, 42px);
-    font-weight: 800;
-    color: #fff;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    line-height: 1.1;
-    margin: 0 0 12px;
-}
-.drops-hero-creator {
+.sb-card-parties {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
+    flex-direction: column;
+    gap: 4px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 7px;
+    margin-top: 2px;
 }
-.drops-hero-avatar {
-    width: 26px; height: 26px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid rgba(255,255,255,0.2);
-}
-.drops-hero-creator-name {
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 12px;
-    font-weight: 800;
-    color: rgba(255,255,255,0.6);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-}
-.drops-hero-verified {
-    width: 15px; height: 15px;
-}
-.drops-hero-countdown {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 20px;
-}
-.drops-hero-countdown-lbl {
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 11px;
-    color: rgba(255,255,255,0.4);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-}
-.drops-hero-countdown-val {
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 20px;
-    font-weight: 800;
-    color: #4ade80;
-    letter-spacing: 0.04em;
-}
-.drops-hero-countdown-val[data-start] {
-    color: #00B3FF;
-}
-.drops-hero-cta {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 12px 28px;
-    background: rgba(255,255,255,0.1);
-    border: 1.5px solid rgba(255,255,255,0.35);
-    border-radius: 10px;
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 13px;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: #fff;
-    text-decoration: none;
-    transition: background 0.15s, border-color 0.15s;
-    align-self: flex-start;
-    backdrop-filter: blur(4px);
-}
-.drops-hero-cta:hover {
-    background: rgba(255,255,255,0.2);
-    border-color: rgba(255,255,255,0.6);
-    text-decoration: none;
-}
-
-/* Navigation */
-.drops-hero-nav {
-    position: absolute;
-    top: 50%; transform: translateY(-50%);
-    z-index: 10;
-    width: 44px; height: 44px;
-    background: rgba(0,0,0,0.4);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 50%;
-    color: #fff;
-    font-size: 22px;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: background 0.15s;
-    backdrop-filter: blur(4px);
-    line-height: 1;
-}
-.drops-hero-nav:hover { background: rgba(0,0,0,0.65); }
-.drops-hero-nav--prev { left: 16px; }
-.drops-hero-nav--next { right: 16px; }
-
-/* Dots */
-.drops-hero-dots {
-    position: absolute;
-    bottom: 16px; left: 50%;
-    transform: translateX(-50%);
-    display: flex; gap: 6px;
-    z-index: 10;
-}
-.drops-hero-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.3);
-    border: none; cursor: pointer;
-    transition: background 0.15s, transform 0.15s;
-}
-.drops-hero-dot--active {
-    background: #fff;
-    transform: scale(1.3);
-}
-
-/* ── Rank badge : couleur cyan du site (#00B3FF) ── */
-.sb-rank-badge {
-    background: rgba(0,100,180,0.0) !important;
-    background: rgba(0,55,100,0.9) !important;
-    border-color: rgba(0,179,255,0.4) !important;
-    color: #00B3FF !important;
-}
-.sb-rank-badge svg { color: #00B3FF; }
-
-/* cp-nft-rank-badge : même style que sb-rank-badge */
-.cp-nft-rank-badge {
-    background: rgba(0,55,100,0.9) !important;
-    backdrop-filter: blur(4px);
-    color: #00B3FF !important;
-    font-size: 9px;
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    padding: 2px 6px 2px 5px;
-    border-radius: 5px;
-    border: 1px solid rgba(0,179,255,0.35) !important;
-    line-height: 1.4;
-    pointer-events: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-}
-
-/* ── Bot : Buyer / Seller plus lisibles ── */
-.sb-card-trade--sale {
+.sb-card-party {
     display: flex;
     align-items: center;
     gap: 6px;
-}
-.sb-trade-party {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
     min-width: 0;
-    flex: 1;
 }
-.sb-trade-label {
+.sb-party-label {
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 8px;
     font-weight: 800;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-}
-.sb-trade-label--seller { color: rgba(255,100,80,0.7); }
-.sb-trade-label--buyer  { color: rgba(74,222,128,0.7); }
-.sb-trade-arrow {
-    color: rgba(255,255,255,0.2);
+    padding: 1px 5px;
+    border-radius: 3px;
     flex-shrink: 0;
+    line-height: 1.5;
 }
-
-/* ── Rank badge : position bas-gauche + étoile (profil + collection) ── */
-.cp-nft-rank-badge {
-    position: absolute !important;
-    top: auto !important;
-    bottom: 6px !important;
-    left: 6px !important;
-    right: auto !important;
-    display: inline-flex !important;
-    align-items: center;
-    gap: 3px;
+.sb-party-label--seller {
+    background: rgba(239,68,68,0.12);
+    color: rgba(239,68,68,0.8);
+    border: 1px solid rgba(239,68,68,0.2);
 }
-
-/* Prix sous le nom (profil + collection) */
-.cp-nft-price-below {
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 10px;
-    font-weight: 800;
-    color: #00B3FF;
-    letter-spacing: 0.04em;
-    padding: 0 4px 2px;
+.sb-party-label--buyer {
+    background: rgba(74,222,128,0.12);
+    color: rgba(74,222,128,0.85);
+    border: 1px solid rgba(74,222,128,0.2);
 }
-
-/* Badge prix overlay (masqué — remplacé par cp-nft-price-below) */
-.cp-nft-price-badge {
-    display: none !important;
-}
-
-/* ── Bot : seller / buyer sur lignes séparées, texte plus grand ── */
-.sb-card-trade--sale {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-.sb-trade-row {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    min-width: 0;
-}
-.sb-trade-label {
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    flex-shrink: 0;
-    width: 38px;
-}
-.sb-trade-label--seller { color: rgba(255,100,80,0.75); }
-.sb-trade-label--buyer  { color: rgba(74,222,128,0.75); }
-.sb-card-user {
-    font-size: 12px !important;
-    color: rgba(255,255,255,0.8) !important;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
-    min-width: 0;
-}
-.sb-card-seller { color: rgba(255,255,255,0.65) !important; }
-.sb-card-buyer  { color: rgba(255,255,255,0.9) !important; }
-
-/* Prix + date bot plus grands */
-.sb-card-price {
-    font-size: 14px !important;
-}
-.sb-card-time {
-    font-size: 11px !important;
-    color: rgba(255,255,255,0.4) !important;
-}
-
-/* ── Rank badge : fond blanc, texte foncé ── */
-.cp-nft-rank-badge,
-.sb-rank-badge {
-    background: rgba(255,255,255,0.95) !important;
-    color: #0a1428 !important;
-    border: 1.5px solid #00B3FF !important;
-}
-.cp-nft-rank-badge svg,
-.sb-rank-badge svg { color: #00B3FF !important; fill: #00B3FF !important; }
-
-/* ── Bot : seller/buyer alignés gauche, couleurs vives ── */
-.sb-card-seller { color: #ff6b6b !important; }
-.sb-card-buyer  { color: #4ade80 !important; }
-.sb-trade-label--seller { color: rgba(255,107,107,0.8) !important; }
-.sb-trade-label--buyer  { color: rgba(74,222,128,0.8) !important; }
-.sb-trade-label--listing { color: rgba(255,255,255,0.4) !important; font-weight:800; font-family:'Geomanist-Bold',sans-serif; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; }
-
-.sb-card-trade, .sb-card-trade--sale {
-    align-items: flex-start !important;
-    text-align: left !important;
-}
-.sb-card-trade--listing {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    gap: 6px !important;
-    text-align: left;
-}
-.sb-trade-row { text-align: left; }
-
-/* ── Type badge (Sale/Listing) plus visible ── */
-.sb-type-badge {
-    font-size: 11px !important;
-    padding: 3px 8px !important;
-    border-radius: 6px !important;
-    font-weight: 800 !important;
-}
-.sb-type-badge--sale {
-    background: rgba(74,222,128,0.18) !important;
-    border: 1px solid rgba(74,222,128,0.4) !important;
-    color: #4ade80 !important;
-}
-.sb-type-badge--listing {
-    background: rgba(0,179,255,0.12) !important;
-    border: 1px solid rgba(0,179,255,0.35) !important;
-    color: #00B3FF !important;
-}
-.sb-type-badge--auction {
-    background: rgba(251,191,36,0.15) !important;
-    border: 1px solid rgba(251,191,36,0.4) !important;
-    color: #fbbf24 !important;
-}
-
-/* ── Alarme : sélecteur son + par collection ── */
-.sb-alarm-sound-row {
-    display: flex; align-items: center; gap: 8px;
-    margin: 10px 0 6px;
-}
-.sb-alarm-sound-lbl {
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 10px; font-weight: 800;
-    letter-spacing: 0.1em; color: rgba(255,255,255,0.4);
-    text-transform: uppercase; flex-shrink: 0;
-}
-.sb-alarm-sound-select {
-    flex: 1; background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: rgba(255,255,255,0.8); border-radius: 6px;
-    padding: 4px 8px; font-size: 11px; cursor: pointer;
-}
-.sb-alarm-test {
-    background: rgba(0,179,255,0.1); border: 1px solid rgba(0,179,255,0.3);
-    color: #00B3FF; border-radius: 6px; padding: 4px 8px;
-    font-size: 11px; cursor: pointer; transition: background 0.15s; flex-shrink:0;
-}
-.sb-alarm-test:hover { background: rgba(0,179,255,0.2); }
-.sb-alarm-col-section { margin-top: 10px; }
-.sb-alarm-col-title {
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 9px; font-weight: 800; letter-spacing: 0.16em;
-    color: rgba(255,255,255,0.35); text-transform: uppercase; margin-bottom: 8px;
-}
-.sb-alarm-col-row {
-    display: flex; align-items: center; gap: 6px; margin-bottom: 6px;
-}
-.sb-alarm-col-name {
-    font-size: 11px; color: rgba(255,255,255,0.65); flex: 1; min-width: 0;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.sb-alarm-col-sound {
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-    color: rgba(255,255,255,0.7); border-radius: 5px; padding: 3px 6px; font-size: 10px;
-    cursor: pointer; flex: 1;
-}
-.sb-alarm-col-empty {
-    font-size: 11px; color: rgba(255,255,255,0.3); font-style: italic;
-}
-
-/* ── Carousel sur home : contenu centré + pleine largeur ── */
-.drops-hero--home {
-    width: 100%;
-    margin-left: 0;
-    margin-right: 0;
-}
-.drops-hero--home .drops-hero-content {
-    max-width: 100%;
-    align-items: center;
-    text-align: center;
-    padding: 40px 60px;
-}
-.drops-hero--home .drops-hero-badges { justify-content: center; }
-.drops-hero--home .drops-hero-creator { justify-content: center; }
-.drops-hero--home .drops-hero-countdown { justify-content: center; }
-.drops-hero--home .drops-hero-cta { align-self: center; }
-.drops-hero--home .drops-hero-overlay {
-    background: linear-gradient(0deg, rgba(5,13,26,0.75) 0%, rgba(5,13,26,0.2) 50%, rgba(5,13,26,0.5) 100%);
-}
-
-/* ── Panel alarme redesigné : collection + prix + son sur 1 ligne ── */
-.sb-alarm-panel {
-    width: 340px !important;
-}
-.sb-alarm-col-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 10px;
-    max-height: 280px;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.08) transparent;
-}
-.sb-alarm-col-row {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 9px;
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    transition: border-color 0.15s;
-}
-.sb-alarm-col-row--active {
-    border-color: rgba(74,222,128,0.3);
-    background: rgba(74,222,128,0.04);
-}
-.sb-alarm-col-name {
+.sb-party-name {
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 11px;
     font-weight: 800;
     color: rgba(255,255,255,0.75);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    letter-spacing: 0.02em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-.sb-alarm-col-controls {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-.sb-alarm-col-price {
-    width: 60px;
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.12);
-    color: rgba(255,255,255,0.85);
-    border-radius: 6px;
-    padding: 4px 6px;
-    font-size: 12px;
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-weight: 800;
-    flex-shrink: 0;
-}
-.sb-alarm-col-price:focus { outline: none; border-color: rgba(0,179,255,0.5); }
-.sb-alarm-col-sound {
-    flex: 1;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: rgba(255,255,255,0.7);
-    border-radius: 6px;
-    padding: 4px 5px;
-    font-size: 10px;
-    cursor: pointer;
     min-width: 0;
-}
-.sb-alarm-col-set {
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    color: rgba(0,179,255,0.85);
-    background: rgba(0,179,255,0.1);
-    border: 1px solid rgba(0,179,255,0.3);
-    border-radius: 6px;
-    padding: 4px 8px;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background 0.15s;
-}
-.sb-alarm-col-set:hover { background: rgba(0,179,255,0.2); }
-.sb-alarm-volume-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    margin-top: 4px;
-}
-.sb-alarm-sound-lbl {
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    color: rgba(255,255,255,0.35);
-    text-transform: uppercase;
-    flex-shrink: 0;
-}
-.sb-alarm-currency {
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 11px;
-    color: rgba(255,255,255,0.5);
-    flex-shrink: 0;
+    flex: 1;
 }
