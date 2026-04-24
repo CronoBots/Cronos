@@ -17416,6 +17416,15 @@ code.sup-card-address {
     border-radius: 4px; padding: 1px 4px; white-space: nowrap; pointer-events: none;
 }
 
+/* NEW badge above tab text (same structure as BETA, but green) */
+.topnav-tab--has-new { position: relative; }
+.topnav-new-badge--top {
+    position: absolute; top: 4px; left: 50%; transform: translateX(-50%);
+    font-family: 'Geomanist-Bold', sans-serif; font-size: 7px; letter-spacing: 0.12em;
+    color: #4ade80; background: rgba(74,222,128,0.12); border: 1px solid rgba(74,222,128,0.4);
+    border-radius: 4px; padding: 1px 4px; white-space: nowrap; pointer-events: none;
+}
+
 /* Price colors */
 .sb-card-price--white { color: rgba(255,255,255,0.92); }
 
@@ -18156,10 +18165,10 @@ code.sup-card-address {
 
 /* ── TIMELINE LINES : règle finale absolue via ID ── */
 #dropsTimeline > .tl-line {
-  width: 40px !important;
-  flex: 0 0 40px !important;
-  min-width: 40px !important;
-  max-width: 40px !important;
+  width: 80px !important;
+  flex: 0 0 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
   flex-grow: 0 !important;
   flex-shrink: 0 !important;
   height: 2px !important;
@@ -18174,26 +18183,16 @@ code.sup-card-address {
   background: linear-gradient(90deg, rgba(0,179,255,0.5), rgba(74,222,128,0.5)) !important;
 }
 
-/* ── TIMELINE NODES : largeur uniforme pour écart gauche/droite constant ── */
+/* ── TIMELINE NODES : largeur auto (adapte au nom complet), lignes égales ── */
 #dropsTimeline > .tl-node {
-  width: 106px !important;
   min-width: 106px !important;
-  max-width: 106px !important;
   padding: 0 !important;
-  flex: 0 0 106px !important;
+  flex: 0 0 auto !important;
   box-sizing: border-box !important;
 }
 #dropsTimeline > .tl-node .tl-info {
   width: 100% !important;
   min-width: 0 !important;
-}
-#dropsTimeline > .tl-node .tl-name,
-#dropsTimeline > .tl-node .tl-date,
-#dropsTimeline > .tl-node .tl-artist {
-  max-width: 100% !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
 }
 
 /* ── DROP CARDS : séparateur sous la bannière + halo vidéo ── */
@@ -18270,4 +18269,81 @@ code.sup-card-address {
   height: auto;
   display: block;
   border-radius: 9px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SUPPORT CRONOS.WTF — Palette jaune (override des bleus/verts LIVE)
+   Cible : badge + contour + halo + label Ongoing, sur la carte et la timeline.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── CARTE : contour + halo jaune ── */
+.drop-card--support {
+  border-color: rgba(251, 191, 36, 0.5) !important;
+  animation: dropSupportGlow 3s ease-in-out infinite !important;
+}
+.drop-card--support:hover {
+  animation: none !important;
+  border-color: rgba(251, 191, 36, 0.9) !important;
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.7), 0 0 60px rgba(251, 191, 36, 0.5), 0 16px 48px rgba(0, 0, 0, 0.6) !important;
+}
+@keyframes dropSupportGlow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.4), 0 0 28px rgba(251, 191, 36, 0.25), 0 0 60px rgba(251, 191, 36, 0.12); }
+  50%      { box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.75), 0 0 50px rgba(251, 191, 36, 0.45), 0 0 100px rgba(251, 191, 36, 0.22); }
+}
+
+/* Badge "ONGOING" sur la bannière de la carte */
+.drop-card--support .drop-badge--live-centered {
+  background: rgba(251, 191, 36, 0.18) !important;
+  border-color: rgba(251, 191, 36, 0.6) !important;
+  color: #fbbf24 !important;
+}
+.drop-card--support .drop-badge--live-centered .drop-badge-dot {
+  background: #fbbf24 !important;
+}
+
+/* Ligne fine sous la bannière */
+.drop-card--support .drop-banner-body {
+  border-top-color: rgba(251, 191, 36, 0.5) !important;
+}
+
+/* Halo fin autour de l'aperçu NFT (slot vidéo) */
+.drop-card--support .dli-preview {
+  border-color: rgba(251, 191, 36, 0.5) !important;
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.25), 0 0 16px rgba(251, 191, 36, 0.2), 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Footer : label "Ongoing · 100% funds the platform" */
+.drop-card--support .dli-footer-ongoing {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.08);
+  border-color: rgba(251, 191, 36, 0.2);
+}
+
+/* ── TIMELINE : nœud jaune ── */
+/* Contour de l'image */
+.tl-node--support .tl-img {
+  border-color: rgba(251, 191, 36, 0.7) !important;
+}
+/* Halo pulsé autour de l'image */
+.tl-node--support .tl-img-wrap {
+  animation: tlSupportHalo 2s ease-in-out infinite !important;
+}
+@keyframes tlSupportHalo {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.5), 0 0 10px rgba(251, 191, 36, 0.35), 0 0 22px rgba(251, 191, 36, 0.15); }
+  50%      { box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.85), 0 0 18px rgba(251, 191, 36, 0.6), 0 0 40px rgba(251, 191, 36, 0.25); }
+}
+/* Badge "SUPPORT" dans la timeline */
+.tl-node--support .tl-status-badge,
+.tl-node--support .drop-badge--live {
+  background: rgba(251, 191, 36, 0.2) !important;
+  border-color: rgba(251, 191, 36, 0.5) !important;
+  color: #fbbf24 !important;
+}
+/* Dot central sous l'image */
+.tl-node--support .tl-dot {
+  background: #fbbf24 !important;
+}
+/* Date "Ongoing" sous l'image */
+.tl-node--support .tl-date {
+  color: #fbbf24 !important;
 }
