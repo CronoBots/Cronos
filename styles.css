@@ -13293,6 +13293,67 @@ body.is-profile-loading #profileLoadingOverlay * {
     border-radius: 10px 4px 10px 10px;
     font-weight: 700;
 }
+/* Community chat — message avec user + timestamp */
+.home-chat-msg--community {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.9);
+    align-self: stretch;
+    max-width: 100%;
+    padding: 6px 10px 8px;
+}
+.home-chat-msg-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 3px;
+}
+.home-chat-msg-user {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #00B3FF;
+    text-transform: uppercase;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.home-chat-msg-time {
+    font-size: 9px;
+    color: rgba(255,255,255,0.35);
+    flex-shrink: 0;
+}
+.home-chat-msg-body {
+    font-size: 12px;
+    line-height: 1.45;
+    color: rgba(255,255,255,0.88);
+    word-break: break-word;
+}
+/* Message système (erreur / config manquante) */
+.home-chat-msg--system {
+    background: rgba(251,191,36,0.08);
+    border: 1px solid rgba(251,191,36,0.2);
+    color: rgba(251,191,36,0.85);
+    font-size: 11px;
+    text-align: center;
+    align-self: center;
+    padding: 6px 10px;
+}
+/* État locked : utilisateur non connecté */
+.home-chat-locked {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 14px;
+    color: rgba(255,255,255,0.4);
+    font-size: 11px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    flex-shrink: 0;
+}
+.home-chat-locked svg { stroke: rgba(255,255,255,0.35); }
 .home-chat-suggestions {
     display: flex;
     flex-wrap: wrap;
@@ -13679,6 +13740,7 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 .topnav-tab--signin:hover svg { stroke: #fff; }
 
+.topnav-tab--signout {
     padding: 0 10px !important;
     color: rgba(255,255,255,0.2) !important;
     border-left: none !important;
@@ -15148,7 +15210,7 @@ code.sup-card-address {
     box-sizing: border-box;
 }
 .drops-inner {
-    padding: clamp(20px, 3vh, 40px) 20px 80px;
+    padding: clamp(20px, 3vh, 40px) 20px 0;
     display: flex;
     flex-direction: column;
     gap: 48px;
@@ -15158,9 +15220,13 @@ code.sup-card-address {
 .drops-page-header {
     display: flex;
     align-items: flex-end;
-    justify-content: space-between;
+    justify-content: center;
     gap: 16px;
     flex-wrap: wrap;
+    margin-bottom: -36px;
+}
+.drops-page-header-left {
+    text-align: center;
 }
 .drops-page-title {
     font-family: 'Geomanist-Bold', sans-serif;
@@ -15173,6 +15239,7 @@ code.sup-card-address {
     line-height: 1;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 14px;
 }
 .drops-page-title svg {
@@ -15219,18 +15286,17 @@ code.sup-card-address {
 }
 .drops-section-label {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 14px;
+    font-size: 18px;
     font-weight: 800;
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.55);
+    color: #fff;
     display: flex;
     align-items: center;
     gap: 10px;
     padding-bottom: 10px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
 }
-.drops-section-label--muted { color: rgba(255,255,255,0.3); }
+.drops-section-label--muted { color: #fff; }
 
 /* Dot LIVE animé */
 .drops-live-pulse {
@@ -15269,16 +15335,37 @@ code.sup-card-address {
     border: 1px solid rgba(255,255,255,0.06);
     border-radius: 16px;
     overflow: hidden;
-    cursor: pointer;
     text-decoration: none;
     display: flex;
     flex-direction: column;
     transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
     position: relative;
 }
+.drop-card--ended { cursor: pointer; }
 .drop-card:hover {
     border-color: rgba(0,179,255,0.4);
     box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,179,255,0.15);
+}
+
+/* Glow animé sur les cartes LIVE */
+@keyframes dropLiveGlow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(0,179,255,0.4), 0 0 28px rgba(0,179,255,0.25), 0 0 60px rgba(0,179,255,0.12); }
+  50%       { box-shadow: 0 0 0 1px rgba(0,179,255,0.75), 0 0 50px rgba(0,179,255,0.45), 0 0 100px rgba(0,179,255,0.22); }
+}
+.drop-card--live {
+    border-color: rgba(0,179,255,0.5);
+    animation: dropLiveGlow 3s ease-in-out infinite;
+}
+.drop-card--live:hover {
+    animation: none;
+    border-color: rgba(0,179,255,0.9);
+    box-shadow: 0 0 0 1px rgba(0,179,255,0.7), 0 0 60px rgba(0,179,255,0.5), 0 16px 48px rgba(0,0,0,0.6);
+}
+
+/* Glow statique doux sur les cartes UPCOMING */
+.drop-card--upcoming {
+    border-color: rgba(255,255,255,0.1);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.4);
 }
 
 /* Image wrap */
@@ -15399,6 +15486,11 @@ code.sup-card-address {
 .drop-card-creator-name--sm {
     font-size: 10px;
     color: rgba(255,255,255,0.4);
+}
+.drop-card-creator--ended {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 .drop-card-verified {
     width: 14px; height: 14px;
@@ -15987,18 +16079,18 @@ code.sup-card-address {
     display: flex;
     align-items: flex-start;
     gap: 0;
-    padding: 0 40px;
+    padding: 0 60px;
     min-width: max-content;
 }
 
 /* Ligne de connexion entre les noeuds */
 .tl-line {
-    width: 40px;
+    width: 56px;
     height: 2px;
     background: rgba(255,255,255,0.08);
     align-self: center;
     flex-shrink: 0;
-    margin-top: -46px; /* aligner sur le centre des images agrandies */
+    margin-top: -27px; /* centre de l'image avec badge au-dessus */
 }
 .tl-line--accent {
     background: linear-gradient(90deg, rgba(0,179,255,0.4), rgba(74,222,128,0.4));
@@ -16010,18 +16102,23 @@ code.sup-card-address {
     flex-direction: column;
     align-items: center;
     gap: 7px;
-    width: 90px;
+    width: 106px;
     text-decoration: none;
     cursor: pointer;
     transition: transform 0.15s;
     flex-shrink: 0;
 }
-.tl-node:hover { transform: translateY(-2px); }
+.tl-node { pointer-events: none; }
+.tl-node .tl-img-wrap,
+.tl-node .tl-info { pointer-events: all; cursor: pointer; }
+.tl-node:has(.tl-img-wrap:hover),
+.tl-node:has(.tl-info:hover) { transform: translateY(-2px); }
+.tl-node:hover { transform: none; }
 
 /* Image du noeud */
 .tl-img-wrap {
     position: relative;
-    width: 88px; height: 88px;
+    width: 96px; height: 96px;
     flex-shrink: 0;
 }
 .tl-img {
@@ -16032,25 +16129,12 @@ code.sup-card-address {
     transition: border-color 0.15s;
     display: block;
 }
-.tl-node--live .tl-img { border-color: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,0.2), 0 0 16px rgba(74,222,128,0.25); }
+.tl-node--live .tl-img { border-color: rgba(74,222,128,0.7); border-width: 1px; }
 .tl-node--upcoming .tl-img { border-color: rgba(0,179,255,0.4); }
 .tl-node--ended .tl-img { filter: saturate(0.4) brightness(0.7); }
-.tl-node:hover .tl-img { border-color: rgba(0,179,255,0.6); }
+.tl-node:hover .tl-img { border-color: rgba(74,222,128,0.9); box-shadow: 0 0 0 2px rgba(74,222,128,0.5), 0 0 14px rgba(74,222,128,0.4); }
 
 /* Anneau pulsé sur le noeud LIVE */
-.tl-live-ring {
-    position: absolute;
-    inset: -6px;
-    border-radius: 16px;
-    border: 2px solid rgba(74,222,128,0.4);
-    animation: tlLivePulse 2s ease-in-out infinite;
-    pointer-events: none;
-}
-@keyframes tlLivePulse {
-    0%,100% { opacity: 0.4; transform: scale(1); }
-    50%      { opacity: 1;   transform: scale(1.05); }
-}
-
 /* Point central */
 .tl-dot {
     width: 8px; height: 8px;
@@ -16060,6 +16144,7 @@ code.sup-card-address {
 .tl-dot--live    { background: #4ade80; box-shadow: 0 0 8px rgba(74,222,128,0.8); animation: dropsPulse 1.8s ease-in-out infinite; }
 .tl-dot--upcoming { background: #00B3FF; }
 .tl-dot--ended  { background: rgba(255,255,255,0.2); }
+.tl-dot--featured { background: rgba(255,255,255,0.2); }
 
 /* Texte du noeud */
 .tl-info {
@@ -16315,7 +16400,7 @@ code.sup-card-address {
     font-size: 9px;
     font-weight: 800;
     letter-spacing: 0.2em;
-    color: rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.5);
     text-transform: uppercase;
 }
 
@@ -16335,6 +16420,9 @@ code.sup-card-address {
     border-radius: 10px;
     padding: 8px 12px 8px 8px;
     transition: border-color 0.15s;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
 }
 .dli-pack:hover { border-color: rgba(0,179,255,0.3); }
 .dli-pack--sold { opacity: 0.5; }
@@ -16361,7 +16449,7 @@ code.sup-card-address {
 }
 .dli-pack-nfts {
     font-size: 11px;
-    color: rgba(255,255,255,0.55);
+    color: rgba(255,255,255,0.7);
     letter-spacing: 0.05em;
 }
 .dli-pack-price-block {
@@ -16426,11 +16514,11 @@ code.sup-card-address {
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 12px;
     font-weight: 800;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255,255,255,0.7);
     letter-spacing: 0.06em;
 }
 .dli-progress-pct {
-    color: rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.5);
     margin-left: 4px;
 }
 .dli-progress-rem {
@@ -16517,18 +16605,18 @@ code.sup-card-address {
     font-size: 10px;
     font-weight: 800;
     letter-spacing: 0.14em;
-    color: rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.55);
     text-transform: uppercase;
 }
 .dli-footer-date-val {
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 12px;
-    color: rgba(255,255,255,0.7);
+    color: rgba(255,255,255,0.85);
     font-weight: 800;
     letter-spacing: 0.04em;
 }
 .dli-footer-arrow {
-    color: rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.4);
     font-size: 14px;
     flex-shrink: 0;
 }
@@ -16551,7 +16639,7 @@ code.sup-card-address {
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 15px;
     font-weight: 800;
-    color: #4ade80;
+    color: #ffffff;
     letter-spacing: 0.04em;
 }
 .dli-cta {
@@ -16623,7 +16711,7 @@ code.sup-card-address {
 }
 .dli-tier-qty {
     font-size: 10px;
-    color: rgba(255,255,255,0.35);
+    color: rgba(255,255,255,0.6);
     letter-spacing: 0.06em;
 }
 .dli-tier-price {
@@ -16665,7 +16753,7 @@ code.sup-card-address {
     white-space: nowrap;
 }
 .dli-footer-arrow {
-    color: rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.4);
     font-size: 12px;
     flex-shrink: 0;
 }
@@ -17170,4 +17258,1016 @@ code.sup-card-address {
     text-overflow: ellipsis;
     min-width: 0;
     flex: 1;
+}
+
+/* ── Market Bot : seller/buyer largeur de label égale + nom complet ── */
+.sb-card-parties {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin: 5px 0 4px;
+}
+.sb-card-party {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+.sb-party-label {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 1px 5px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    line-height: 1.6;
+    /* Largeur fixe identique pour SELLER et BUYER */
+    width: 52px;
+    text-align: center;
+    box-sizing: border-box;
+}
+.sb-party-label--seller {
+    background: rgba(239,68,68,0.12);
+    color: rgba(239,68,68,0.85);
+    border: 1px solid rgba(239,68,68,0.2);
+}
+.sb-party-label--buyer {
+    background: rgba(74,222,128,0.12);
+    color: rgba(74,222,128,0.85);
+    border: 1px solid rgba(74,222,128,0.2);
+}
+.sb-party-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.8);
+    letter-spacing: 0.02em;
+    white-space: normal;
+    word-break: break-all;
+    line-height: 1.3;
+    flex: 1;
+    min-width: 0;
+}
+
+/* ── Bot : LISTER label (même taille que SELLER/BUYER) ── */
+.sb-party-label--lister {
+    background: rgba(139,92,246,0.12);
+    color: rgba(167,139,250,0.9);
+    border: 1px solid rgba(139,92,246,0.25);
+}
+
+/* ── Bot : alignement vertical nom + badge ── */
+.sb-card-name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+.sb-card-name-row .sb-card-name {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* centré verticalement automatiquement par align-items: center */
+}
+.sb-card-badge-wrap {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+/* ── Bot : groupe résultats par page ── */
+.sb-perpage-group {
+    gap: 0;
+}
+
+/* ── Alarme : trigger type row ── */
+.sb-alarm-trigger-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+.sb-alarm-trigger-lbl {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.sb-alarm-trigger-group { gap: 0; }
+
+/* ── Bot : OWNER label (même taille que SELLER/BUYER) ── */
+.sb-party-label--owner {
+    background: rgba(139,92,246,0.12);
+    color: rgba(167,139,250,0.9);
+    border: 1px solid rgba(139,92,246,0.25);
+}
+
+/* ── Bot : alignement vertical nom + badge — fix définitif ── */
+#salesBotPanel .sb-card-name-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin-bottom: 4px;
+    min-height: 20px;
+}
+#salesBotPanel .sb-card-name-row .sb-card-name {
+    flex: 1 !important;
+    min-width: 0;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    align-self: center !important;
+    margin: 0 !important;
+}
+#salesBotPanel .sb-card-badge-wrap,
+#salesBotPanel .sb-type-badge {
+    flex-shrink: 0 !important;
+    align-self: center !important;
+    display: inline-flex !important;
+    align-items: center !important;
+}
+
+/* ── Bot stats : date range en taille réduite ── */
+.sb-stat-val--date {
+    font-size: clamp(10px, 1.2vw, 14px) !important;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+/* ══ MARKET BOT additions ══ */
+
+/* BETA badge above tab text */
+.topnav-tab--has-beta { position: relative; }
+.topnav-beta-badge--top {
+    position: absolute; top: 4px; left: 50%; transform: translateX(-50%);
+    font-family: 'Geomanist-Bold', sans-serif; font-size: 7px; letter-spacing: 0.12em;
+    color: #fbbf24; background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.35);
+    border-radius: 4px; padding: 1px 4px; white-space: nowrap; pointer-events: none;
+}
+
+/* Price colors */
+.sb-card-price--white { color: rgba(255,255,255,0.92); }
+
+/* Card layout tweaks */
+#salesBotPanel .sb-card-name-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px; }
+#salesBotPanel .sb-card-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+#salesBotPanel .sb-card-badge-wrap { flex-shrink: 0; }
+.sb-card-price-block { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-bottom: 8px; }
+#salesBotPanel .sb-card-parties--nosep { border-top: none !important; padding-top: 0 !important; margin-top: 0 !important; }
+.sb-card-footer--centered { display: flex; justify-content: center; margin-top: 6px; }
+
+/* Floor diff */
+.sb-floor-diff { font-size: 10px; font-family: 'Geomanist-Bold', sans-serif; text-align: center; line-height: 1; }
+.sb-floor-above { color: #4ade80; }
+.sb-floor-below { color: #f87171; }
+
+/* View toggle */
+.sb-view-toggle { display: flex; align-items: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 7px; overflow: hidden; }
+.sb-view-btn { display: flex; align-items: center; justify-content: center; width: 30px; height: 28px; background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.35); transition: color .15s, background .15s; }
+.sb-view-btn:hover { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.06); }
+.sb-view-btn--active { color: var(--color1) !important; background: rgba(0,179,255,0.12) !important; }
+
+/* TABLE */
+.sb-table-wrap { width: 100%; overflow-x: auto; border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; margin-top: 4px; }
+.sb-table { width: 100%; border-collapse: collapse; }
+.sb-th { padding: 10px 14px; text-align: left; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.9); border-bottom: 1px solid rgba(255,255,255,0.08); font-family: 'Geomanist-Bold', sans-serif; white-space: nowrap; }
+.sb-th--right { text-align: left; } /* Time column — left-aligned */
+/* Min-widths pour stabiliser sans écraser l'auto-layout */
+.sb-td--event  { min-width: 80px; }
+.sb-td--price  { min-width: 155px; }
+.sb-td--rarity { min-width: 55px; }
+.sb-td--from   { min-width: 100px; }
+.sb-td--to     { min-width: 100px; }
+.sb-td--time   { min-width: 80px; }
+.sb-tr { cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.04); transition: background .12s; }
+.sb-tr:hover { background: rgba(255,255,255,0.04); }
+.sb-tr:last-child { border-bottom: none; }
+.sb-td { padding: 8px 14px; vertical-align: middle; font-size: 13px; color: rgba(255,255,255,0.8); white-space: nowrap; }
+/* Inner flex wrappers (on div, not td) */
+.sb-td-inner { display: flex; align-items: center; gap: 8px; }
+.sb-row-img { width: 44px; height: 44px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
+.sb-row-name { font-size: 13px; font-family: 'Geomanist-Bold', sans-serif; color: rgba(255,255,255,0.88); overflow: hidden; text-overflow: ellipsis; max-width: 155px; }
+.sb-row-floor { font-size: 10px; font-family: 'Geomanist-Bold', sans-serif; white-space: nowrap; }
+.sb-td--rarity { color: rgba(255,255,255,0.85); }
+.sb-td--from { color: #f87171; font-size: 12px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
+.sb-td--to   { color: #4ade80; font-size: 12px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
+.sb-row-link { cursor: pointer; opacity: 0.3; margin-left: 5px; transition: opacity .15s; }
+.sb-tr:hover .sb-row-link { opacity: 1; }
+/* Rank badge table — standalone, no position:absolute */
+.sb-rank-badge--table { display: inline-flex; align-items: center; gap: 3px; background: rgba(255,255,255,0.95); border: 1.5px solid #00B3FF; border-radius: 6px; padding: 2px 6px 2px 4px; font-size: 10px; font-family: 'Geomanist-Bold', sans-serif; color: #0a1428; white-space: nowrap; }
+/* Gold highlight row */
+.sb-tr--highlight { border-left: 2px solid rgba(251,191,36,0.7); background: rgba(251,191,36,0.03); }
+.sb-tr--highlight:hover { background: rgba(251,191,36,0.07) !important; }
+/* Event labels */
+.sb-evt-label { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; font-family: 'Geomanist-Bold', sans-serif; }
+.sb-evt--sale    { background: rgba(74,222,128,.15);  color: #4ade80; }
+.sb-evt--listing { background: rgba(96,165,250,.15);  color: #60a5fa; }
+.sb-evt--auction { background: rgba(251,191,36,.15);  color: #fbbf24; }
+
+/* ── PAUSED ON HOVER — toast discret en bas de page ── */
+.sb-paused-toast {
+    position: fixed;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: rgba(15, 20, 35, 0.88);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    color: rgba(245, 158, 11, 0.85);
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 20px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 999;
+}
+.sb-paused-toast--visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ── Table : uniformisation des polices + rank sans # ── */
+
+/* Taille de base uniforme pour tout le contenu */
+.sb-td { font-size: 14px !important; }
+.sb-td--from,
+.sb-td--to   { font-size: 14px !important; }
+.sb-td--time { font-size: 14px !important; }
+.sb-row-name { font-size: 14px !important; }
+.sb-card-price { font-size: 15px !important; font-family: 'Geomanist-Bold', sans-serif; }
+
+/* Rank : même taille, en blanc, sans # */
+.sb-td-rank {
+    color: rgba(255,255,255,0.85);
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 14px;
+}
+
+/* % floor légèrement plus petit */
+.sb-row-floor { font-size: 11px !important; }
+
+/* Opacité douce pendant le chargement */
+#sbTableBody { transition: opacity 0.15s ease; }
+
+/* ── COLLECTION ANALYTICS ─────────────────────────────────────────────── */
+
+/* Tab nav */
+.cp-tab-nav {
+  display: flex;
+  gap: 4px;
+  padding: 0 24px 0;
+  margin-bottom: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.cp-tabnav-btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: rgba(255,255,255,0.45);
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 10px 14px 8px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: color .15s, border-color .15s;
+  margin-bottom: -1px;
+}
+.cp-tabnav-btn:hover { color: rgba(255,255,255,0.75); }
+.cp-tabnav-btn--active {
+  color: #fff;
+  border-bottom-color: #00b3ff;
+}
+
+/* Analytics section */
+.cp-analytics {
+  padding: 20px 24px 32px;
+}
+.cp-analytics-loading {
+  display: flex;
+  justify-content: center;
+  padding: 60px 0;
+  gap: 8px;
+}
+
+/* Range row */
+.cp-an-range-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+/* KPI grid */
+.cp-an-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.cp-an-kpi {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 14px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color .15s;
+}
+.cp-an-kpi:hover { border-color: rgba(0,179,255,0.3); }
+.cp-an-kpi-icon { font-size: 18px; margin-bottom: 2px; }
+.cp-an-kpi-val {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 20px;
+  color: #fff;
+  font-weight: 800;
+  line-height: 1;
+}
+.cp-an-kpi-label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-family: 'Geomanist-Bold', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.cp-an-chg { font-size: 10px; font-family: 'Geomanist-Bold', sans-serif; border-radius: 4px; padding: 1px 5px; }
+.cp-an-chg--up { color: #4ade80; background: rgba(74,222,128,0.12); }
+.cp-an-chg--dn { color: #f87171; background: rgba(248,113,113,0.12); }
+
+/* Chart blocks */
+.cp-an-chart-block {
+  margin-bottom: 28px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 18px 20px 14px;
+}
+.cp-an-chart-title {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cp-an-chart-sub { color: rgba(255,255,255,0.25); font-size: 10px; text-transform: none; letter-spacing: 0; }
+.cp-an-chart-wrap { width: 100%; overflow: hidden; }
+.cp-an-svg { width: 100%; height: auto; display: block; }
+
+/* Top sales */
+.cp-an-topsales { display: flex; flex-direction: column; gap: 8px; }
+.cp-an-sale-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: background .12s;
+  cursor: default;
+}
+.cp-an-sale-row:hover { background: rgba(255,255,255,0.05); }
+.cp-an-sale-rank {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+  min-width: 26px;
+}
+.cp-an-sale-img {
+  width: 40px; height: 40px; border-radius: 6px; object-fit: cover; flex-shrink: 0;
+}
+.cp-an-sale-info { flex: 1; min-width: 0; }
+.cp-an-sale-name {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 13px;
+  color: rgba(255,255,255,0.88);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cp-an-sale-meta { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+.cp-an-sale-rarity {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 11px;
+  color: rgba(251,191,36,0.7);
+  background: rgba(251,191,36,0.08);
+  border-radius: 5px;
+  padding: 2px 7px;
+  flex-shrink: 0;
+}
+.cp-an-sale-right { text-align: right; flex-shrink: 0; }
+.cp-an-sale-price {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 15px;
+  color: #00b3ff;
+}
+.cp-an-sale-date { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 2px; }
+
+.cp-an-empty {
+  text-align: center;
+  padding: 24px;
+  color: rgba(255,255,255,0.3);
+  font-size: 13px;
+  font-family: 'Geomanist-Bold', sans-serif;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   TIMELINE 3 SECTIONS — version définitive
+   ended (gauche, scroll) | live (centre fixe) | upcoming (droite, scroll)
+   ══════════════════════════════════════════════════════════════════ */
+
+/* 1. Le wrap : espace en haut pour le label LIVE NOW, drag cursor */
+.drops-timeline-wrap {
+  overflow-x: hidden !important;
+  padding-top: 40px !important;
+  padding-bottom: 20px !important;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.drops-timeline-wrap.is-dragging { cursor: grabbing !important; }
+
+/* 2. Le conteneur flex interne : top-aligned, pas de min-width:max-content */
+.drops-timeline {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-start !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  padding: 0 8px !important;
+}
+
+/* 3. Les trois sections */
+.tl-section {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start !important; /* top-align → margin-top sur .tl-line contrôle la hauteur */
+  flex-shrink: 0;
+}
+
+.tl-section--ended {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow-x: auto;
+  justify-content: flex-end;   /* items collés à droite → plus récent près du centre */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.06) transparent;
+}
+.tl-section--ended::-webkit-scrollbar  { height: 3px; }
+.tl-section--ended::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+.tl-section--live {
+  flex: 0 0 auto;
+  position: relative;           /* ancre pour ::before */
+  justify-content: center;
+}
+
+.tl-section--upcoming {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow-x: auto;
+  justify-content: flex-start;  /* items collés à gauche → plus proche du centre en premier */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.06) transparent;
+}
+.tl-section--upcoming::-webkit-scrollbar  { height: 3px; }
+.tl-section--upcoming::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+/* 4. Lignes de connexion : top-aligned + margin-top = centre de l'image (100px/2 - 1px) */
+.tl-section .tl-line {
+  align-self: flex-start !important;
+  margin-top: 49px !important;   /* centre l'image 100×100 */
+  margin-bottom: 0 !important;
+  transform: none !important;
+  flex: 0 0 40px !important;
+  min-width: 16px !important;
+  height: 2px !important;
+}
+
+/* 5. Label LIVE NOW centré au-dessus de toute la section live */
+.tl-section--live::before {
+  content: '● LIVE NOW';
+  position: absolute;
+  top: -28px;                    /* dans l'espace du padding-top du wrap */
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  font-family: 'Geomanist-Bold', sans-serif;
+  letter-spacing: 0.14em;
+  color: #4ade80;
+  white-space: nowrap;
+  text-shadow: 0 0 10px rgba(74,222,128,0.45);
+  animation: dropsPulse 2s ease-in-out infinite;
+}
+
+/* Annuler l'ancien ::before sur le premier nœud live (ancienne implémentation) */
+.tl-section--live .tl-node--live:first-of-type::before {
+  content: none !important;
+  display: none !important;
+}
+
+/* 6. Mobile */
+@media (max-width: 640px) {
+  .tl-section--ended,
+  .tl-section--upcoming { flex: 0 1 auto; max-width: 28vw; }
+}
+
+/* ── TIMELINE & DROP CARDS : état final consolidé ── */
+
+/* Section live : pas de padding ni pseudo-element hérité */
+.tl-section--live::before { content: none !important; display: none !important; }
+.tl-section--live { padding-top: 0 !important; }
+.tl-section--ended, .tl-section--upcoming { padding-top: 0 !important; }
+
+/* Lien VIEW ALL centré en bas de page */
+.drops-view-all-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 0;
+}
+.drops-all-link--bottom {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #00B3FF;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.drops-all-link--bottom:hover { color: #fff; }
+
+/* Badge statut au-dessus de l'image — dans le flux flex du tl-node, pas en absolu */
+.tl-status-badge {
+  position: static !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  text-align: center;
+  font-size: 7px !important;
+  padding: 1px 5px !important;
+  margin-bottom: 10px;
+  pointer-events: none;
+  flex-shrink: 0;
+  top: auto !important;
+  left: auto !important;
+}
+/* Contour sur les images END */
+.tl-img-wrap--ended .tl-img {
+  border-color: rgba(255,255,255,0.18) !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.1);
+}
+
+/* ── TIMELINE : scroll horizontal simple, tous les éléments visibles ── */
+.drops-timeline-wrap {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  padding-top: 16px !important;
+  padding-bottom: 16px !important;
+  min-height: 0 !important;
+  cursor: grab;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent       0px,
+    rgba(0,0,0,0.4)   30px,
+    black             80px,
+    black             calc(100% - 80px),
+    rgba(0,0,0,0.4)   calc(100% - 30px),
+    transparent       100%
+  ) !important;
+  mask-image: linear-gradient(
+    to right,
+    transparent       0px,
+    rgba(0,0,0,0.4)   30px,
+    black             80px,
+    black             calc(100% - 80px),
+    rgba(0,0,0,0.4)   calc(100% - 30px),
+    transparent       100%
+  ) !important;
+}
+.drops-timeline-wrap.is-dragging { cursor: grabbing !important; }
+.drops-timeline {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-start !important;
+  min-width: max-content !important;
+  width: auto !important;
+  padding: 0 20px !important;
+  gap: 0 !important;
+}
+/* Override toutes les règles tl-line précédentes */
+.drops-timeline > .tl-line {
+  width: 40px !important;
+  flex: 0 0 40px !important;
+  min-width: 40px !important;
+  height: 2px !important;
+  align-self: flex-start !important;
+  margin-top: 75px !important;
+}
+.drops-timeline > .tl-line:not(.tl-line--accent) { background: rgba(255,255,255,0.08) !important; }
+.drops-timeline > .tl-line.tl-line--accent { background: linear-gradient(90deg, rgba(0,179,255,0.4), rgba(74,222,128,0.4)) !important; }
+/* Égaliser largeur images régulières avec tl-featured-wrap (96px) */
+.drops-timeline .tl-img-wrap { width: 96px !important; height: 96px !important; }
+
+/* Ligne de la section live alignée avec la hauteur du badge */
+.tl-section--live .tl-line { margin-top: 67px !important; }
+
+/* Contour lumineux sur les nœuds live */
+/* Halo vert pulsé sur les nœuds live de la timeline */
+.tl-node--live .tl-img-wrap {
+  border-radius: 14px;
+  animation: tlLiveHalo 2s ease-in-out infinite;
+}
+@keyframes tlLiveHalo {
+  0%,100% { box-shadow: 0 0 0 1px rgba(74,222,128,0.5), 0 0 10px rgba(74,222,128,0.35), 0 0 22px rgba(74,222,128,0.15); }
+  50%     { box-shadow: 0 0 0 1px rgba(74,222,128,0.85), 0 0 18px rgba(74,222,128,0.6), 0 0 40px rgba(74,222,128,0.25); }
+}
+
+/* GET FEATURED node : cliquable */
+.tl-node--featured { pointer-events: all !important; cursor: pointer !important; width: 106px; }
+
+/* Cadre GET FEATURED : même taille que les autres nœuds, halo blanc sans contour */
+.tl-featured-wrap {
+  width: 96px !important;
+  height: 96px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.06);
+  border: none;
+  border-radius: 14px;
+  box-shadow: 0 0 18px rgba(255,255,255,0.4), 0 0 38px rgba(255,255,255,0.2);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.tl-node--featured:hover .tl-featured-wrap {
+  background: rgba(0,179,255,0.1);
+  box-shadow: 0 0 20px rgba(0,179,255,0.5), 0 0 42px rgba(0,179,255,0.25);
+}
+.tl-featured-label {
+  opacity: 1;
+  color: #fff;
+  transition: opacity 0.2s;
+}
+.tl-node--featured:hover .tl-featured-label { opacity: 1; }
+.tl-featured-sub {
+  color: #fff !important;
+}
+
+.drop-badge--live-centered {
+  background: rgba(74,222,128,0.18);
+  border-color: rgba(74,222,128,0.6);
+  color: #4ade80;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  padding: 6px 16px;
+}
+.drop-banner-overlay-info {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 24px;
+  background: rgba(8,10,20,0.38);
+}
+.drop-banner-overlay-name {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: clamp(22px, 3.5vw, 42px);
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin: 0;
+  line-height: 1.1;
+  text-align: center;
+  text-shadow: 0 2px 16px rgba(0,0,0,0.8);
+}
+.drop-banner-overlay-artist {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 17px;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.drop-banner-overlay-avatar {
+  display: none;
+}
+.drop-banner-overlay-verified {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Body : gauche = infos, droite = aperçu vidéo */
+.drop-banner-body {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  padding: 0;
+  flex: 1;
+  position: relative;
+}
+.dli-body-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px 22px 20px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Aperçu vidéo : colonne droite encadrée, ratio naturel de la vidéo */
+.dli-preview {
+  position: relative;
+  flex-shrink: 0;
+  align-self: flex-start;
+  width: 25%;
+  overflow: hidden;
+  cursor: pointer;
+  margin: 44px 44px 44px 0;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: #0a0d18;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+.dli-preview-video {
+  width: 100%;
+  height: auto;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.dli-preview-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.6);
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+/* ── DROP CARDS : layout bannière pleine largeur ── */
+
+/* Réduire l'écart entre le label DROP TIMELINE et la timeline scrollable */
+#dropsTimelineWrap {
+  margin-top: -28px;
+}
+
+.drop-banner-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.drop-banner-media {
+  position: relative;
+  width: 100% !important;
+  aspect-ratio: 16 / 4 !important;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.04);
+  border-radius: 0 !important;
+}
+
+.drop-banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.25s;
+}
+
+.drop-banner-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.drop-banner-media .drop-live-media-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 60%, rgba(10,14,28,0.55) 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.drop-banner-media .drop-card-badges--media { z-index: 2; }
+.drop-banner-media .drop-live-play-hint     { z-index: 2; }
+
+.dli-header--banner { gap: 6px; }
+.dli-header--banner .dli-title {
+  font-size: 17px;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+.dli-header--banner .dli-desc {
+  -webkit-line-clamp: 3;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 12px;
+  opacity: 1;
+  color: #fff;
+  line-height: 1.5;
+}
+
+.drops-live-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+  width: 100%;
+}
+.drops-live-grid .drop-card--live {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+.drops-grid--upcoming {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  width: 100%;
+}
+.drops-grid--upcoming .drop-card--upcoming {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+/* Prix des packs en blanc */
+.dli-pack-price {
+  color: #fff !important;
+  font-weight: 800 !important;
+}
+
+/* Flash de navigation depuis la timeline */
+@keyframes dropCardFlash {
+  0%   { box-shadow: 0 0 0 0 rgba(0,179,255,0); }
+  30%  { box-shadow: 0 0 0 4px rgba(0,179,255,0.6), 0 0 24px rgba(0,179,255,0.3); }
+  100% { box-shadow: 0 0 0 0 rgba(0,179,255,0); }
+}
+.drop-card--flash {
+  animation: dropCardFlash 1.4s ease-out forwards;
+}
+
+/* ── TIMELINE LINES : règle finale absolue via ID ── */
+#dropsTimeline > .tl-line {
+  width: 40px !important;
+  flex: 0 0 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+  height: 2px !important;
+  align-self: flex-start !important;
+  margin-top: 75px !important;
+  margin-bottom: 0 !important;
+  margin-left: 16px !important;
+  margin-right: 16px !important;
+  background: rgba(255,255,255,0.1) !important;
+}
+#dropsTimeline > .tl-line.tl-line--accent {
+  background: linear-gradient(90deg, rgba(0,179,255,0.5), rgba(74,222,128,0.5)) !important;
+}
+
+/* ── TIMELINE NODES : largeur uniforme pour écart gauche/droite constant ── */
+#dropsTimeline > .tl-node {
+  width: 106px !important;
+  min-width: 106px !important;
+  max-width: 106px !important;
+  padding: 0 !important;
+  flex: 0 0 106px !important;
+  box-sizing: border-box !important;
+}
+#dropsTimeline > .tl-node .tl-info {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+#dropsTimeline > .tl-node .tl-name,
+#dropsTimeline > .tl-node .tl-date,
+#dropsTimeline > .tl-node .tl-artist {
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* ── DROP CARDS : séparateur sous la bannière + halo vidéo ── */
+/* Ligne fine sous la bannière (même couleur que la bordure de la carte) */
+.drop-card--live .drop-banner-body {
+  border-top: 1px solid rgba(0,179,255,0.5);
+}
+.drop-card--upcoming .drop-banner-body {
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Halo fin autour de la vidéo d'aperçu — match la couleur de la carte */
+.drop-card--live .dli-preview {
+  border-color: rgba(0,179,255,0.5);
+  box-shadow: 0 0 0 1px rgba(0,179,255,0.25), 0 0 16px rgba(0,179,255,0.2), 0 4px 20px rgba(0,0,0,0.5);
+}
+.drop-card--upcoming .dli-preview {
+  border-color: rgba(255,255,255,0.12);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 0 14px rgba(255,255,255,0.05), 0 4px 20px rgba(0,0,0,0.5);
+}
+
+/* ── SCROLL BUTTONS : style sombre-glass bleu, centrés dans l'écart droit ── */
+#scrollToTopButton,
+#scrollToBottomButton {
+  width: 36px !important;
+  height: 36px !important;
+  background: rgba(14, 24, 48, 0.85) !important;
+  color: #00B3FF !important;
+  border: 1px solid rgba(0, 179, 255, 0.4) !important;
+  border-radius: 50% !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 12px rgba(0, 179, 255, 0.15) !important;
+  opacity: 1 !important;
+  right: 36px !important; /* décalé légèrement à droite */
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s, transform 0.2s !important;
+}
+#scrollToTopButton:hover,
+#scrollToBottomButton:hover {
+  border-color: rgba(0, 179, 255, 0.85) !important;
+  background: rgba(14, 24, 48, 0.95) !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 0 22px rgba(0, 179, 255, 0.4) !important;
+  transform: scale(1.06) !important;
+}
+#scrollToTopButton svg,
+#scrollToBottomButton svg {
+  width: 18px !important;
+  height: 18px !important;
+  color: #00B3FF !important;
+  stroke: currentColor !important;
+}
+#scrollToTopButton svg path,
+#scrollToBottomButton svg path {
+  stroke: #00B3FF !important;
+}
+
+/* Label "Ongoing" sur le footer des drops de type support (remplace dates+countdown) */
+.dli-footer-ongoing {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #00B3FF;
+  padding: 6px 12px;
+  background: rgba(0, 179, 255, 0.08);
+  border: 1px solid rgba(0, 179, 255, 0.2);
+  border-radius: 8px;
+  display: inline-block;
+}
+/* Image NFT dans le slot du preview vidéo (drops de type support) */
+.dli-preview-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 9px;
 }
