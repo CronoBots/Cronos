@@ -11553,6 +11553,16 @@ body.is-profile-loading #profileLoadingOverlay * {
     display: block;
 }
 
+/* Bloc de titre du panel Top Collections — strictement aligné sur le rendu
+   visuel des onglets Drops / Snapshot, mais SANS flex wrapper externe
+   (qui pouvait par moments interférer avec la barre de filtres en dessous).
+   margin-bottom: 32px → écart suffisant entre le sous-titre et la barre de
+   filtres (idem au gap visuel des autres onglets). */
+.stats-page-title-block {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
 /* Controls row — left group (search+summary) / right group (filters) */
 .stats-panel-title-row {
     display: flex;
@@ -12962,14 +12972,16 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 
 /* ── BODY ── */
+/* Largeur alignée sur celle des onglets Drops / Top Collections / Snapshot
+   (qui utilisent ~20px de padding latéral et fillent toute la largeur de la
+   fenêtre). On retire le max-width:1200px qui contraignait la home, et on
+   passe le padding latéral de 32px à 20px pour matcher exactement. */
 .home-body {
     flex: 1;
-    padding: 32px 32px 64px;
+    padding: 32px 20px 64px;
     display: flex;
     flex-direction: column;
     gap: 40px;
-    max-width: 1200px;
-    margin: 0 auto;
     width: 100%;
     box-sizing: border-box;
 }
@@ -13325,6 +13337,109 @@ body.is-profile-loading #profileLoadingOverlay * {
     color: rgba(255,255,255,0.35);
     flex-shrink: 0;
 }
+/* Bloc droit du méta-header : heure + (edited) + actions edit/delete.
+   On groupe pour avoir un alignement stable même quand un message est édité
+   ou que les boutons apparaissent sur les messages "à moi". */
+.home-chat-msg-meta-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.home-chat-msg-edited {
+    font-size: 9px;
+    color: rgba(255,255,255,0.25);
+    font-style: italic;
+}
+.home-chat-msg-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    /* Cachés au repos, révélés au hover du message — UX type Slack/Discord */
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+.home-chat-msg--mine:hover .home-chat-msg-actions { opacity: 1; }
+.home-chat-msg-action {
+    width: 18px; height: 18px;
+    background: transparent;
+    border: 0;
+    border-radius: 4px;
+    color: rgba(255,255,255,0.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background 0.12s, color 0.12s;
+}
+.home-chat-msg-edit-btn:hover {
+    background: rgba(0,179,255,0.15);
+    color: #00B3FF;
+}
+.home-chat-msg-delete-btn:hover {
+    background: rgba(239,68,68,0.15);
+    color: #ef4444;
+}
+/* Édition inline : textarea + Save / Cancel — apparaît sous le meta-header
+   et masque temporairement le body original. Stylisé pour rester compact. */
+.home-chat-msg-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+}
+.home-chat-msg-edit-input {
+    width: 100%;
+    min-height: 50px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(0,179,255,0.35);
+    border-radius: 6px;
+    padding: 6px 8px;
+    color: #fff;
+    font-size: 12px;
+    line-height: 1.45;
+    font-family: inherit;
+    resize: vertical;
+    box-sizing: border-box;
+    outline: none;
+}
+.home-chat-msg-edit-input:focus { border-color: rgba(0,179,255,0.65); }
+.home-chat-msg-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+.home-chat-msg-edit-cancel,
+.home-chat-msg-edit-save {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-radius: 4px;
+    padding: 4px 10px;
+    cursor: pointer;
+    border: 1px solid;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.home-chat-msg-edit-cancel {
+    background: transparent;
+    border-color: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.5);
+}
+.home-chat-msg-edit-cancel:hover {
+    border-color: rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.8);
+}
+.home-chat-msg-edit-save {
+    background: rgba(0,179,255,0.15);
+    border-color: rgba(0,179,255,0.4);
+    color: #00B3FF;
+}
+.home-chat-msg-edit-save:hover {
+    background: rgba(0,179,255,0.25);
+    color: #fff;
+}
 .home-chat-msg-body {
     font-size: 12px;
     line-height: 1.45;
@@ -13424,7 +13539,9 @@ body.is-profile-loading #profileLoadingOverlay * {
 .sb-inner {
     width: 100%;
     box-sizing: border-box;
-    padding: clamp(20px, 3vh, 36px) 20px 64px;
+    /* Aligné sur drops-inner / snapshot-inner pour que le titre démarre à la
+       même hauteur que dans les autres onglets. */
+    padding: clamp(8px, 1.5vh, 20px) 20px 64px;
     display: flex;
     flex-direction: column;
     gap: 0;
@@ -13438,6 +13555,15 @@ body.is-profile-loading #profileLoadingOverlay * {
     margin-bottom: clamp(16px, 2.5vh, 28px);
     flex-wrap: wrap;
     gap: 12px;
+}
+/* Variante centrée — utilisée par Market Bot après suppression des contrôles
+   du header. Comme le titre est désormais le seul contenu, on passe en bloc
+   simple (pas de flex space-between qui pousserait le titre à gauche). On
+   laisse le margin-bottom à 0 : c'est .stats-page-title-block (32px) qui
+   pilote l'écart vers la barre de filtres, pour matcher Drops/Snapshot. */
+.sb-header--centered {
+    display: block;
+    margin-bottom: 0;
 }
 .sb-header-left { display: flex; flex-direction: column; gap: 2px; }
 .sb-title {
@@ -13488,6 +13614,16 @@ body.is-profile-loading #profileLoadingOverlay * {
     border: 1px solid rgba(74,222,128,0.2);
     border-radius: 20px; padding: 5px 12px;
 }
+/* Variante "filtre" — alignée sur la hauteur des autres pills de la barre
+   des filtres (stats-tr-btn / stats-cf-btn ≈ 32px). Garde la couleur verte
+   et le dot pulsé qui font sa lisibilité comme indicateur "LIVE". */
+.sb-live--filter {
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 8px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
 .sb-live-dot {
     width: 7px; height: 7px; border-radius: 50%;
     background: #4ade80;
@@ -13510,6 +13646,11 @@ body.is-profile-loading #profileLoadingOverlay * {
     border-radius: 8px; color: rgba(255,255,255,0.5);
     cursor: pointer; display: flex; align-items: center; justify-content: center;
     transition: background 0.15s, color 0.15s, transform 0.15s;
+}
+/* Variante "filtre" — légèrement réduite pour s'aligner sur les pills (32px). */
+.sb-refresh-btn--filter {
+    width: 32px; height: 32px;
+    flex-shrink: 0;
 }
 .sb-refresh-btn:hover { background: rgba(0,179,255,0.12); color: #00B3FF; transform: rotate(90deg); }
 
@@ -13553,6 +13694,21 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 
 /* ── Feed grid ── */
+/* Conteneur des résultats du Market Bot — halo bleu cyan (même intensité que
+   les cartes des drops live : .drop-card--live) pour mettre en évidence le
+   bloc d'événements. Englobe à la fois le feed (vue cards) et la vue table. */
+.sb-results-wrap {
+    border: 1px solid rgba(0,179,255,0.5);
+    border-radius: 14px;
+    box-shadow:
+        0 0 0  1px rgba(0,179,255,0.55),
+        0 0 40px rgba(0,179,255,0.35),
+        0 0 80px rgba(0,179,255,0.18);
+    padding: 16px;
+    background: rgba(11,20,38,0.4);
+    margin-top: 8px;
+}
+
 .sb-feed {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -13715,6 +13871,41 @@ body.is-profile-loading #profileLoadingOverlay * {
 .sb-price-input:focus { border-color: rgba(0,179,255,0.4); }
 .sb-price-input::placeholder { color: rgba(255,255,255,0.25); }
 .sb-price-sep { font-size: 11px; color: rgba(255,255,255,0.3); }
+.sb-transfer-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 7px;
+    color: rgba(255,255,255,0.5);
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    box-sizing: border-box;
+}
+.sb-transfer-filter-btn:hover {
+    color: rgba(255,255,255,0.85);
+    border-color: rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.06);
+}
+.sb-transfer-filter-btn--active {
+    color: #00B3FF;
+    background: rgba(0,179,255,0.12);
+    border-color: rgba(0,179,255,0.35);
+}
+.sb-transfer-filter-btn--active:hover {
+    background: rgba(0,179,255,0.18);
+    border-color: rgba(0,179,255,0.5);
+    color: #00B3FF;
+}
 .sb-sort-group { margin: 0; }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -13722,9 +13913,7 @@ body.is-profile-loading #profileLoadingOverlay * {
    ══════════════════════════════════════════════════════════════════════════ */
 /* ── Auth bloc topnav ── */
 .topnav-auth-sep {
-    width: 1px; height: 22px;
-    background: rgba(255,255,255,0.1);
-    margin: 0 4px; flex-shrink: 0; align-self: center;
+    display: none;
 }
 .topnav-auth { display: flex; align-items: stretch; height: 100%; }
 
@@ -15347,19 +15536,14 @@ code.sup-card-address {
     box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,179,255,0.15);
 }
 
-/* Glow animé sur les cartes LIVE */
-@keyframes dropLiveGlow {
-  0%, 100% { box-shadow: 0 0 0 1px rgba(0,179,255,0.4), 0 0 28px rgba(0,179,255,0.25), 0 0 60px rgba(0,179,255,0.12); }
-  50%       { box-shadow: 0 0 0 1px rgba(0,179,255,0.75), 0 0 50px rgba(0,179,255,0.45), 0 0 100px rgba(0,179,255,0.22); }
-}
+/* Halo PERMANENT sur les cartes LIVE (état hover appliqué en continu) */
 .drop-card--live {
     border-color: rgba(0,179,255,0.5);
-    animation: dropLiveGlow 3s ease-in-out infinite;
+    box-shadow: 0 0 0 1px rgba(0,179,255,0.55), 0 0 40px rgba(0,179,255,0.35), 0 0 80px rgba(0,179,255,0.18);
 }
 .drop-card--live:hover {
-    animation: none;
-    border-color: rgba(0,179,255,0.9);
-    box-shadow: 0 0 0 1px rgba(0,179,255,0.7), 0 0 60px rgba(0,179,255,0.5), 0 16px 48px rgba(0,0,0,0.6);
+    border-color: rgba(0,179,255,0.5);
+    box-shadow: 0 0 0 1px rgba(0,179,255,0.55), 0 0 40px rgba(0,179,255,0.35), 0 0 80px rgba(0,179,255,0.18);
 }
 
 /* Glow statique doux sur les cartes UPCOMING */
@@ -17061,8 +17245,8 @@ code.sup-card-address {
 .snapshot-debug-toggle { display:inline-flex; align-items:center; gap:5px; font-family:'Geomanist-Bold',sans-serif; font-size:10px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.55); background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:6px; height:26px; padding:0 12px; cursor:pointer; transition:color 0.15s, background 0.15s, border-color 0.15s; }
 .snapshot-debug-toggle:hover { color:#fff; background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.15); }
 .snapshot-summary {
-    display: flex !important;
-    flex-direction: row !important;
+    display: flex;
+    flex-direction: row;
     flex-wrap: nowrap;
     background: rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.07);
@@ -17331,25 +17515,27 @@ code.sup-card-address {
     gap: 0;
 }
 
-/* ── Alarme : trigger type row ── */
-.sb-alarm-trigger-row {
+/* ── Alarmes : 2 rangées indépendantes (Sales / Listings) ──
+   Chaque rangée = label "Sales"/"Listings" en small-caps + input row + status. */
+.sb-alarm-row {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
 }
-.sb-alarm-trigger-lbl {
+.sb-alarm-row:last-of-type {
+    border-bottom: 0;
+}
+.sb-alarm-row-lbl {
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 10px;
     font-weight: 800;
-    letter-spacing: 0.1em;
-    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.55);
     text-transform: uppercase;
-    white-space: nowrap;
-    flex-shrink: 0;
 }
-.sb-alarm-trigger-group { gap: 0; }
 
 /* ── Bot : OWNER label (même taille que SELLER/BUYER) ── */
 .sb-party-label--owner {
@@ -17900,14 +18086,17 @@ code.sup-card-address {
 /* Ligne de la section live alignée avec la hauteur du badge */
 .tl-section--live .tl-line { margin-top: 67px !important; }
 
-/* Halo bleu pulsé sur les nœuds live de la timeline */
+/* Halo bleu pulsé sur les nœuds live de la timeline (animation partagée tlHaloSync) */
 .tl-node--live .tl-img-wrap {
+  --tl-halo-rgb: 0,179,255;
   border-radius: 14px;
-  animation: tlLiveHalo 2s ease-in-out infinite;
+  animation: tlHaloSync 2s ease-in-out infinite;
 }
-@keyframes tlLiveHalo {
-  0%,100% { box-shadow: 0 0 0 1px rgba(0,179,255,0.5), 0 0 10px rgba(0,179,255,0.35), 0 0 22px rgba(0,179,255,0.15); }
-  50%     { box-shadow: 0 0 0 1px rgba(0,179,255,0.85), 0 0 18px rgba(0,179,255,0.6), 0 0 40px rgba(0,179,255,0.25); }
+/* Animation UNIQUE partagée par tous les halos de la timeline.
+   Garantit la synchronisation entre live / support / featured (même nom = même horloge). */
+@keyframes tlHaloSync {
+  0%,100% { box-shadow: 0 0 0 1px rgba(var(--tl-halo-rgb),0.5),  0 0 10px rgba(var(--tl-halo-rgb),0.35), 0 0 22px rgba(var(--tl-halo-rgb),0.15); }
+  50%     { box-shadow: 0 0 0 1px rgba(var(--tl-halo-rgb),0.85), 0 0 18px rgba(var(--tl-halo-rgb),0.6),  0 0 40px rgba(var(--tl-halo-rgb),0.25); }
 }
 /* Hover : on accentue le halo existant (même couleur, plus intense) */
 .tl-node--live:hover .tl-img-wrap {
@@ -17918,8 +18107,9 @@ code.sup-card-address {
 /* GET FEATURED node : cliquable */
 .tl-node--featured { pointer-events: all !important; cursor: pointer !important; width: 106px; }
 
-/* Cadre GET FEATURED : même style que live/ongoing mais en blanc (contour + halo pulsé) */
+/* Cadre GET FEATURED : même style que live/ongoing mais en blanc — animation partagée tlHaloSync */
 .tl-featured-wrap {
+  --tl-halo-rgb: 255,255,255;
   width: 96px !important;
   height: 96px !important;
   display: flex;
@@ -17928,12 +18118,8 @@ code.sup-card-address {
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.7);
   border-radius: 14px;
-  animation: tlFeaturedHalo 2s ease-in-out infinite;
+  animation: tlHaloSync 2s ease-in-out infinite;
   transition: background 0.2s, border-color 0.2s;
-}
-@keyframes tlFeaturedHalo {
-  0%,100% { box-shadow: 0 0 0 1px rgba(255,255,255,0.5), 0 0 10px rgba(255,255,255,0.35), 0 0 22px rgba(255,255,255,0.15); }
-  50%     { box-shadow: 0 0 0 1px rgba(255,255,255,0.85), 0 0 18px rgba(255,255,255,0.6), 0 0 40px rgba(255,255,255,0.25); }
 }
 .tl-node--featured:hover .tl-featured-wrap {
   animation: none;
@@ -18310,13 +18496,13 @@ code.sup-card-address {
    Cible : badge + contour + halo + label Ongoing, sur la carte et la timeline.
    ════════════════════════════════════════════════════════════════════════ */
 
-/* ── CARTE : contour + halo jaune ── */
+/* ── CARTE : contour + halo vert PERMANENT (état hover appliqué en continu) ── */
 .drop-card--support {
-  border-color: rgba(74,222,128,0.5) !important;
-  animation: dropSupportGlow 3s ease-in-out infinite !important;
+  border-color: rgba(74,222,128,0.9) !important;
+  box-shadow: 0 0 0 1px rgba(74,222,128,0.7), 0 0 60px rgba(74,222,128,0.5), 0 16px 48px rgba(0, 0, 0, 0.6) !important;
+  animation: none !important;
 }
 .drop-card--support:hover {
-  animation: none !important;
   border-color: rgba(74,222,128,0.9) !important;
   box-shadow: 0 0 0 1px rgba(74,222,128,0.7), 0 0 60px rgba(74,222,128,0.5), 0 16px 48px rgba(0, 0, 0, 0.6) !important;
 }
@@ -18358,13 +18544,10 @@ code.sup-card-address {
 .tl-node--support .tl-img {
   border-color: rgba(74,222,128,0.7) !important;
 }
-/* Halo pulsé autour de l'image */
+/* Halo pulsé autour de l'image — animation partagée tlHaloSync (sync live/support/featured) */
 .tl-node--support .tl-img-wrap {
-  animation: tlSupportHalo 2s ease-in-out infinite !important;
-}
-@keyframes tlSupportHalo {
-  0%, 100% { box-shadow: 0 0 0 1px rgba(74,222,128,0.5), 0 0 10px rgba(74,222,128,0.35), 0 0 22px rgba(74,222,128,0.15); }
-  50%      { box-shadow: 0 0 0 1px rgba(74,222,128,0.85), 0 0 18px rgba(74,222,128,0.6), 0 0 40px rgba(74,222,128,0.25); }
+  --tl-halo-rgb: 74,222,128;
+  animation: tlHaloSync 2s ease-in-out infinite !important;
 }
 /* Hover : on accentue le halo vert existant (même couleur, plus intense) */
 .tl-node--support:hover .tl-img-wrap {
@@ -18385,4 +18568,3403 @@ code.sup-card-address {
 /* Date "Ongoing" sous l'image */
 .tl-node--support .tl-date {
   color: #4ade80 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DROP LIVE — HERO TOP BAR (LIVE chip + countdown segmenté)
+   ═══════════════════════════════════════════════════════════════════════ */
+.drop-hero-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 14px 18px;
+  pointer-events: none;
+  gap: 12px;
+}
+.drop-hero-top > * { pointer-events: auto; }
+
+/* LIVE chip (gauche) — dot pulsant */
+.drop-hero-live-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #fff;
+  padding: 7px 12px 7px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(0,179,255,0.25), rgba(0,179,255,0.10));
+  border: 1px solid rgba(0,179,255,0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4), 0 0 20px rgba(0,179,255,0.18);
+}
+.drop-hero-live-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #00B3FF;
+  box-shadow: 0 0 0 0 rgba(0,179,255,0.75);
+  animation: drop-live-pulse 1.8s ease-out infinite;
+}
+@keyframes drop-live-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(0,179,255,0.75); }
+  70%  { box-shadow: 0 0 0 8px rgba(0,179,255,0); }
+  100% { box-shadow: 0 0 0 0 rgba(0,179,255,0); }
+}
+/* Variante PERPETUAL (drop support) — cyan */
+.drop-hero-live-chip--perpetual {
+  background: linear-gradient(135deg, rgba(0,179,255,0.22), rgba(0,179,255,0.08));
+  border-color: rgba(0,179,255,0.55);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4), 0 0 20px rgba(0,179,255,0.18);
+}
+.drop-hero-live-infinity {
+  font-size: 14px;
+  color: #00B3FF;
+  line-height: 1;
+  margin-right: 1px;
+}
+
+/* Countdown segmenté (droite) */
+.drop-hero-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 8px 14px 9px;
+  border-radius: 12px;
+  background: rgba(8,10,20,0.65);
+  border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.5);
+}
+.drop-hero-countdown-lbl {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: rgba(255,255,255,0.55);
+  text-transform: uppercase;
+}
+.drop-hero-countdown-segs {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  font-family: 'Geomanist-Bold', sans-serif;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.drop-hero-countdown-seg {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+}
+.drop-hero-countdown-num {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #fff;
+  line-height: 1;
+  min-width: 22px;
+  text-align: center;
+}
+.drop-hero-countdown-unit {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.55);
+  text-transform: uppercase;
+}
+.drop-hero-countdown-sep {
+  color: rgba(255,255,255,0.25);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  align-self: center;
+  margin: 0 1px;
+}
+/* État urgence : < 24h restants */
+.drop-hero-countdown--urgent {
+  border-color: rgba(239,68,68,0.45);
+  background: rgba(40,10,15,0.75);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.5), 0 0 24px rgba(239,68,68,0.2);
+}
+.drop-hero-countdown--urgent .drop-hero-countdown-num { color: #fca5a5; }
+.drop-hero-countdown--urgent .drop-hero-countdown-lbl { color: rgba(252,165,165,0.8); }
+.drop-hero-countdown--ended {
+  border-color: rgba(255,255,255,0.1);
+  opacity: 0.55;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DROP LIVE — STATS BAR (4 tuiles récapitulatives sous le hero)
+   ═══════════════════════════════════════════════════════════════════════ */
+.dli-stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+.dli-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 14px 16px 15px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
+  min-width: 0;
+}
+.dli-stat-lbl {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: rgba(255,255,255,0.55);
+  text-transform: uppercase;
+}
+.dli-stat-val {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: #fff;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.dli-stat-val--green { color: #4ade80; }
+.dli-stat-val--accent {
+  color: #00B3FF;
+  text-shadow: 0 0 18px rgba(0,179,255,0.35);
+}
+.dli-stat-val-sep {
+  color: rgba(255,255,255,0.3);
+  margin: 0 2px;
+  font-weight: 400;
+}
+.dli-stat-val-total {
+  color: rgba(255,255,255,0.5);
+  font-size: 18px;
+}
+.dli-stat-sub {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.04em;
+}
+
+/* Barre de progression pleine largeur sous la stats bar */
+.dli-progress-hero {
+  width: 100%;
+  padding: 0;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.dli-progress-hero-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+  position: relative;
+}
+.dli-progress-hero-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00B3FF 0%, #7c3aed 50%, #ec4899 100%);
+  box-shadow: 0 0 14px rgba(0,179,255,0.5), 0 0 28px rgba(124,58,237,0.25);
+  transition: width 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+  position: relative;
+}
+.dli-progress-hero-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: dli-progress-shimmer 2.4s ease-in-out infinite;
+}
+@keyframes dli-progress-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DROP LIVE — PACKS AMÉLIORÉS (sold out visuel + mini progress par pack)
+   ═══════════════════════════════════════════════════════════════════════ */
+.dli-pack-img-wrap {
+  position: relative;
+  width: 48px; height: 48px;
+  border-radius: 7px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.dli-pack-img-wrap .dli-pack-img {
+  width: 100%; height: 100%;
+  display: block;
+}
+.dli-pack-sold-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(8,10,20,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.dli-pack-sold-stripe {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 7px;
+  font-weight: 800;
+  color: #fbbf24;
+  letter-spacing: 0.1em;
+  transform: rotate(-18deg);
+  background: rgba(251,191,36,0.95);
+  color: #1a0f00;
+  padding: 1px 18px;
+  white-space: nowrap;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.6);
+}
+.dli-pack--sold .dli-pack-img {
+  filter: grayscale(1) brightness(0.7);
+}
+.dli-pack--sold { opacity: 0.65; }
+
+/* Mini barre de progression à l'intérieur de chaque pack */
+.dli-pack-mini-progress {
+  margin-top: 4px;
+  width: 100%;
+  max-width: 140px;
+}
+.dli-pack-mini-track {
+  width: 100%;
+  height: 2px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 1px;
+  overflow: hidden;
+}
+.dli-pack-mini-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00B3FF, #4ade80);
+  border-radius: 1px;
+  transition: width 0.6s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .drop-hero-top { padding: 10px 12px; gap: 8px; }
+  .drop-hero-live-chip { font-size: 10px; padding: 6px 10px 6px 8px; }
+  .drop-hero-countdown { padding: 6px 10px 7px; }
+  .drop-hero-countdown-num { font-size: 14px; min-width: 18px; }
+  .drop-hero-countdown-unit { font-size: 8px; }
+  .drop-hero-countdown-lbl { font-size: 8px; }
+  .dli-stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .dli-stat { padding: 12px 14px 13px; }
+  .dli-stat-val { font-size: 19px; }
+}
+@media (max-width: 520px) {
+  .drop-hero-top { padding: 8px 10px; }
+  .drop-hero-countdown-segs { gap: 2px; }
+  .drop-hero-countdown-num { font-size: 13px; min-width: 16px; }
+  .drop-hero-countdown-sep { font-size: 11px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DROP LIVE — WHAT'S INSIDE (NFT samples fetchés du drop)
+   ═══════════════════════════════════════════════════════════════════════ */
+.dli-samples-wrap .dli-section-label {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.dli-section-sub {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.4);
+  text-transform: none;
+  font-weight: 600;
+}
+.dli-samples {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 8px;
+}
+.dli-sample {
+  position: relative;
+  display: block;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  text-decoration: none;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.dli-sample:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0,179,255,0.5);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5), 0 0 16px rgba(0,179,255,0.2);
+}
+.dli-sample-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+.dli-sample:hover .dli-sample-img {
+  transform: scale(1.06);
+}
+.dli-sample-name {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 14px 6px 5px;
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: linear-gradient(180deg, transparent, rgba(0,0,0,0.85));
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dli-sample:hover .dli-sample-name {
+  opacity: 1;
+}
+
+@media (max-width: 900px) {
+  .dli-samples { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 520px) {
+  .dli-samples { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DROP LIVE — VIDEO PREVIEW : click-to-play avec overlay
+   ═══════════════════════════════════════════════════════════════════════ */
+.dli-preview-video {
+  cursor: pointer;
+}
+.dli-preview-play {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.22);
+  box-shadow: 0 6px 22px rgba(0,0,0,0.6);
+  transition: background 0.15s ease, transform 0.15s ease, opacity 0.2s ease;
+  z-index: 2;
+}
+.dli-preview-play:hover {
+  background: rgba(0,179,255,0.85);
+  transform: scale(1.08);
+}
+.dli-preview-play svg {
+  width: 22px;
+  height: 22px;
+  margin-left: 3px; /* compensation optique du triangle */
+}
+/* Cacher le bouton quand la vidéo joue */
+.dli-preview--playing .dli-preview-play {
+  opacity: 0;
+  pointer-events: none;
+}
+/* Très subtile gradient overlay quand la vidéo est en pause (pour lisibilité du bouton) */
+.dli-preview:not(.dli-preview--playing)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.1), rgba(0,0,0,0.3));
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DROP LIVE — BANNIERE CINÉMATIQUE (vidéo en fond + play central + titre en bas)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Vidéo de fond : absolue, invisible par défaut, s'affiche en fondu quand --playing */
+.drop-banner-video-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  z-index: 1;
+  cursor: pointer;
+  display: block;
+}
+.drop-banner-media--playing .drop-banner-video-bg {
+  opacity: 1;
+}
+/* L'image statique s'estompe quand la vidéo joue (fondu enchaîné) */
+.drop-banner-media .drop-banner-img {
+  transition: opacity 0.45s ease;
+}
+.drop-banner-media--playing .drop-banner-img {
+  opacity: 0;
+}
+/* L'overlay sombre de lecture live s'estompe aussi (pour profiter de la vidéo) */
+.drop-banner-media--playing .drop-live-media-overlay {
+  opacity: 0.25;
+  transition: opacity 0.45s ease;
+}
+
+/* Bouton play central — glass, cyan au hover */
+.drop-banner-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 22px 14px 18px;
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 999px;
+  background: rgba(8,10,20,0.55);
+  color: #fff;
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.05) inset;
+  transition: transform 0.2s ease, background 0.2s ease, opacity 0.3s ease, border-color 0.2s ease;
+  z-index: 4;
+  font-family: 'Geomanist-Bold', sans-serif;
+}
+.drop-banner-play:hover {
+  background: rgba(0,179,255,0.85);
+  border-color: rgba(0,179,255,0.9);
+  transform: translate(-50%, -50%) scale(1.05);
+  box-shadow: 0 8px 36px rgba(0,179,255,0.45);
+}
+.drop-banner-play svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-left: 2px; /* compensation optique du triangle */
+}
+.drop-banner-play-lbl {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #fff;
+  line-height: 1;
+}
+/* Quand la vidéo joue, le bouton disparaît */
+.drop-banner-media--playing .drop-banner-play {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Titre + artiste repositionnés EN BAS de la bannière avec gradient */
+.drop-banner-overlay-info--bottom {
+  inset: auto 0 0 0 !important; /* override absolute inset:0 */
+  top: auto !important;
+  height: auto !important;
+  justify-content: flex-end !important;
+  padding: 50px 28px 22px !important;
+  background: linear-gradient(180deg, transparent 0%, rgba(8,10,20,0.55) 45%, rgba(4,6,14,0.92) 100%) !important;
+  z-index: 2;
+}
+.drop-banner-overlay-info--bottom .drop-banner-overlay-name {
+  margin-bottom: 2px;
+}
+
+/* Body en pleine largeur : on supprime la contrainte 2-col du live */
+.drop-banner-body--full {
+  flex-direction: column !important;
+}
+.drop-banner-body--full .dli-body-left {
+  padding: 20px 24px 22px;
+}
+
+/* Mini ajustement : quand la vidéo joue, les chips top sont plus lisibles sur fond vidéo */
+.drop-banner-media--playing .drop-hero-top {
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .drop-banner-play { padding: 12px 18px 12px 15px; }
+  .drop-banner-play svg { width: 16px; height: 16px; }
+  .drop-banner-play-lbl { font-size: 10px; letter-spacing: 0.14em; }
+  .drop-banner-overlay-info--bottom { padding: 40px 16px 16px !important; }
+  .drop-banner-body--full .dli-body-left { padding: 16px 16px 18px; }
+}
+@media (max-width: 520px) {
+  .drop-banner-play-lbl { display: none; }
+  .drop-banner-play { padding: 14px; width: 48px; height: 48px; }
+  .drop-banner-play svg { margin-left: 3px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PACKS — REFONTE : grille 2 cols, thumbs plus grands, badge BEST DEAL
+   ═══════════════════════════════════════════════════════════════════════ */
+.dli-packs--grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+}
+.dli-pack--card {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 14px;
+  padding: 14px 16px 14px 14px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  text-decoration: none;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  overflow: hidden;
+  min-width: 0;
+}
+.dli-pack--card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0,179,255,0.35);
+  background: rgba(0,179,255,0.04);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45), 0 0 18px rgba(0,179,255,0.12);
+}
+/* BEST DEAL state — accent cyan permanent */
+.dli-pack--best {
+  border-color: rgba(0,179,255,0.55);
+  background: rgba(0,179,255,0.06);
+  box-shadow: 0 0 0 1px rgba(0,179,255,0.25), 0 4px 18px rgba(0,179,255,0.15);
+}
+.dli-pack--best:hover {
+  border-color: rgba(0,179,255,0.85);
+  box-shadow: 0 0 0 1px rgba(0,179,255,0.45), 0 8px 26px rgba(0,179,255,0.25);
+}
+.dli-pack-ribbon {
+  position: absolute;
+  top: 9px;
+  right: -28px;
+  transform: rotate(35deg);
+  background: linear-gradient(135deg, #00B3FF, #0090d4);
+  color: #fff;
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  padding: 3px 32px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  z-index: 2;
+}
+
+/* Thumbnail plus grand pour la grille */
+.dli-pack-img-wrap--lg {
+  width: 96px;
+  height: 96px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+/* Body en colonne : top (nom + nft) / bottom (prix + progress) */
+.dli-pack-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.dli-pack-top {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.dli-pack-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dli-pack-price-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.dli-pack-price-row .dli-pack-price {
+  font-size: 18px !important;
+  letter-spacing: 0.01em;
+}
+.dli-pack-price-row .dli-pack-left {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.55);
+  font-variant-numeric: tabular-nums;
+}
+.dli-pack--card .dli-pack-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dli-pack--card .dli-pack-nfts {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.04em;
+}
+.dli-pack--card .dli-pack-mini-progress {
+  margin: 0;
+  max-width: none;
+}
+.dli-pack--card.dli-pack--sold {
+  background: rgba(255,255,255,0.015);
+  border-color: rgba(255,255,255,0.05);
+}
+.dli-pack--card .dli-pack-sold {
+  align-self: flex-start;
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #fbbf24;
+  background: rgba(251,191,36,0.12);
+  border: 1px solid rgba(251,191,36,0.3);
+  padding: 5px 10px;
+  border-radius: 6px;
+}
+
+@media (max-width: 720px) {
+  .dli-packs--grid { grid-template-columns: 1fr; }
+  .dli-pack-img-wrap--lg { width: 80px; height: 80px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DESCRIPTION — clamp 2 lignes + Read more
+   ═══════════════════════════════════════════════════════════════════════ */
+.dli-desc--clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+.dli-desc--expanded {
+  display: block;
+  overflow: visible;
+}
+.dli-desc-toggle {
+  background: none;
+  border: none;
+  padding: 2px 0;
+  margin-top: 2px;
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #00B3FF;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: color 0.15s ease, text-shadow 0.15s ease;
+}
+.dli-desc-toggle:hover {
+  color: #4dccff;
+  text-shadow: 0 0 12px rgba(0,179,255,0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   HIERARCHIE VERTICALE — séparateurs subtils entre sections majeures
+   ═══════════════════════════════════════════════════════════════════════ */
+.drop-card--live .drop-banner-body--full .dli-section + .dli-section {
+  position: relative;
+  padding-top: 22px;
+}
+.drop-card--live .drop-banner-body--full .dli-section + .dli-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255,255,255,0.06) 15%,
+    rgba(255,255,255,0.1) 50%,
+    rgba(255,255,255,0.06) 85%,
+    transparent 100%);
+}
+
+/* Section labels : un peu plus marqués */
+.drop-card--live .dli-section-label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.65);
+  font-weight: 800;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   AIR ENTRE DROPS LIVE — séparateur cinématique
+   ═══════════════════════════════════════════════════════════════════════ */
+.drops-live-grid {
+  gap: 72px !important; /* +16px par rapport à l'existant */
+}
+.drops-live-grid .drop-card--live + .drop-card--live {
+  position: relative;
+}
+.drops-live-grid .drop-card--live + .drop-card--live::before {
+  content: "";
+  position: absolute;
+  top: -36px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,179,255,0.45), transparent);
+  box-shadow: 0 0 12px rgba(0,179,255,0.35);
+  pointer-events: none;
+}
+
+@media (max-width: 720px) {
+  .drops-live-grid { gap: 48px !important; }
+  .drops-live-grid .drop-card--live + .drop-card--live::before { top: -24px; width: 60px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   "WHAT'S INSIDE" — Cellule vidéo (premier slot de la grille)
+   ═══════════════════════════════════════════════════════════════════════ */
+.dli-sample--video {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid rgba(0,179,255,0.45);
+  box-shadow: 0 0 0 1px rgba(0,179,255,0.18), 0 6px 20px rgba(0,0,0,0.45), 0 0 22px rgba(0,179,255,0.18);
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.dli-sample--video:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0,179,255,0.85);
+  box-shadow: 0 0 0 1px rgba(0,179,255,0.4), 0 8px 24px rgba(0,0,0,0.5), 0 0 28px rgba(0,179,255,0.3);
+}
+.dli-sample-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  cursor: pointer;
+}
+/* Bouton play/pause centré */
+.dli-sample-video-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 50%;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  transition: opacity 0.2s ease, background 0.2s ease, transform 0.18s ease;
+  z-index: 2;
+  opacity: 0; /* caché par défaut quand la vidéo joue */
+}
+.dli-sample-video-btn:hover {
+  background: rgba(0,179,255,0.9);
+  border-color: rgba(0,179,255,0.95);
+  transform: translate(-50%, -50%) scale(1.08);
+}
+.dli-sample-video-icon { width: 18px; height: 18px; }
+.dli-sample-video-icon--play { display: none; margin-left: 2px; }
+.dli-sample-video-icon--pause { display: block; }
+/* État "paused" : montrer le bouton play, cacher pause */
+.dli-sample--video.dli-sample--paused .dli-sample-video-btn { opacity: 1; }
+.dli-sample--video.dli-sample--paused .dli-sample-video-icon--play { display: block; }
+.dli-sample--video.dli-sample--paused .dli-sample-video-icon--pause { display: none; }
+/* Au hover (en lecture), bouton pause visible */
+.dli-sample--video:not(.dli-sample--paused):hover .dli-sample-video-btn { opacity: 1; }
+
+/* Tag "PREVIEW" en bas à gauche */
+.dli-sample-video-tag {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  padding: 3px 7px;
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: #00B3FF;
+  background: rgba(8,10,20,0.7);
+  border: 1px solid rgba(0,179,255,0.35);
+  border-radius: 4px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 2;
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   STATS — Tuile "Minted" (progress) avec barre intégrée
+   ═══════════════════════════════════════════════════════════════════════ */
+.dli-stat--progress {
+  /* Tuile plus large : prend 1.5fr au lieu de 1fr pour la barre */
+}
+.dli-stats-bar:has(.dli-stat--progress) {
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+}
+.dli-stat-progress-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.dli-stat-progress-row .dli-stat-val {
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.dli-stat-progress-row .dli-stat-val-sep {
+  color: rgba(255,255,255,0.25);
+  font-weight: 400;
+  margin: 0 1px;
+}
+.dli-stat-progress-row .dli-stat-val-total {
+  color: rgba(255,255,255,0.55);
+  font-weight: 700;
+}
+.dli-stat-pct {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #00B3FF;
+  text-shadow: 0 0 18px rgba(0,179,255,0.3);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.dli-stat-pct-sym {
+  font-size: 14px;
+  font-weight: 800;
+  margin-left: 1px;
+  color: rgba(0,179,255,0.7);
+}
+
+.dli-stat-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.05);
+  position: relative;
+}
+.dli-stat-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00B3FF 0%, #4dccff 60%, #7c3aed 100%);
+  box-shadow: 0 0 14px rgba(0,179,255,0.4);
+  border-radius: 999px;
+  transition: width 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+  position: relative;
+  overflow: hidden;
+}
+.dli-stat-progress-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  animation: dli-stat-shimmer 2.4s ease-in-out infinite;
+}
+@keyframes dli-stat-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Responsive : sur mobile, la tuile progress prend toute la 1ère ligne */
+@media (max-width: 720px) {
+  .dli-stats-bar:has(.dli-stat--progress) {
+    grid-template-columns: 1fr 1fr;
+  }
+  .dli-stat--progress {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PREVIEW PLAYER — bouton play/pause centré (scope global, marche partout)
+   ═══════════════════════════════════════════════════════════════════════ */
+.dli-preview-player .dli-preview-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 50%;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.55);
+  transition: opacity 0.2s ease, background 0.2s ease, border-color 0.2s ease, transform 0.18s ease;
+  z-index: 2;
+  opacity: 1;
+}
+.dli-preview-player .dli-preview-btn:hover {
+  background: rgba(255,255,255,0.92);
+  border-color: rgba(255,255,255,0.95);
+  color: #0a0d18;
+  transform: translate(-50%, -50%) scale(1.06);
+}
+.dli-preview-player .dli-preview-icon { width: 24px; height: 24px; }
+.dli-preview-player .dli-preview-icon--pause { display: none; }
+.dli-preview-player .dli-preview-icon--play { display: block; margin-left: 3px; }
+/* En lecture (pas paused) : bouton caché par défaut, visible au hover en mode pause */
+.dli-preview-player:not(.dli-preview-player--paused) .dli-preview-btn { opacity: 0; }
+.dli-preview-player:not(.dli-preview-player--paused):hover .dli-preview-btn { opacity: 1; }
+.dli-preview-player:not(.dli-preview-player--paused):hover .dli-preview-icon--play { display: none; }
+.dli-preview-player:not(.dli-preview-player--paused):hover .dli-preview-icon--pause { display: block; margin-left: 0; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PACKS SOLD OUT — préserver prix barré + total + tag discret
+   ═══════════════════════════════════════════════════════════════════════ */
+.dli-pack-price--struck {
+  color: rgba(255,255,255,0.45) !important;
+  text-decoration: line-through;
+  text-decoration-color: rgba(255,255,255,0.25);
+  text-decoration-thickness: 2px;
+  font-weight: 800 !important;
+}
+.dli-pack-sold-tag {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #fbbf24;
+  background: rgba(251,191,36,0.12);
+  border: 1px solid rgba(251,191,36,0.35);
+  padding: 4px 9px;
+  border-radius: 5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  align-self: center;
+}
+.dli-pack-left--sold {
+  color: rgba(255,255,255,0.4) !important;
+  font-style: italic;
+  font-weight: 600 !important;
+}
+/* Mini progress en sold out : grisé/saturé */
+.dli-pack-mini-fill--sold {
+  background: linear-gradient(90deg, rgba(251,191,36,0.6), rgba(251,191,36,0.35)) !important;
+  box-shadow: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DESCRIPTION BLOCK — pleine largeur, alignée avec les sections
+   ═══════════════════════════════════════════════════════════════════════ */
+.dli-desc-block {
+  /* Padding horizontal aligné avec .dli-section (22px) pour cohérence visuelle */
+  padding: 4px 22px 8px;
+  margin-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.dli-desc-block .dli-desc {
+  margin: 0;
+  /* Override des contraintes héritées : pas de scrollbar */
+  max-height: none !important;
+  overflow: visible !important;
+  text-align: left;
+  width: 100%;
+}
+/* Clamp à 4 lignes — appliqué par défaut tant que pas "expanded" */
+.dli-desc-block .dli-desc--clamped-4 {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  line-clamp: 4;
+  overflow: hidden !important;
+}
+.dli-desc-block .dli-desc--expanded {
+  display: block;
+  overflow: visible !important;
+}
+/* Bouton Read more / Read less */
+.dli-desc-block .dli-desc-toggle {
+  background: none;
+  border: none;
+  padding: 2px 0 0;
+  margin: 0;
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #00B3FF;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: color 0.15s ease, text-shadow 0.15s ease;
+}
+.dli-desc-block .dli-desc-toggle:hover {
+  color: #4dccff;
+  text-shadow: 0 0 10px rgba(0,179,255,0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   WHAT'S INSIDE — grille unique : NFTs + Preview central, toutes même taille
+   ═══════════════════════════════════════════════════════════════════════ */
+.dli-samples-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 8px;
+}
+/* Avec preview central : 9 colonnes égales (4 NFTs + preview + 4 NFTs) */
+.dli-samples-grid--with-preview {
+  grid-template-columns: repeat(9, 1fr);
+}
+
+/* Le preview prend la même cellule qu'un NFT — même taille, même aspect-ratio */
+.dli-samples-grid--with-preview .dli-preview-player {
+  position: relative;
+  width: auto;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid rgba(0,179,255,0.45);
+  box-shadow: 0 0 0 1px rgba(0,179,255,0.18), 0 4px 16px rgba(0,0,0,0.4), 0 0 18px rgba(0,179,255,0.18);
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  margin: 0;
+  max-width: none;
+}
+.dli-samples-grid--with-preview .dli-preview-player:hover {
+  border-color: rgba(0,179,255,0.75);
+  box-shadow: 0 0 0 1px rgba(0,179,255,0.4), 0 6px 20px rgba(0,0,0,0.5), 0 0 24px rgba(0,179,255,0.3);
+  transform: translateY(-2px);
+}
+.dli-samples-grid--with-preview .dli-preview-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 1 !important;
+  cursor: pointer;
+}
+
+/* Tag PREVIEW compact (cellule plus petite, donc tag plus petit) */
+.dli-preview-tag {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  padding: 2px 6px;
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: #00B3FF;
+  background: rgba(8,10,20,0.78);
+  border: 1px solid rgba(0,179,255,0.4);
+  border-radius: 4px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 2;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+/* Bouton play plus compact (cellule petite) + couleur NEUTRE (pas bleue) */
+.dli-samples-grid--with-preview .dli-preview-player .dli-preview-btn {
+  width: 38px;
+  height: 38px;
+}
+.dli-samples-grid--with-preview .dli-preview-player .dli-preview-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Responsive : sur écran étroit, le preview repasse plus large + grille en 4 colonnes */
+@media (max-width: 900px) {
+  .dli-samples-grid,
+  .dli-samples-grid--with-preview {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .dli-samples-grid--with-preview .dli-preview-player {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ESPACE APRÈS DERNIÈRE COLLECTION LIVE — équilibre avec gap entre cartes
+   ═══════════════════════════════════════════════════════════════════════ */
+/* Gap entre cartes live = 72px (override). Gap drops-inner = 32px.
+   Pour avoir 72px aussi sous la dernière carte avant le titre suivant,
+   on ajoute 40px de padding-bottom à la grille live. */
+.drops-live-grid {
+  padding-bottom: 40px;
+}
+@media (max-width: 720px) {
+  .drops-live-grid { padding-bottom: 16px; } /* gap mobile = 48px, donc 48-32 = 16px */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — input élargi (sans le select prédéfini)
+   ═══════════════════════════════════════════════════════════════════════ */
+.snapshot-id-wrap--wide {
+  flex: 1;
+  min-width: 280px;
+  max-width: 520px;
+}
+.snapshot-id-wrap--wide .stats-search-input {
+  width: 100% !important;
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Progress info : étape courante (gauche) + % (droite)
+   ═══════════════════════════════════════════════════════════════════════ */
+.snapshot-progress-info {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: baseline !important;
+  gap: 14px;
+  margin-top: 8px;
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 12px;
+}
+.snapshot-progress-text {
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.04em;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.snapshot-progress-count {
+  color: #00B3FF;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Log détaillé des étapes (visible pendant + après le run)
+   ═══════════════════════════════════════════════════════════════════════ */
+.snapshot-progress-log {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: rgba(8,10,20,0.75);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: rgba(255,255,255,0.78);
+  max-height: 260px;       /* console plus courte (520 → 260) — l'utilisateur peut scroller */
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+.snapshot-progress-log:empty {
+  display: none;
+}
+.snap-log-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 1px 0;
+}
+.snap-log-time {
+  flex-shrink: 0;
+  width: 52px;
+  color: rgba(255,255,255,0.35);
+  font-variant-numeric: tabular-nums;
+  font-size: 10.5px;
+  text-align: right;
+}
+.snap-log-msg {
+  flex: 1;
+  word-break: break-word;
+}
+.snap-log-msg code {
+  font-family: inherit;
+  background: rgba(0,179,255,0.12);
+  border: 1px solid rgba(0,179,255,0.25);
+  padding: 0 5px;
+  border-radius: 3px;
+  color: #4dccff;
+  font-size: 10.5px;
+}
+.snap-log-line--start .snap-log-msg { color: #00B3FF; font-weight: 700; }
+.snap-log-line--step .snap-log-msg { color: #fff; font-weight: 600; }
+.snap-log-line--detail .snap-log-msg { color: rgba(255,255,255,0.55); padding-left: 8px; }
+.snap-log-line--ok .snap-log-msg { color: #4ade80; font-weight: 600; }
+.snap-log-line--success .snap-log-msg { color: #4ade80; font-weight: 700; }
+.snap-log-line--warn .snap-log-msg { color: #fbbf24; }
+.snap-log-line--error .snap-log-msg { color: #ef4444; font-weight: 700; }
+/* Ligne de données structurées (key=value · key=value …) — bleu doux */
+.snap-log-line--data .snap-log-msg { color: #4dccff; }
+.snap-log-data-label {
+  font-weight: 700;
+  color: #4dccff;
+  margin-right: 4px;
+}
+.snap-log-data-pair {
+  display: inline-block;
+  margin-right: 2px;
+}
+.snap-log-data-key {
+  color: rgba(255,255,255,0.55);
+  font-size: 10.5px;
+}
+.snap-log-data-val {
+  color: #fff;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin-left: 1px;
+}
+/* Séparateur de phase — barre cyan stylée */
+.snap-log-line--divider {
+  margin: 6px 0 4px;
+  padding: 4px 0;
+  border-top: 1px solid rgba(0,179,255,0.18);
+}
+.snap-log-line--divider .snap-log-msg {
+  color: #00B3FF;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT DEBUG — Détail par édition (multi-éditions)
+   ═══════════════════════════════════════════════════════════════════════ */
+.snap-edition-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-family: 'Geomanist-Bold', sans-serif;
+}
+.snap-edition-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 8px;
+  background: rgba(0,179,255,0.06);
+  border: 1px solid rgba(0,179,255,0.18);
+  border-radius: 5px;
+  font-size: 10.5px;
+  line-height: 1.3;
+  width: fit-content;
+}
+.snap-edition-num {
+  flex-shrink: 0;
+  font-weight: 800;
+  color: rgba(255,255,255,0.55);
+  font-variant-numeric: tabular-nums;
+  min-width: 28px;
+}
+.snap-edition-arrow {
+  color: rgba(255,255,255,0.25);
+  font-weight: 400;
+  flex-shrink: 0;
+}
+.snap-edition-owner {
+  color: #00B3FF;
+  font-weight: 700;
+  word-break: break-all;
+}
+.snap-edition-status {
+  color: rgba(239,68,68,0.85);
+  font-weight: 600;
+  font-style: italic;
+}
+/* Édition sans owner data (API a retourné l'édition mais pas l'owner) */
+.snap-edition-row--unresolved {
+  background: rgba(239,68,68,0.06);
+  border-color: rgba(239,68,68,0.25);
+}
+.snap-edition-row--unresolved .snap-edition-num {
+  color: rgba(239,68,68,0.6);
+}
+/* Éditions non retournées du tout par l'API */
+.snap-edition-row--missing {
+  background: rgba(251,191,36,0.06);
+  border-color: rgba(251,191,36,0.3);
+}
+.snap-edition-row--missing .snap-edition-num {
+  color: #fbbf24;
+}
+.snap-edition-row--missing .snap-edition-status {
+  color: rgba(251,191,36,0.85);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Stat "Official Supply" (mise en avant)
+   ═══════════════════════════════════════════════════════════════════════ */
+.snapshot-stat--official .snapshot-stat-val {
+  color: #00B3FF;
+  text-shadow: 0 0 18px rgba(0,179,255,0.35);
+}
+.snapshot-stat--official .snapshot-stat-lbl {
+  color: rgba(0,179,255,0.7);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT DEBUG — Owners groupés par édition (compact)
+   ═══════════════════════════════════════════════════════════════════════ */
+.snap-owner-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: 'Geomanist-Bold', sans-serif;
+}
+.snap-owner-group {
+  display: grid;
+  grid-template-columns: minmax(110px, auto) 1fr auto;
+  align-items: baseline;
+  gap: 10px;
+  padding: 4px 10px;
+  background: rgba(0,179,255,0.06);
+  border: 1px solid rgba(0,179,255,0.2);
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.snap-owner-name {
+  color: #00B3FF;
+  font-weight: 800;
+  word-break: break-all;
+  letter-spacing: 0.01em;
+}
+.snap-owner-eds {
+  color: rgba(255,255,255,0.55);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-size: 10.5px;
+  word-break: break-word;
+}
+.snap-owner-count {
+  color: rgba(255,255,255,0.7);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  background: rgba(0,179,255,0.12);
+  padding: 1px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Variante : éditions retournées sans owner */
+.snap-owner-group--unresolved {
+  background: rgba(239,68,68,0.06);
+  border-color: rgba(239,68,68,0.25);
+}
+.snap-owner-group--unresolved .snap-owner-name {
+  color: rgba(239,68,68,0.85);
+  font-style: italic;
+}
+.snap-owner-group--unresolved .snap-owner-count {
+  background: rgba(239,68,68,0.15);
+  color: rgba(239,68,68,0.95);
+}
+
+/* Variante : éditions non retournées par l'API */
+.snap-owner-group--missing {
+  background: rgba(251,191,36,0.06);
+  border-color: rgba(251,191,36,0.3);
+}
+.snap-owner-group--missing .snap-owner-name {
+  color: rgba(251,191,36,0.95);
+  font-style: italic;
+}
+.snap-owner-group--missing .snap-owner-eds {
+  color: rgba(251,191,36,0.7);
+}
+.snap-owner-group--missing .snap-owner-count {
+  background: rgba(251,191,36,0.15);
+  color: rgba(251,191,36,0.95);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Sub-text dans une stat (ex. "/ 433 cap")
+   ═══════════════════════════════════════════════════════════════════════ */
+.snapshot-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.snapshot-stat-sub {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  margin-top: 1px;
+}
+.snapshot-stat-sub:empty { display: none; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT DEBUG — Bandeau de comparaison Officiel / Retrouvé
+   ═══════════════════════════════════════════════════════════════════════ */
+.snapshot-debug-compare {
+  margin: 12px 0 18px;
+  padding: 14px 16px;
+  background: rgba(8,10,20,0.6);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+}
+.snap-compare-title {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 12px;
+}
+.snap-compare-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.snap-compare-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 0.6fr;
+  gap: 12px;
+  padding: 8px 10px;
+  align-items: center;
+  background: rgba(255,255,255,0.02);
+  border-radius: 6px;
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 12px;
+}
+.snap-compare-row--header {
+  background: transparent;
+  padding: 4px 10px 6px;
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  font-weight: 800;
+}
+.snap-compare-cell {
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+.snap-compare-label {
+  color: rgba(255,255,255,0.7);
+  font-weight: 700;
+}
+.snap-compare-official {
+  color: rgba(255,255,255,0.85);
+  font-weight: 800;
+}
+.snap-compare-retrieved {
+  color: #00B3FF;
+  font-weight: 800;
+}
+.snap-compare-status {
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+.snap-compare-status--ok {
+  color: #4ade80;
+}
+.snap-compare-status--diff {
+  color: #fbbf24;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Header collection (logo + nom + artiste)
+   ═══════════════════════════════════════════════════════════════════════ */
+.snapshot-collection-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 22px;
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, rgba(0,179,255,0.08), rgba(0,179,255,0.02));
+  border: 1px solid rgba(0,179,255,0.22);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4), 0 0 24px rgba(0,179,255,0.06);
+}
+.snapshot-collection-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.snapshot-collection-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+.snapshot-collection-name {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  line-height: 1.15;
+  transition: color 0.15s ease, text-shadow 0.15s ease;
+  word-break: break-word;
+}
+.snapshot-collection-name:hover {
+  color: #00B3FF;
+  text-shadow: 0 0 14px rgba(0,179,255,0.4);
+}
+.snapshot-collection-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 0.02em;
+}
+.snapshot-collection-verified {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 720px) {
+  .snapshot-collection-header { padding: 14px 16px; gap: 14px; }
+  .snapshot-collection-logo { width: 52px; height: 52px; }
+  .snapshot-collection-name { font-size: 17px; }
+  .snapshot-collection-meta { font-size: 12px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT DEBUG — Indices d'édition cliquables
+   ═══════════════════════════════════════════════════════════════════════ */
+.snap-owner-eds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: baseline;
+}
+.snap-owner-idx {
+  color: rgba(255,255,255,0.55);
+  font-weight: 600;
+  text-decoration: none;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+a.snap-owner-idx:hover {
+  color: #fff;
+  background: rgba(0,179,255,0.18);
+  border-color: rgba(0,179,255,0.5);
+}
+.snap-owner-idx--no-link {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Variante missing : lien orange pour fallback "browse on crypto.com" */
+.snap-owner-group--missing a.snap-owner-idx {
+  background: rgba(251,191,36,0.1);
+  border-color: rgba(251,191,36,0.3);
+  color: rgba(251,191,36,0.95);
+}
+.snap-owner-group--missing a.snap-owner-idx:hover {
+  background: rgba(251,191,36,0.25);
+  border-color: rgba(251,191,36,0.7);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT DEBUG — Lien vers le profil owner + badge verified
+   ═══════════════════════════════════════════════════════════════════════ */
+.snap-owner-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+a.snap-owner-name--link {
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease, text-shadow 0.15s ease;
+}
+a.snap-owner-name--link:hover {
+  color: #4dccff;
+  text-shadow: 0 0 12px rgba(0,179,255,0.4);
+}
+.snap-owner-verified {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT DEBUG — Liste linéaire : une ligne par édition (ordre #1, #2, ...)
+   ═══════════════════════════════════════════════════════════════════════ */
+.snap-edition-list-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-family: 'Geomanist-Bold', sans-serif;
+}
+.snap-edition-line {
+  display: grid;
+  grid-template-columns: 48px 14px 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 10px;
+  background: rgba(0,179,255,0.05);
+  border: 1px solid rgba(0,179,255,0.16);
+  border-radius: 5px;
+  font-size: 11px;
+  line-height: 1.3;
+}
+.snap-edition-idx {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 800;
+  color: rgba(255,255,255,0.65);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  font-size: 10px;
+  transition: color 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+a.snap-edition-idx:hover {
+  color: #fff;
+  background: rgba(0,179,255,0.18);
+  border-color: rgba(0,179,255,0.5);
+}
+.snap-edition-idx--no-link { opacity: 0.5; cursor: default; }
+.snap-edition-arrow {
+  color: rgba(255,255,255,0.25);
+  text-align: center;
+  font-weight: 400;
+}
+.snap-edition-owner-link {
+  color: #00B3FF;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  word-break: break-all;
+  transition: color 0.15s ease, text-shadow 0.15s ease;
+}
+.snap-edition-owner-link:hover {
+  color: #4dccff;
+  text-shadow: 0 0 10px rgba(0,179,255,0.4);
+}
+.snap-edition-owner-text {
+  color: rgba(239,68,68,0.85);
+  font-weight: 600;
+  font-style: italic;
+}
+
+/* Variantes : édition sans owner data (rouge) */
+.snap-edition-line--unresolved {
+  background: rgba(239,68,68,0.06);
+  border-color: rgba(239,68,68,0.25);
+}
+.snap-edition-line--unresolved .snap-edition-idx {
+  color: rgba(239,68,68,0.7);
+}
+
+/* Variante : éditions non retournées par l'API (jaune) */
+.snap-edition-line--missing {
+  background: rgba(251,191,36,0.06);
+  border-color: rgba(251,191,36,0.3);
+}
+.snap-edition-line--missing .snap-edition-owner-text {
+  color: rgba(251,191,36,0.95);
+  font-style: normal;
+}
+.snap-edition-idx--missing {
+  color: #fbbf24 !important;
+  background: rgba(251,191,36,0.12) !important;
+  border-color: rgba(251,191,36,0.3) !important;
+}
+.snap-edition-line--missing a.snap-edition-idx {
+  background: rgba(251,191,36,0.1);
+  border-color: rgba(251,191,36,0.3);
+  color: rgba(251,191,36,0.95);
+}
+.snap-edition-line--missing a.snap-edition-idx:hover {
+  background: rgba(251,191,36,0.25);
+  border-color: rgba(251,191,36,0.7);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT MAIN TABLE — Cellule Holder enrichie (avatar + name + badges)
+   ═══════════════════════════════════════════════════════════════════════ */
+.snap-holder-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.snap-holder-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.snap-holder-avatar--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.55);
+  background: linear-gradient(135deg, rgba(0,179,255,0.12), rgba(0,179,255,0.04));
+  text-transform: uppercase;
+}
+.snap-holder-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.snap-holder-name-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.snap-holder-name {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #fff;
+  font-size: 13px;
+  word-break: break-word;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+.snap-holder-verified {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+.snap-holder-creator-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, rgba(0,179,255,0.22), rgba(0,179,255,0.08));
+  border: 1px solid rgba(0,179,255,0.45);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: #00B3FF;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.snap-holder-username {
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 10.5px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0;
+  word-break: break-all;
+}
+
+/* Top 3 : avatar plus gros + halo */
+.snapshot-tr--top1 .snap-holder-avatar {
+  border: 2px solid rgba(255,215,0,0.6);
+  box-shadow: 0 0 14px rgba(255,215,0,0.25);
+}
+.snapshot-tr--top2 .snap-holder-avatar {
+  border: 2px solid rgba(192,192,192,0.6);
+  box-shadow: 0 0 12px rgba(192,192,192,0.2);
+}
+.snapshot-tr--top3 .snap-holder-avatar {
+  border: 2px solid rgba(205,127,50,0.6);
+  box-shadow: 0 0 12px rgba(205,127,50,0.2);
+}
+
+/* Responsive : avatar plus petit, badge creator caché si trop étroit */
+@media (max-width: 700px) {
+  .snap-holder-avatar { width: 32px; height: 32px; }
+  .snap-holder-name { font-size: 12px; }
+  .snap-holder-username { font-size: 10px; }
+}
+@media (max-width: 480px) {
+  .snap-holder-creator-badge { display: none; }
+  .snap-holder-cell { gap: 9px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT TABLE — Nom cliquable + icônes sociales + avatar interactive
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Avatar wrap (lien vers profil) */
+a.snap-holder-avatar-wrap {
+  display: block;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  width: 38px;
+  height: 38px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+a.snap-holder-avatar-wrap:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 2px rgba(0,179,255,0.5), 0 0 16px rgba(0,179,255,0.3);
+}
+
+/* Nom cliquable */
+a.snap-holder-name {
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease, text-shadow 0.15s ease;
+}
+a.snap-holder-name:hover {
+  color: #4dccff;
+  text-shadow: 0 0 14px rgba(0,179,255,0.5);
+}
+
+/* Username sub (handle) — cliquable aussi */
+a.snap-holder-username {
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+a.snap-holder-username:hover {
+  color: rgba(0,179,255,0.85);
+}
+
+/* Liens sociaux */
+.snap-holder-socials {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 4px;
+}
+.snap-holder-social {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.55);
+  text-decoration: none;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+}
+.snap-holder-social svg {
+  width: 11px;
+  height: 11px;
+}
+a.snap-holder-social:hover {
+  color: #fff;
+  transform: scale(1.1);
+}
+.snap-holder-social--twitter:hover {
+  background: rgba(29,161,242,0.18);
+  border-color: rgba(29,161,242,0.55);
+}
+.snap-holder-social--instagram:hover {
+  background: rgba(225,48,108,0.18);
+  border-color: rgba(225,48,108,0.55);
+}
+.snap-holder-social--website:hover {
+  background: rgba(0,179,255,0.18);
+  border-color: rgba(0,179,255,0.55);
+}
+.snap-holder-social--discord {
+  cursor: help;
+}
+.snap-holder-social--discord:hover {
+  background: rgba(88,101,242,0.18);
+  border-color: rgba(88,101,242,0.55);
+  color: #fff;
+}
+.snap-holder-social--no-link {
+  cursor: help;
+}
+
+/* Sur mobile, icônes plus petites + masquer celles trop dense */
+@media (max-width: 700px) {
+  a.snap-holder-avatar-wrap { width: 32px; height: 32px; }
+  .snap-holder-social { width: 20px; height: 20px; }
+  .snap-holder-social svg { width: 10px; height: 10px; }
+}
+@media (max-width: 480px) {
+  /* Garder seulement Twitter+Web sur très petit écran (les plus consultés) */
+  .snap-holder-social--instagram,
+  .snap-holder-social--discord {
+    display: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Override : avatar non cliquable + username CAPS gris
+   ═══════════════════════════════════════════════════════════════════════ */
+/* Username sub : MAJUSCULES, gris, MÊME police que le reste du site (Geomanist),
+   PAS de @ devant. Fonctionne aussi en lien (cliquable vers profil). */
+.snap-holder-username {
+  font-family: 'Geomanist-Bold', sans-serif !important;
+  font-size: 10.5px;
+  color: rgba(255,255,255,0.42);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 700;
+  word-break: break-all;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+a.snap-holder-username:hover {
+  color: rgba(255,255,255,0.7);
+}
+
+/* L'avatar n'est plus enveloppé d'un <a>, on retire les styles de l'ancien wrapper */
+/* (Les styles de hover sur a.snap-holder-avatar-wrap deviennent obsolètes mais
+    restent inoffensifs puisque le sélecteur ne matche plus aucun élément.) */
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Icône Facebook (en remplacement de Discord/Website)
+   ═══════════════════════════════════════════════════════════════════════ */
+.snap-holder-social--facebook:hover {
+  background: rgba(24,119,242,0.18);
+  border-color: rgba(24,119,242,0.55);
+  color: #fff;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Bannière de collection (au-dessus du logo + nom)
+   ═══════════════════════════════════════════════════════════════════════ */
+.snapshot-collection-header {
+  /* Le wrapper contient maintenant la bannière (en haut) + la row info en bas */
+  display: block !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+.snapshot-collection-banner {
+  width: 100%;
+  height: 140px;
+  background-color: rgba(0,179,255,0.05);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-bottom: 1px solid rgba(0,179,255,0.2);
+  position: relative;
+  display: none; /* visible seulement si bannière présente */
+}
+.snapshot-collection-banner.has-banner {
+  display: block;
+}
+/* Léger fade en bas pour que le logo + nom soient lisibles même si bannière claire */
+.snapshot-collection-banner.has-banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8,10,20,0) 40%, rgba(8,10,20,0.75) 100%);
+  pointer-events: none;
+}
+.snapshot-collection-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 22px;
+  position: relative;
+}
+/* Quand la bannière est affichée, le logo "remonte" sur la bannière (style classique) */
+.snapshot-collection-banner.has-banner + .snapshot-collection-row {
+  margin-top: -32px; /* logo chevauche la bannière */
+}
+.snapshot-collection-banner.has-banner + .snapshot-collection-row .snapshot-collection-logo {
+  border: 3px solid rgba(8,10,20,0.95);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+}
+@media (max-width: 720px) {
+  .snapshot-collection-banner { height: 100px; }
+  .snapshot-collection-row { padding: 14px 16px; gap: 14px; }
+  .snapshot-collection-banner.has-banner + .snapshot-collection-row { margin-top: -24px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Bannière collection style "drop" (16:4 avec overlay nom + artiste)
+   ═══════════════════════════════════════════════════════════════════════ */
+/* Override de l'ancien style — remettre le header en mode bloc plein */
+.snapshot-collection-header {
+  display: block;
+  padding: 0;
+  margin-bottom: 18px;
+  background: rgba(8,10,20,0.4);
+  border: 1px solid rgba(0,179,255,0.18);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+.snapshot-collection-banner-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 4;
+  overflow: hidden;
+  background: rgba(255,255,255,0.04);
+  flex-shrink: 0;
+}
+.snapshot-collection-banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.snapshot-collection-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 60%, rgba(10,14,28,0.55) 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+.snapshot-collection-banner-info {
+  /* IDENTIQUE à .drop-banner-overlay-info — centré horizontalement + verticalement */
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 24px;
+  background: rgba(8,10,20,0.38);
+}
+.snapshot-collection-banner-name {
+  /* IDENTIQUE à .drop-banner-overlay-name */
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: clamp(22px, 3.5vw, 42px);
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin: 0;
+  line-height: 1.1;
+  text-align: center;
+  text-shadow: 0 2px 16px rgba(0,0,0,0.8);
+}
+.snapshot-collection-banner-artist {
+  /* IDENTIQUE à .drop-banner-overlay-artist */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 17px;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+/* Avatar du créateur masqué pour matcher exactement le style drop */
+.snapshot-collection-banner-avatar {
+  display: none !important;
+}
+.snapshot-collection-banner-verified {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Le link transparent recouvre toute la bannière pour la rendre cliquable */
+.snapshot-collection-banner-link {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: block;
+  text-decoration: none;
+}
+
+/* Responsive */
+@media (max-width: 720px) {
+  .snapshot-collection-banner-media {
+    aspect-ratio: 16 / 5;
+  }
+  .snapshot-collection-banner-info {
+    padding: 12px 18px;
+    gap: 5px;
+  }
+  .snapshot-collection-banner-artist { font-size: 14px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Ancien CSS bannière (pré-refonte) — neutralisé
+   ═══════════════════════════════════════════════════════════════════════ */
+.snapshot-collection-banner,
+.snapshot-collection-row,
+.snapshot-collection-logo,
+.snapshot-collection-info,
+.snapshot-collection-name,
+.snapshot-collection-meta,
+.snapshot-collection-creator,
+.snapshot-collection-verified {
+  /* anciennes classes utilisées dans la version précédente, plus présentes dans le DOM
+     mais on neutralise les styles éventuels qui auraient pu leak ailleurs */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT TABLE — Largeurs ajustées (4 colonnes seulement)
+   ═══════════════════════════════════════════════════════════════════════ */
+/* Rank étroit, Holder limitée, NFTs + Share rapprochées (alignées droite) */
+.snapshot-th--rank, .snapshot-td--rank { width: 60px; }
+.snapshot-th--wallet, .snapshot-td--wallet {
+  /* Pas de largeur fixe : prend ce qui reste, mais limitée pour rapprocher les autres */
+  width: auto;
+  max-width: 0; /* astuce pour empêcher l'expansion excessive */
+}
+.snapshot-th--count, .snapshot-td--count {
+  width: 90px;
+  text-align: right;
+  white-space: nowrap;
+  padding-right: 10px;
+}
+.snapshot-th--pct, .snapshot-td--pct {
+  width: 180px;
+  text-align: right;
+  padding-right: 16px;
+}
+/* Le wrapper du % avec barre : largeur fixe pour que la barre soit cohérente */
+.snapshot-pct-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.snapshot-pct-bar {
+  width: 140px;
+}
+@media (max-width: 700px) {
+  .snapshot-th--count, .snapshot-td--count { width: 64px; padding-right: 6px; }
+  .snapshot-th--pct, .snapshot-td--pct { width: 120px; padding-right: 10px; }
+  .snapshot-pct-bar { width: 90px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — S'assurer que les éléments masqués le restent (override les
+   éventuels !important) Le style="display:none" inline doit toujours gagner.
+   ═══════════════════════════════════════════════════════════════════════ */
+.snapshot-summary[style*="display:none"],
+.snapshot-collection-header[style*="display:none"],
+.snapshot-progress-wrap[style*="display:none"],
+.snapshot-table-wrap[style*="display:none"] {
+  display: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Section labels (identique aux drops, sans override)
+   ═══════════════════════════════════════════════════════════════════════ */
+/* Pas d'override : on hérite directement de .drops-section-label
+   (font-size: 18px, letter-spacing: 0.2em, padding-bottom: 4px).
+   On compte juste sur le gap parent pour les espacements verticaux. */
+.snapshot-section-label {
+  /* Aucune modification : style strictement identique aux drops */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Console log (séparée du progress wrap)
+   ═══════════════════════════════════════════════════════════════════════ */
+.snapshot-progress-log-wrap {
+  margin-bottom: 14px;
+}
+.snapshot-progress-log-wrap .snapshot-progress-log {
+  margin-top: 0; /* on retire l'ancienne marge top puisque le label tient ce rôle */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Stats intégrées en BAS de la bannière (glassmorphism)
+   ═══════════════════════════════════════════════════════════════════════ */
+/* La banner-media est position:relative — le summary se positionne en absolute
+   au bas, recouvrant la partie inférieure de la bannière avec un fond flouté
+   pour assurer la lisibilité (effet glassmorphism moderne). */
+.snapshot-collection-banner-media {
+  position: relative;
+}
+.snapshot-collection-banner-media .snapshot-summary {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;                         /* au-dessus de l'overlay (z=1), texte (z=2), link (z=3) */
+
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  margin: 0;
+  border: none;
+  /* Ligne cyan en haut ET en bas — symétriques pour encadrer le summary */
+  border-top: 1px solid rgba(0,179,255,0.55);
+  border-bottom: 1px solid rgba(0,179,255,0.55);
+  border-radius: 0;
+
+  /* GLASSMORPHISM léger — fond très subtil pour laisser la bannière dominer.
+     On garde un mini-dégradé qui s'assombrit imperceptiblement vers le bas
+     pour rester lisible quand la bannière est claire en bas. */
+  background: linear-gradient(180deg,
+    rgba(0,15,30,0.04) 0%,
+    rgba(0,12,25,0.10) 60%,
+    rgba(0,10,22,0.18) 100%);
+  backdrop-filter: blur(10px) saturate(160%);
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
+
+  /* Le 1px de gap entre stats forme les séparateurs verticaux fins */
+}
+
+/* Chaque stat individuelle dans l'overlay : transparent pour laisser passer
+   le glassmorphism du parent (l'image bannière floutée + saturée) */
+.snapshot-collection-banner-media .snapshot-stat {
+  flex: none;
+  background: rgba(0,179,255,0.015);  /* voile cyan minimal — quasi imperceptible */
+  padding: 14px 16px 16px;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* Le link transparent sur la bannière ne doit PAS recouvrir les stats
+   (sinon clic = redirige vers crypto.com au lieu de cliquer sur un nom dans le tableau). */
+.snapshot-collection-banner-media .snapshot-collection-banner-link {
+  bottom: auto;                       /* limite le link à la zone supérieure */
+  height: calc(100% - 96px);          /* laisse 96px en bas pour les stats */
+}
+@media (max-width: 720px) {
+  .snapshot-collection-banner-media .snapshot-collection-banner-link {
+    height: calc(100% - 220px);       /* mobile : 4 lignes de stats — laisse + de place */
+  }
+}
+
+/* Texte du nom de collection : déplacer un peu vers le HAUT pour ne pas
+   chevaucher les stats du bas (l'info-bar est centrée verticalement et risque
+   de heurter visuellement les stats). On la décale vers le haut. */
+.snapshot-collection-banner-info {
+  /* Override : align center mais pousser un peu vers le haut */
+  padding-bottom: 110px;              /* hauteur approximative de la stats-bar */
+}
+@media (max-width: 720px) {
+  .snapshot-collection-banner-info {
+    padding-bottom: 230px;              /* mobile : 4 lignes de stats avec 7 items */
+  }
+}
+
+/* Sub stat-sub neutralisé (cap retiré) */
+.snapshot-collection-banner-media .snapshot-stat-sub {
+  display: none;
+}
+
+/* Ligne valeur + sub-text */
+.snapshot-collection-banner-media .snapshot-stat-val-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+.snapshot-collection-banner-media .snapshot-stat-val {
+  color: #fff;
+  font-size: 26px;
+  font-weight: 800;
+  font-family: 'Geomanist-Bold', sans-serif;
+  letter-spacing: 0.01em;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  /* Shadow plus marquée pour rester lisible sur image floutée */
+  text-shadow: 0 2px 12px rgba(0,0,0,0.85), 0 0 4px rgba(0,0,0,0.6);
+}
+.snapshot-collection-banner-media .snapshot-stat-lbl {
+  color: #00B3FF;
+  font-size: 12px;
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-top: 2px;
+  /* Shadow noire pour faire ressortir le cyan sur image */
+  text-shadow: 0 1px 8px rgba(0,0,0,0.9), 0 0 3px rgba(0,0,0,0.7);
+}
+
+@media (max-width: 720px) {
+  .snapshot-collection-banner-media .snapshot-summary {
+    grid-template-columns: repeat(2, 1fr);  /* 2 colonnes sur mobile → 4 lignes pour 7 stats */
+  }
+  .snapshot-collection-banner-media .snapshot-stat-val { font-size: 22px; }
+  .snapshot-collection-banner-media .snapshot-stat-lbl { font-size: 10px; }
+}
+
+/* Note jaune retirée définitivement */
+.snapshot-note { display: none !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Bannière + stats + tableau dans UN SEUL cadre unifié
+   ═══════════════════════════════════════════════════════════════════════ */
+/* Plus de border-radius interne sur le tableau quand il est dans le header :
+   il s'intègre comme une 3ème "ligne" du cadre (banner / stats / table). */
+.snapshot-collection-header .snapshot-table-wrap {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  margin: 0;
+}
+.snapshot-collection-header .snapshot-table {
+  background: rgba(8,10,20,0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Stats : labels CYAN + valeur BLANCHE + sub à droite (inline)
+   ═══════════════════════════════════════════════════════════════════════ */
+/* Override pour la version intégrée dans le collection header */
+.snapshot-collection-header .snapshot-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;         /* CENTRÉ HORIZONTALEMENT dans la cellule */
+  text-align: center;
+  justify-content: center;
+}
+/* Ligne valeur + sub-text — "266 / 900 cap" sur la même ligne */
+.snapshot-collection-header .snapshot-stat-val-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+.snapshot-collection-header .snapshot-stat-val {
+  color: #fff;                 /* VALEUR EN BLANC */
+  font-size: 32px;             /* AGRANDI : 22px → 32px */
+  font-weight: 800;
+  font-family: 'Geomanist-Bold', sans-serif;
+  letter-spacing: 0.01em;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+/* Sub-text "/ 900 cap" inline à droite, en petit gris (élément retiré du HTML
+   mais on garde le style au cas où d'anciens screenshots/contenu en utilisent) */
+.snapshot-collection-header .snapshot-stat-sub {
+  display: none;               /* RETIRÉ : on n'affiche plus le cap */
+}
+/* INTITULÉ EN CYAN (plus gros) */
+.snapshot-collection-header .snapshot-stat-lbl {
+  color: #00B3FF;              /* cyan accent du site */
+  font-size: 12px;             /* AGRANDI : 10px → 12px */
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Headers du tableau classement (style "market bot" .sb-th)
+   ═══════════════════════════════════════════════════════════════════════ */
+/* Reproduit exactement le style des en-têtes du market bot :
+   - font-size 12px (vs 9px avant)
+   - letter-spacing 0.08em (vs 0.18em avant)
+   - color rgba(255,255,255,0.9) (vs 0.3 avant)
+   - padding 10px 14px */
+.snapshot-collection-header .snapshot-th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.9);     /* presque blanc, lisible */
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-family: 'Geomanist-Bold', sans-serif;
+  white-space: nowrap;
+  font-weight: 800;
+  background: rgba(255,255,255,0.03);
+}
+/* Headers : tous alignés à GAUCHE de leur colonne (sauf rank centré, c'est un # ordinal) */
+.snapshot-collection-header .snapshot-th--count,
+.snapshot-collection-header .snapshot-th--firstheld,
+.snapshot-collection-header .snapshot-th--walletest,
+.snapshot-collection-header .snapshot-th--wallet,
+.snapshot-collection-header .snapshot-th--pct {
+  text-align: left;
+}
+.snapshot-collection-header .snapshot-th--rank {
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Ligne de séparation entre les stats et le tableau classement
+   ═══════════════════════════════════════════════════════════════════════ */
+/* La ligne du bas reprend EXACTEMENT le style de celle du haut (1px cyan 0.55)
+   pour que le bloc stats soit encadré symétriquement. */
+.snapshot-collection-header .snapshot-summary {
+  border-bottom: 1px solid rgba(0,179,255,0.55);
+  box-shadow: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Répartition des colonnes du tableau classement
+   ═══════════════════════════════════════════════════════════════════════ */
+/* table-layout: fixed → respecte strictement les widths déclarés, ce qui permet
+   de répartir l'espace en pourcentages (pas de "leftover" qui s'accumule dans
+   une seule colonne et crée un grand vide). */
+.snapshot-collection-header .snapshot-table {
+  table-layout: fixed;
+}
+.snapshot-collection-header .snapshot-th--rank,
+.snapshot-collection-header .snapshot-td--rank {
+  width: 5%;
+  min-width: 50px;
+  text-align: center;
+}
+.snapshot-collection-header .snapshot-th--wallet,
+.snapshot-collection-header .snapshot-td--wallet {
+  width: 38%;
+  min-width: 320px;
+}
+.snapshot-collection-header .snapshot-th--count,
+.snapshot-collection-header .snapshot-td--count {
+  width: 8%;
+  min-width: 90px;
+  white-space: nowrap;
+  padding-right: 18px;
+  padding-left: 22px;
+  text-align: left;        /* header aligné à gauche, contenu géré par .snap-count-cell */
+}
+/* La cellule du tableau garde son contenu aligné à gauche (collé au header) */
+.snapshot-collection-header .snapshot-td--count .snap-count-cell {
+  justify-content: flex-start;
+}
+
+/* ── Colonne : First Held (date de première acquisition par le holder) ── */
+.snapshot-collection-header .snapshot-th--firstheld,
+.snapshot-collection-header .snapshot-td--firstheld {
+  width: 19%;
+  min-width: 200px;
+  white-space: nowrap;
+  padding-left: 22px;
+  padding-right: 22px;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+/* Cellule date : layout INLINE — date + relatif sur la MÊME ligne, alignés à gauche
+   pour suivre l'alignement gauche des nouveaux headers. */
+.snap-firstheld-cell {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 8px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.snap-firstheld-date {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.snap-firstheld-rel {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.32);
+  text-transform: uppercase;
+}
+.snap-firstheld--empty {
+  color: rgba(255,255,255,0.25);
+  font-weight: 400;
+  font-size: 13px;
+  font-family: 'Geomanist-Bold', sans-serif;
+}
+
+/* ── PIONNIER : holder avec la date d'acquisition la plus ancienne ────
+   Distingué simplement par une couleur jaune (sans badge, sans fond). */
+.snap-firstheld-cell--first .snap-firstheld-date {
+  /* Date jaune doré pour signaler que c'est LE premier de la collection */
+  color: #fbbf24;
+}
+.snap-firstheld-cell--first .snap-firstheld-rel {
+  color: rgba(251,191,36,0.55);
+}
+
+/* Mode "no first-held" : le toggle est désactivé → on cache complètement la colonne.
+   Header et cellules ciblés via le wrapper du tableau (classe ajoutée par JS). */
+.snapshot-table-wrap--no-firstheld .snapshot-th--firstheld,
+.snapshot-table-wrap--no-firstheld .snapshot-td--firstheld {
+  display: none;
+}
+
+/* ── Colonne : Wallet est. (count × floor price) ─────────────────────── */
+.snapshot-collection-header .snapshot-th--walletest,
+.snapshot-collection-header .snapshot-td--walletest {
+  width: 12%;
+  min-width: 120px;
+  white-space: nowrap;
+  padding-left: 22px;
+  padding-right: 22px;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+.snap-walletest-val {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;             /* BLANC (passé de vert à blanc) */
+  letter-spacing: 0.01em;
+}
+.snap-walletest--empty {
+  color: rgba(255,255,255,0.25);
+  font-weight: 400;
+  font-size: 13px;
+  font-family: 'Geomanist-Bold', sans-serif;
+}
+/* Mode "no wallet est." : le toggle est désactivé → on cache complètement la colonne */
+.snapshot-table-wrap--no-walletest .snapshot-th--walletest,
+.snapshot-table-wrap--no-walletest .snapshot-td--walletest {
+  display: none;
+}
+
+/* % of supply — colonne dimensionnée en pourcentage. Header ET contenu alignés à
+   GAUCHE de la cellule pour cohérence visuelle (header au-dessus du début de la barre). */
+.snapshot-collection-header .snapshot-th--pct,
+.snapshot-collection-header .snapshot-td--pct {
+  width: 18%;
+  min-width: 200px;
+  padding-right: 22px;
+  padding-left: 22px;
+  text-align: left;
+}
+/* Le wrapper du % : valeur au-dessus de la barre, alignés À GAUCHE pour suivre
+   le header. La barre fait 180px (largeur réduite comme demandé). */
+.snapshot-collection-header .snapshot-pct-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;   /* GAUCHE — sous le header */
+  gap: 5px;
+  width: 100%;
+}
+.snapshot-collection-header .snapshot-pct-val {
+  text-align: left;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+}
+/* Barre de progression : 180px fixe (compacte, comme demandé). */
+.snapshot-collection-header .snapshot-pct-bar {
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
+  height: 4px;
+}
+
+@media (max-width: 700px) {
+  .snapshot-collection-header .snapshot-th--wallet,
+  .snapshot-collection-header .snapshot-td--wallet {
+    width: 200px;
+    max-width: 200px;
+  }
+  .snapshot-collection-header .snapshot-th--pct,
+  .snapshot-collection-header .snapshot-td--pct {
+    min-width: 120px;
+  }
+  .snapshot-collection-header .snapshot-pct-bar {
+    min-width: 90px;
+    max-width: 160px;
+  }
+  .snapshot-collection-header .snapshot-th--count,
+  .snapshot-collection-header .snapshot-td--count { padding-left: 8px; padding-right: 6px; }
+  .snapshot-collection-header .snapshot-th--pct,
+  .snapshot-collection-header .snapshot-td--pct { padding-left: 8px; padding-right: 8px; }
+  .snapshot-collection-header .snapshot-th--firstheld,
+  .snapshot-collection-header .snapshot-td--firstheld { padding-left: 8px; padding-right: 8px; }
+  .snap-firstheld-date { font-size: 12px; }
+  .snap-firstheld-rel  { font-size: 8px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Cadre principal : bordure CYAN + halo STATIQUE
+   ═══════════════════════════════════════════════════════════════════════ */
+/* Halo cyan permanent sans pulsation — pas d'animation. Le rendu est calme,
+   le cadre reste cyan en continu sans fluctuation. */
+.snapshot-collection-header {
+  border: 1px solid rgba(0,179,255,0.55);
+  background: rgba(8,10,20,0.7);
+  border-radius: 14px;
+  overflow: hidden;
+  /* Halo statique : 3 niveaux de glow cyan empilés (fin → moyen → large) */
+  box-shadow:
+    0 0 0 1px rgba(0,179,255,0.45),
+    0 0 32px rgba(0,179,255,0.28),
+    0 0 72px rgba(0,179,255,0.14);
+}
+/* Pas d'effet hover supplémentaire — le halo reste constant */
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Retirer backgrounds différenciés top1/2/3 (uniforme)
+   ═══════════════════════════════════════════════════════════════════════ */
+/* Les avatars du top 3 conservent leurs bordures dorée/argentée/bronze,
+   mais le background des rows reste identique aux autres rows. */
+.snapshot-collection-header .snapshot-tr--top1 .snapshot-td,
+.snapshot-collection-header .snapshot-tr--top2 .snapshot-td,
+.snapshot-collection-header .snapshot-tr--top3 .snapshot-td {
+  background: transparent !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Cellule NFTs : "12 NFTs" sur la MÊME ligne, nombre BLANC + label CYAN
+   ═══════════════════════════════════════════════════════════════════════ */
+.snap-count-cell {
+  display: flex;
+  flex-direction: row;        /* HORIZONTAL : nombre + label côte à côte */
+  align-items: baseline;      /* aligné sur la baseline pour un meilleur rendu */
+  justify-content: flex-end;
+  gap: 6px;
+}
+.snap-count-val {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;                /* BLANC */
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.snap-count-sub {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  color: #00B3FF;             /* CYAN */
+  letter-spacing: 0.05em;
+  text-transform: none;       /* PAS de uppercase — on respecte la casse "NFTs" / "NFT" */
+}
+
+/* Header de la colonne NFTs : casse exacte "NFTs" et non "NFTS" */
+.snapshot-collection-header .snapshot-th--count {
+  text-transform: none;       /* override l'uppercase global pour ce header */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Toolbar du tableau de résultats : recherche + compteur
+   ═══════════════════════════════════════════════════════════════════════ */
+.snapshot-table-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.snapshot-table-search-wrap {
+  position: relative;
+  flex: 1;
+  max-width: 360px;
+  display: flex;
+  align-items: center;
+}
+.snapshot-table-search-icon {
+  position: absolute;
+  left: 10px;
+  width: 14px;
+  height: 14px;
+  color: rgba(255,255,255,0.3);
+  pointer-events: none;
+}
+.snapshot-table-search-input {
+  width: 100%;
+  height: 32px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  color: #fff;
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 0 28px 0 30px;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+  box-sizing: border-box;
+}
+.snapshot-table-search-input::placeholder { color: rgba(255,255,255,0.28); text-transform: none; }
+.snapshot-table-search-input:focus {
+  border-color: rgba(0,179,255,0.45);
+  background: rgba(0,179,255,0.05);
+}
+.snapshot-table-search-clear {
+  position: absolute;
+  right: 6px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.snapshot-table-search-clear:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.08);
+}
+.snapshot-table-result-count {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+}
+.snapshot-table-empty {
+  padding: 36px 16px;
+  text-align: center;
+  color: rgba(255,255,255,0.35);
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SNAPSHOT — Toggle "Collect first-held dates" (à gauche d'Add Collection)
+   ═══════════════════════════════════════════════════════════════════════ */
+.snapshot-opt-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px 6px 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+.snapshot-opt-toggle:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.14);
+}
+/* Le checkbox natif est masqué — on rend un track + thumb personnalisés */
+.snapshot-opt-toggle-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+.snapshot-opt-toggle-track {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+.snapshot-opt-toggle-thumb {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+.snapshot-opt-toggle-input:checked + .snapshot-opt-toggle-track {
+  background: rgba(0,179,255,0.55);
+  border-color: rgba(0,179,255,0.7);
+}
+.snapshot-opt-toggle-input:checked + .snapshot-opt-toggle-track .snapshot-opt-toggle-thumb {
+  transform: translateX(14px);
+}
+.snapshot-opt-toggle-label {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.1;
+}
+.snapshot-opt-toggle-title {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.85);
+  text-transform: uppercase;
+}
+.snapshot-opt-toggle-sub {
+  font-family: 'Geomanist-Bold', sans-serif;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+}
+/* Quand activé, le sub-label passe en cyan pâle pour signaler que le mode "lent" est ON */
+.snapshot-opt-toggle-input:checked ~ .snapshot-opt-toggle-label .snapshot-opt-toggle-sub {
+  color: rgba(0,179,255,0.65);
+}
+
+/* Mobile : toolbar et toggle en stack vertical */
+@media (max-width: 720px) {
+  .snapshot-table-toolbar { flex-wrap: wrap; }
+  .snapshot-table-search-wrap { max-width: none; }
+  .snapshot-opt-toggle-sub { display: none; }
+  .snapshot-collection-header .snapshot-th--wallet,
+  .snapshot-collection-header .snapshot-td--wallet { min-width: 220px; }
+  .snapshot-collection-header .snapshot-th--pct,
+  .snapshot-collection-header .snapshot-td--pct { width: 140px; min-width: 140px; }
+}
+
+
+
+/* ════════════════════════════════════════════════════════════════════════
+ * GRAPHQL BOOST STYLES — added by optimization pass
+ * Styles for the new UI elements injected by the GraphQL boost module:
+ *   - .cb-ticker .........  Live activity ticker (top of homepage)
+ *   - .cb-range-toggle ...  1D / 7D / 30D / All buttons on Top Collections
+ *   - .cb-creators-section  Top Creators leaderboard
+ *   - .cb-feat-card ......  Featured-collection card extras
+ * Every selector is `cb-` prefixed → zero risk of conflict with existing styles.
+ * ════════════════════════════════════════════════════════════════════════ */
+
+/* ── Live activity ticker ──────────────────────────────────────────────── */
+.cb-ticker {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 0 24px 12px;
+    padding: 10px 18px;
+    background: linear-gradient(135deg, rgba(0, 179, 255, 0.06), rgba(255, 255, 255, 0.02));
+    border: 1px solid rgba(0, 179, 255, 0.18);
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+}
+.cb-ticker-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #00B3FF;
+    flex-shrink: 0;
+    padding-right: 14px;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+.cb-ticker-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #ef4444;
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    animation: cb-pulse 1.6s infinite;
+}
+@keyframes cb-pulse {
+    0%   { box-shadow: 0 0 0 0   rgba(239, 68, 68, 0.7); }
+    70%  { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);   }
+    100% { box-shadow: 0 0 0 0   rgba(239, 68, 68, 0);   }
+}
+.cb-ticker-track {
+    display: flex;
+    gap: 28px;
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    white-space: nowrap;
+    align-items: center;
+}
+.cb-ticker-track::-webkit-scrollbar { display: none; }
+
+.cb-ticker-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 12.5px;
+    text-decoration: none;
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border-radius: 8px;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+.cb-ticker-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-1px);
+}
+.cb-ticker-img {
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.cb-ticker-verb {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+.cb-tk-sale .cb-ticker-verb { background: rgba(74, 222, 128, 0.16); color: #4ade80; }
+.cb-tk-list .cb-ticker-verb { background: rgba(0, 179, 255, 0.16); color: #00B3FF; }
+.cb-ticker-asset { font-weight: 600; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+.cb-ticker-price { color: #fbbf24; font-weight: 700; font-variant-numeric: tabular-nums; }
+.cb-ticker-by    { color: rgba(255, 255, 255, 0.5); font-size: 11.5px; }
+.cb-ticker-time  { color: rgba(255, 255, 255, 0.35); font-size: 11px; font-variant-numeric: tabular-nums; }
+.cb-ticker-empty { color: rgba(255, 255, 255, 0.4); font-size: 12px; padding: 4px 8px; }
+
+/* ── Time-range toggle (1D / 7D / 30D / All) ───────────────────────────── */
+.cb-range-toggle {
+    display: inline-flex;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 9px;
+    padding: 3px;
+    gap: 2px;
+    margin-right: 12px;
+}
+.cb-range-btn {
+    background: transparent;
+    border: 0;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 5px 11px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+}
+.cb-range-btn:hover { color: rgba(255, 255, 255, 0.85); }
+.cb-range-btn.cb-range-active {
+    background: rgba(0, 179, 255, 0.18);
+    color: #00B3FF;
+}
+
+/* ── Top Creators section ──────────────────────────────────────────────── */
+.cb-creators-section .home-section-header { margin-bottom: 14px; }
+.cb-badge-muted {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: rgba(255, 255, 255, 0.45) !important;
+    font-weight: 500 !important;
+    font-size: 10.5px !important;
+}
+.cb-creators-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 14px;
+}
+.cb-creator-row {
+    display: grid;
+    grid-template-columns: 22px 36px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+.cb-creator-row:hover { background: rgba(0, 179, 255, 0.06); }
+.cb-creator-rank {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+}
+.cb-creator-row:nth-child(1) .cb-creator-rank { color: #fbbf24; }
+.cb-creator-row:nth-child(2) .cb-creator-rank { color: #d1d5db; }
+.cb-creator-row:nth-child(3) .cb-creator-rank { color: #c084fc; }
+.cb-creator-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.05);
+}
+.cb-creator-info {
+    display: flex; flex-direction: column;
+    min-width: 0;
+}
+.cb-creator-name {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.cb-creator-handle {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 11.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.cb-creator-sales {
+    color: #4ade80;
+    font-size: 12.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Featured-card extras (item count + verified) ──────────────────────── */
+.cb-feat-card .cb-feat-items {
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 11px;
+    margin-top: 2px;
+    display: block;
+}
+.cb-verified {
+    display: inline-block;
+    color: #00B3FF;
+    font-weight: 800;
+    font-size: 0.85em;
+    transform: translateY(-1px);
+}
+
+/* ── Generic empty / loading states for new sections ───────────────────── */
+.cb-empty {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 12px;
+    padding: 20px;
+    text-align: center;
+}
+.cb-up   { color: #4ade80; }
+.cb-down { color: #f87171; }
+
+/* ── Mobile (< 640px) ──────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+    .cb-ticker {
+        margin: 0 12px 10px;
+        padding: 8px 12px;
+        gap: 10px;
+    }
+    .cb-ticker-label {
+        padding-right: 8px;
+        font-size: 10px;
+    }
+    .cb-ticker-asset { max-width: 110px; }
+    .cb-ticker-by    { display: none; }
+
+    .cb-range-toggle { padding: 2px; }
+    .cb-range-btn    { padding: 4px 8px; font-size: 11px; }
+
+    .cb-creators-list { grid-template-columns: 1fr; gap: 6px; padding: 10px; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+ * NAV REFACTOR (Profil/Collections retirés, MY PROFILE ajouté)
+ * ════════════════════════════════════════════════════════════════════════ */
+
+/* MY PROFILE — onglet visible uniquement si connecté */
+.topnav-tab--myprofil {
+    color: #00B3FF;
+}
+.topnav-tab--myprofil:hover {
+    color: #fff;
+    background: rgba(0, 179, 255, 0.12);
+}
+.topnav-tab--myprofil.topnav-tab--active {
+    background: rgba(0, 179, 255, 0.18);
+    color: #00B3FF;
+}
+
+/* Pulse subtil sur la search bar quand on clique "Profile/Collection Explorer"
+   sur la home — guide l'utilisateur vers la barre de recherche. */
+@keyframes cb-search-pulse {
+    0%   { box-shadow: 0 0 0 0   rgba(0, 179, 255, 0.55); }
+    70%  { box-shadow: 0 0 0 14px rgba(0, 179, 255, 0);    }
+    100% { box-shadow: 0 0 0 0   rgba(0, 179, 255, 0);    }
+}
+.topnav-search-input.cb-search-pulse,
+.cb-search-pulse {
+    animation: cb-search-pulse 1.2s ease-out 1;
+}
+
+/* Mobile : compresser le tab MY PROFILE comme les autres */
+@media (max-width: 720px) {
+    .topnav-tab--myprofil span:not(.topnav-beta-badge):not(.topnav-new-badge) {
+        display: none;
+    }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+ * SOLD OUT THEME (drops timeline + cards)
+ * Aligné sur le style des autres nœuds de la timeline :
+ *   - même animation `tlHaloSync` (juste la couleur change via --tl-halo-rgb)
+ *   - badge pill style identique à drop-badge--live (translucide + bordure 1px)
+ *   - chip carte = même structure que .drop-hero-live-chip (gradient translucide)
+ * ════════════════════════════════════════════════════════════════════════ */
+
+/* ── Halo blanc léger sur les bords haut/bas de la timeline ─────────────── */
+/* Override du baseline (.drops-timeline-wrap, ligne ~16091).
+   Triple stratégie pour garantir la visibilité :
+   (a) bordures à 0.45 (vs 0.05 baseline) — bien marquées sur fond sombre,
+   (b) lignes en gradient via pseudo-éléments (alpha pic 0.7 au centre) — non clippées par overflow,
+   (c) ombre externe diffuse !important pour le glow.
+*/
+.drops-timeline-wrap {
+    position: relative;
+    border-top:    1px solid rgba(255,255,255,0.45) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.45) !important;
+    box-shadow:
+        0 -6px 28px -4px rgba(255,255,255,0.30),
+        0  6px 28px -4px rgba(255,255,255,0.30) !important;
+}
+.drops-timeline-wrap::before,
+.drops-timeline-wrap::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(90deg,
+        rgba(255,255,255,0)   0%,
+        rgba(255,255,255,0.7) 50%,
+        rgba(255,255,255,0)   100%);
+    z-index: 2;
+}
+.drops-timeline-wrap::before { top: 0; }
+.drops-timeline-wrap::after  { bottom: 0; }
+
+/* ── Réduire légèrement l'espace au dessus du titre "DROPS TIMELINE" ────── */
+/* Le parent .drops-inner a gap:32px et la page-header a margin-bottom:-24px,
+   ce qui laisse ~8px. On pousse encore avec un margin-top négatif modeste
+   sur le titre lui-même (pas sur le wrap pour ne pas affecter le halo). */
+#dropsTimelineTitle {
+    margin-top: -10px;
+}
+
+/* ── Bordure du cadre image sur le nœud sold-out ──────────────────────── */
+/* L'image hérite par défaut de `.tl-img { border: 2px solid rgba(255,255,255,0.08); }`,
+   ce qui apparaît comme un cadre sombre incompatible avec le halo orange.
+   On surcharge en orange — même approche que .tl-node--live .tl-img. */
+.tl-node--soldout .tl-img {
+    border-color: rgba(249,115,22,0.7);
+    border-width: 1px;
+}
+
+/* ── Timeline node — image wrap : halo PULSÉ (tlHaloSync) en orange.
+   Même pattern que les autres nœuds de la timeline (live, support, featured)
+   — seule la couleur change via --tl-halo-rgb. */
+.tl-img-wrap--soldout {
+    --tl-halo-rgb: 249,115,22;          /* orange (#f97316) */
+    border-radius: 14px;
+    animation: tlHaloSync 2s ease-in-out infinite;
+}
+/* Subtle "indisponible" hint via desat — gardé léger pour ne pas écraser le halo */
+.tl-img-wrap--soldout .tl-img {
+    filter: saturate(0.65) brightness(0.9);
+}
+/* Hover : même pattern que .tl-node--live:hover (animation off, halo intensifié) */
+.tl-node--soldout:hover .tl-img-wrap--soldout {
+    animation: none;
+    box-shadow:
+        0 0 0 1px rgba(249,115,22,1),
+        0 0 24px rgba(249,115,22,0.8),
+        0 0 56px rgba(249,115,22,0.4);
+}
+
+/* ── Date du nœud sold-out : colorée au thème (orange) ─────────────────── */
+.tl-node--soldout .tl-date {
+    color: #fb923c;
+}
+
+/* ── Timeline dot — même structure que les autres dots (pas d'override !important) */
+.tl-dot--soldout {
+    background: #f97316;
+    box-shadow: 0 0 0 3px rgba(249,115,22,0.18), 0 0 12px rgba(249,115,22,0.55);
+}
+
+/* ── Timeline status badge — même pill-style que .drop-badge--live ─────── */
+/* (cf. drop-badge--live : background rgba(0,179,255,0.2) + border 0.5 + color accent) */
+.drop-badge--soldout {
+    background: rgba(249,115,22,0.18);
+    border: 1px solid rgba(249,115,22,0.5);
+    color: #fb923c;
+}
+
+/* ── Card (section "Sold Out · Still Active") ──────────────────────────── */
+/* Halo orange en mode FIXE (resting state) — même intensité 3 niveaux que le
+   halo bleu de .drop-card--live (cf. ligne 15388). On override aussi :hover
+   pour ne pas que le halo bleu de .drop-card--live:hover reprenne le dessus. */
+.drop-card--soldout {
+    border-color: rgba(249,115,22,0.5);
+    box-shadow:
+        0 0 0  1px rgba(249,115,22,0.55),
+        0 0 40px rgba(249,115,22,0.35),
+        0 0 80px rgba(249,115,22,0.18);
+}
+.drop-card--soldout:hover {
+    border-color: rgba(249,115,22,0.5);
+    box-shadow:
+        0 0 0  1px rgba(249,115,22,0.55),
+        0 0 40px rgba(249,115,22,0.35),
+        0 0 80px rgba(249,115,22,0.18);
+}
+.drop-card--soldout .drop-banner-img {
+    filter: saturate(0.7) brightness(0.88);
+}
+.drop-card--soldout .drop-live-media-overlay {
+    background: linear-gradient(180deg,
+        rgba(0,0,0,0.20) 0%,
+        rgba(0,0,0,0.65) 70%,
+        rgba(220,38,38,0.14) 100%);
+}
+
+/* ── Sold-out chip sur la carte — même structure que .drop-hero-live-chip ── */
+/* (gradient translucide + bordure 1px + box-shadow douce, PAS de fond plein) */
+.drop-hero-live-chip--soldout {
+    background: linear-gradient(135deg, rgba(249,115,22,0.25), rgba(249,115,22,0.10)) !important;
+    border: 1px solid rgba(249,115,22,0.55) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4), 0 0 20px rgba(249,115,22,0.18) !important;
+}
+.drop-hero-soldout-icon {
+    color: #fb923c;
+    font-weight: 700;
+    font-size: 14px;
+    margin-right: 4px;
+    display: inline-block;
+    line-height: 1;
+}
+
+/* Texte d'info à droite (remplace le countdown) */
+.drop-hero-soldout-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    color: rgba(255,255,255,0.85);
+    font-size: 12px;
+    text-align: right;
+}
+.drop-hero-soldout-msg {
+    font-weight: 700;
+    color: #fb923c;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 11px;
+}
+.drop-hero-soldout-end {
+    color: rgba(255,255,255,0.55);
+    font-size: 11.5px;
+}
+
+/* ── Section header — strictement aligné sur .drops-section-label ─────── */
+/* Pas de border-left, titre blanc (hérite de .drops-section-label).      */
+/* Aucune règle nécessaire — on ne surcharge plus rien.                   */
+
+/* Mobile */
+@media (max-width: 640px) {
+    .drop-hero-soldout-info { display: none; }
+}
+
+/* ── Hide $1 toggle (Sales Bot) — réutilise le style snapshot-opt-toggle ──
+   Petits ajustements pour le contexte de la barre Sales Bot :
+   - hauteur cohérente avec les autres boutons de la toolbar (32px)
+   - sub-label masqué sur viewport étroit (la toolbar est déjà chargée) */
+.sb-hide-dollar-toggle {
+    height: 32px;
+    align-self: center;
+}
+.sb-hide-dollar-toggle .snapshot-opt-toggle-sub {
+    font-size: 8px;
+}
+@media (max-width: 1100px) {
+    .sb-hide-dollar-toggle .snapshot-opt-toggle-sub { display: none; }
 }
