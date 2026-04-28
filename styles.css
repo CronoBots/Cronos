@@ -11333,9 +11333,11 @@ body.is-profile-loading #profileLoadingOverlay * {
     font-size: 11px;
     letter-spacing: 0.04em;
     padding: 7px 70px 7px 32px;
+    /* Largeur fixée — la barre ne s'élargit plus au focus pour éviter de
+       déstabiliser le layout du topnav (les onglets sautent à droite). */
     width: 280px;
     outline: none;
-    transition: border-color 0.2s ease, background 0.2s ease, width 0.3s ease;
+    transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .topnav-search-input::placeholder {
@@ -11345,7 +11347,6 @@ body.is-profile-loading #profileLoadingOverlay * {
 .topnav-search-input:focus {
     border-color: rgba(0, 179, 255, 0.45);
     background: rgba(255, 255, 255, 0.08);
-    width: 360px;
 }
 
 .topnav-search-kbd {
@@ -11487,9 +11488,6 @@ body.is-profile-loading #profileLoadingOverlay * {
     .topnav-search-input {
         width: 220px;
     }
-    .topnav-search-input:focus {
-        width: 280px;
-    }
     .topnav-tab {
         padding: 0 14px;
     }
@@ -11521,7 +11519,11 @@ body.is-profile-loading #profileLoadingOverlay * {
     padding: 0 20px 20px;
     height: 100%;
     box-sizing: border-box;
-    overflow: hidden;
+    /* PAS de overflow:hidden ici : ça clippait le halo bleu de
+       .stats-table-wrap (qui s'étend ~80px en dehors du cadre). Le scroll
+       horizontal du tableau est porté par .stats-table-wrap (overflow-x:auto)
+       donc le parent peut rester en visible sans risque. */
+    overflow: visible;
     display: flex;
     flex-direction: column;
 }
@@ -11530,10 +11532,16 @@ body.is-profile-loading #profileLoadingOverlay * {
     min-height: 0;
 }
 
-/* Header — same spacing as profile legend title zone */
+/* Header — aligné sur drops-inner / snapshot-inner pour que le titre TOP
+   COLLECTIONS démarre à la même hauteur que dans les autres onglets.
+   Le padding latéral et bottom est porté par .stats-panel ; ici on ne
+   contrôle que l'écart vertical au-dessus du titre. */
 .stats-panel-header {
-    padding-top: clamp(20px, 3vh, 36px);
-    margin-bottom: 16px;
+    padding-top: clamp(8px, 1.5vh, 20px);
+    /* Gap filtres → tableau : 0 ici + margin-top 8px sur .stats-table-wrap
+       pour matcher EXACTEMENT le rythme du Market Bot (.sb-results-wrap a
+       margin-top:8px par rapport à la barre de filtres). */
+    margin-bottom: 0;
     flex-shrink: 0;
 }
 
@@ -11563,14 +11571,19 @@ body.is-profile-loading #profileLoadingOverlay * {
     margin-bottom: 32px;
 }
 
-/* Controls row — left group (search+summary) / right group (filters) */
+/* Filter row : padding/margins identiques à .sb-filters-bar du Market Bot
+   (padding 8px 0 12px + margin-bottom 12px). Combiné avec :
+   - .stats-page-title-block { margin-bottom: 32px } pour le gap titre→filtres
+   - .stats-table-wrap { margin-top: 8px } qui collapse avec margin-bottom 12
+   ça donne EXACTEMENT le même rythme vertical que Market Bot. */
 .stats-panel-title-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
     flex-wrap: wrap;
-    margin-bottom: 0;
+    padding: 8px 0 12px;
+    margin-bottom: 12px;
 }
 
 /* Left side: search + stats inline */
@@ -11723,9 +11736,18 @@ body.is-profile-loading #profileLoadingOverlay * {
     overflow-x: auto;
     overflow-y: auto;
     /* height set dynamically by JS */
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(0,0,0,0.15);
+    border-radius: 14px;
+    border: 1px solid rgba(0,179,255,0.5);
+    /* Halo bleu cyan — même intensité que .drop-card--live et .sb-results-wrap
+       pour mettre en évidence le bloc principal de l'onglet Top Collections. */
+    box-shadow:
+        0 0 0  1px rgba(0,179,255,0.55),
+        0 0 40px rgba(0,179,255,0.35),
+        0 0 80px rgba(0,179,255,0.18);
+    background: rgba(11,20,38,0.4);
+    /* Gap filtres → tableau : 20px. Compromis entre le 16px (encore un poil
+       trop serré) et le 24px (un peu trop aéré au goût du user). */
+    margin-top: 20px;
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,0.4) rgba(255,255,255,0.06);
     box-sizing: border-box;
@@ -12492,8 +12514,41 @@ body.is-profile-loading #profileLoadingOverlay * {
 .cp-inner {
     width: 100%;
     box-sizing: border-box;
-    padding: 0 0 64px;
+    /* Aligné sur drops-inner / sb-inner / stats-panel pour que le contenu
+       de l'onglet ait la même largeur effective que les autres onglets
+       (Drops / Top Collections / Market Bot). */
+    padding: clamp(8px, 1.5vh, 20px) 20px 64px;
     flex: 1;
+}
+
+/* ── CADRE PRINCIPAL avec halo bleu ──
+   Wrapper qui contient bannière + titre + tabs + filtres + résultats.
+   Halo cyan identique à .drop-card--live, .sb-results-wrap et
+   .stats-table-wrap pour la cohérence inter-onglets.
+   padding:0 → la bannière reste flush contre les bords arrondis (clip via
+   overflow:hidden). Les enfants qui ne sont pas pleine largeur (titre,
+   tabs, filtres, sections) ont leur propre padding latéral interne. */
+.cp-results-wrap {
+    border: 1px solid rgba(0,179,255,0.5);
+    border-radius: 14px;
+    box-shadow:
+        0 0 0  1px rgba(0,179,255,0.55),
+        0 0 40px rgba(0,179,255,0.35),
+        0 0 80px rgba(0,179,255,0.18);
+    background: rgba(11,20,38,0.4);
+    overflow: hidden;
+    /* Marge en haut pour aérer du titre de page (si présent au-dessus). */
+    margin-top: clamp(8px, 1.5vh, 20px);
+}
+/* Padding interne pour les enfants du cadre (sauf bannière qui reste
+   pleine largeur clippée par overflow:hidden du wrapper). */
+.cp-results-wrap > .cp-title-block,
+.cp-results-wrap > .cp-tab-nav,
+.cp-results-wrap > .cp-filters-bar,
+.cp-results-wrap > .cp-analytics,
+.cp-results-wrap > .cp-nft-section {
+    padding-left: 24px;
+    padding-right: 24px;
 }
 
 /* ── BANNIÈRE pleine largeur ── */
@@ -12503,8 +12558,6 @@ body.is-profile-loading #profileLoadingOverlay * {
     height: clamp(140px, 20vw, 240px);
     overflow: hidden;
     flex-shrink: 0;
-    margin-left: -20px;            /* annuler le padding du parent .app-main */
-    width: calc(100% + 40px);      /* compenser les deux côtés */
 }
 .cp-hero-banner {
     position: absolute;
@@ -12653,7 +12706,12 @@ body.is-profile-loading #profileLoadingOverlay * {
     gap: 10px;
     flex-wrap: wrap;
     padding: 8px 0;
-    background: #0d1829;
+    /* Fond légèrement opaque qui matche le halo wrapper — quand la barre
+       devient sticky pendant le scroll, elle masque proprement le contenu
+       qui passe derrière. */
+    background: rgba(11,20,38,0.95);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -13446,6 +13504,108 @@ body.is-profile-loading #profileLoadingOverlay * {
     color: rgba(255,255,255,0.88);
     word-break: break-word;
 }
+
+/* ── Modal de confirmation de suppression de message ────────────────────
+   Remplace le confirm() natif (qui montre l'URL et est moche). Centré sur
+   l'écran, fond noir semi-transparent, focus trap simple via Escape/Enter. */
+.home-chat-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: hccFadeIn 0.15s ease-out;
+}
+@keyframes hccFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+.home-chat-confirm-modal {
+    width: clamp(280px, 90vw, 380px);
+    background: #0d1829;
+    border: 1px solid rgba(239,68,68,0.35);
+    border-radius: 12px;
+    padding: 22px 24px;
+    box-shadow:
+        0 0 0 1px rgba(239,68,68,0.25),
+        0 12px 40px rgba(0,0,0,0.6);
+    text-align: center;
+    animation: hccPop 0.18s ease-out;
+}
+@keyframes hccPop {
+    from { opacity: 0; transform: translateY(8px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.home-chat-confirm-icon {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: rgba(239,68,68,0.12);
+    color: #ef4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+}
+.home-chat-confirm-title {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+.home-chat-confirm-desc {
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.5;
+    margin: 0 0 18px;
+    font-family: sans-serif;
+}
+.home-chat-confirm-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+.home-chat-confirm-cancel,
+.home-chat-confirm-ok {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 6px;
+    padding: 8px 18px;
+    cursor: pointer;
+    border: 1px solid;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+    min-width: 90px;
+}
+.home-chat-confirm-cancel {
+    background: transparent;
+    border-color: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.6);
+}
+.home-chat-confirm-cancel:hover {
+    border-color: rgba(255,255,255,0.3);
+    color: #fff;
+}
+.home-chat-confirm-ok {
+    background: rgba(239,68,68,0.18);
+    border-color: rgba(239,68,68,0.6);
+    color: #ef4444;
+}
+.home-chat-confirm-ok:hover {
+    background: rgba(239,68,68,0.3);
+    color: #fff;
+}
+.home-chat-confirm-ok:focus-visible {
+    outline: 2px solid rgba(239,68,68,0.6);
+    outline-offset: 2px;
+}
 /* Message système (erreur / config manquante) */
 .home-chat-msg--system {
     background: rgba(251,191,36,0.08);
@@ -13707,6 +13867,29 @@ body.is-profile-loading #profileLoadingOverlay * {
     padding: 16px;
     background: rgba(11,20,38,0.4);
     margin-top: 8px;
+    position: relative;       /* ancre pour le loader overlay */
+    overflow: hidden;         /* clip le tableau contre les coins arrondis */
+}
+/* En vue tableau : pas de padding interne pour que le tableau soit collé
+   contre le bord du cadre halo (les bordures du tableau matchent celles du
+   conteneur). On garde overflow:hidden pour que les coins arrondis clippent
+   proprement les en-têtes du tableau. */
+.sb-results-wrap--table {
+    padding: 0;
+}
+
+/* Loader overlay — couvre toute la zone résultats sans changer le layout
+   pendant un refresh. Le tableau / les cards restent visibles en dessous. */
+.sb-results-wrap > .sb-loading {
+    position: absolute;
+    inset: 0;
+    background: rgba(7, 15, 30, 0.55);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 5;
+    border-radius: inherit;
+    align-items: center;
+    justify-content: center;
 }
 
 .sb-feed {
@@ -13736,13 +13919,29 @@ body.is-profile-loading #profileLoadingOverlay * {
     border-color: rgba(0,179,255,0.35);
     box-shadow: 0 8px 24px rgba(0,179,255,0.1);
 }
-.sb-card--highlight {
-    border-color: rgba(251,191,36,0.3);
-    box-shadow: 0 0 0 1px rgba(251,191,36,0.15);
+/* sb-tr--highlight : ligne "grosse vente" en mode tableau. La flamme 🔥
+   a été retirée pour rester sobre — la mise en évidence est portée par un
+   gradient ambré horizontal, plus discret et plus élégant. Effet "lumière
+   dorée" qui s'estompe vers la droite, plus une fine bordure amber à gauche
+   pour renforcer la lecture verticale. */
+.sb-tr--highlight {
+    background: linear-gradient(90deg,
+        rgba(251,191,36,0.14) 0%,
+        rgba(251,191,36,0.07) 40%,
+        rgba(251,191,36,0.02) 100%) !important;
+    box-shadow: inset 3px 0 0 rgba(251,191,36,0.55);
 }
+.sb-tr--highlight:hover {
+    background: linear-gradient(90deg,
+        rgba(251,191,36,0.22) 0%,
+        rgba(251,191,36,0.12) 40%,
+        rgba(251,191,36,0.04) 100%) !important;
+}
+/* En vue cards on garde la flamme dans le DOM (.sb-card-hot) ; on désactive
+   ici uniquement les box-shadow ajoutées avant pour ne pas doubler l'effet. */
+.sb-card--highlight,
 .sb-card--highlight:hover {
-    border-color: rgba(251,191,36,0.6);
-    box-shadow: 0 8px 24px rgba(251,191,36,0.15);
+    /* no-op visual */
 }
 .sb-card-img-wrap {
     position: relative;
@@ -13838,7 +14037,6 @@ body.is-profile-loading #profileLoadingOverlay * {
     flex-wrap: wrap;
     padding: 8px 0 12px;
     margin-bottom: 12px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 .sb-filters-left {
     display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
@@ -14379,6 +14577,59 @@ code.sup-card-address {
 /* ── Rich collection selector (Sales Bot / Listing Bot) ── */
 .sb-col-dropdown-rich { min-width: 240px; padding: 6px; }
 .sb-col-rich-list { display: flex; flex-direction: column; gap: 2px; }
+
+/* En-tête de groupe (créateur) — séparateur cliquable au-dessus de chaque
+   famille de collections du même artiste. Cliquer toggle TOUTES les
+   collections de cet artiste d'un coup. Le 1er header n'a pas de bordure
+   haute (sinon ça créerait une ligne au sommet du dropdown). */
+.sb-col-group-header {
+    all: unset;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 12px 4px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.55);
+    cursor: pointer;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transition: color 0.15s, background 0.15s;
+    margin-top: 4px;
+}
+.sb-col-group-header:first-child {
+    border-top: 0;
+    margin-top: 0;
+    padding-top: 4px;
+}
+.sb-col-group-header:hover {
+    color: #00B3FF;
+    background: rgba(0,179,255,0.04);
+    border-radius: 6px;
+}
+.sb-col-group-name {
+    /* Nom du créateur, lisible mais discret. */
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sb-col-group-action {
+    /* Indication d'action ("Toggle all") en plus petit/transparent —
+       n'apparaît qu'au hover pour ne pas encombrer le dropdown. */
+    font-size: 9px;
+    letter-spacing: 0;
+    text-transform: none;
+    color: rgba(0,179,255,0.7);
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+.sb-col-group-header:hover .sb-col-group-action {
+    opacity: 1;
+}
+
 .sb-col-rich-item {
     display: flex; align-items: center; gap: 10px;
     padding: 8px 10px; border-radius: 7px;
@@ -15059,7 +15310,11 @@ code.sup-card-address {
 .sb-alarm-panel {
     position: absolute;
     top: calc(100% + 8px); right: 0;
-    width: 260px;
+    /* Largeur de base — élargie à 380px (= largeur min du multi) pour que
+       les cellules Sales/Listings aient EXACTEMENT la même taille en mode
+       single qu'en mode multi. Le col-block frame est désormais affiché
+       dans les deux cas → cohérence visuelle complète. */
+    width: 380px;
     background: #0d1829;
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 12px;
@@ -17226,7 +17481,7 @@ code.sup-card-address {
 .snapshot-page-title svg { width:clamp(24px,3vw,38px); height:clamp(24px,3vw,38px); color:#00B3FF; flex-shrink:0; }
 .snapshot-page-sub { font-family:'Geomanist-Bold',sans-serif; font-size:12px; color:rgba(255,255,255,0.4); letter-spacing:0.1em; text-transform:uppercase; margin:8px 0 0; }
 .snapshot-header-right { display:flex; align-items:center; gap:16px; flex-shrink:0; }
-.snapshot-filters-bar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:8px 0 12px; border-bottom:1px solid rgba(255,255,255,0.05); }
+.snapshot-filters-bar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:8px 0 12px; }
 .snapshot-filters-left { display:flex; align-items:center; gap:10px; flex:1; min-width:0; flex-wrap:wrap; }
 .snapshot-filters-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
 .snapshot-col-select-wrap { flex:0 0 220px; min-width:180px; max-width:260px; }
@@ -17515,26 +17770,170 @@ code.sup-card-address {
     gap: 0;
 }
 
-/* ── Alarmes : 2 rangées indépendantes (Sales / Listings) ──
-   Chaque rangée = label "Sales"/"Listings" en small-caps + input row + status. */
-.sb-alarm-row {
+/* ── Alarmes : grille compacte (Sales | Listings côte-à-côte) ────────────
+   Layout horizontal pour limiter la hauteur du panel quand plusieurs
+   collections sont sélectionnées. Chaque cellule a un label en mini caps,
+   un input compact, un bouton Set, et un mini × quand l'alarme est armée. */
+.sb-alarm-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.sb-alarm-cell {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-bottom: 12px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    gap: 4px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px;
+    padding: 6px 8px;
+    transition: border-color 0.15s, background 0.15s;
 }
-.sb-alarm-row:last-of-type {
-    border-bottom: 0;
+.sb-alarm-cell--armed {
+    border-color: rgba(74,222,128,0.35);
+    background: rgba(74,222,128,0.05);
 }
-.sb-alarm-row-lbl {
+.sb-alarm-cell-lbl {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 800;
     letter-spacing: 0.12em;
-    color: rgba(255,255,255,0.55);
     text-transform: uppercase;
+    color: rgba(255,255,255,0.45);
+}
+.sb-alarm-cell--armed .sb-alarm-cell-lbl {
+    color: #4ade80;
+}
+.sb-alarm-cell .sb-alarm-input-row {
+    margin: 0;
+}
+.sb-alarm-cell .sb-alarm-input {
+    /* Plus compact — assez large pour 4 chiffres mais pas plus.
+       flex: 0 1 X = peut rétrécir, ne grandit pas, base à X. min-width:0
+       autorise le rétrécissement sous la taille de l'input par défaut. */
+    font-size: 12px;
+    padding: 4px 6px;
+    flex: 0 1 70px;
+    min-width: 0;
+    width: 70px;
+}
+.sb-alarm-cell .sb-alarm-set {
+    /* Bouton Set/✓ plus carré et discret */
+    padding: 4px 8px;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+.sb-alarm-clear-mini {
+    background: transparent;
+    border: 0;
+    color: rgba(239,68,68,0.7);
+    cursor: pointer;
+    padding: 0 4px;
+    font-size: 16px;
+    line-height: 1;
+    transition: color 0.12s;
+    flex-shrink: 0;
+}
+.sb-alarm-clear-mini:hover {
+    color: #ef4444;
+}
+
+/* Bloc collection — TOUJOURS encadré (border + bg + padding), que la
+   sélection soit single ou multi. Cohérence visuelle : peu importe le
+   nombre de collections sélectionnées, le rendu d'une section est
+   identique (logo + nom dans un cadre, suivis de la grille Sales|Listings).
+   Padding réduit (4px 6px) pour que les cellules à l'intérieur conservent
+   une largeur confortable même avec une seule collection. */
+/* En-tête créateur dans le panel d'alarmes — affiché uniquement quand
+   plusieurs créateurs ont des collections sélectionnées. Même rendu que
+   le séparateur du dropdown (small caps gris, ligne du dessus). */
+.sb-alarm-creator-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+    padding: 6px 4px 2px;
+    margin-top: 4px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+.sb-alarm-creator-header:first-child {
+    /* Pas de séparateur sur le 1er créateur (au sommet du panel). */
+    border-top: 0;
+    margin-top: 0;
+    padding-top: 0;
+}
+.sb-alarm-creator-name {
+    /* Tronque proprement (ellipse) si le pseudonyme est très long. Le badge
+       vérifié vient juste après — même placement que dans l'onglet Drop. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+/* Badge vérifié à droite du nom d'artiste — même icône (cercle bleu Twitter
+   + check blanc) que celle utilisée dans les cards de l'onglet Drop. Taille
+   alignée sur la typo du header (10px) pour rester discret. */
+.sb-alarm-creator-verified {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+}
+
+.sb-alarm-col-block {
+    padding: 4px 6px;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+}
+.sb-alarm-col-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #00B3FF;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* Header de la section — logo de la collection + nom alignés horizontalement. */
+.sb-alarm-col-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+.sb-alarm-col-logo {
+    width: 18px; height: 18px;
+    border-radius: 4px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.05);
+}
+.sb-alarm-col-logo--placeholder {
+    border: 1px dashed rgba(255,255,255,0.15);
+}
+
+/* ── Variante panel large quand plusieurs collections sont sélectionnées ──
+   Le panel s'élargit progressivement pour ne pas dépasser une hauteur trop
+   importante : 2 collections = ~340px, 3+ = max-height fixée + scroll. */
+/* Le panel d'alarme garde la MÊME largeur de base (380px) qu'on ait 1 ou
+   plusieurs collections sélectionnées. Plus d'élargissement spécifique
+   pour le multi → cadre des cellules Sales/Listings strictement identique
+   visuellement, peu importe le nombre de collections. */
+
+/* Conteneur des sections par collection — empilées verticalement avec un
+   léger gap. Pas de scroll : le panel s'agrandit naturellement et reste
+   lisible d'un coup d'œil. Pour 3+ collections, le layout compact (Sales |
+   Listings côte-à-côte par cellule) garde la hauteur raisonnable. */
+.sb-alarm-collections {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
 }
 
 /* ── Bot : OWNER label (même taille que SELLER/BUYER) ── */
@@ -17622,18 +18021,80 @@ code.sup-card-address {
 
 /* TABLE */
 .sb-table-wrap { width: 100%; overflow-x: auto; border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; margin-top: 4px; }
+/* Quand la table est dans le conteneur halo (.sb-results-wrap--table), on
+   retire sa bordure/radius/margin propres pour qu'elle soit collée pile
+   contre le halo bleu — pas de "cadre dans cadre". */
+.sb-results-wrap--table .sb-table-wrap {
+    border: 0;
+    border-radius: 0;
+    margin-top: 0;
+}
 .sb-table { width: 100%; border-collapse: collapse; }
-.sb-th { padding: 10px 14px; text-align: left; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.9); border-bottom: 1px solid rgba(255,255,255,0.08); font-family: 'Geomanist-Bold', sans-serif; white-space: nowrap; }
-.sb-th--right { text-align: left; } /* Time column — left-aligned */
-/* Min-widths pour stabiliser sans écraser l'auto-layout */
-.sb-td--event  { min-width: 80px; }
+.sb-th {
+    /* Aligné sur .stats-th (Top Collections) : même font-size + padding pour
+       que les en-têtes des deux tableaux aient la même hauteur visuelle. */
+    padding: 12px 10px;
+    text-align: left;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #ffffff;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+    font-family: 'Geomanist-Bold', sans-serif;
+    white-space: nowrap;
+    background: #0d1829;
+}
+/* Modificateur centrer : appliqué aux colonnes Time, Event, Rank pour
+   aligner header et cellules au centre horizontalement (les autres colonnes
+   restent left-aligned par défaut). */
+.sb-th--center { text-align: center !important; }
+.sb-td--center { text-align: center !important; }
+/* Cellule rank centrée : neutralise l'inline-flex du badge pour que
+   text-align:center marche, et centre via display:block du span enfant. */
+.sb-td--center .sb-td-rank,
+.sb-td--center .sb-rank-badge--table { margin: 0 auto; }
+/* Largeurs des colonnes : Time / Rank en SHRINK-TO-CONTENT (width:1% est
+   l'astuce CSS classique pour qu'une colonne de table ne prenne que la
+   largeur strictement nécessaire à son contenu). EVENT a une largeur FIXE
+   égale à celle d'un badge "AUCTION" (le plus long) pour que la colonne ne
+   varie pas selon la rangée affichée. nowrap empêche le contenu de se
+   plier. */
+.sb-th--time, .sb-td--time,
+.sb-th--rarity, .sb-td--rarity {
+    width: 1%;
+    white-space: nowrap;
+}
+.sb-th--event, .sb-td--event {
+    width: 90px;
+    min-width: 90px;
+    max-width: 90px;
+    white-space: nowrap;
+}
 .sb-td--price  { min-width: 155px; }
-.sb-td--rarity { min-width: 55px; }
 .sb-td--from   { min-width: 100px; }
 .sb-td--to     { min-width: 100px; }
-.sb-td--time   { min-width: 80px; }
+/* Padding latéral réduit sur les colonnes étroites pour qu'elles soient
+   compactes mais pas serrées. */
+.sb-th--center,
+.sb-td--center {
+    padding-left: 6px;
+    padding-right: 6px;
+}
 .sb-tr { cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.04); transition: background .12s; }
-.sb-tr:hover { background: rgba(255,255,255,0.04); }
+/* Zebra striping — alterne le fond une ligne sur deux, comme le tableau
+   Top Collections (.stats-tr--alt). Ici on utilise :nth-child(even) plutôt
+   qu'une classe pour ne pas avoir à toucher le JS qui construit les rows. */
+#sbTableBody .sb-tr:nth-child(even) {
+    background: rgba(255,255,255,0.018);
+}
+.sb-tr:hover { background: rgba(0,179,255,0.06) !important; }
+/* Bordures de colonnes — séparateur vertical entre chaque cellule (sauf la
+   première de chaque rangée), pour matcher la grille du tableau Top
+   Collections. */
+.sb-th + .sb-th,
+.sb-td + .sb-td {
+    border-left: 1px solid rgba(255,255,255,0.08);
+}
 .sb-tr:last-child { border-bottom: none; }
 .sb-td { padding: 8px 14px; vertical-align: middle; font-size: 13px; color: rgba(255,255,255,0.8); white-space: nowrap; }
 /* Inner flex wrappers (on div, not td) */
@@ -17644,18 +18105,29 @@ code.sup-card-address {
 .sb-td--rarity { color: rgba(255,255,255,0.85); }
 .sb-td--from { color: #f87171; font-size: 12px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
 .sb-td--to   { color: #4ade80; font-size: 12px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
-.sb-row-link { cursor: pointer; opacity: 0.3; margin-left: 5px; transition: opacity .15s; }
-.sb-tr:hover .sb-row-link { opacity: 1; }
+/* .sb-row-link retiré : la flèche ↗ a été supprimée du tableau (redondante
+   avec le clic sur la row entière qui ouvre l'asset Crypto.com). */
 /* Rank badge table — standalone, no position:absolute */
 .sb-rank-badge--table { display: inline-flex; align-items: center; gap: 3px; background: rgba(255,255,255,0.95); border: 1.5px solid #00B3FF; border-radius: 6px; padding: 2px 6px 2px 4px; font-size: 10px; font-family: 'Geomanist-Bold', sans-serif; color: #0a1428; white-space: nowrap; }
 /* Gold highlight row */
-.sb-tr--highlight { border-left: 2px solid rgba(251,191,36,0.7); background: rgba(251,191,36,0.03); }
-.sb-tr--highlight:hover { background: rgba(251,191,36,0.07) !important; }
-/* Event labels */
-.sb-evt-label { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; font-family: 'Geomanist-Bold', sans-serif; }
-.sb-evt--sale    { background: rgba(74,222,128,.15);  color: #4ade80; }
-.sb-evt--listing { background: rgba(96,165,250,.15);  color: #60a5fa; }
-.sb-evt--auction { background: rgba(251,191,36,.15);  color: #fbbf24; }
+/* sb-tr--highlight : géré plus haut dans la section globale (gradient
+   ambré + box-shadow inset). Pas de redéfinition ici. */
+/* Event labels — utilisés en vue tableau ET en vue cards (cohérence). La
+   bordure prend la même couleur que la police pour un look "outlined".
+   border-color est défini par variante (override par couleur du badge). */
+.sb-evt-label {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    border: 1px solid;
+    display: inline-block;
+}
+.sb-evt--sale    { background: rgba(74,222,128,.15);  color: #4ade80; border-color: #4ade80; }
+.sb-evt--listing { background: rgba(96,165,250,.15);  color: #60a5fa; border-color: #60a5fa; }
+.sb-evt--auction { background: rgba(251,191,36,.15);  color: #fbbf24; border-color: #fbbf24; }
 
 /* ── PAUSED ON HOVER — toast discret en bas de page ── */
 .sb-paused-toast {
@@ -21359,8 +21831,11 @@ a.snap-holder-username:hover {
   border-radius: 8px;
   color: #fff;
   font-family: 'Geomanist-Bold', sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.04em;
+  /* Aligné sur .stats-search-input (Top Collections, Market Bot, Collection
+     Explorer) — même font-size et letter-spacing pour une typo cohérente
+     entre toutes les barres de recherche de la plateforme. */
+  font-size: 10px;
+  letter-spacing: 0.05em;
   padding: 0 28px 0 30px;
   outline: none;
   transition: border-color 0.15s, background 0.15s;
