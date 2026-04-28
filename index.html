@@ -1120,6 +1120,11 @@
       </div>
     </div>
 
+    <!-- ── CADRE PRINCIPAL avec halo bleu (bannière + titre + tabs + filtres
+         + résultats). Affiché seulement quand une collection est chargée
+         (toggle via _hideCpWelcome / _showCpWelcome). ── -->
+    <div class="cp-results-wrap" id="cpResultsWrap" style="display:none;">
+
     <!-- ── BANNIÈRE pleine largeur ── -->
     <div class="cp-banner-full" id="cpHeader" style="display:none;">
       <img class="cp-hero-banner" id="cpBanner" src="" alt="" style="display:none;"/>
@@ -1212,6 +1217,7 @@
           <button class="stats-tr-btn" data-cpsort="price-desc" type="button">Price ↓</button>
           <button class="stats-tr-btn" data-cpsort="rank-asc"   type="button">Rarity</button>
           <button class="stats-tr-btn" data-cpsort="name-asc"   type="button">Name</button>
+          <button class="stats-tr-btn" data-cpsort="likes-desc" type="button">Likes</button>
         </div>
         <!-- Listed -->
         <div class="stats-chain-filter cp-listed-group" id="cpListedGroup">
@@ -1248,6 +1254,8 @@
       <div class="cp-nft-grid" id="cpNftGrid"></div>
     </div>
 
+    </div><!-- /.cp-results-wrap -->
+
   </div>
 </div>
 
@@ -1270,7 +1278,7 @@
       <div class="sb-filters-left">
         <div class="stats-search-wrap sb-search-wrap">
           <svg class="stats-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="5.5"/><line x1="13" y1="13" x2="17" y2="17"/></svg>
-          <input class="stats-search-input" id="sbSearchInput" type="text" placeholder="Search NFT name…" autocomplete="off" spellcheck="false"/>
+          <input class="stats-search-input" id="sbSearchInput" type="text" placeholder="Search NFT or profile name…" autocomplete="off" spellcheck="false"/>
           <button class="stats-search-clear" id="sbSearchClear" type="button" style="display:none;">×</button>
         </div>
         <span class="sb-result-count" id="sbResultCount"></span>
@@ -1289,7 +1297,6 @@
           <span class="snapshot-opt-toggle-track"><span class="snapshot-opt-toggle-thumb"></span></span>
           <span class="snapshot-opt-toggle-label">
             <span class="snapshot-opt-toggle-title">Hide $1</span>
-            <span class="snapshot-opt-toggle-sub">Owner transfers</span>
           </span>
         </label>
         <!-- Tri -->
@@ -1297,6 +1304,7 @@
           <button class="stats-tr-btn stats-tr-btn--active" data-sbsort="date-desc" type="button">Recent</button>
           <button class="stats-tr-btn sb-price-sort-btn" id="sbPriceSortBtn" data-sbsort="price-asc" type="button">Price <span id="sbPriceSortArrow">↓</span></button>
           <button class="stats-tr-btn" data-sbsort="rank-asc"   type="button">Rank</button>
+          <button class="stats-tr-btn" data-sbsort="likes-desc" type="button">Likes</button>
         </div>
 <!-- Filtre mode Sales / Listings / All -->
         <div class="stats-chain-filter sb-mode-group" id="sbModeGroup">
@@ -1305,7 +1313,12 @@
           <button class="stats-cf-btn" data-sbmode="auction" type="button">Auctions</button>
           <button class="stats-cf-btn" data-sbmode="all" type="button">All</button>
         </div>
-        <!-- Alarme sonore -->
+        <!-- Toggle vue -->
+        <div class="sb-view-toggle">
+          <button class="sb-view-btn sb-view-btn--active" id="sbViewCards" type="button" title="Cards"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><rect x="1" y="1" width="8" height="8" rx="1.5"/><rect x="11" y="1" width="8" height="8" rx="1.5"/><rect x="1" y="11" width="8" height="8" rx="1.5"/><rect x="11" y="11" width="8" height="8" rx="1.5"/></svg></button>
+          <button class="sb-view-btn" id="sbViewTable" type="button" title="Table"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="2" y1="5" x2="18" y2="5"/><line x1="2" y1="10" x2="18" y2="10"/><line x1="2" y1="15" x2="18" y2="15"/></svg></button>
+        </div>
+        <!-- Alarme sonore — placée juste à droite du toggle vue -->
         <div class="sb-alarm-wrap" id="sbAlarmWrap">
           <button class="sb-alarm-btn" id="sbAlarmBtn" type="button" title="Price alert">
             <svg class="sb-alarm-icon" id="sbAlarmIcon" width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2a6 6 0 016 6c0 3.5 1.5 5 1.5 5h-15S4 11.5 4 8a6 6 0 016-6z"/><path d="M8.5 17a1.5 1.5 0 003 0"/></svg>
@@ -1313,45 +1326,16 @@
           </button>
           <div class="sb-alarm-panel" id="sbAlarmPanel" style="display:none;">
             <div class="sb-alarm-panel-title">Price Alerts</div>
-            <p class="sb-alarm-panel-desc">Set a separate threshold for sales &amp; listings — each fires independently when an event drops below its limit.</p>
-            <!-- Alarme Sales -->
-            <div class="sb-alarm-row">
-              <span class="sb-alarm-row-lbl">Sales</span>
-              <div class="sb-alarm-input-row">
-                <span class="sb-alarm-currency">$</span>
-                <input class="sb-alarm-input" id="sbAlarmPriceSales" type="number" placeholder="e.g. 500" min="0" inputmode="numeric"/>
-                <button class="sb-alarm-set" id="sbAlarmSetSales" type="button">Set</button>
-              </div>
-              <div class="sb-alarm-status" id="sbAlarmStatusSales" style="display:none;">
-                <div class="sb-alarm-status-dot"></div>
-                <span id="sbAlarmStatusTextSales">Alert active — below $0</span>
-                <button class="sb-alarm-clear" id="sbAlarmClearSales" type="button">×</button>
-              </div>
-            </div>
-            <!-- Alarme Listings -->
-            <div class="sb-alarm-row">
-              <span class="sb-alarm-row-lbl">Listings</span>
-              <div class="sb-alarm-input-row">
-                <span class="sb-alarm-currency">$</span>
-                <input class="sb-alarm-input" id="sbAlarmPriceListed" type="number" placeholder="e.g. 500" min="0" inputmode="numeric"/>
-                <button class="sb-alarm-set" id="sbAlarmSetListed" type="button">Set</button>
-              </div>
-              <div class="sb-alarm-status" id="sbAlarmStatusListed" style="display:none;">
-                <div class="sb-alarm-status-dot"></div>
-                <span id="sbAlarmStatusTextListed">Alert active — below $0</span>
-                <button class="sb-alarm-clear" id="sbAlarmClearListed" type="button">×</button>
-              </div>
-            </div>
+            <p class="sb-alarm-panel-desc">Get notified the moment a sale or a new listing drops below the price you set. One threshold per channel (Sales / Listings) per collection — alerts fire independently and trigger an audio chime in your browser as long as Market Bot is open.</p>
+            <!-- Conteneur dynamique : une section par collection sélectionnée,
+                 chacune avec ses propres seuils Sales / Listings. Re-rendu à
+                 chaque changement de sélection. -->
+            <div class="sb-alarm-collections" id="sbAlarmCollections"></div>
             <div class="sb-alarm-volume-row">
               <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3,7 8,7 13,2 13,18 8,13 3,13"/><path d="M16 7a4 4 0 010 6"/></svg>
               <input class="sb-alarm-volume" id="sbAlarmVolume" type="range" min="0" max="100" value="70"/>
             </div>
           </div>
-        </div>
-        <!-- Toggle vue -->
-        <div class="sb-view-toggle">
-          <button class="sb-view-btn sb-view-btn--active" id="sbViewCards" type="button" title="Cards"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><rect x="1" y="1" width="8" height="8" rx="1.5"/><rect x="11" y="1" width="8" height="8" rx="1.5"/><rect x="1" y="11" width="8" height="8" rx="1.5"/><rect x="11" y="11" width="8" height="8" rx="1.5"/></svg></button>
-          <button class="sb-view-btn" id="sbViewTable" type="button" title="Table"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="2" y1="5" x2="18" y2="5"/><line x1="2" y1="10" x2="18" y2="10"/><line x1="2" y1="15" x2="18" y2="15"/></svg></button>
         </div>
         <!-- Live indicator (déplacé du header vers la barre des filtres) -->
         <div class="sb-live sb-live--filter" id="sbLive">
@@ -1362,7 +1346,7 @@
         <div class="stats-col-selector-wrap" id="sbColSelectorWrap">
           <button class="stats-col-selector-btn" id="sbColSelectorBtn" type="button">
             <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 2.5"/></svg>
-            Collection
+            <span id="sbColSelectorLabel">1 Collection</span>
           </button>
           <div class="stats-col-dropdown sb-col-dropdown-rich" id="sbColDropdown" style="display:none;">
             <div class="sb-col-rich-list" id="sbColList">
@@ -1376,6 +1360,12 @@
                 <input class="sb-col-cb" type="checkbox" value="40af4533404b6dc586cf847f46810372"/>
                 <img class="sb-col-rich-logo" src="" alt="" data-logo-id="40af4533404b6dc586cf847f46810372"/>
                 <span class="sb-col-rich-name">Loaded Pixel</span>
+                <span class="sb-col-rich-check">✓</span>
+              </label>
+              <label class="sb-col-rich-item">
+                <input class="sb-col-cb" type="checkbox" value="366e1c3857fecce971703df888904e86"/>
+                <img class="sb-col-rich-logo" src="" alt="" data-logo-id="366e1c3857fecce971703df888904e86"/>
+                <span class="sb-col-rich-name" data-placeholder="1">…</span>
                 <span class="sb-col-rich-check">✓</span>
               </label>
               <label class="sb-col-rich-item">
@@ -1395,7 +1385,7 @@
           </button>
           <div class="sb-request-dropdown" id="sbRequestDropdown" style="display:none;">
             <div class="sb-request-title">Request to add your collection</div>
-            <p class="sb-request-desc">Contact me on Discord or X to have your collection added to the bot.</p>
+            <p class="sb-request-desc">Contact me on Discord or X to have your collection added to the Market Bot.</p>
             <div class="sb-request-links">
               <a class="sb-request-link sb-request-link--discord" href="https://discord.gg/Cronos_WTF" target="_blank" rel="noopener">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
@@ -1412,19 +1402,19 @@
     </div>
 
 
-    <!-- Loading -->
-    <div class="sb-loading" id="sbLoading">
-      <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
-    </div>
-
     <!-- Conteneur des résultats : feed (cards) ou table — entouré d'un halo
          bleu, comme les cartes des drops live, pour mettre en évidence le bloc
-         de résultats. -->
+         de résultats. Le loader est en overlay à l'intérieur pour rester
+         visible pendant le refresh sans rétrécir le conteneur. -->
     <div class="sb-results-wrap" id="sbResultsWrap">
+      <!-- Loading overlay (couvre le conteneur sans modifier sa hauteur) -->
+      <div class="sb-loading" id="sbLoading" style="display:none;">
+        <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
+      </div>
       <!-- Feed -->
       <div class="sb-feed" id="sbFeed"></div>
       <!-- Table -->
-      <div class="sb-table-wrap" id="sbTableWrap" style="display:none;"><table class="sb-table"><thead><tr><th class="sb-th">Event</th><th class="sb-th">Item</th><th class="sb-th">Price</th><th class="sb-th">Rank</th><th class="sb-th">From</th><th class="sb-th">To</th><th class="sb-th sb-th--right">Time</th></tr></thead><tbody id="sbTableBody"></tbody></table></div>
+      <div class="sb-table-wrap" id="sbTableWrap" style="display:none;"><table class="sb-table"><thead><tr><th class="sb-th sb-th--center sb-th--time">Time</th><th class="sb-th sb-th--center sb-th--event">Event</th><th class="sb-th">Item</th><th class="sb-th sb-th--center sb-th--rarity">Rank</th><th class="sb-th">Price</th><th class="sb-th">From</th><th class="sb-th">To</th></tr></thead><tbody id="sbTableBody"></tbody></table></div>
     </div>
 
     <!-- Load more -->
@@ -1480,7 +1470,7 @@
             <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="3" width="4" height="14" rx="1"/><rect x="8" y="3" width="4" height="14" rx="1"/><rect x="13" y="3" width="4" height="14" rx="1"/>
             </svg>
-            Columns
+            <span id="statsColSelectorLabel">Columns</span>
           </button>
           <div class="stats-col-dropdown" id="statsColDropdown" style="display:none;">
             <div class="stats-col-list" id="statsColList"></div>
@@ -6972,6 +6962,7 @@ document.addEventListener('DOMContentLoaded', initialize);
                 defaultRarityRank
                 externalRarityScore
                 externalRarityRank
+                likes
                 externalNftMetadata { network isSuspicious }
                 latestPurchasedEdition { id priceUSD }
             }
@@ -7040,6 +7031,13 @@ document.addEventListener('DOMContentLoaded', initialize);
             if (_cpSort === 'name-asc') {
                 return (a.name || '').localeCompare(b.name || '');
             }
+            // Tri par nombre de likes — desc par défaut (les NFT les plus
+            // populaires en haut). Les assets sans valeur tombent à la fin.
+            if (_cpSort === 'likes-desc') {
+                const la = Number(a.likes) || 0;
+                const lb = Number(b.likes) || 0;
+                return lb - la;
+            }
             return 0;
         });
 
@@ -7077,67 +7075,11 @@ document.addEventListener('DOMContentLoaded', initialize);
     }
 
     function initFilters() {
-        // Tri
-        document.getElementById('cpSortGroup')?.addEventListener('click', e => {
-            const btn = e.target.closest('[data-cpsort]');
-            if (!btn) return;
-            _cpSort = btn.dataset.cpsort;
-            document.querySelectorAll('#cpSortGroup [data-cpsort]').forEach(b =>
-                b.classList.toggle('stats-tr-btn--active', b === btn));
-            applyFilters();
-        });
-
-        // Listed
-        document.getElementById('cpListedGroup')?.addEventListener('click', e => {
-            const btn = e.target.closest('[data-cplisted]');
-            if (!btn) return;
-            _cpListed = btn.dataset.cplisted;
-            document.querySelectorAll('#cpListedGroup [data-cplisted]').forEach(b =>
-                b.classList.toggle('stats-cf-btn--active', b === btn));
-            applyFilters();
-        });
-
-        // Taille
-        document.getElementById('cpSizeToggle')?.addEventListener('click', e => {
-            const btn = e.target.closest('[data-cpsize]');
-            if (!btn) return;
-            _cpSize = btn.dataset.cpsize;
-            updateCpGrid();
-        });
-
-        // Search
-        const inp = document.getElementById('cpSearchInput');
-        const clr = document.getElementById('cpSearchClear');
-        inp?.addEventListener('input', () => {
-            _cpSearch = inp.value.trim();
-            if (clr) clr.style.display = _cpSearch ? 'flex' : 'none';
-            applyFilters();
-        });
-        clr?.addEventListener('click', () => {
-            inp.value = ''; _cpSearch = '';
-            clr.style.display = 'none';
-            inp.focus();
-            applyFilters();
-        });
-
-        // Overlay info
-        document.getElementById('cpOverlayGroup')?.addEventListener('click', e => {
-            const btn = e.target.closest('[data-cpoverlay]');
-            if (!btn) return;
-            _cpOverlay = btn.dataset.cpoverlay;
-            document.querySelectorAll('#cpOverlayGroup [data-cpoverlay]').forEach(b =>
-                b.classList.toggle('stats-cf-btn--active', b === btn));
-            applyFilters();
-        });
-
-        // Re-calculer la grille au resize
-        window.addEventListener('resize', () => {
-            if (document.getElementById('collectionsPanel')?.style.display !== 'none') {
-                updateCpGrid();
-            }
-        });
-
-        // Init bouton actif
+        // La délégation des clics est attachée au niveau document
+        // immédiatement après cette fonction (en bas du IIFE), pour
+        // garantir que les boutons soient cliquables AVANT même que le
+        // panel ne soit affiché pour la 1ère fois.
+        // Init bouton actif (idempotent)
         updateCpGrid();
     }
 
@@ -7424,6 +7366,84 @@ document.addEventListener('DOMContentLoaded', initialize);
         if (typeof window._hideCpWelcome === 'function') window._hideCpWelcome();
         await loadCollection(id);
     };
+
+    // ─────────────────────────────────────────────────────────────────────
+    //   Délégation des clics au niveau document — attachée DÈS le chargement
+    //   du script (pas dans initFilters qui n'est appelé que si le panel
+    //   s'affiche). Comme ça, les boutons fonctionnent peu importe le flow
+    //   d'ouverture du panel (depuis Home, search, featured chip, etc).
+    //   Guard avec window._cpInitDone pour ne jamais double-binder.
+    // ─────────────────────────────────────────────────────────────────────
+    if (!window._cpInitDone) {
+        window._cpInitDone = true;
+
+        // ── Tri ──
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('#cpSortGroup [data-cpsort]');
+            if (!btn) return;
+            _cpSort = btn.dataset.cpsort;
+            document.querySelectorAll('#cpSortGroup [data-cpsort]').forEach(b =>
+                b.classList.toggle('stats-tr-btn--active', b === btn));
+            applyFilters();
+        });
+
+        // ── Listed ──
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('#cpListedGroup [data-cplisted]');
+            if (!btn) return;
+            _cpListed = btn.dataset.cplisted;
+            document.querySelectorAll('#cpListedGroup [data-cplisted]').forEach(b =>
+                b.classList.toggle('stats-cf-btn--active', b === btn));
+            applyFilters();
+        });
+
+        // ── Taille ──
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('#cpSizeToggle [data-cpsize]');
+            if (!btn) return;
+            _cpSize = btn.dataset.cpsize;
+            document.querySelectorAll('#cpSizeToggle [data-cpsize]').forEach(b =>
+                b.classList.toggle('stats-tr-btn--active', b === btn));
+            updateCpGrid();
+        });
+
+        // ── Overlay info ──
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('#cpOverlayGroup [data-cpoverlay]');
+            if (!btn) return;
+            _cpOverlay = btn.dataset.cpoverlay;
+            document.querySelectorAll('#cpOverlayGroup [data-cpoverlay]').forEach(b =>
+                b.classList.toggle('stats-cf-btn--active', b === btn));
+            applyFilters();
+        });
+
+        // ── Search input ──
+        document.addEventListener('input', e => {
+            if (e.target?.id !== 'cpSearchInput') return;
+            _cpSearch = e.target.value.trim();
+            const clr = document.getElementById('cpSearchClear');
+            if (clr) clr.style.display = _cpSearch ? 'flex' : 'none';
+            applyFilters();
+        });
+
+        // ── Search clear ──
+        document.addEventListener('click', e => {
+            if (!e.target.closest('#cpSearchClear')) return;
+            const inp = document.getElementById('cpSearchInput');
+            const clr = document.getElementById('cpSearchClear');
+            if (inp) { inp.value = ''; inp.focus(); }
+            _cpSearch = '';
+            if (clr) clr.style.display = 'none';
+            applyFilters();
+        });
+
+        // Resize : re-calcule la grille (silent si le panel n'est pas affiché)
+        window.addEventListener('resize', () => {
+            if (document.getElementById('collectionsPanel')?.style.display !== 'none') {
+                updateCpGrid();
+            }
+        });
+    }
 })();
 </script>
 
@@ -7629,8 +7649,43 @@ document.addEventListener('DOMContentLoaded', initialize);
             });
         }
 
+        // Confirmation pour suppression de message — boîte de dialogue stylée
+        // (au lieu du confirm() natif qui montre l'URL de la page et est moche).
+        // Renvoie une Promise<boolean>.
+        function confirmDeleteMessage() {
+            return new Promise(resolve => {
+                const overlay = document.createElement('div');
+                overlay.className = 'home-chat-confirm-overlay';
+                overlay.innerHTML = `
+                    <div class="home-chat-confirm-modal">
+                        <div class="home-chat-confirm-icon">
+                            <svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h14M8 6V3.5h4V6M5.5 6l1 11h7l1-11"/></svg>
+                        </div>
+                        <div class="home-chat-confirm-title">Delete message?</div>
+                        <p class="home-chat-confirm-desc">This will remove your message for everyone in the chat. It can't be undone.</p>
+                        <div class="home-chat-confirm-actions">
+                            <button class="home-chat-confirm-cancel" type="button">Cancel</button>
+                            <button class="home-chat-confirm-ok" type="button">Delete</button>
+                        </div>
+                    </div>`;
+                const cleanup = (val) => { overlay.remove(); document.removeEventListener('keydown', onKey); resolve(val); };
+                const onKey = (ev) => {
+                    if (ev.key === 'Escape') { ev.preventDefault(); cleanup(false); }
+                    if (ev.key === 'Enter')  { ev.preventDefault(); cleanup(true); }
+                };
+                overlay.addEventListener('click', (ev) => { if (ev.target === overlay) cleanup(false); });
+                overlay.querySelector('.home-chat-confirm-cancel').addEventListener('click', () => cleanup(false));
+                overlay.querySelector('.home-chat-confirm-ok').addEventListener('click', () => cleanup(true));
+                document.addEventListener('keydown', onKey);
+                document.body.appendChild(overlay);
+                // Focus l'action principale après le mount
+                requestAnimationFrame(() => overlay.querySelector('.home-chat-confirm-ok')?.focus());
+            });
+        }
+
         async function deleteMsg(key) {
-            if (!confirm('Delete this message? This cannot be undone.')) return;
+            const ok = await confirmDeleteMessage();
+            if (!ok) return;
             try { await fbDb.ref(`chat/messages/${key}`).remove(); }
             catch(e) { console.error('[Community chat] delete failed:', e); }
         }
@@ -7867,6 +7922,11 @@ document.addEventListener('DOMContentLoaded', initialize);
     let _sbMode = 'transferred';
     let _sbView = 'cards';
     let _sbFloorByCol = {};
+    /* Total NFT supply par collection — utilisé pour afficher le rang sous
+       forme "954/10000" (rang du NFT sur le total de la collection) au lieu
+       d'un simple numéro qui ne dit rien sur la rareté absolue. Peuplé par
+       fetchSales en même temps que le floor (même endpoint). */
+    let _sbSupplyByCol = {};
     let _cursor = null;
     let _hasMore = false;
     let _sales = [];
@@ -7874,9 +7934,9 @@ document.addEventListener('DOMContentLoaded', initialize);
     let _autoRefreshTimer = null;
 
     const Q = `query getCollectionEventHistory($collectionId:ID!,$first:Int!,$after:String,$naturesIn:[String!]){
-        public{collection(id:$collectionId){id metrics{minSaleListingPriceDecimal} eventHistory(first:$first,after:$after,naturesIn:$naturesIn){
+        public{collection(id:$collectionId){id totalSupply metrics{minSaleListingPriceDecimal} eventHistory(first:$first,after:$after,naturesIn:$naturesIn){
             edges{node{id
-            asset{id name copies copiesInCirculation kind isExternalNft cover{url} defaultRarityRank}
+            asset{id name copies copiesInCirculation kind isExternalNft cover{url} defaultRarityRank likes}
             edition{index}
             listing{currency salePriceDecimalUSD externalUser{address username avatar{url}}}
             user{id uuid username displayName}
@@ -7885,26 +7945,47 @@ document.addEventListener('DOMContentLoaded', initialize);
             pageInfo{endCursor hasNextPage}}}}}`;
 
     async function fetchSales(after) {
+        // IMPORTANT : on capture l'id de la collection AU DÉBUT, en local.
+        // loadInitialMulti lance plusieurs fetchSales en parallèle via
+        // Promise.all en mutant _currentCol entre chaque appel. Sans cette
+        // capture locale, la 2e lecture de _currentCol.id (après l'await
+        // fetch) peut renvoyer l'id d'une AUTRE collection qui a été setée
+        // entre-temps → _sbFloorByCol[colId] = floor était keyé sur la
+        // mauvaise collection, d'où des % above/below floor incorrects en
+        // mode multi.
+        const colId = _currentCol.id;
         const res = await fetch(graphqlEndpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 operationName: 'getCollectionEventHistory',
-                variables: { collectionId: _currentCol.id, first: 20, after: after || null, naturesIn: _sbMode === 'all' ? ['transferred','listed'] : _sbMode === 'auction' ? ['transferred','listed'] : [_sbMode] },
+                variables: { collectionId: colId, first: 20, after: after || null, naturesIn: _sbMode === 'all' ? ['transferred','listed'] : _sbMode === 'auction' ? ['transferred','listed'] : [_sbMode] },
                 query: Q
             })
         });
         const json = await res.json();
         const col = json?.data?.public?.collection;
         const floor = Number(col?.metrics?.minSaleListingPriceDecimal) || 0;
-        if (floor > 0) _sbFloorByCol[_currentCol.id] = floor;
+        if (floor > 0) _sbFloorByCol[colId] = floor;
+        // Capture aussi totalSupply (utilisé pour afficher le rang sur le
+        // total : "954/10000"). Même logique que pour le floor : keyé sur
+        // colId capturé localement pour éviter la race condition.
+        const supply = Number(col?.totalSupply) || 0;
+        if (supply > 0) _sbSupplyByCol[colId] = supply;
         const data = col?.eventHistory;
         return { edges: data?.edges || [], pageInfo: data?.pageInfo || {} };
     }
 
+    // Renvoie le floor d'UNE collection précise. Avec plusieurs collections
+    // sélectionnées, chaque ligne / card doit être comparée au floor de SA
+    // collection — pas au min global, sinon les % above/below sont faux.
+    function getFloorFor(colId) {
+        return colId ? (_sbFloorByCol[colId] || 0) : 0;
+    }
+    // Conservé pour compat (n'est plus utilisé pour le rendu, mais référencé
+    // ailleurs éventuellement). Renvoie 0 si on appelle sans colId.
     function getActiveFloor() {
-        const vals = Object.values(_sbFloorByCol).filter(v => v > 0);
-        return vals.length ? Math.min(...vals) : 0;
+        return 0;
     }
 
     function fmt(n) {
@@ -7928,10 +8009,10 @@ document.addEventListener('DOMContentLoaded', initialize);
         return 'sb-card-price--white';
     }
 
-    function _floorHtml(price, isListing, forTable) {
+    function _floorHtml(price, isListing, forTable, colId) {
         if (price <= 0) return '';
         if (price <= 1) return '';
-        const floor = getActiveFloor();
+        const floor = getFloorFor(colId);
         if (floor <= 0) return '';
         const pct = ((price - floor) / floor) * 100;
         const absPct = Math.abs(pct).toFixed(1);
@@ -7953,21 +8034,29 @@ document.addEventListener('DOMContentLoaded', initialize);
         const date   = node.createdAt ? timeAgo(node.createdAt) : '';
         const pClass = priceClass(price);
         const rank = node.asset?.defaultRarityRank;
+        // Affiche le rang sur le total : "954/10000" si on connaît la supply
+        // de la collection (capturée par fetchSales dans _sbSupplyByCol),
+        // sinon juste le numéro.
+        const supply = _sbSupplyByCol[node._colId] || 0;
+        const rankText = rank ? (supply > 0 ? rank + '/' + supply : String(rank)) : '';
         const isListing = node.nature === 'listed';
         const isAuction = node.mode === 'auction';
         // Highlight : jamais pour les listings, pour les enchères seulement si offre intéressante (≥ 200$), pour les ventes si ≥ 1000$
         const isHighlight = !isListing && (isAuction ? price >= 200 : price >= 1000);
+        // Badges harmonisés avec la vue tableau : même classe (.sb-evt-label)
+        // pour un rendu strictement identique sale/listing/auction. Plus
+        // d'emoji 💰 / 📋 / 🔨 — la couleur + le contour suffisent.
         const typeBadge = isListing
-            ? (isAuction ? '<span class="sb-type-badge sb-type-badge--auction">🔨 Auction</span>'
-                         : '<span class="sb-type-badge sb-type-badge--listing">📋 Listing</span>')
-            : '<span class="sb-type-badge sb-type-badge--sale">💰 Sale</span>';
+            ? (isAuction ? '<span class="sb-evt-label sb-evt--auction">Auction</span>'
+                         : '<span class="sb-evt-label sb-evt--listing">Listing</span>')
+            : '<span class="sb-evt-label sb-evt--sale">Sale</span>';
 
         const card = document.createElement('div');
         card.className = 'sb-card' + (isHighlight ? ' sb-card--highlight' : '');
         card.innerHTML = `
             <div class="sb-card-img-wrap">
                 <img class="sb-card-img" src="${imgUrl}" alt="${name}" loading="lazy"/>
-                ${rank ? `<div class="sb-rank-badge"><svg width="10" height="10" viewBox="0 0 20 20" fill="#00B3FF" style="flex-shrink:0"><path d="M10 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L10 14.3l-4.8 2.5.9-5.4L2.2 7.7l5.4-.8z"/></svg>${rank}</div>` : ''}
+                ${rank ? `<div class="sb-rank-badge"><svg width="10" height="10" viewBox="0 0 20 20" fill="#00B3FF" style="flex-shrink:0"><path d="M10 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L10 14.3l-4.8 2.5.9-5.4L2.2 7.7l5.4-.8z"/></svg>${rankText}</div>` : ''}
                 ${isHighlight ? '<span class="sb-card-hot">🔥</span>' : ''}
             </div>
             <div class="sb-card-body">
@@ -7977,7 +8066,7 @@ document.addEventListener('DOMContentLoaded', initialize);
                 </div>
                 <div class="sb-card-price-block">
                     <span class="sb-card-price ${pClass}">${priceUsd}</span>
-                    ${_floorHtml(price, isListing, false)}
+                    ${_floorHtml(price, isListing, false, node._colId)}
                 </div>
                 <div class="sb-card-parties sb-card-parties--nosep">
                     ${isListing ? `
@@ -8002,8 +8091,8 @@ document.addEventListener('DOMContentLoaded', initialize);
             const url = `https://crypto.com/nft/asset/${node.asset?.id}`;
             window.open(url, '_blank', 'noopener');
         });
-        // Vérifier alarme prix
-        if (typeof window._sbCheckAlarm === 'function') window._sbCheckAlarm(price, node.nature);
+        // Vérifier alarme prix (par collection)
+        if (typeof window._sbCheckAlarm === 'function') window._sbCheckAlarm(price, node.nature, node._colId);
         return card;
     }
 
@@ -8017,31 +8106,35 @@ document.addEventListener('DOMContentLoaded', initialize);
         const date     = node.createdAt ? timeAgo(node.createdAt) : '';
         const pClass   = priceClass(price);
         const rank     = node.asset?.defaultRarityRank;
+        const supply   = _sbSupplyByCol[node._colId] || 0;
+        const rankText = rank ? (supply > 0 ? rank + '/' + supply : String(rank)) : '';
         const isListing = node.nature === 'listed';
         const isAuction = node.mode === 'auction';
         const isHighlight = !isListing && (isAuction ? price >= 200 : price >= 1000);
         const assetUrl  = 'https://crypto.com/nft/asset/' + (node.asset?.id || '');
         const evtLabel  = isAuction ? 'Auction' : isListing ? 'Listing' : 'Sale';
         const evtCls    = isAuction ? 'sb-evt--auction' : isListing ? 'sb-evt--listing' : 'sb-evt--sale';
-        const rankCell  = rank ? '<span class="sb-td-rank">' + rank + '</span>' : '—';
-        const floorSpan = _floorHtml(price, isListing, true);
+        const rankCell  = rank ? '<span class="sb-td-rank">' + rankText + '</span>' : '—';
+        const floorSpan = _floorHtml(price, isListing, true, node._colId);
         const tr = document.createElement('tr');
         tr.className = 'sb-tr' + (isHighlight ? ' sb-tr--highlight' : '');
+        // TIME first (left-most), then EVENT, ITEM, RANK, PRICE, FROM, TO.
+        // Plus de flèche ↗ ni de flamme 🔥 dans la table : la mise en
+        // évidence des "grosses ventes" est portée par le fond du <tr>
+        // (.sb-tr--highlight, gradient ambré), plus discret et plus
+        // élégant que l'emoji.
         tr.innerHTML =
-            '<td class="sb-td sb-td--event"><span class="sb-evt-label ' + evtCls + '">' + evtLabel + '</span>' + (isHighlight ? ' 🔥' : '') + '</td>' +
+            '<td class="sb-td sb-td--time sb-td--center">' + date + '</td>' +
+            '<td class="sb-td sb-td--event sb-td--center"><span class="sb-evt-label ' + evtCls + '">' + evtLabel + '</span></td>' +
             '<td class="sb-td sb-td--item"><div class="sb-td-inner"><img class="sb-row-img" src="' + imgUrl + '" alt="" loading="lazy"/><span class="sb-row-name">' + name + '</span></div></td>' +
+            '<td class="sb-td sb-td--rarity sb-td--center">' + rankCell + '</td>' +
             '<td class="sb-td sb-td--price"><div class="sb-td-inner">' +
                 '<span class="sb-card-price ' + pClass + '">' + priceUsd + '</span>' + floorSpan +
             '</div></td>' +
-            '<td class="sb-td sb-td--rarity">' + rankCell + '</td>' +
             '<td class="sb-td sb-td--from" style="color:#f87171">' + seller + '</td>' +
-            '<td class="sb-td sb-td--to" style="color:#4ade80">' + (isListing ? '—' : buyer) + '</td>' +
-            '<td class="sb-td sb-td--time">' + date + ' <span class="sb-row-link">↗</span></td>';
-        tr.querySelector('.sb-row-link').addEventListener('click', function(e) {
-            e.stopPropagation(); window.open(assetUrl, '_blank', 'noopener');
-        });
+            '<td class="sb-td sb-td--to" style="color:#4ade80">' + (isListing ? '—' : buyer) + '</td>';
         tr.addEventListener('click', function() { window.open(assetUrl, '_blank', 'noopener'); });
-        if (typeof window._sbCheckAlarm === 'function') window._sbCheckAlarm(price, node.nature);
+        if (typeof window._sbCheckAlarm === 'function') window._sbCheckAlarm(price, node.nature, node._colId);
         return tr;
     }
 
@@ -8055,14 +8148,28 @@ document.addEventListener('DOMContentLoaded', initialize);
         const sort   = window._sbCurrentSort || 'date-desc';
         let filtered = _sales.slice().filter(s => {
             const price = Number(s.listing?.salePriceDecimalUSD) || Number(s.amountDecimal) || 0;
-            const name  = (s.asset?.name || '').toLowerCase();
-            if (search && !name.includes(search)) return false;
+            // Le filtre texte teste maintenant le nom de l'asset ET les noms
+            // de profil (seller / buyer, displayName ou username) pour qu'on
+            // puisse retrouver toutes les ventes/listings d'un wallet précis.
+            if (search) {
+                const fields = [
+                    s.asset?.name,
+                    s.user?.displayName, s.user?.username,
+                    s.toUser?.displayName, s.toUser?.username
+                ].map(v => (v || '').toLowerCase());
+                if (!fields.some(f => f.includes(search))) return false;
+            }
             if (price > 1 && price < pMin) return false;
             if (pMax < Infinity && price > pMax) return false;
             // Masquer ventes à 1$ (transferts déguisés) quand le filtre est actif
             if (window._sbHideDollarSales && price > 0 && price <= 1) return false;
             // Filtre auction côté client
             if (_sbMode === 'auction' && s.mode !== 'auction') return false;
+            // Le filtre "Listings" exclut explicitement les enchères : celles-ci
+            // ont leur propre onglet "Auctions" et l'API renvoie les deux types
+            // sous nature='listed'. Sans ce filtre, des auctions polluaient le
+            // flux des listings classiques (achat immédiat).
+            if (_sbMode === 'listed' && s.mode === 'auction') return false;
             return true;
         });
         filtered.sort((a, b) => {
@@ -8077,6 +8184,13 @@ document.addEventListener('DOMContentLoaded', initialize);
                 const rb = Number(b.asset?.defaultRarityRank) || 99999;
                 return ra - rb;
             }
+            // Tri par nombre de likes — desc par défaut (les NFT les plus
+            // populaires en haut). Les assets sans valeur tombent à la fin.
+            if (sort === 'likes-desc') {
+                const la = Number(a.asset?.likes) || 0;
+                const lb = Number(b.asset?.likes) || 0;
+                return lb - la;
+            }
             return db - da; // date-desc
         });
         if (_sbView !== 'table') feed.innerHTML = '';
@@ -8090,7 +8204,28 @@ document.addEventListener('DOMContentLoaded', initialize);
         } else {
             display.forEach(s => feed.appendChild(buildCard(s)));
         }
-        if (countEl) countEl.textContent = filtered.length + ' sale' + (filtered.length !== 1 ? 's' : '');
+        if (countEl) {
+            // Le label suit le filtre actif : Sales → "Sales", Listings →
+            // "Listings", Auctions → "Auctions", All → "Events" (le mode
+            // "all" mélange ventes + listings → "Events" décrit mieux le
+            // contenu mixte que "Sales").
+            // Rendu aligné sur la summary de "TOP COLLECTIONS" — label en
+            // gris uppercase (.stats-summary-label) et nombre en blanc bold
+            // (.stats-summary-val) — pour une typographie cohérente entre
+            // les barres de filtres de la plateforme.
+            const labelMap = {
+                transferred: 'Sales',
+                listed:      'Listings',
+                auction:     'Auctions',
+                all:         'Events'
+            };
+            const label = labelMap[_sbMode] || 'Events';
+            countEl.innerHTML =
+                '<span class="stats-summary-item">'
+                  + '<span class="stats-summary-label">' + label + '</span>'
+                  + '<span class="stats-summary-val">' + filtered.length + '</span>'
+              + '</span>';
+        }
     };
 
     function fmtDate(dateStr) {
@@ -8176,7 +8311,9 @@ document.addEventListener('DOMContentLoaded', initialize);
             const res = await fetch(graphqlEndpoint, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ operationName: 'GetColLogo', variables: { id },
-                    query: 'query GetColLogo($id:ID!){public{collection(id:$id){name logo{url}}}}' })
+                    // Étend pour récupérer aussi creator → permet de grouper
+                    // les collections par artiste dans le dropdown.
+                    query: 'query GetColLogo($id:ID!){public{collection(id:$id){name logo{url} creator{uuid id displayName username verified}}}}' })
             });
             const j = await res.json();
             return j?.data?.public?.collection || null;
@@ -8193,13 +8330,90 @@ document.addEventListener('DOMContentLoaded', initialize);
         }
     }
 
-    // Charge logos dans le dropdown
+    // Charge logos + nom + créateur pour chaque collection dans le dropdown.
+    // Une fois TOUTES les collections récupérées, on (re-)groupe par
+    // artiste avec un en-tête cliquable au-dessus de chaque groupe.
     async function loadDropdownLogos(listId) {
-        document.querySelectorAll(`#${listId} [data-logo-id]`).forEach(async img => {
-            if (img.classList.contains('loaded')) return; // déjà chargé
+        const imgs = Array.from(document.querySelectorAll(`#${listId} [data-logo-id]`));
+        await Promise.all(imgs.map(async img => {
+            if (img.classList.contains('loaded')) return;
             const col = await fetchColLogo(img.dataset.logoId);
-            if (col?.logo?.url) { img.src = col.logo.url; img.classList.add('loaded'); }
+            if (!col) return;
+            if (col.logo?.url) {
+                img.src = col.logo.url;
+                img.classList.add('loaded');
+            }
+            // Met à jour le nom (si placeholder) et tague la checkbox avec
+            // les data-creator-* pour pouvoir grouper ensuite.
+            const label = img.closest('.sb-col-rich-item');
+            if (!label) return;
+            const nameEl = label.querySelector('.sb-col-rich-name');
+            if (nameEl && nameEl.dataset.placeholder) {
+                nameEl.textContent = col.name || '';
+                delete nameEl.dataset.placeholder;
+            }
+            const cb = label.querySelector('.sb-col-cb');
+            const creatorId       = col.creator?.uuid || col.creator?.id || '';
+            const creatorName     = col.creator?.displayName || col.creator?.username || '';
+            const creatorVerified = !!col.creator?.verified;
+            if (cb && creatorId) {
+                cb.dataset.creatorId       = creatorId;
+                cb.dataset.creatorName     = creatorName;
+                cb.dataset.creatorVerified = creatorVerified ? '1' : '';
+            }
+        }));
+        // Tous les créateurs sont maintenant connus → on injecte les
+        // séparateurs/headers entre groupes d'artistes.
+        regroupDropdownByCreator(listId);
+        // Mise à jour du label du bouton (peut maintenant inclure "X creators / Y collections")
+        if (typeof updateColSelectorLabel === 'function') updateColSelectorLabel();
+    }
+
+    // Regroupe les items du dropdown par créateur en RÉORDONNANT le DOM
+    // (bug précédent : on insérait juste des headers quand le creator changeait
+    //  entre items consécutifs, donc avec un ordre HTML A,B,A,B on obtenait
+    //  4 groupes séparés au lieu de 2). Maintenant : on collecte les labels,
+    //  on les groupe par creatorId en préservant l'ordre de 1ère apparition
+    //  de chaque créateur, puis on ré-insère TOUT dans l'ordre groupé avec
+    //  un en-tête cliquable au-dessus de chaque groupe.
+    function regroupDropdownByCreator(listId) {
+        const list = document.getElementById(listId);
+        if (!list) return;
+        // 1) Reset : retire les anciens headers
+        list.querySelectorAll('.sb-col-group-header').forEach(h => h.remove());
+        // 2) Collecte tous les labels actuels (les références DOM sont
+        //    conservées — pas de re-création donc les event listeners
+        //    directs sur les checkboxes restent en place).
+        const labels = Array.from(list.querySelectorAll('.sb-col-rich-item'));
+        // 3) Groupe par creatorId en préservant l'ordre de 1ère apparition
+        const byCreator = new Map(); // creatorId -> { name, items: [] }
+        const orphans   = []; // items sans creator (fetch pas encore terminé)
+        labels.forEach(label => {
+            const cb = label.querySelector('.sb-col-cb');
+            const creatorId   = cb?.dataset.creatorId   || '';
+            const creatorName = cb?.dataset.creatorName || '';
+            if (!creatorId) { orphans.push(label); return; }
+            if (!byCreator.has(creatorId)) {
+                byCreator.set(creatorId, { name: creatorName, items: [] });
+            }
+            byCreator.get(creatorId).items.push(label);
         });
+        // 4) Vide la liste sans détruire les nodes (on les ré-attachera)
+        labels.forEach(l => l.remove());
+        // 5) Réinsère orphans en premier (pas de header), puis chaque
+        //    groupe précédé de son en-tête
+        orphans.forEach(l => list.appendChild(l));
+        for (const [creatorId, group] of byCreator) {
+            const header = document.createElement('button');
+            header.className = 'sb-col-group-header';
+            header.type = 'button';
+            header.dataset.creatorId = creatorId;
+            header.innerHTML =
+                '<span class="sb-col-group-name">' + (group.name || 'Creator') + '</span>' +
+                '<span class="sb-col-group-action">Toggle all</span>';
+            list.appendChild(header);
+            group.items.forEach(l => list.appendChild(l));
+        }
     }
 
     // _selectedIds : set des IDs cochés
@@ -8221,15 +8435,13 @@ document.addEventListener('DOMContentLoaded', initialize);
         const loader = document.getElementById('sbLoading');
         const lmWrap = document.getElementById('sbLoadMoreWrap');
         _sales = []; _cursors = {}; _hasMoreMap = {};
-        // En vue tableau : préserver la hauteur pour éviter le saut de layout
-        const tbody = document.getElementById('sbTableBody');
-        if (_sbView === 'table') {
-            if (tbody) tbody.style.opacity = '0'; // masquer sans changer la hauteur
-            if (loader) loader.style.display = 'none';    // pas de spinner en vue tableau
-        } else {
-            if (feed) feed.innerHTML = '';
-            if (loader) loader.style.display = 'flex';
-        }
+        // ── REFRESH-FRIENDLY ─────────────────────────────────────────────
+        // On NE vide PAS le feed/le tbody : les résultats actuels restent
+        // visibles pendant le fetch. Le loader s'affiche en OVERLAY
+        // (position absolute) au-dessus du conteneur halo, donc il ne
+        // change pas la taille du contenu. Quand les nouveaux résultats
+        // arrivent, _sbApplyClientFilters() remplace le DOM en une fois.
+        if (loader) loader.style.display = 'flex';
         if (lmWrap) lmWrap.style.display = 'none';
         try {
             const results = await Promise.all(ids.map(async id => {
@@ -8240,11 +8452,16 @@ document.addEventListener('DOMContentLoaded', initialize);
                 return { id, ...r };
             }));
             if (loader) loader.style.display = 'none';
-            if (tbody) tbody.style.opacity = '';
             let allEdges = [];
             results.forEach(r => {
                 _cursors[r.id] = r.pageInfo?.endCursor || null;
                 _hasMoreMap[r.id] = r.pageInfo?.hasNextPage || false;
+                // Tag chaque node avec sa collection d'origine — nécessaire
+                // pour les alarmes par-collection (window._sbCheckAlarm) et
+                // pour pouvoir afficher la collection dans la card si besoin.
+                (r.edges || []).forEach(e => {
+                    if (e?.node) e.node._colId = r.id;
+                });
                 allEdges = allEdges.concat(r.edges || []);
             });
             allEdges.sort((a, b) => new Date(b.node.createdAt) - new Date(a.node.createdAt));
@@ -8255,7 +8472,10 @@ document.addEventListener('DOMContentLoaded', initialize);
             if (anyMore && lmWrap) lmWrap.style.display = 'flex';
         } catch(err) {
             if (loader) loader.style.display = 'none';
-            if (feed) feed.innerHTML = '<div class="sb-empty">Error loading sales.</div>';
+            // En cas d'erreur, ne pas écraser le contenu existant si on a déjà
+            // affiché des résultats — on log juste le problème.
+            if (feed && !feed.children.length) feed.innerHTML = '<div class="sb-empty">Error loading sales.</div>';
+            console.warn('[Market Bot] load failed:', err?.message);
         } finally {
             _sbLoading = false;
         }
@@ -8311,6 +8531,51 @@ document.addEventListener('DOMContentLoaded', initialize);
                 if (colDropdown) colDropdown.style.display = 'none';
         });
 
+        // Met à jour le label du bouton "Collection" pour refléter le nombre
+        // de collections actuellement sélectionnées. Format avancé :
+        //   - Si toutes les collections cochées appartiennent à des créateurs
+        //     dont l'INTÉGRALITÉ des collections est cochée → on indique
+        //     aussi le nombre de créateurs : "1 creator / 2 collections".
+        //   - Sinon (sélection partielle d'au moins un créateur) → format
+        //     simple "X Collection(s)".
+        function updateColSelectorLabel() {
+            const lbl = document.getElementById('sbColSelectorLabel');
+            if (!lbl) return;
+            const checkedCbs = Array.from(document.querySelectorAll('.sb-col-cb:checked'));
+            const collCount = checkedCbs.length;
+
+            // Regroupe les checked par creatorId (peut être absent tant que
+            // le fetch async n'a pas peuplé les dataset).
+            const checkedByCreator = {};
+            checkedCbs.forEach(cb => {
+                const cid = cb.dataset.creatorId;
+                if (cid) {
+                    (checkedByCreator[cid] = checkedByCreator[cid] || []).push(cb);
+                }
+            });
+            const creatorIds = Object.keys(checkedByCreator);
+
+            // Tous les créateurs dont au moins 1 collection est cochée
+            // doivent l'être ENTIÈREMENT pour afficher le format "X creators".
+            const allCreatorsFully = creatorIds.length > 0 && creatorIds.every(cid => {
+                const total = document.querySelectorAll('.sb-col-cb[data-creator-id="' + cid + '"]').length;
+                return checkedByCreator[cid].length === total;
+            });
+            // En plus, il faut que TOUTES les checked aient un creatorId
+            // connu (sinon on a une collection sans creator → skip le format
+            // étendu pour rester précis).
+            const allHaveCreator = checkedCbs.every(cb => !!cb.dataset.creatorId);
+
+            let label;
+            if (allCreatorsFully && allHaveCreator) {
+                label = creatorIds.length + ' creator' + (creatorIds.length > 1 ? 's' : '')
+                      + ' / ' + collCount + ' collection' + (collCount > 1 ? 's' : '');
+            } else {
+                label = collCount + ' Collection' + (collCount > 1 ? 's' : '');
+            }
+            lbl.textContent = label;
+        }
+
         // Checkboxes multi-sélection
         document.querySelectorAll('.sb-col-cb').forEach(cb => {
             cb.addEventListener('change', () => {
@@ -8324,9 +8589,38 @@ document.addEventListener('DOMContentLoaded', initialize);
                     names.push(c.closest('label')?.querySelector('.sb-col-rich-name')?.textContent || '');
                 });
                 updateHeaderCol(names.join(', '), '');
+                updateColSelectorLabel();
+                // Re-render le panel des alarmes : ajoute les sections pour les
+                // nouvelles collections cochées et retire celles décochées.
+                // L'état (seuils armés) est conservé dans _alarms côté JS donc
+                // re-cocher une collection rétablit son alarme.
+                if (typeof window._sbAlarmRefresh === 'function') window._sbAlarmRefresh();
                 loadInitialMulti();
             });
         });
+
+        // Click sur un en-tête de groupe (créateur) : toggle TOUTES les
+        // collections de cet artiste d'un coup. Si elles sont toutes
+        // cochées → décoche tout (sauf si ça vide totalement la sélection,
+        // auquel cas le handler change ci-dessus garde au moins 1 cochée).
+        // Si certaines sont décochées → coche tout.
+        document.addEventListener('click', e => {
+            const header = e.target.closest('.sb-col-group-header');
+            if (!header) return;
+            e.stopPropagation();
+            const cid = header.dataset.creatorId;
+            if (!cid) return;
+            const cbs = Array.from(document.querySelectorAll('.sb-col-cb[data-creator-id="' + cid + '"]'));
+            const allChecked = cbs.length > 0 && cbs.every(cb => cb.checked);
+            cbs.forEach(cb => {
+                if (cb.checked === !allChecked) return;
+                cb.checked = !allChecked;
+                cb.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+        });
+
+        // Init du label dès le boot pour refléter l'état initial.
+        updateColSelectorLabel();
 
         // Mode filter (Sales / Listings / All)
         let _sbModeDebounce = null;
@@ -8362,6 +8656,10 @@ document.addEventListener('DOMContentLoaded', initialize);
             if (_btnTable) _btnTable.classList.toggle('sb-view-btn--active', v === 'table');
             if (_feedEl)  _feedEl.style.display  = v === 'cards' ? '' : 'none';
             if (_tblWrap) _tblWrap.style.display = v === 'table' ? '' : 'none';
+            // Toggle modifier sur le conteneur halo pour que la vue table soit
+            // collée pile contre les bords du halo (pas de padding interne).
+            const wrap = document.getElementById('sbResultsWrap');
+            if (wrap) wrap.classList.toggle('sb-results-wrap--table', v === 'table');
             if (typeof window._sbApplyClientFilters === 'function') window._sbApplyClientFilters();
         }
         if (_btnCards) _btnCards.addEventListener('click', function() { _setView('cards'); });
@@ -9288,19 +9586,19 @@ document.addEventListener('DOMContentLoaded', initialize);
 </script>
 
 <script>
-/* ── BOT PRICE ALARMS — 2 canaux indépendants : Sales & Listings ──
-   Chaque canal a son propre seuil ($) et peut être armé / désarmé
-   séparément. Le cooldown est partagé pour éviter de jouer 2 sons
-   coup sur coup quand les 2 alarmes se déclenchent au même moment. */
+/* ── BOT PRICE ALARMS — par collection × par canal (sales/listings) ──
+   Chaque collection sélectionnée a sa propre paire d'alarmes Sales / Listings,
+   indépendantes les unes des autres. Le panel se re-rend automatiquement
+   quand l'utilisateur change la sélection des collections. */
 (function() {
-    // Seuils — null = désactivé
-    let _alarmSales  = null;  // sur nature 'transferred'
-    let _alarmListed = null;  // sur nature 'listed'
+    // _alarms[colId] = { sales: priceOrNull, listed: priceOrNull }
+    // (préservé entre re-renders : si tu décoches puis recoches une collection,
+    // l'alarme reste active.)
+    const _alarms = Object.create(null);
     let _alarmVolume = 0.7;
     let _alarmLastTriggered = 0;
-    const COOLDOWN = 8000;    // ms entre deux déclenchements
+    const COOLDOWN = 8000;
 
-    // Générer un son d'alerte via Web Audio API
     function playAlarm() {
         const now = Date.now();
         if (now - _alarmLastTriggered < COOLDOWN) return;
@@ -9310,7 +9608,6 @@ document.addEventListener('DOMContentLoaded', initialize);
             const vol = ctx.createGain();
             vol.gain.value = _alarmVolume;
             vol.connect(ctx.destination);
-            // Deux bips successifs
             [0, 0.25].forEach((delay, i) => {
                 const osc = ctx.createOscillator();
                 osc.type = 'sine';
@@ -9323,60 +9620,154 @@ document.addEventListener('DOMContentLoaded', initialize);
         } catch(e) {}
     }
 
-    // Hook appelé par le pipeline d'événements pour chaque card ajoutée.
-    // On dispatch sur la nature : seul le canal correspondant peut tirer.
-    window._sbCheckAlarm = function(price, nature) {
-        if (!(price > 0)) return;
-        if (nature === 'transferred' && _alarmSales  !== null && price <= _alarmSales)  playAlarm();
-        if (nature === 'listed'      && _alarmListed !== null && price <= _alarmListed) playAlarm();
+    // Hook appelé par le pipeline d'événements pour chaque card / row affichée.
+    // colId est rattaché par loadInitialMulti dans node._colId.
+    window._sbCheckAlarm = function(price, nature, colId) {
+        if (!(price > 0) || !colId) return;
+        const a = _alarms[colId];
+        if (!a) return;
+        const ch = nature === 'transferred' ? 'sales'
+                 : nature === 'listed'      ? 'listed' : null;
+        if (!ch) return;
+        const t = a[ch];
+        if (t !== null && t !== undefined && price <= t) playAlarm();
     };
 
-    // Mise à jour du label du bouton flotter (Alert / < $X / multi)
+    // Met à jour le label du bouton flottant — Alert / nb d'alarmes armées.
     function updateAlarmLabel() {
         const label = document.getElementById('sbAlarmLabel');
         const icon  = document.getElementById('sbAlarmIcon');
         const btn   = document.getElementById('sbAlarmBtn');
-        const armed = [];
-        if (_alarmSales !== null)  armed.push(`S<$${_alarmSales}`);
-        if (_alarmListed !== null) armed.push(`L<$${_alarmListed}`);
-        const anyArmed = armed.length > 0;
-        if (label) label.textContent = anyArmed ? armed.join(' · ') : 'Alert';
-        if (icon)  icon.style.stroke = anyArmed ? '#4ade80' : '';
-        if (btn)   btn.classList.toggle('sb-alarm-btn--active', anyArmed);
+        let count = 0;
+        for (const id in _alarms) {
+            if (_alarms[id]?.sales  != null) count++;
+            if (_alarms[id]?.listed != null) count++;
+        }
+        if (label) label.textContent = count === 0 ? 'Alert' : `${count} active`;
+        if (icon)  icon.style.stroke = count > 0 ? '#4ade80' : '';
+        if (btn)   btn.classList.toggle('sb-alarm-btn--active', count > 0);
     }
 
-    // Wire un canal (sales | listed) — input/setBtn/status/text/clearBtn ciblés
-    // par suffixe d'id. Encapsulé en fabrique pour éviter la duplication.
-    function wireChannel(suffix, getValue, setValue) {
-        const input    = document.getElementById('sbAlarmPrice'   + suffix);
-        const setBtn   = document.getElementById('sbAlarmSet'     + suffix);
-        const status   = document.getElementById('sbAlarmStatus'  + suffix);
-        const statusTx = document.getElementById('sbAlarmStatusText' + suffix);
-        const clearBtn = document.getElementById('sbAlarmClear'   + suffix);
+    // Rendu d'un bloc compact pour une collection : Sales et Listings
+    // côte-à-côte dans une grille 2 colonnes, pour limiter la hauteur du
+    // panel quand plusieurs collections sont sélectionnées.
+    function rowHTML(colId, channel, label) {
+        const cur = _alarms[colId]?.[channel];
+        const armed = cur != null;
+        return `
+          <div class="sb-alarm-cell${armed ? ' sb-alarm-cell--armed' : ''}" data-col-id="${colId}" data-channel="${channel}">
+            <span class="sb-alarm-cell-lbl">${label}</span>
+            <div class="sb-alarm-input-row">
+              <span class="sb-alarm-currency">$</span>
+              <input class="sb-alarm-input" type="number" placeholder="500" min="0" inputmode="numeric"
+                     data-col-id="${colId}" data-channel="${channel}" value="${armed ? cur : ''}"/>
+              <button class="sb-alarm-set" type="button" data-col-id="${colId}" data-channel="${channel}" data-action="set" title="Set alert">✓</button>
+              ${armed ? `<button class="sb-alarm-clear-mini" type="button" data-col-id="${colId}" data-channel="${channel}" data-action="clear" title="Clear">×</button>` : ''}
+            </div>
+          </div>`;
+    }
 
-        function activate(v) {
-            setValue(v);
-            if (status)   status.style.display = 'flex';
-            if (statusTx) statusTx.textContent = `Alert active — below $${v}`;
-            updateAlarmLabel();
+    // Re-rendu complet du panel alarmes selon les collections sélectionnées.
+    // Le header (logo + nom) est TOUJOURS affiché — y compris pour une seule
+    // collection — pour que l'utilisateur identifie clairement la cible des
+    // seuils qu'il configure (cohérent avec le multi). De même, le nom de
+    // l'artiste est TOUJOURS affiché (même avec un seul créateur sélectionné)
+    // et accompagné du badge "vérifié" (même SVG que dans l'onglet Drop) si
+    // l'artiste est certifié sur la plateforme.
+    function renderAlarmPanel() {
+        const wrap = document.getElementById('sbAlarmCollections');
+        if (!wrap) return;
+        // 1) Récupère les collections cochées dans l'ordre du DOM (= ordre
+        //    groupé par créateur après regroupDropdownByCreator), avec leur
+        //    creatorId, creatorName et creatorVerified.
+        const cols = [];
+        document.querySelectorAll('.sb-col-cb:checked').forEach(cb => {
+            const label = cb.closest('label');
+            const id              = cb.value;
+            const name            = label?.querySelector('.sb-col-rich-name')?.textContent?.trim() || id;
+            const logo            = label?.querySelector('.sb-col-rich-logo')?.getAttribute('src') || '';
+            const creatorId       = cb.dataset.creatorId       || '';
+            const creatorName     = cb.dataset.creatorName     || '';
+            const creatorVerified = cb.dataset.creatorVerified === '1';
+            cols.push({ id, name, logo, creatorId, creatorName, creatorVerified });
+        });
+        if (!cols.length) { wrap.innerHTML = ''; return; }
+        // 2) Groupe par creator (préserve l'ordre de 1ère apparition)
+        const groups = new Map();
+        cols.forEach(c => {
+            const k = c.creatorId || '_orphan';
+            if (!groups.has(k)) groups.set(k, { name: c.creatorName, verified: c.creatorVerified, items: [] });
+            groups.get(k).items.push(c);
+        });
+        // 3) Badge vérifié — exactement le même SVG que celui utilisé dans
+        //    les cards de l'onglet Drop (cercle bleu Twitter + check blanc).
+        const verifiedSvg = '<svg class="sb-alarm-creator-verified" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        const blockHTML = (c) => `
+          <div class="sb-alarm-col-block" data-col-id="${c.id}">
+            <div class="sb-alarm-col-header">
+              ${c.logo
+                  ? `<img class="sb-alarm-col-logo" src="${c.logo}" alt=""/>`
+                  : `<span class="sb-alarm-col-logo sb-alarm-col-logo--placeholder"></span>`}
+              <span class="sb-alarm-col-name">${c.name}</span>
+            </div>
+            <div class="sb-alarm-grid">
+              ${rowHTML(c.id, 'sales',  'Sales')}
+              ${rowHTML(c.id, 'listed', 'Listings')}
+            </div>
+          </div>`;
+        let html = '';
+        for (const [, group] of groups) {
+            // L'artiste est toujours affiché dès qu'on connaît son nom —
+            // y compris quand un seul créateur est sélectionné. Le badge
+            // "vérifié" apparaît à droite du nom si l'artiste est certifié.
+            if (group.name) {
+                html += `<div class="sb-alarm-creator-header">`
+                    + `<span class="sb-alarm-creator-name">${group.name}</span>`
+                    + (group.verified ? verifiedSvg : '')
+                    + `</div>`;
+            }
+            html += group.items.map(blockHTML).join('');
         }
-        function clear() {
-            setValue(null);
-            if (status) status.style.display = 'none';
-            if (input)  input.value = '';
-            updateAlarmLabel();
-        }
-        setBtn?.addEventListener('click', () => {
+        wrap.innerHTML = html;
+        updateAlarmLabel();
+    }
+    // Exposé pour le re-rendu depuis le module collection
+    window._sbAlarmRefresh = renderAlarmPanel;
+
+    // Délégation : Set / Clear sur tous les boutons générés dynamiquement.
+    // Après chaque action on re-rend juste la cellule concernée (cheap) pour
+    // refléter l'état armé/désarmé sans toucher au reste du panel.
+    function rerenderCell(colId, channel) {
+        const cell = document.querySelector(`.sb-alarm-cell[data-col-id="${colId}"][data-channel="${channel}"]`);
+        if (!cell) return;
+        const label = channel === 'sales' ? 'Sales' : 'Listings';
+        cell.outerHTML = rowHTML(colId, channel, label);
+    }
+
+    document.getElementById('sbAlarmCollections')?.addEventListener('click', e => {
+        const setBtn   = e.target.closest('[data-action="set"]');
+        const clearBtn = e.target.closest('[data-action="clear"]');
+        if (setBtn) {
+            const colId   = setBtn.dataset.colId;
+            const channel = setBtn.dataset.channel;
+            const cell    = setBtn.closest('.sb-alarm-cell');
+            const input   = cell?.querySelector(`input[data-col-id="${colId}"][data-channel="${channel}"]`);
             const v = parseFloat(input?.value);
             if (!v || v <= 0) return;
-            activate(v);
+            if (!_alarms[colId]) _alarms[colId] = { sales: null, listed: null };
+            _alarms[colId][channel] = v;
+            rerenderCell(colId, channel);
+            updateAlarmLabel();
             playAlarm(); // test sound à l'arming
-        });
-        clearBtn?.addEventListener('click', clear);
-    }
-
-    wireChannel('Sales',  () => _alarmSales,  v => _alarmSales  = v);
-    wireChannel('Listed', () => _alarmListed, v => _alarmListed = v);
+        }
+        if (clearBtn) {
+            const colId   = clearBtn.dataset.colId;
+            const channel = clearBtn.dataset.channel;
+            if (_alarms[colId]) _alarms[colId][channel] = null;
+            rerenderCell(colId, channel);
+            updateAlarmLabel();
+        }
+    });
 
     // UI : ouvrir/fermer le panel
     const btn   = document.getElementById('sbAlarmBtn');
@@ -9386,7 +9777,13 @@ document.addEventListener('DOMContentLoaded', initialize);
     btn?.addEventListener('click', e => {
         e.stopPropagation();
         const open = panel?.style.display !== 'none';
-        if (panel) panel.style.display = open ? 'none' : 'block';
+        if (panel) {
+            // Avant d'afficher, on re-rend le panel pour capter les éventuels
+            // logos de collection chargés entre-temps (loadDropdownLogos est
+            // async et peut se terminer après le 1er render).
+            if (!open) renderAlarmPanel();
+            panel.style.display = open ? 'none' : 'block';
+        }
     });
     document.addEventListener('click', e => {
         if (!btn?.contains(e.target) && !panel?.contains(e.target))
@@ -9395,6 +9792,9 @@ document.addEventListener('DOMContentLoaded', initialize);
     volSlider?.addEventListener('input', () => {
         _alarmVolume = parseInt(volSlider.value) / 100;
     });
+
+    // 1er rendu (les checkboxes par défaut sont déjà dans le DOM)
+    renderAlarmPanel();
 })();
 </script>
 
@@ -9612,30 +10012,35 @@ document.addEventListener('DOMContentLoaded', initialize);
     };
 
     function _showCpWelcome() {
-        // Page vierge : cacher tout le contenu de la collection
+        // Page vierge : cacher tout le contenu de la collection (y compris
+        // le cadre halo qui contient bannière + titre + filtres + résultats).
         const welcome = document.getElementById('cpWelcome');
+        const wrap    = document.getElementById('cpResultsWrap');
         const banner  = document.getElementById('cpHeader');
         const titleBl = document.getElementById('cpTitleBlock');
         const filters = document.getElementById('cpFiltersBar');
         const nftSec  = document.getElementById('cpNftSection');
         if (welcome) welcome.style.display = 'none';
-        if (banner)  banner.style.display = 'none';
+        if (wrap)    wrap.style.display    = 'none';
+        if (banner)  banner.style.display  = 'none';
         if (titleBl) titleBl.style.display = 'none';
         if (filters) filters.style.display = 'none';
-        if (nftSec)  nftSec.style.display = 'none';
+        if (nftSec)  nftSec.style.display  = 'none';
     }
 
     function _hideCpWelcome() {
         const welcome = document.getElementById('cpWelcome');
+        const wrap    = document.getElementById('cpResultsWrap');
         const banner  = document.getElementById('cpHeader');
         const titleBl = document.getElementById('cpTitleBlock');
         const filters = document.getElementById('cpFiltersBar');
         const nftSec  = document.getElementById('cpNftSection');
         if (welcome) welcome.style.display = 'none';
-        if (banner)  banner.style.display = 'block';
+        if (wrap)    wrap.style.display    = 'block';
+        if (banner)  banner.style.display  = 'block';
         if (titleBl) titleBl.style.display = 'flex';
         if (filters) filters.style.display = 'flex';
-        if (nftSec)  nftSec.style.display = 'block';
+        if (nftSec)  nftSec.style.display  = 'block';
         window._cpHasCollection = true;
     }
     window._hideCpWelcome = _hideCpWelcome;
@@ -9892,6 +10297,25 @@ document.addEventListener('DOMContentLoaded', initialize);
             sidebarInput.value = topnavInput.value;
             sidebarInput.dispatchEvent(new Event('input', { bubbles: true }));
         });
+
+        // Au focus / clic : sélectionner le contenu + ré-afficher les
+        // suggestions précédentes si le champ contient déjà du texte. Ça
+        // permet à l'utilisateur :
+        //   1) de remplacer la recherche en tapant directement (sélection)
+        //   2) de revoir les résultats de la dernière recherche sans avoir
+        //      à re-taper.
+        const refocusBehavior = async () => {
+            const v = topnavInput.value;
+            if (v && v.length > 0) topnavInput.select();
+            const q = (typeof sanitizeInput === 'function' ? sanitizeInput(v) : v).trim();
+            if (q.length > 2 && typeof searchProfiles === 'function') {
+                await searchProfiles(q);
+            }
+        };
+        topnavInput.addEventListener('focus', refocusBehavior);
+        // click peut suivre un focus déjà acquis (deuxième clic) → on couvre
+        // les deux cas pour garantir la sélection quel que soit l'état.
+        topnavInput.addEventListener('click', refocusBehavior);
 
         topnavInput.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
@@ -10756,6 +11180,14 @@ fragment CollectionStatsData on Collection {
         document.querySelectorAll('.stats-col-check').forEach(cb => {
             cb.checked = !!colVisibility[cb.dataset.col];
         });
+        // Update button label with count of visible columns ("14 Columns") —
+        // miroir du compteur de collections du Market Bot, pour qu'on voie
+        // d'un coup d'œil combien de colonnes sont actuellement affichées.
+        const lbl = document.getElementById('statsColSelectorLabel');
+        if (lbl) {
+            const n = COLUMNS.filter(c => c.always || colVisibility[c.key]).length;
+            lbl.textContent = n + ' Column' + (n > 1 ? 's' : '');
+        }
     }
 
     function buildColList() {
