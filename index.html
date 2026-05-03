@@ -18,12 +18,16 @@
 .home-panel,.collections-panel,.sb-panel,.sup-panel,.stats-panel{display:none}
 #leftSidebar{display:none}
 #pfWelcome{display:none}
+/* Contenu profil — caché via le wrapper */
+#profileViewContent{display:none}
 #nftContainer{display:none}
 #timestamp{display:none}
 #noResults{display:none}
 #profileLoadingOverlay{display:none}
 .profile-section{display:none}
 #topnavUserLogout{display:none}
+/* Anciens filtres (navbar flottante) — cachés jusqu'à ce que la vue profil les montre explicitement */
+.navbar.navbar--floating-controls{display:none}
 </style>
 <!-- Librairies JS -->
 <!-- Open Graph (aperçu lien) -->
@@ -75,6 +79,7 @@
 
     <!-- Logo -->
     <div class="topnav-brand" role="button" tabindex="0" title="Back to Home" id="topnavBrand" style="cursor:pointer;">
+      <img src="PNG.png" alt="CRONOS.WTF logo" class="topnav-logo-img"/>
       <span class="topnav-logo-text">CRONOS<span class="topnav-logo-dot">.WTF</span></span>
     </div>
 
@@ -399,17 +404,19 @@
 
 <main class="app-main" id="appMain">
 
-<div class="profile-section">
-<div class="group-legend" id="groupLegend" hidden></div>
-<div class="asset-count-bar">
-<div aria-live="polite" class="asset-count-text" id="nftCountContainer"></div>
+<!-- ── Contenu propre à la vue PROFIL — toujours caché hors de cette vue ── -->
+<div id="profileViewContent" style="display:none;">
+  <div class="profile-section">
+    <div class="group-legend" id="groupLegend" hidden></div>
+    <div class="asset-count-bar">
+      <div aria-live="polite" class="asset-count-text" id="nftCountContainer"></div>
+    </div>
+  </div>
+  <div class="timestamp" id="timestamp"></div>
+  <div class="error" id="error" role="alert"></div>
+  <div class="no-results" id="noResults" style="display: none;">No results found</div>
+  <div class="nft-container" id="nftContainer"></div>
 </div>
-</div>
-
-<div class="timestamp" id="timestamp"></div>
-<div class="error" id="error" role="alert"></div>
-<div class="no-results" id="noResults" style="display: none;">No results found</div>
-<div class="nft-container" id="nftContainer"></div>
 
 <!-- ── COLLECTIONS PANEL ── -->
 <!-- ── DROPS PANEL ── -->
@@ -927,160 +934,216 @@
 <!-- ── HOME PANEL ── -->
 <div class="home-panel" id="homePanel" style="display:none;">
 
-  <!-- Hero -->
-  <div class="home-hero">
-    <div class="home-hero-bg">
-      <div class="home-hero-particle" style="--x:15%;--y:20%;--s:180px;--d:8s"></div>
-      <div class="home-hero-particle" style="--x:75%;--y:60%;--s:120px;--d:12s"></div>
-      <div class="home-hero-particle" style="--x:45%;--y:80%;--s:90px;--d:9s"></div>
-      <div class="home-hero-particle" style="--x:85%;--y:15%;--s:60px;--d:14s"></div>
-    </div>
-    <div class="home-hero-content">
-      <div class="home-hero-eyebrow">CRONOS.WTF</div>
-      <h1 class="home-hero-title">Browse smarter.<br><span class="home-hero-accent">Collect better.</span></h1>
-      <p class="home-hero-sub">The ultimate NFT explorer for the Cronos ecosystem — profiles, collections, live drops, market stats and real-time sales.</p>
-
-      <!-- ── Hero search prompt — gros call-to-action visuel qui amène
-           directement à l'action principale (chercher une collection ou
-           un profil). Click → focus la barre de recherche du topnav et
-           place le curseur dedans.
-           Note : les 3 boutons CTAs (Top Stats / Live Drops / Profile)
-           qui étaient ici ont été retirés car ils faisaient double emploi
-           avec 3 des 6 fonctionnalités du Feature Spotlight juste en
-           dessous. La hero est maintenant claire : titre + sous-titre +
-           barre de recherche unique. ── -->
-      <button class="home-hero-search" id="homeHeroSearch" type="button">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <circle cx="9" cy="9" r="6"/><line x1="13.5" y1="13.5" x2="18" y2="18"/>
-        </svg>
-        <span class="home-hero-search-text">Search a collection or a profile</span>
-        <span class="home-hero-search-kbd">⌘K</span>
-      </button>
-    </div>
-  </div>
-
   <div class="home-body">
 
-    <!-- ══ FEATURE SPOTLIGHT — vitrine animée des 6 fonctionnalités ══════
-         Une grosse carte qui change de feature toutes les 6 secondes
-         (auto-cycle), avec barre de progression, dots indicators et
-         flèches manuelles. Le bouton "PAUSE" met en pause l'auto-cycle.
-         Hover sur la card = pause aussi. C'est l'élément central de
-         découverte du site : le visiteur voit immédiatement ce qu'il
-         peut faire ici, et chaque feature est mise en valeur tour à
-         tour avec son icône, titre, description et CTA. ════════════════ -->
-    <section class="home-section home-spotlight-section">
-      <div class="home-spotlight" id="homeSpotlight" data-active="0">
+    <!-- ── PAGE HEADER — bloc custom dédié (sans dépendance à stats-page-title-block) ── -->
+    <div class="home-title-block">
+      <h1 class="home-title-h1">CRONOS.WTF</h1>
+      <p class="home-title-sub">Browse smarter. Collect better.</p>
+    </div>
 
-        <!-- Slides (un seul visible à la fois via JS) -->
-        <div class="home-spotlight-slides">
+    <!-- ══ 2 COLONNES : Spotlight (gauche) | Community Chat (droite) ══ -->
+    <div class="home-two-col home-two-col--spotlight">
+
+      <!-- SPOTLIGHT — colonne gauche, titre à l'intérieur comme le chat -->
+      <section class="home-section home-spotlight-section">
+        <div class="home-section-header">
+          <h2 class="home-section-title">Spotlight</h2>
+        </div>
+        <div class="home-spotlight" id="homeSpotlight" data-active="0">
+          <div class="home-spotlight-slides">
 
           <article class="home-spotlight-slide is-active" data-tab-target="drops">
             <span class="home-spotlight-badge">NEW</span>
-            <div class="home-spotlight-icon home-spotlight-icon--drops">
-              <svg width="56" height="56" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M10 2L3 7v4c0 4 3.5 7 7 8 3.5-1 7-4 7-8V7z"/>
-                <path d="M7 10l2 2 4-4"/>
-              </svg>
+            <div class="home-spotlight-slide-inner">
+              <div class="home-spotlight-icon home-spotlight-icon--drops">
+                <svg width="56" height="56" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="10" cy="10" r="7"/>
+                  <path d="M10 6v4l3 2"/>
+                  <path d="M3 10h2M15 10h2M10 3v2M10 15v2"/>
+                </svg>
+              </div>
+              <div class="home-spotlight-slide-text">
+                <h3 class="home-spotlight-title">NFT Drops</h3>
+                <div class="home-spotlight-slide-bottom">
+                  <p class="home-spotlight-desc">Live and upcoming drops on Crypto.com NFT — video previews, pack prices, availability, early-access conditions and a visual timeline of all recent drops. Also home to the CRONOS.WTF mint that funds the platform.</p>
+                  <span class="home-spotlight-cta">View Drops →</span>
+                </div>
+              </div>
             </div>
-            <h3 class="home-spotlight-title">NFT Drops</h3>
-            <p class="home-spotlight-desc">Live and upcoming drops on Crypto.com NFT — video previews, pack prices, availability, early-access conditions and a visual timeline of all recent drops. Also home to the CRONOS.WTF mint that funds the platform.</p>
-            <span class="home-spotlight-cta">View Drops →</span>
           </article>
 
           <article class="home-spotlight-slide" data-tab-target="salesbot">
-            <span class="home-spotlight-badge">LIVE</span>
-            <div class="home-spotlight-icon home-spotlight-icon--bot">
-              <svg width="56" height="56" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="4,14 8,10 11,13 16,7"/>
-                <rect x="2" y="2" width="16" height="16" rx="2"/>
-              </svg>
+            <span class="home-spotlight-badge">NEW</span>
+            <div class="home-spotlight-slide-inner">
+              <div class="home-spotlight-icon home-spotlight-icon--bot">
+                <svg width="56" height="56" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="5" width="14" height="10" rx="2"/>
+                  <circle cx="7.5" cy="10" r="1"/>
+                  <circle cx="12.5" cy="10" r="1"/>
+                  <path d="M8 3.5V5M12 3.5V5"/>
+                </svg>
+              </div>
+              <div class="home-spotlight-slide-text">
+                <h3 class="home-spotlight-title">Sales &amp; Listings Bot</h3>
+                <div class="home-spotlight-slide-bottom">
+                  <p class="home-spotlight-desc">Real-time feed of sales, listings and auctions across your selected Cronos collections — floor price, last sale, and configurable price alarms to never miss the deal you're watching for.</p>
+                  <span class="home-spotlight-cta">Open Bot →</span>
+                </div>
+              </div>
             </div>
-            <h3 class="home-spotlight-title">Sales &amp; Listings Bot</h3>
-            <p class="home-spotlight-desc">Real-time feed of sales and new listings across tracked Cronos collections — floor price, last sale, and instant alerts for the market you follow.</p>
-            <span class="home-spotlight-cta">Open Bot →</span>
           </article>
 
           <article class="home-spotlight-slide" data-tab-target="profil">
-            <div class="home-spotlight-icon home-spotlight-icon--profile">
-              <svg width="56" height="56" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="10" cy="7" r="3.5"/>
-                <path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/>
-              </svg>
+            <span class="home-spotlight-badge">NEW</span>
+            <div class="home-spotlight-slide-inner">
+              <div class="home-spotlight-icon home-spotlight-icon--profile">
+                <svg width="56" height="56" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="10" cy="7" r="3.5"/>
+                  <path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/>
+                </svg>
+              </div>
+              <div class="home-spotlight-slide-text">
+                <h3 class="home-spotlight-title">Profile Explorer</h3>
+                <div class="home-spotlight-slide-bottom">
+                  <p class="home-spotlight-desc">Search any Crypto.com NFT profile — collected NFTs grouped by collection or artist, liked items, stats and filters by size, sort and overlay.</p>
+                  <span class="home-spotlight-cta">Search a Profile →</span>
+                </div>
+              </div>
             </div>
-            <h3 class="home-spotlight-title">Profile Explorer</h3>
-            <p class="home-spotlight-desc">Search any Crypto.com NFT profile from the bar above — collected NFTs grouped by collection or artist, liked items, stats and filters by size, sort and overlay.</p>
-            <span class="home-spotlight-cta">Search a Profile →</span>
           </article>
 
           <article class="home-spotlight-slide" data-tab-target="explorer">
-            <div class="home-spotlight-icon home-spotlight-icon--explorer">
-              <svg width="56" height="56" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="3" width="7" height="7" rx="1.5"/>
-                <rect x="11" y="3" width="7" height="7" rx="1.5"/>
-                <rect x="2" y="11" width="7" height="7" rx="1.5"/>
-                <rect x="11" y="11" width="7" height="7" rx="1.5"/>
-              </svg>
+            <span class="home-spotlight-badge">NEW</span>
+            <div class="home-spotlight-slide-inner">
+              <div class="home-spotlight-icon home-spotlight-icon--explorer">
+                <svg width="56" height="56" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="3" width="7" height="7" rx="1.5"/>
+                  <rect x="11" y="3" width="7" height="7" rx="1.5"/>
+                  <rect x="2" y="11" width="7" height="7" rx="1.5"/>
+                  <rect x="11" y="11" width="7" height="7" rx="1.5"/>
+                </svg>
+              </div>
+              <div class="home-spotlight-slide-text">
+                <h3 class="home-spotlight-title">Collection Explorer</h3>
+                <div class="home-spotlight-slide-bottom">
+                  <p class="home-spotlight-desc">Deep-dive into any collection — pick from Featured or Top to see all NFTs with rarity ranks, floor prices, and a full market overview.</p>
+                  <span class="home-spotlight-cta">Open a Collection →</span>
+                </div>
+              </div>
             </div>
-            <h3 class="home-spotlight-title">Collection Explorer</h3>
-            <p class="home-spotlight-desc">Deep-dive into any collection — search above or pick from Featured/Top to see all NFTs with rarity ranks, floor prices, and a full market overview.</p>
-            <span class="home-spotlight-cta">Open a Collection →</span>
           </article>
 
           <article class="home-spotlight-slide" data-tab-target="stats">
-            <div class="home-spotlight-icon home-spotlight-icon--stats">
-              <svg width="56" height="56" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="2,15 7,9 11,12 18,4"/>
-                <line x1="2" y1="18" x2="18" y2="18"/>
-              </svg>
+            <span class="home-spotlight-badge">NEW</span>
+            <div class="home-spotlight-slide-inner">
+              <div class="home-spotlight-icon home-spotlight-icon--stats">
+                <svg width="56" height="56" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="2,15 7,9 11,12 18,4"/>
+                  <line x1="2" y1="18" x2="18" y2="18"/>
+                </svg>
+              </div>
+              <div class="home-spotlight-slide-text">
+                <h3 class="home-spotlight-title">Market Statistics</h3>
+                <div class="home-spotlight-slide-bottom">
+                  <p class="home-spotlight-desc">Real-time rankings across all Cronos and Cronos POS Chain collections on Crypto.com NFT — volume, floor price, buyers, supply and market distribution for the past 24H, 7D or 30D.</p>
+                  <span class="home-spotlight-cta">View Stats →</span>
+                </div>
+              </div>
             </div>
-            <h3 class="home-spotlight-title">Market Statistics</h3>
-            <p class="home-spotlight-desc">Real-time rankings across all Cronos collections — volume, floor price, buyers, supply and market distribution for the past 24H, 7D or 30D.</p>
-            <span class="home-spotlight-cta">View Stats →</span>
           </article>
 
           <article class="home-spotlight-slide" data-tab-target="snapshot">
             <span class="home-spotlight-badge">BETA</span>
-            <div class="home-spotlight-icon home-spotlight-icon--snapshot">
-              <svg width="56" height="56" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="10" cy="10" r="7"/>
-                <path d="M10 6v4l3 2"/>
-                <path d="M3 10h2M15 10h2M10 3v2M10 15v2"/>
-              </svg>
+            <div class="home-spotlight-slide-inner">
+              <div class="home-spotlight-icon home-spotlight-icon--snapshot">
+                <svg width="56" height="56" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6.5h2.5l1.5-2h6l1.5 2H17a1 1 0 011 1v9a1 1 0 01-1 1H3a1 1 0 01-1-1v-9a1 1 0 011-1z"/>
+                  <circle cx="10" cy="11.5" r="3.3"/>
+                </svg>
+              </div>
+              <div class="home-spotlight-slide-text">
+                <h3 class="home-spotlight-title">Snapshot</h3>
+                <div class="home-spotlight-slide-bottom">
+                  <p class="home-spotlight-desc">Real-time holder distribution for any Crypto.com NFT collection — see who owns what, wallet counts, and ownership concentration at a glance.</p>
+                  <span class="home-spotlight-cta">Open Snapshot →</span>
+                </div>
+              </div>
             </div>
-            <h3 class="home-spotlight-title">Snapshot</h3>
-            <p class="home-spotlight-desc">Real-time holder distribution for any Crypto.com NFT collection — see who owns what, wallet counts, and ownership concentration at a glance.</p>
-            <span class="home-spotlight-cta">Open Snapshot →</span>
           </article>
 
         </div>
 
-        <!-- Auto-cycle progress bar -->
-        <div class="home-spotlight-progress" aria-hidden="true">
-          <div class="home-spotlight-progress-fill" id="homeSpotlightProgress"></div>
-        </div>
-
-        <!-- Controls : prev / dots / next -->
+        <!-- Controls : prev / progress+dots / next — sur une seule ligne -->
         <div class="home-spotlight-controls">
           <button class="home-spotlight-arrow" id="homeSpotlightPrev" type="button" aria-label="Previous">
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="12,4 6,10 12,16"/></svg>
           </button>
-          <div class="home-spotlight-dots" id="homeSpotlightDots">
-            <button class="home-spotlight-dot is-active" type="button" data-idx="0" aria-label="Slide 1"></button>
-            <button class="home-spotlight-dot" type="button" data-idx="1" aria-label="Slide 2"></button>
-            <button class="home-spotlight-dot" type="button" data-idx="2" aria-label="Slide 3"></button>
-            <button class="home-spotlight-dot" type="button" data-idx="3" aria-label="Slide 4"></button>
-            <button class="home-spotlight-dot" type="button" data-idx="4" aria-label="Slide 5"></button>
-            <button class="home-spotlight-dot" type="button" data-idx="5" aria-label="Slide 6"></button>
+          <div class="home-spotlight-center">
+            <div class="home-spotlight-progress" aria-hidden="true">
+              <div class="home-spotlight-progress-fill" id="homeSpotlightProgress"></div>
+            </div>
+            <div class="home-spotlight-dots" id="homeSpotlightDots">
+              <button class="home-spotlight-dot is-active" type="button" data-idx="0" aria-label="Slide 1"></button>
+              <button class="home-spotlight-dot" type="button" data-idx="1" aria-label="Slide 2"></button>
+              <button class="home-spotlight-dot" type="button" data-idx="2" aria-label="Slide 3"></button>
+              <button class="home-spotlight-dot" type="button" data-idx="3" aria-label="Slide 4"></button>
+              <button class="home-spotlight-dot" type="button" data-idx="4" aria-label="Slide 5"></button>
+              <button class="home-spotlight-dot" type="button" data-idx="5" aria-label="Slide 6"></button>
+            </div>
           </div>
           <button class="home-spotlight-arrow" id="homeSpotlightNext" type="button" aria-label="Next">
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="8,4 14,10 8,16"/></svg>
           </button>
         </div>
       </div>
-    </section>
 
-    <!-- ── Featured collections — diversité curatée d'abord ── -->
+      <!-- LIVE ACTIVITY — intégrée sous le spotlight dans la colonne gauche -->
+      <div class="home-live-subsection">
+        <div class="home-section-header home-section-header--sub">
+          <h2 class="home-section-title">Live Activity</h2>
+          <span class="home-live-badge">LIVE</span>
+        </div>
+        <div id="cbTicker" class="home-live-card">
+          <div class="cb-ticker-track" id="cbTickerTrack">
+            <span class="cb-ticker-empty">Loading live activity…</span>
+          </div>
+        </div>
+      </div>
+
+      </section>
+
+      <!-- COMMUNITY CHAT — colonne droite directe (même niveau que spotlight) -->
+      <section class="home-section home-community-section">
+        <div class="home-section-header">
+          <h2 class="home-section-title">Community Chat</h2>
+          <div class="home-chat-header-row">
+            <span class="home-chat-online-badge" id="homeChatOnline" style="display:none;">
+              <span class="home-chat-online-dot"></span>
+              <span id="homeChatOnlineCount">0</span> online
+            </span>
+            <span class="home-community-live" id="homeChatStatus">connecting…</span>
+          </div>
+        </div>
+        <div class="home-community-card">
+          <div class="home-chat-messages" id="homeChatMessages"></div>
+          <div class="home-chat-online-panel" id="homeChatOnlinePanel" style="display:none;"></div>
+          <div class="home-chat-locked" id="homeChatLocked" style="display:none;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+            <span>Sign in to chat</span>
+          </div>
+          <div class="home-chat-input-row" id="homeChatInputRow">
+            <input class="home-chat-input" id="homeChatInput" type="text" placeholder="Message community…" autocomplete="off" spellcheck="false" maxlength="500"/>
+            <button class="home-chat-send" id="homeChatSend" type="button">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- fin home-two-col--spotlight -->
+
+    <!-- ── Featured Collections ── -->
     <section class="home-section home-section--featured">
       <div class="home-section-header">
         <h2 class="home-section-title">Featured Collections</h2>
@@ -1091,115 +1154,42 @@
       </div>
     </section>
 
-    <!-- ── Top Collections 24H — what's trending right now ── -->
+    <!-- ── Featured Artists — juste après Featured Collections ── -->
     <section class="home-section">
       <div class="home-section-header">
-        <h2 class="home-section-title">Top Collections <span class="home-section-badge">24H</span></h2>
-        <button class="home-section-action" id="homeGoStats2" type="button">Full ranking →</button>
+        <h2 class="home-section-title">Featured Artists</h2>
       </div>
-      <div class="home-top-list" id="homeTopList">
+      <div class="home-creators-grid" id="homeFeaturedCreatorsGrid">
         <div class="home-top-loading"><span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span></div>
       </div>
     </section>
 
-    <!-- ── CRONOS.WTF Genesis Banner — drop spotlight (placé APRÈS featured
-         pour que l'utilisateur voie d'abord la diversité du catalogue avant
-         de tomber sur la promo du mint) ── -->
-    <section class="home-section home-genesis-banner">
-      <a class="home-genesis-card" data-tab-target="drops" type="button">
-        <div class="home-genesis-glow"></div>
-        <div class="home-genesis-left">
-          <div class="home-genesis-eyebrow">
-            <span class="home-genesis-pulse"></span>
-            <span>NOW MINTING · WAVE 1</span>
-          </div>
-          <h2 class="home-genesis-title">CRONOS.WTF Collection</h2>
-          <p class="home-genesis-desc">
-            <strong>21 unique color halos.</strong> 10 limited editions each. Released in waves of 5, prices from <strong>$25</strong>.
-            Every mint goes <strong>100%</strong> toward keeping this platform alive.
-          </p>
-          <div class="home-genesis-stats">
-            <div class="home-genesis-stat">
-              <span class="home-genesis-stat-val">21</span>
-              <span class="home-genesis-stat-lbl">Colors</span>
-            </div>
-            <div class="home-genesis-stat-sep"></div>
-            <div class="home-genesis-stat">
-              <span class="home-genesis-stat-val">10</span>
-              <span class="home-genesis-stat-lbl">Editions / color</span>
-            </div>
-            <div class="home-genesis-stat-sep"></div>
-            <div class="home-genesis-stat">
-              <span class="home-genesis-stat-val">$25</span>
-              <span class="home-genesis-stat-lbl">Starting at</span>
-            </div>
-            <div class="home-genesis-stat-sep"></div>
-            <div class="home-genesis-stat">
-              <span class="home-genesis-stat-val">100%</span>
-              <span class="home-genesis-stat-lbl">Funds platform</span>
-            </div>
-          </div>
-          <span class="home-genesis-cta">View the mint →</span>
-        </div>
-        <div class="home-genesis-right">
-          <div class="home-genesis-preview">
-            <img class="home-genesis-img home-genesis-img--1" src="White.png" alt="WHITE.WTF"/>
-            <img class="home-genesis-img home-genesis-img--2" src="Blue.png" alt="BLUE.WTF"/>
-            <img class="home-genesis-img home-genesis-img--3" src="Lime.png" alt="LIME.WTF"/>
-            <img class="home-genesis-img home-genesis-img--4" src="Pink.png" alt="PINK.WTF"/>
-            <img class="home-genesis-img home-genesis-img--5" src="Turquoise.png" alt="TURQUOISE.WTF"/>
-          </div>
-        </div>
-      </a>
-    </section>
+    <!-- ── Top Collections 24H + Top Creators — 2 colonnes ── -->
+    <div class="home-two-col home-two-col--bottom">
 
-    <!-- Features -->
-    <!-- Community Chat (embedded) -->
-    <section class="home-section home-chat-section">
-      <h2 class="home-section-title">Community Chat</h2>
-      <div class="home-chat" id="homeChat">
-        <button class="home-chat-toggle" id="homeChatToggle" type="button" title="Community Chat">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h2a2 2 0 012 2v7a2 2 0 01-2 2h-3l-3 3v-3H9a2 2 0 01-2-2v-1"/><path d="M3 5a2 2 0 012-2h10a2 2 0 012 2v7a2 2 0 01-2 2H8l-3 3v-3H5a2 2 0 01-2-2z"/></svg>
-          <span class="home-chat-label">Community</span>
-        </button>
-        <div class="home-chat-panel" id="homeChatPanel">
-          <div class="home-chat-header">
-            <span class="home-chat-title">Community Chat</span>
-            <span class="home-chat-powered" id="homeChatStatus">connecting…</span>
-            <button class="home-chat-close" id="homeChatClose" type="button">×</button>
-          </div>
-          <div class="home-chat-messages" id="homeChatMessages"></div>
-          <div class="home-chat-locked" id="homeChatLocked" style="display:none;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
-            <span>Sign in to chat with the community</span>
-          </div>
-          <div class="home-chat-input-row" id="homeChatInputRow">
-            <input class="home-chat-input" id="homeChatInput" type="text" placeholder="Message community…" autocomplete="off" spellcheck="false" maxlength="500"/>
-            <button class="home-chat-send" id="homeChatSend" type="button">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            </button>
-          </div>
+      <section class="home-section">
+        <div class="home-section-header">
+          <h2 class="home-section-title">Top Collections <span class="home-section-badge">24H</span></h2>
+          <button class="home-section-action" id="homeGoStats2" type="button">Full ranking →</button>
         </div>
-      </div>
-    </section>
+        <div class="home-top-list" id="homeTopList">
+          <div class="home-top-loading"><span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span></div>
+        </div>
+      </section>
 
-    <!-- Section Support -->
-    <section class="home-section home-support-section">
-      <div class="home-support-card">
-        <div class="home-support-left">
-          <svg class="home-support-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-          <div>
-            <h3 class="home-support-title">Support CRONOS.WTF</h3>
-            <p class="home-support-desc">This platform runs on one developer, one laptop, and the support of its users. Mint a halo from the CRONOS.WTF collection — 21 unique colors, 10 editions each, prices from <strong>$25</strong>. 100% of every mint funds domain, hosting and development. <strong>If the tools have helped you, this is how you give back.</strong></p>
-          </div>
+      <section class="home-section cb-creators-section">
+        <div class="home-section-header">
+          <h2 class="home-section-title">Top Creators</h2>
+          <span class="home-section-badge cb-badge-muted">All time · Primary</span>
         </div>
-        <button class="home-support-btn" data-tab-target="drops" type="button">View the mint →</button>
-      </div>
-    </section>
+        <div class="cb-creators-list" id="cbTopCreatorsList">
+          <div class="home-top-loading"><span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span></div>
+        </div>
+      </section>
+
+    </div>
 
   </div>
-
-  <!-- Community Chat moved inside home-body as an embedded section -->
 
 </div>
 
@@ -1639,15 +1629,15 @@
           <th class="stats-th stats-th--collection stats-th--sep" title="Collection name and creator">Collection</th>
           <th class="stats-th stats-th--minlisting stats-th--sortable" data-col="minlisting" title="Lowest price to buy an NFT from this collection right now">Floor Price <span class="stats-sort-icon"></span></th>
           <th class="stats-th stats-th--floorpct stats-th--sortable" data-col="floorpct" title="Floor price change over the selected period">Floor % <span class="stats-sort-icon"></span></th>
-          <th class="stats-th stats-th--vol stats-th--sortable stats-th--sorted-desc" data-col="vol" title="Total trading volume in USD over the selected period">Volume <span class="stats-sort-icon">↓</span></th>
-          <th class="stats-th stats-th--change stats-th--sortable" data-col="change" title="Volume change compared to the previous period">Volume % <span class="stats-sort-icon"></span></th>
+          <th class="stats-th stats-th--vol stats-th--sortable stats-th--sorted-desc" data-col="vol" title="Total trading volume in USD over the selected period">Vol. <span class="stats-sort-icon">↓</span></th>
+          <th class="stats-th stats-th--change stats-th--sortable" data-col="change" title="Volume change compared to the previous period">Vol. % <span class="stats-sort-icon"></span></th>
           <th class="stats-th stats-th--buyers stats-th--sortable" data-col="buyers" title="Number of unique buyers over the selected period">Buyers <span class="stats-sort-icon"></span></th>
           <th class="stats-th stats-th--items stats-th--sortable" data-col="items" title="Total number of NFTs in this collection">Supply <span class="stats-sort-icon"></span></th>
           <th class="stats-th stats-th--owners stats-th--sortable" data-col="owners" title="Number of unique wallets holding at least one NFT">Owners <span class="stats-sort-icon"></span></th>
           <th class="stats-th stats-th--mintrate stats-th--sortable" data-col="mintrate" title="Share of total editions already minted">Mint % <span class="stats-sort-icon"></span></th>
           <th class="stats-th stats-th--ownerspct stats-th--sortable" data-col="ownerspct" title="Owners divided by supply — higher means more evenly distributed">Distrib. <span class="stats-sort-icon"></span></th>
           <th class="stats-th stats-th--listed stats-th--sortable" data-col="listed" title="Share of supply currently listed for sale">Listed % <span class="stats-sort-icon"></span></th>
-          <th class="stats-th stats-th--totalsales stats-th--sortable" data-col="totalsales" title="Total volume traded since the collection launched">Volume Traded <span class="stats-sort-icon"></span></th>
+          <th class="stats-th stats-th--totalsales stats-th--sortable" data-col="totalsales" title="Total volume traded since the collection launched">Vol. Traded <span class="stats-sort-icon"></span></th>
           <th class="stats-th stats-th--marketcap stats-th--sortable" data-col="marketcap" title="Floor price multiplied by supply — estimated total collection value">Market Cap <span class="stats-sort-icon"></span></th>
           <th class="stats-th stats-th--avgimplied stats-th--sortable" data-col="avgimplied" title="Estimated average sale price based on volume and buyers">Avg Sale <span class="stats-sort-icon"></span></th>
           <th class="stats-th stats-th--volmcap stats-th--sortable" data-col="volmcap" title="Volume relative to market cap — higher means more actively traded">Vol/MCap <span class="stats-sort-icon"></span></th>
@@ -1655,6 +1645,9 @@
       </thead>
       <tbody id="statsTableBody"></tbody>
     </table>
+  </div>
+  <div class="sb-loadmore-wrap" id="statsLoadMoreWrap" style="display:none;">
+    <button class="sb-loadmore-btn" id="statsLoadMoreBtn" type="button">Load more stats</button>
   </div>
 </div>
 
@@ -2135,7 +2128,6 @@ function updateSidebarStats(nfts) {
             }
         }
 
-        const recentCollectionName = String(mostRecentNft?.collection?.name || '-').trim() || '-';
         const recentNftName = String(mostRecentNft?.name || '-').trim() || '-';
 
         mostRecentNftCollectionEl.textContent = recentNftName.toUpperCase();
@@ -7568,33 +7560,36 @@ document.addEventListener('DOMContentLoaded', initialize);
     'use strict';
 
     const FEATURED = [
-        // Trois collections de la marque CRONOS.WTF — l'API les renvoie sous
-        // le creator "unscoop" mais on affiche "CRONOS.WTF" pour cohérence
-        // de marque (champ `creator` ci-dessous = override du nom API).
-        { id: '2ec243b8746154fd9dc1c892d7f54fe9', name: 'CRONOS.WTF',     logo: 'https://media.nft.crypto.com/22b0261a-8c1a-4fe3-a76e-9e6b90e43b8d/original.png', creator: 'CRONOS.WTF' },
-        { id: '40af4533404b6dc586cf847f46810372', name: 'Loaded Pixel',   logo: 'https://media.nft.crypto.com/e7dc8e5d-5773-4dbb-a5ba-7c69e76e8960/original.gif', creator: 'CRONOS.WTF' },
-        { id: '0281887cff39c6e2d790a2e716f84686', name: 'Loaded Mushroom', logo: '',                                                                                creator: 'CRONOS.WTF' },
-        // Loaded Lions — pas d'override, le vrai creator (cryptocomnft) s'affiche.
-        { id: '82421cf8e15df0edcaa200af752a344f', name: 'Loaded Lions',   logo: 'https://media.nft.crypto.com/273dc24c-5b5f-45d9-83d3-5db578bdce79/original.gif' },
+        // Ordre : Loaded Lions · Loaded Pixel · Loaded Mushroom · CRONOS.WTF
+        { id: '82421cf8e15df0edcaa200af752a344f', name: 'Loaded Lions',    logo: 'https://media.nft.crypto.com/273dc24c-5b5f-45d9-83d3-5db578bdce79/original.gif' },
+        { id: '40af4533404b6dc586cf847f46810372', name: 'Loaded Pixel',    logo: 'https://media.nft.crypto.com/e7dc8e5d-5773-4dbb-a5ba-7c69e76e8960/original.gif', creator: 'CRONOS.WTF' },
+        { id: '0281887cff39c6e2d790a2e716f84686', name: 'Loaded Mushroom',  logo: '',                                                                                creator: 'CRONOS.WTF' },
+        { id: '2ec243b8746154fd9dc1c892d7f54fe9', name: 'CRONOS.WTF',      logo: 'https://media.nft.crypto.com/22b0261a-8c1a-4fe3-a76e-9e6b90e43b8d/original.png', creator: 'CRONOS.WTF',
+          staticImages: ['White.png','Blue.png','Lime.png','Pink.png','Turquoise.png','Red.png'] },
     ];
 
     let _homeInit = false;
 
     // ── Featured grid — modern card design with live stats ───────────────
-    async function fetchFeaturedStats(id) {
-        try {
-            const res = await fetch(graphqlEndpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    operationName: 'GetFeatStats',
-                    variables: { id, withStats: true },
-                    query: `query GetFeatStats($id:ID!,$withStats:Boolean!){public{collection(id:$id){id name verified logo{url} banner{url} creator{username verified} metrics{items owners totalSalesDecimal minSaleListingPriceDecimal listedCollectiblesCount} stats@include(if:$withStats){floorPriceDecimal oneDayVolumeDecimal oneDayVolumeDecimalChange sevenDayVolumeDecimal}}}}`
-                })
-            });
-            const json = await res.json();
-            return json?.data?.public?.collection || null;
-        } catch (e) { return null; }
+    async function fetchFeaturedStats(id, retries = 3) {
+        for (let attempt = 0; attempt < retries; attempt++) {
+            try {
+                if (attempt > 0) await new Promise(r => setTimeout(r, 600 * attempt));
+                const res = await fetch(graphqlEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        operationName: 'GetFeatStats',
+                        variables: { id, withStats: true },
+                        query: `query GetFeatStats($id:ID!,$withStats:Boolean!){public{collection(id:$id){id name verified logo{url} banner{url} creator{username verified} metrics{items owners totalSalesDecimal minSaleListingPriceDecimal listedCollectiblesCount} stats@include(if:$withStats){floorPriceDecimal oneDayVolumeDecimal oneDayVolumeDecimalChange sevenDayVolumeDecimal}}}}`
+                    })
+                });
+                const json = await res.json();
+                const col = json?.data?.public?.collection;
+                if (col) return col;
+            } catch (e) {}
+        }
+        return null;
     }
 
     function buildFeaturedCard(col) {
@@ -7649,6 +7644,11 @@ document.addEventListener('DOMContentLoaded', initialize);
                     <div class="home-feat-v3-stat">
                         <span class="home-feat-v3-stat-label" data-label="vol">Volume</span>
                         <span class="home-feat-v3-stat-val" data-stat="vol">—</span>
+                    </div>
+                </div>
+                <div class="home-feat-v3-nfts" data-nfts-strip>
+                    <div class="home-feat-v3-nfts-loading">
+                        <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
                     </div>
                 </div>
                 <button class="home-feat-v3-cta" type="button">
@@ -7812,19 +7812,191 @@ document.addEventListener('DOMContentLoaded', initialize);
         }
     }
 
+    // ── NFT sample strip — 2-3 NFTs aléatoires de chaque collection ────────
+    async function fetchCollectionNFTs(id) {
+        try {
+            const res = await fetch(graphqlEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    operationName: 'GetFeatNFTs',
+                    variables: { collectionId: id, first: 20, skip: 0 },
+                    query: `query GetFeatNFTs($collectionId:ID,$first:Int!,$skip:Int!){public{assets(collectionId:$collectionId,first:$first,skip:$skip){id name main{url} cover{url} defaultRarityRank defaultListingV2{priceDecimal currency}}}}`
+                })
+            });
+            const json = await res.json();
+            const assets = json?.data?.public?.assets || [];
+            if (!assets.length) return [];
+            // Mélange Fisher-Yates → 3 aléatoires
+            const shuffled = assets.slice();
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled.slice(0, 6);
+        } catch(e) { return []; }
+    }
+
+    function updateNFTStrip(card, nfts) {
+        const strip = card.querySelector('[data-nfts-strip]');
+        if (!strip) return;
+        if (!nfts || !nfts.length) {
+            strip.style.display = 'none';
+            return;
+        }
+        strip.innerHTML = nfts.map(nft => {
+            const img  = nft.cover?.url || nft.main?.url || '';
+            const name = nft.name || '';
+            return `<div class="home-feat-v3-nft" title="${name}">
+                <div class="home-feat-v3-nft-img-wrap">
+                    <img src="${img}" alt="${name}" loading="lazy" onerror="this.style.opacity='0.2'"/>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
     async function buildFeatured() {
         const grid = document.getElementById('homeFeaturedGrid');
         if (!grid || grid.children.length) return;
         FEATURED.forEach(col => grid.appendChild(buildFeaturedCard(col)));
         grid.appendChild(buildContactCard());
-        // Pass the data (or null) to update so it always clears the
-        // loading state — even when the API call fails for one collection,
-        // its card won't be stuck on "Loading…".
-        FEATURED.forEach(async (col) => {
-            const data = await fetchFeaturedStats(col.id);
+        // Décalage de 200ms entre chaque requête pour éviter le rate limit API
+        FEATURED.forEach(async (col, i) => {
+            await new Promise(r => setTimeout(r, i * 200));
             const card = grid.querySelector(`[data-col-id="${col.id}"]`);
-            if (card) updateFeaturedCardStats(card, data);
+            if (col.staticImages && col.staticImages.length) {
+                updateNFTStrip(card, col.staticImages.map(url => ({ main: { url } })));
+            }
+            const [data, nfts] = await Promise.all([
+                fetchFeaturedStats(col.id),
+                col.staticImages ? Promise.resolve(null) : fetchCollectionNFTs(col.id)
+            ]);
+            if (card) {
+                updateFeaturedCardStats(card, data);
+                if (nfts) updateNFTStrip(card, nfts);
+            }
         });
+    }
+
+    // ── Featured Creators ─────────────────────────────────────────────────
+    const _fcEsc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const FEATURED_CREATORS = [
+        { username: 'cryptocomnft',        displayName: 'Crypto.com NFT',     role: 'Official Platform',     url: 'https://crypto.com/nft' },
+        { username: 'unscoop',             displayName: 'CRONOS.WTF',         role: 'Platform & Tools',      url: 'https://cronos.wtf' },
+        { username: 'cabezaenlasnubes',    displayName: 'cabezaenlasnubes',   role: 'NFT Artist',            url: 'https://crypto.com/nft/profile/cabezaenlasnubes?tab=created' }
+    ];
+
+    async function fetchCreatorProfile(username) {
+        try {
+            const res = await fetch(graphqlEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    operationName: 'GetCreatorProfile',
+                    variables: { id: username },
+                    query: `query GetCreatorProfile($id:ID!){public{user(id:$id){uuid username displayName bio verified isCreator avatar{url} cover{url}}}}`
+                })
+            });
+            const json = await res.json();
+            return json?.data?.public?.user || null;
+        } catch(e) { return null; }
+    }
+
+    async function fetchCreatorCollections(userId) {
+        try {
+            const res = await fetch(graphqlEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    operationName: 'GetUserCollections',
+                    variables: { id: userId, first: 5 },
+                    query: `query GetUserCollections($id:ID!,$first:Int!){public{user(id:$id){collections(first:$first){id name logo{url} metrics{items} stats{totalVolumeDecimal oneDayFloorPriceDecimal}}}}}`
+                })
+            });
+            const json = await res.json();
+            const cols = json?.data?.public?.user?.collections || [];
+            return cols.sort((a,b) => (Number(b.stats?.totalVolumeDecimal)||0) - (Number(a.stats?.totalVolumeDecimal)||0));
+        } catch(e) { return []; }
+    }
+
+    function buildArtistSlide(cfg, data, collections) {
+        const slide = document.createElement('div');
+        slide.className = 'home-fa-slide';
+        const avatar = data?.avatar?.url || '';
+        const banner = data?.cover?.url  || '';
+        const name   = data?.displayName || cfg.displayName || cfg.username;
+        const bio    = data?.bio || '';
+        const verified = data?.verified || false;
+        const profileUrl = cfg.url || `https://crypto.com/nft/profile/${cfg.username}?tab=created`;
+        const fmt = n => { const v=Number(n)||0; if(!v) return '—'; return v>=1000?'$'+(v/1000).toFixed(1)+'K':'$'+v.toFixed(0); };
+        const colsHtml = collections.slice(0,3).map(c => `
+            <a class="home-fa-col" href="https://crypto.com/nft/collection/${c.id}" target="_blank" rel="noopener">
+                ${c.logo?.url?`<img class="home-fa-col-logo" src="${_fcEsc(c.logo.url)}" alt="" loading="lazy"/>`:`<div class="home-fa-col-logo--empty"></div>`}
+                <div class="home-fa-col-info">
+                    <span class="home-fa-col-name">${_fcEsc(c.name||'—')}</span>
+                    <div class="home-fa-col-stats">
+                        <span class="home-fa-col-vol">${fmt(c.stats?.totalVolumeDecimal)} vol.</span>
+                        <span class="home-fa-col-floor">${fmt(c.stats?.oneDayFloorPriceDecimal)} floor</span>
+                    </div>
+                </div>
+                <span class="home-fa-col-items">${(c.metrics?.items||0).toLocaleString()} items</span>
+            </a>`).join('') || `<span class="home-fa-no-cols">No public collections yet</span>`;
+        slide.innerHTML = `
+            ${banner?`<div class="home-fa-bg" style="background-image:url('${_fcEsc(banner)}')"></div>`:`<div class="home-fa-bg" style="background:linear-gradient(135deg,rgba(0,179,255,0.07),rgba(7,14,28,0.95))"></div>`}
+            <div class="home-fa-content">
+                <div class="home-fa-identity">
+                    ${avatar?`<img class="home-fa-avatar" src="${_fcEsc(avatar)}" alt="${_fcEsc(name)}" loading="lazy"/>`:`<div class="home-fa-avatar--fallback">${_fcEsc(name[0]?.toUpperCase()||'?')}</div>`}
+                    <div class="home-fa-name-row">
+                        <span class="home-fa-name">${_fcEsc(name)}</span>
+                        ${verified?'<svg class="home-fa-verified" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
+                    </div>
+                    <span class="home-fa-role">${_fcEsc(cfg.role)}</span>
+                    ${bio?`<p class="home-fa-bio">${_fcEsc(bio.slice(0,160))}${bio.length>160?'…':''}</p>`:''}
+                    <a class="home-fa-cta" href="${_fcEsc(profileUrl)}" target="_blank" rel="noopener">View Profile →</a>
+                </div>
+                <div class="home-fa-divider"></div>
+                <div class="home-fa-cols-wrap">
+                    <span class="home-fa-cols-label">Top Collections · by volume</span>
+                    <div class="home-fa-cols">${colsHtml}</div>
+                </div>
+            </div>`;
+        return slide;
+    }
+
+    async function buildFeaturedCreators() {
+        const wrap = document.getElementById('homeFeaturedCreatorsGrid');
+        if (!wrap || wrap.querySelector('.home-fa-spotlight')) return;
+        wrap.innerHTML = '';
+        wrap.className = '';
+        const profiles = await Promise.all(FEATURED_CREATORS.map(c => fetchCreatorProfile(c.username)));
+        const colsList = await Promise.all(profiles.map(p => p?.uuid ? fetchCreatorCollections(p.uuid) : Promise.resolve([])));
+        const spotlight = document.createElement('div');
+        spotlight.className = 'home-fa-spotlight';
+        FEATURED_CREATORS.forEach((cfg,i) => {
+            const slide = buildArtistSlide(cfg, profiles[i], colsList[i]);
+            if (i===0) slide.classList.add('is-active');
+            spotlight.appendChild(slide);
+        });
+        const n = FEATURED_CREATORS.length;
+        let current = 0;
+        const nav = document.createElement('div');
+        nav.className = 'home-fa-nav';
+        nav.innerHTML = `
+            <button class="home-fa-prev" type="button" aria-label="Previous"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="12,4 6,10 12,16"/></svg></button>
+            <div class="home-fa-dots">${FEATURED_CREATORS.map((_,i)=>`<button class="home-fa-dot${i===0?' is-active':''}" data-idx="${i}" type="button"></button>`).join('')}</div>
+            <button class="home-fa-next" type="button" aria-label="Next"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="8,4 14,10 8,16"/></svg></button>
+            <span class="home-fa-counter"><span class="home-fa-cur">1</span> / ${n}</span>`;
+        spotlight.appendChild(nav);
+        function goTo(idx) {
+            spotlight.querySelectorAll('.home-fa-slide').forEach((s,i)=>s.classList.toggle('is-active',i===idx));
+            nav.querySelectorAll('.home-fa-dot').forEach((d,i)=>d.classList.toggle('is-active',i===idx));
+            nav.querySelector('.home-fa-cur').textContent = idx+1;
+            current = idx;
+        }
+        nav.querySelector('.home-fa-prev').addEventListener('click', ()=>goTo((current-1+n)%n));
+        nav.querySelector('.home-fa-next').addEventListener('click', ()=>goTo((current+1)%n));
+        nav.querySelectorAll('.home-fa-dot').forEach(d=>d.addEventListener('click',()=>goTo(+d.dataset.idx)));
+        wrap.appendChild(spotlight);
     }
 
     // ── Top collections (24H) depuis l'API stats ──────────────────────────
@@ -7888,16 +8060,13 @@ document.addEventListener('DOMContentLoaded', initialize);
     //    console.firebase.google.com → créer projet → ajouter app web → copier le config
     //    Puis activer Realtime Database (test mode ou avec rules adaptées)
     function initChat() {
-        const toggle  = document.getElementById('homeChatToggle');
-        const panel   = document.getElementById('homeChatPanel');
-        const close   = document.getElementById('homeChatClose');
-        const input   = document.getElementById('homeChatInput');
-        const send    = document.getElementById('homeChatSend');
         const msgs    = document.getElementById('homeChatMessages');
         const locked  = document.getElementById('homeChatLocked');
         const inputRow= document.getElementById('homeChatInputRow');
+        const input   = document.getElementById('homeChatInput');
+        const send    = document.getElementById('homeChatSend');
         const status  = document.getElementById('homeChatStatus');
-        if (!toggle || !panel) return;
+        if (!msgs) return;
 
         // ─── Firebase config — À REMPLIR ───
         const FB_CONFIG = {
@@ -8049,7 +8218,7 @@ document.addEventListener('DOMContentLoaded', initialize);
             if (msg.user) div.dataset.msgUser = msg.user;
             div.innerHTML = `
                 <div class="home-chat-msg-meta">
-                    <span class="home-chat-msg-user">${escapeHtml(msg.display || msg.user || 'Anonymous')}</span>
+                    <span class="home-chat-msg-user">${_fcEsc(msg.display || msg.user || 'Anonymous')}</span>
                     <span class="home-chat-msg-meta-right">
                         <span class="home-chat-msg-time">${formatDateTime(msg.t)}</span>
                         ${msg.edited ? '<span class="home-chat-msg-edited">(edited)</span>' : ''}
@@ -8064,7 +8233,7 @@ document.addEventListener('DOMContentLoaded', initialize);
                             </span>` : ''}
                     </span>
                 </div>
-                <div class="home-chat-msg-body">${escapeHtml(msg.text || '')}</div>
+                <div class="home-chat-msg-body">${_fcEsc(msg.text || '')}</div>
             `;
             if (isMine && key) {
                 div.querySelector('.home-chat-msg-edit-btn')?.addEventListener('click', () => startEdit(div, key, msg.text || ''));
@@ -8143,6 +8312,60 @@ document.addEventListener('DOMContentLoaded', initialize);
                     removeMessageById(snap.key);
                 });
                 if (status) status.textContent = 'live';
+
+                // ── Présence en ligne — tous les visiteurs (même anonymes) ──
+                const presenceRef = fbDb.ref('chat/presence');
+                // Clé de session : username si connecté, sinon ID aléatoire
+                const sessionUser = getCurrentUser();
+                const sessionKey = sessionUser
+                    ? 'u_' + sessionUser.username
+                    : 's_' + Math.random().toString(36).slice(2, 10);
+                const myRef = presenceRef.child(sessionKey);
+                myRef.set({
+                    t:       Date.now(),
+                    anon:    !sessionUser,
+                    username: sessionUser?.username    || null,
+                    display:  sessionUser?.displayName || sessionUser?.username || null,
+                    avatar:   sessionUser?.avatar?.url || null
+                });
+                myRef.onDisconnect().remove();
+
+                presenceRef.on('value', snap => {
+                    const count = snap.numChildren();
+                    const badge = document.getElementById('homeChatOnline');
+                    const countEl = document.getElementById('homeChatOnlineCount');
+                    if (badge) {
+                        badge.style.display = 'flex';
+                        if (countEl) countEl.textContent = count;
+                    }
+                    // Panneau membres en ligne (bas du chat)
+                    const panel = document.getElementById('homeChatOnlinePanel');
+                    if (panel) {
+                        const members = [];
+                        snap.forEach(child => {
+                            const v = child.val();
+                            if (!v.anon && v.username) members.push(v);
+                        });
+                        if (members.length === 0) {
+                            panel.style.display = 'none';
+                        } else {
+                            panel.style.display = 'flex';
+                            const MAX = 10;
+                            const shown = members.slice(0, MAX);
+                            const extra = members.length - MAX;
+                            panel.innerHTML =
+                                '<span class="home-chat-op-label">Online</span>' +
+                                shown.map(m => `
+                                    <span class="home-chat-op-item" title="${_fcEsc(m.display || m.username)}">
+                                        ${m.avatar
+                                            ? `<img class="home-chat-op-avatar" src="${_fcEsc(m.avatar)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><span class="home-chat-op-initial" style="display:none">${escapeHtml((m.display||m.username)[0].toUpperCase())}</span>`
+                                            : `<span class="home-chat-op-initial">${_fcEsc((m.display||m.username)[0].toUpperCase())}</span>`
+                                        }
+                                    </span>`).join('') +
+                                (extra > 0 ? `<span class="home-chat-op-more">+${extra}</span>` : '');
+                        }
+                    }
+                });
             } catch(e) {
                 console.error('[Community chat] Firebase init failed:', e);
                 if (status) status.textContent = 'offline';
@@ -8174,22 +8397,12 @@ document.addEventListener('DOMContentLoaded', initialize);
             }
         }
 
-        toggle.addEventListener('click', () => {
-            const open = panel.style.display !== 'none';
-            panel.style.display = open ? 'none' : 'flex';
-            if (!open) {
-                refreshAuthState();
-                ensureInit();
-                if (getCurrentUser() && input) setTimeout(() => input.focus(), 0);
-            }
-        });
-        close?.addEventListener('click', () => { panel.style.display = 'none'; });
         send?.addEventListener('click', sendMessage);
         input?.addEventListener('keydown', e => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
         });
 
-        // Panel is embedded and always visible on home — init immediately
+        // Chat inline — toujours visible, init immédiat
         refreshAuthState();
         ensureInit();
 
@@ -8267,6 +8480,7 @@ document.addEventListener('DOMContentLoaded', initialize);
         if (_homeInit) return;
         _homeInit = true;
         buildFeatured();
+        buildFeaturedCreators();
         loadTopCollections();
         initChat();
         initNavButtons();
@@ -8335,18 +8549,16 @@ document.addEventListener('DOMContentLoaded', initialize);
             slide.addEventListener('click', () => {
                 const target = slide.dataset.tabTarget;
                 if (!target) return;
-                if (target === 'profil') {
-                    // Profile = focus topnav search (comme le bouton hero "Profile")
+                if (target === 'profil' || target === 'explorer') {
+                    // Profile ET Collection Explorer = focus la barre de recherche topnav
+                    // (qui supporte les deux : profils et collections)
                     const input = document.getElementById('topnavSearchInput');
                     if (input) {
                         input.focus();
                         input.classList.add('cb-search-pulse');
                         setTimeout(() => input.classList.remove('cb-search-pulse'), 1200);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                     }
-                    return;
-                }
-                if (target === 'explorer') {
-                    if (typeof window.loadCollectionById === 'function') window.loadCollectionById(FEATURED[0].id);
                     return;
                 }
                 document.querySelector('.topnav-tab[data-tab="' + target + '"]')?.click();
@@ -8871,6 +9083,8 @@ document.addEventListener('DOMContentLoaded', initialize);
 
     function getSelectedIds() { return Array.from(_selectedIds); }
 
+    // Expose pour que le Live Activity ticker puisse lire les collections actives
+    window._sbGetSelectedIds = getSelectedIds;
     // Curseurs par collection pour le load more
     let _cursors = {}; // { colId: cursor }
     let _hasMoreMap = {}; // { colId: bool }
@@ -9045,6 +9259,8 @@ document.addEventListener('DOMContentLoaded', initialize);
                 // L'état (seuils armés) est conservé dans _alarms côté JS donc
                 // re-cocher une collection rétablit son alarme.
                 if (typeof window._sbAlarmRefresh === 'function') window._sbAlarmRefresh();
+                // Notifier le ticker Live Activity pour qu'il se mette à jour
+                if (typeof window._sbTickerRefresh === 'function') window._sbTickerRefresh();
                 loadInitialMulti();
             });
         });
@@ -9283,7 +9499,6 @@ document.addEventListener('DOMContentLoaded', initialize);
     let xLabels = '';
     const totalMs = maxT - minT;
     const nTicks = 6;
-    const prevLblX = -999;
     let lastLblX = -999;
     for (let i = 0; i <= nTicks; i++) {
       const t = minT + (totalMs * i / nTicks);
@@ -9532,10 +9747,7 @@ document.addEventListener('DOMContentLoaded', initialize);
     });
   });
 
-  // Hook into collection load to track current ID
-  const _origLoadById = window.loadCollectionById;
-  // We patch via a MutationObserver on cpTitle instead:
-  // Actually, expose a setter that collection panel calls
+  // Expose un setter que le panneau collection appelle pour mettre à jour l'ID analytics
   window._setCpAnalyticsColId = function(id) { _anColId = id; };
 
 })();
@@ -9566,6 +9778,9 @@ document.addEventListener('DOMContentLoaded', initialize);
     // (nécessaire car le CSS critique en <head> est chargé après styles.css et gagne
     //  sur la spécificité pour .profile-section{display:none} et #nftContainer{display:none})
     function _showProfileContent() {
+        // Afficher le conteneur parent d'abord
+        const pvc = document.getElementById('profileViewContent');
+        if (pvc) pvc.style.setProperty('display', 'block', 'important');
         const ps = document.querySelector('.profile-section');
         if (ps) ps.style.display = 'flex';
         const nc = document.getElementById('nftContainer');
@@ -10323,13 +10538,14 @@ document.addEventListener('DOMContentLoaded', initialize);
     /* ── Tab switching ── */
     const tabs = document.querySelectorAll('.topnav-tab');
 
-    const MAIN_ELEMENTS = ['nftContainer','profileSection','groupLegend','timestamp','error','noResults','nftCountContainer'];
     const statsPanel = document.getElementById('statsPanel');
     const appMain = document.getElementById('appMain');
 
     // ── Helpers partagés ──────────────────────────────────────────────────────
 
     function _hideAllPanels() {
+        // Nettoyer la classe de vue profil à chaque changement d'onglet
+        document.body.classList.remove('view--profile');
         if (statsPanel) statsPanel.style.display = 'none';
         const collectionsPanel = document.getElementById('collectionsPanel');
         if (collectionsPanel) collectionsPanel.style.display = 'none';
@@ -10349,6 +10565,9 @@ document.addEventListener('DOMContentLoaded', initialize);
         // Cacher la navbar flottante (sort/size boutons) — ne s'affiche que dans la vue profil
         const navbarControls = document.getElementById('navbarControls');
         if (navbarControls) navbarControls.classList.remove('visible');
+        // Masquer aussi la navbar entière (les boutons sont position:fixed → échappent à height:0)
+        const navbar = document.querySelector('.navbar--floating-controls');
+        if (navbar) navbar.style.display = 'none';
         // Restaurer visibility + pointerEvents (pouvaient être cachés par showPfWelcome ancienne version)
         const am = document.getElementById('appMain');
         if (am) { am.style.visibility = ''; am.style.pointerEvents = ''; }
@@ -10360,6 +10579,9 @@ document.addEventListener('DOMContentLoaded', initialize);
         document.querySelectorAll('.profile-section, #nftContainer, #timestamp, #error, #noResults, #profileLoadingOverlay').forEach(el => {
             if (el) el.style.display = 'none';
         });
+        // Cacher le conteneur wrapper profil — élimine les ghost spaces (margins, paddings)
+        const pvc = document.getElementById('profileViewContent');
+        if (pvc) pvc.style.setProperty('display', 'none', 'important');
     }
 
     function _restoreMainContent() {
@@ -10373,6 +10595,7 @@ document.addEventListener('DOMContentLoaded', initialize);
         if (appMain) {
             appMain.style.removeProperty('margin-left');
             appMain.style.removeProperty('overflow');
+            appMain.style.removeProperty('padding');
         }
     }
 
@@ -10386,17 +10609,24 @@ document.addEventListener('DOMContentLoaded', initialize);
         if (navbar) navbar.style.display = 'none';
         if (appMain) {
             appMain.style.marginLeft = '0';
+            appMain.style.padding = '0';
             appMain.scrollTop = 0;
             appMain.style.setProperty('overflow-y', 'auto', 'important');
-            appMain.style.setProperty('overflow-x', 'hidden', 'important');
+            appMain.style.setProperty('overflow-x', 'clip', 'important');
+        }
+        if (panelEl) {
+            /* Nettoyer tout résidu de scroll délégué au panel (tentative précédente) */
+            panelEl.style.removeProperty('overflow-y');
+            panelEl.style.removeProperty('overflow-x');
+            panelEl.style.removeProperty('height');
         }
         const mainContent = document.querySelector('.main-content');
-        const topnavH = getComputedStyle(document.documentElement).getPropertyValue('--topnav-height').trim() || '52px';
+        const topnavH = getComputedStyle(document.documentElement).getPropertyValue('--navbar-height').trim() || getComputedStyle(document.documentElement).getPropertyValue('--topnav-height').trim() || '60px';
         if (mainContent) {
             mainContent.style.setProperty('top', topnavH, 'important');
             mainContent.style.setProperty('margin-top', topnavH, 'important');
             mainContent.style.setProperty('height', `calc(100vh - ${topnavH})`, 'important');
-            mainContent.style.setProperty('overflow', 'hidden', 'important');
+            mainContent.style.setProperty('overflow', 'clip', 'important');
         }
         if (panelEl) panelEl.style.display = 'block';
         if (onReady) requestAnimationFrame(onReady);
@@ -10405,6 +10635,23 @@ document.addEventListener('DOMContentLoaded', initialize);
     // ── Vue HOME ─────────────────────────────────────────────────────────────
     function showCollectionsView() {
         _showFullscreenPanel(document.getElementById('homePanel'), () => {
+            // Home : le contenu est un grid pleine largeur — annuler le padding
+            // latéral d'app-main (la règle CSS body:not(.view--profile) ajoute 55px
+            // via !important ; seul un inline !important peut la contrer).
+            if (appMain) {
+                appMain.style.setProperty('padding-left',  '0', 'important');
+                appMain.style.setProperty('padding-right', '0', 'important');
+            }
+            // Nettoyage défensif : s'assurer qu'aucun résidu de la vue profil
+            // ne crée d'écart visible (éléments avec display != none après profil)
+            ['nftContainer','timestamp','error','noResults','profileLoadingOverlay'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+            const ps = document.querySelector('.profile-section');
+            if (ps) ps.style.display = 'none';
+            const ls = document.getElementById('leftSidebar');
+            if (ls) ls.style.display = 'none';
             if (typeof initHomePanel === 'function') initHomePanel();
         });
     }
@@ -10510,37 +10757,37 @@ document.addEventListener('DOMContentLoaded', initialize);
 
     function showDropsView() {
         _showFullscreenPanel(document.getElementById('dropsPanel'), async () => {
-            // Attendre que initDropsPanel termine son fetch + render. Si le panel
-            // a déjà été pré-rendu en arrière-plan, c'est instantané (le flag
-            // _initialized renvoie tout de suite). Sinon on attend la 1ère vague.
-            if (typeof window.initDropsPanel === 'function') {
-                try { await window.initDropsPanel(); } catch (e) { /* render best-effort */ }
+            // ── SCROLL SYNCHRONE — avant tout await et avant le 1er paint ──────
+            // _showFullscreenPanel a posé display:block juste avant ce rAF.
+            // On est encore dans le même rAF → le navigateur n'a pas encore peint.
+            // Si le panel a été pré-rendu (preload background), scrollWidth est
+            // immédiatement disponible : on scrolle à droite sans flash visible.
+            const wrap = document.getElementById('dropsTimelineWrap');
+            if (wrap && wrap.scrollWidth > wrap.clientWidth) {
+                wrap.scrollLeft = wrap.scrollWidth - wrap.clientWidth;
             }
-            // Le panel est maintenant visible — on (re-)scroll la timeline tout
-            // à droite pour exposer GET FEATURED. Indispensable quand le panel a
-            // été pré-rendu en arrière-plan (display:none), car scrollWidth était 0
-            // et le scroll dans buildTimeline n'a rien fait.
+
+            // ── INIT (retour immédiat si déjà pré-chargé) ────────────────────
+            if (typeof window.initDropsPanel === 'function') {
+                try { await window.initDropsPanel(); } catch (e) { /* best-effort */ }
+            }
+
+            // ── RE-SCROLL + RE-SYNC halos (cas où initDropsPanel vient de rendre) ─
+            // Un seul rAF + 50ms suffit (le double rAF précédent était conservatif).
             requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    setTimeout(() => {
-                        const wrap = document.getElementById('dropsTimelineWrap');
-                        if (wrap && wrap.scrollWidth > wrap.clientWidth) {
-                            wrap.scrollLeft = wrap.scrollWidth - wrap.clientWidth;
-                        }
-                        // Re-sync des halos pulsés (tlHaloSync) : quand le panel
-                        // est rendu en arrière-plan (display:none → animations
-                        // figées à des temps différents), elles se désynchronisent.
-                        // On les redémarre toutes en même temps en retirant puis
-                        // remettant la propriété animation dans la même frame.
-                        const halos = wrap?.querySelectorAll('.tl-img-wrap, .tl-featured-wrap');
-                        if (halos && halos.length) {
-                            halos.forEach((el) => { el.style.animation = 'none'; });
-                            // Force reflow pour que le navigateur prenne en compte le retrait
-                            void wrap.offsetHeight;
-                            halos.forEach((el) => { el.style.animation = ''; });
-                        }
-                    }, 50);
-                });
+                setTimeout(() => {
+                    const w = document.getElementById('dropsTimelineWrap');
+                    if (w && w.scrollWidth > w.clientWidth) {
+                        w.scrollLeft = w.scrollWidth - w.clientWidth;
+                    }
+                    // Re-sync des halos pulsés (animations figées pendant display:none)
+                    const halos = w?.querySelectorAll('.tl-img-wrap, .tl-featured-wrap');
+                    if (halos?.length) {
+                        halos.forEach(el => { el.style.animation = 'none'; });
+                        void w.offsetHeight; // force reflow
+                        halos.forEach(el => { el.style.animation = ''; });
+                    }
+                }, 50);
             });
         });
     }
@@ -10559,6 +10806,8 @@ document.addEventListener('DOMContentLoaded', initialize);
         // doivent set _lastExplorerView eux-mêmes avant d'appeler.
         _hideAllPanels();
         _restoreMainContent();
+        // Marque la vue profil → permet de scoper le gutter CSS uniquement ici
+        document.body.classList.add('view--profile');
 
         // Sidebar : display:block !important pour écraser le CSS critique (#leftSidebar{display:none})
         const leftSidebar = document.getElementById('leftSidebar');
@@ -10575,9 +10824,9 @@ document.addEventListener('DOMContentLoaded', initialize);
             appMain.style.pointerEvents = '';
         }
 
-        // Navbar flottante
+        // Navbar flottante — affichée explicitement (setProperty bat le CSS FOUC display:none)
         const navbar = document.querySelector('.navbar--floating-controls');
-        if (navbar) navbar.style.removeProperty('display');
+        if (navbar) navbar.style.setProperty('display', 'block', 'important');
 
         // Dispatcher → IIFE profile-welcome décide quoi montrer
         window.dispatchEvent(new CustomEvent('cronos:showProfile'));
@@ -10594,26 +10843,28 @@ document.addEventListener('DOMContentLoaded', initialize);
         if (statsPanel) statsPanel.style.display = 'block';
         if (appMain) {
             appMain.style.marginLeft = '0';
+            appMain.style.padding = '0';
             appMain.scrollTop = 0;
-            appMain.style.setProperty('overflow', 'hidden', 'important');
+            appMain.style.setProperty('overflow-y', 'auto', 'important');
+            appMain.style.setProperty('overflow-x', 'clip', 'important');
+            appMain.style.setProperty('overflow-clip-margin', '80px', 'important');
+        }
+        if (statsPanel) {
+            statsPanel.style.removeProperty('overflow');
+            statsPanel.style.removeProperty('height');
         }
         const mainContent = document.querySelector('.main-content');
-        const topnavH = getComputedStyle(document.documentElement).getPropertyValue('--topnav-height').trim() || '52px';
+        const topnavH = getComputedStyle(document.documentElement).getPropertyValue('--navbar-height').trim() || getComputedStyle(document.documentElement).getPropertyValue('--topnav-height').trim() || '60px';
         if (mainContent) {
             mainContent.style.setProperty('top', topnavH, 'important');
             mainContent.style.setProperty('margin-top', topnavH, 'important');
             mainContent.style.setProperty('height', `calc(100vh - ${topnavH})`, 'important');
-            mainContent.style.setProperty('overflow', 'hidden', 'important');
+            mainContent.style.setProperty('overflow', 'clip', 'important');
         }
         const _sizeWrap = () => {
-            const header = document.querySelector('.stats-panel-header');
             const wrap = document.getElementById('statsTableWrap');
-            const panel = document.getElementById('statsPanel');
-            if (!header || !wrap || !panel) return;
-            const panelRect = panel.getBoundingClientRect();
-            const headerRect = header.getBoundingClientRect();
-            const available = panelRect.bottom - headerRect.bottom - 20;
-            wrap.style.height = Math.max(200, available) + 'px';
+            if (!wrap) return;
+            wrap.style.height = 'auto';
         };
         requestAnimationFrame(_sizeWrap);
         if (!window._statsResizeHandler) {
@@ -10857,7 +11108,6 @@ document.addEventListener('DOMContentLoaded', initialize);
     }
 
     /* ── Stats panel ── */
-    const CRONOS_NETWORKS = ['CRONOS', 'CRONOS_POS'];
     let currentTimeRange = 'ONE_DAY';
     let currentChainFilter = 'ALL'; // ALL | CRONOS | CRO
     let currentVerifiedFilter = 'ALL'; // ALL | true | false
@@ -11013,6 +11263,7 @@ fragment CollectionStatsData on Collection {
 
     // Apply chain filter + column sort to _allRows and re-render
     function applyFilterSort() {
+        _statsVisible = 50;
         let rows = _allRows.slice();
         if (currentChainFilter !== 'ALL') {
             rows = rows.filter(c => c._network === currentChainFilter);
@@ -11117,6 +11368,9 @@ fragment CollectionStatsData on Collection {
         return `<span class="stats-rank"><span class="stats-rank-num">${i + 1}</span></span>`;
     }
 
+    let _statsVisible = 50; // rows currently shown
+    let _statsLastFiltered = []; // last filtered+sorted dataset
+
     function renderTable(rows, timeRange) {
         const tbody = document.getElementById('statsTableBody');
         const table = document.getElementById('statsTable');
@@ -11188,7 +11442,14 @@ fragment CollectionStatsData on Collection {
 
         tbody.innerHTML = '';
 
-        filtered.forEach((col, i) => {
+        // Reset to 50 only on a fresh render (new filter/sort), not on load more
+        if (_statsLastFiltered !== filtered) _statsVisible = 50;
+        _statsLastFiltered = filtered;
+        const visibleRows = filtered.slice(0, _statsVisible);
+        const loadMoreWrap = document.getElementById('statsLoadMoreWrap');
+        if (loadMoreWrap) loadMoreWrap.style.display = filtered.length > _statsVisible ? 'flex' : 'none';
+
+        visibleRows.forEach((col, i) => {
             const s = col.stats || {};
             const m = col.metrics || {};
 
@@ -11384,6 +11645,12 @@ fragment CollectionStatsData on Collection {
         // Apply column visibility to newly rendered rows
         if (typeof applyColVisibility === 'function') applyColVisibility();
     }
+
+    // Load More Stats button
+    document.getElementById('statsLoadMoreBtn')?.addEventListener('click', () => {
+        _statsVisible += 50;
+        renderTable(_statsLastFiltered, currentTimeRange);
+    });
 
     async function loadStats(forceRefresh) {
         const loading = document.getElementById('statsLoading');
@@ -11581,14 +11848,14 @@ fragment CollectionStatsData on Collection {
         { key: 'minlisting', label: 'Floor Price',    default: true, minW: 80,  group: 1 },
         { key: 'floorpct',   label: 'Floor %',        default: true, minW: 72,  group: 1 },
         { key: 'vol',        label: 'Volume',         default: true, minW: 82,  group: 2 },
-        { key: 'change',     label: 'Volume %',       default: true, minW: 80,  group: 2 },
+        { key: 'change',     label: 'Vol. %',       default: true, minW: 80,  group: 2 },
         { key: 'buyers',     label: 'Buyers',         default: true, minW: 60,  group: 2 },
         { key: 'items',      label: 'Supply',         default: true, minW: 64,  group: 3 },
         { key: 'owners',     label: 'Owners',         default: true, minW: 60,  group: 3 },
         { key: 'mintrate',   label: 'Mint %',         default: false, minW: 72,  group: 3 },
         { key: 'ownerspct',  label: 'Distrib.',       default: false, minW: 72,  group: 3 },
         { key: 'listed',     label: 'Listed %',       default: true, minW: 72,  group: 3 },
-        { key: 'totalsales', label: 'Volume Traded',  default: true, minW: 104, group: 5 },
+        { key: 'totalsales', label: 'Vol. Traded',  default: true, minW: 104, group: 5 },
         { key: 'marketcap',  label: 'Market Cap',     default: false, minW: 88, group: 5 },
         { key: 'avgimplied', label: 'Avg Sale',       default: false, minW: 72, group: 5 },
         { key: 'volmcap',    label: 'Vol/MCap',       default: false, minW: 72, group: 5 },
@@ -12496,7 +12763,6 @@ function buildTimeline(data) {
 
   liveDrops.forEach(drop => allNodes.push({ type: 'drop', drop, accent: true }));
   upcomingDrops.forEach(drop => allNodes.push({ type: 'drop', drop, accent: false }));
-  allNodes.push({ type: 'featured' });
   allNodes.push({ type: 'featured' });
 
   allNodes.forEach((item, idx) => {
@@ -16391,8 +16657,8 @@ window.initSnapshotPanel = function() {
             const logo  = col.logo?.url   || '';
             const items = col.metrics?.items;
             card.innerHTML = `
-                ${logo ? `<img class="home-feat-logo" src="${escapeHtml(logo)}" alt="${escapeHtml(col.name)}" loading="lazy" onerror="this.style.display='none'"/>` : ''}
-                <span class="home-feat-name">${escapeHtml(col.name || '—')}${col.verified ? ' <span class="cb-verified" title="Verified">✓</span>' : ''}</span>
+                ${logo ? `<img class="home-feat-logo" src="${_fcEsc(logo)}" alt="${escapeHtml(col.name)}" loading="lazy" onerror="this.style.display='none'"/>` : ''}
+                <span class="home-feat-name">${_fcEsc(col.name || '—')}${col.verified ? ' <span class="cb-verified" title="Verified">✓</span>' : ''}</span>
                 ${items ? `<span class="cb-feat-items">${fmtNum(items)} items</span>` : ''}
                 <span class="home-feat-cta">Explore →</span>`;
             card.addEventListener('click', () => {
@@ -16495,8 +16761,8 @@ window.initSnapshotPanel = function() {
         row.className = 'home-top-row';
         row.innerHTML = `
             <span class="home-top-rank">${i + 1}</span>
-            <img class="home-top-logo" src="${escapeHtml(c.logo?.url || '')}" alt="" loading="lazy"/>
-            <span class="home-top-name">${escapeHtml(c.name || '—')}${c.verified ? ' <span class="cb-verified" title="Verified">✓</span>' : ''}</span>
+            <img class="home-top-logo" src="${_fcEsc(c.logo?.url || '')}" alt="" loading="lazy"/>
+            <span class="home-top-name">${_fcEsc(c.name || '—')}${c.verified ? ' <span class="cb-verified" title="Verified">✓</span>' : ''}</span>
             <span class="home-top-floor">${floor > 0 ? fmtUSD(floor) : '—'}</span>
             <span class="home-top-vol">${vol > 0 ? fmtUSD(vol) : '—'}</span>
             <span class="home-top-chg ${chgFmt.cls === 'cb-up' ? 'home-top-up' : chgFmt.cls === 'cb-down' ? 'home-top-down' : ''}">${chgFmt.text}</span>`;
@@ -16615,10 +16881,10 @@ window.initSnapshotPanel = function() {
             row.className = 'cb-creator-row';
             row.innerHTML = `
                 <span class="cb-creator-rank">${i + 1}</span>
-                <img class="cb-creator-avatar" src="${escapeHtml(u.avatar?.url || '')}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"/>
+                <img class="cb-creator-avatar" src="${_fcEsc(u.avatar?.url || '')}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"/>
                 <div class="cb-creator-info">
-                    <span class="cb-creator-name">${escapeHtml(u.displayName || u.username || '—')}${u.verified ? ' <span class="cb-verified">✓</span>' : ''}</span>
-                    <span class="cb-creator-handle">@${escapeHtml(u.username || '—')}</span>
+                    <span class="cb-creator-name">${_fcEsc(u.displayName || u.username || '—')}${u.verified ? ' <span class="cb-verified">✓</span>' : ''}</span>
+                    <span class="cb-creator-handle">@${_fcEsc(u.username || '—')}</span>
                 </div>
                 <span class="cb-creator-sales">${sales > 0 ? fmtUSD(sales) : '—'}</span>`;
             row.addEventListener('click', () => {
@@ -16671,10 +16937,22 @@ window.initSnapshotPanel = function() {
         if (_tickerRunning) return;
         _tickerRunning = true;
         try {
-            const cols = _topColsCache?.ONE_DAY || (await fetchTopCollectionsForRange('ONE_DAY'));
-            if (!_topColsCache) _topColsCache = {};
-            _topColsCache.ONE_DAY = cols;
-            const top = cols.slice(0, TICKER_TOP_N).map((c) => ({ id: c.id, name: c.name }));
+            // Priorité : collections actives dans le Market Bot
+            let top;
+            const sbIds = typeof window._sbGetSelectedIds === 'function' ? window._sbGetSelectedIds() : null;
+            if (sbIds && sbIds.length > 0) {
+                // Utiliser les collections cochées dans le Market Bot
+                top = sbIds.map((id) => ({ id, name: '' }));
+                // Mettre à jour le titre Live Activity avec le nom des collections
+                _updateLiveTitle(sbIds.length);
+            } else {
+                // Fallback : top collections globales par volume 24H
+                const cols = _topColsCache?.ONE_DAY || (await fetchTopCollectionsForRange('ONE_DAY'));
+                if (!_topColsCache) _topColsCache = {};
+                _topColsCache.ONE_DAY = cols;
+                top = cols.slice(0, TICKER_TOP_N).map((c) => ({ id: c.id, name: c.name }));
+                _updateLiveTitle(null);
+            }
             // 1 call per collection in parallel — small N, OK
             const calls = top.map((c) =>
                 gqlBoost('getCollectionEventHistory', Q_TICKER,
@@ -16702,6 +16980,25 @@ window.initSnapshotPanel = function() {
         }
     }
 
+    function _updateLiveTitle(colCount) {
+        const titleEl = document.querySelector('.home-live-subsection .home-section-title');
+        if (!titleEl) return;
+        if (colCount && colCount > 0) {
+            const label = colCount === 1 ? '1 collection' : colCount + ' collections';
+            titleEl.innerHTML = 'Live Activity <span class="home-live-title-tag">· Market Bot · ' + label + '</span>';
+        } else {
+            titleEl.innerHTML = 'Live Activity';
+        }
+    }
+
+    // Exposer un refresh pour le Market Bot
+    window._sbTickerRefresh = function() {
+        _seenIds = new Set();
+        if (_tickerTimer) { clearInterval(_tickerTimer); _tickerTimer = null; }
+        pollTicker();
+        _tickerTimer = setInterval(pollTicker, TICKER_POLL_MS);
+    };
+
     function renderTickerItems(events) {
         const track = document.getElementById('cbTickerTrack');
         if (!track) return;
@@ -16718,12 +17015,12 @@ window.initSnapshotPanel = function() {
             const cls    = isList ? 'cb-tk-list' : 'cb-tk-sale';
             const img    = e.asset?.cover?.url || '';
             return `
-                <a class="cb-ticker-item ${cls}" href="https://crypto.com/nft/asset/${escapeHtml(e.asset?.id || '')}" target="_blank" rel="noopener">
-                    ${img ? `<img class="cb-ticker-img" src="${escapeHtml(img)}" alt="" loading="lazy"/>` : ''}
+                <a class="cb-ticker-item ${cls}" href="https://crypto.com/nft/asset/${_fcEsc(e.asset?.id || '')}" target="_blank" rel="noopener">
+                    ${img ? `<img class="cb-ticker-img" src="${_fcEsc(img)}" alt="" loading="lazy"/>` : ''}
                     <span class="cb-ticker-verb">${verb}</span>
-                    <span class="cb-ticker-asset">${escapeHtml(e.asset?.name || '—')}</span>
+                    <span class="cb-ticker-asset">${_fcEsc(e.asset?.name || '—')}</span>
                     ${price > 1 ? `<span class="cb-ticker-price">${fmtUSD(price)}</span>` : ''}
-                    <span class="cb-ticker-by">${escapeHtml(isList ? seller : buyer)}</span>
+                    <span class="cb-ticker-by">${_fcEsc(isList ? seller : buyer)}</span>
                     <span class="cb-ticker-time">${timeAgo(e.createdAt)}</span>
                 </a>`;
         }).join('');
@@ -16979,6 +17276,8 @@ window.initSnapshotPanel = function() {
        window._cachedDropsDataPromise — initDropsPanel() la consomme directement.
      - Stats : appelle window._loadStats() qui populera _allRows et _statsLoaded.
        showStatsView() détecte _statsLoaded et n'appelle plus loadStats().
+     - Market Bot : appelle window.initSalesBotPanel() — guard _sbInit empêche
+       toute double-init. Le panel reste display:none, mais données déjà chargées.
      Le préchargement est délayé de 800 ms pour ne pas concurrencer la peinture
      initiale de la home (boost ticker + featured + top collections).
      ════════════════════════════════════════════════════════════════════════ -->
@@ -16988,11 +17287,6 @@ window.initSnapshotPanel = function() {
         // Petit délai pour laisser la home faire sa première peinture en paix
         setTimeout(() => {
             // ── DROPS ────────────────────────────────────────────────────
-            // On appelle le `initDropsPanel` complet — il fetch + render le DOM
-            // en arrière-plan. Le panel est masqué (display:none) donc invisible,
-            // mais quand l'utilisateur cliquera sur l'onglet, tout sera déjà prêt.
-            // Le 2ème appel (depuis showDropsView) hit la branche `_initialized`
-            // qui ne fait que relancer le countdown.
             try {
                 if (typeof window.initDropsPanel === 'function') {
                     Promise.resolve(window.initDropsPanel()).catch((e) =>
@@ -17009,6 +17303,19 @@ window.initSnapshotPanel = function() {
                     );
                 }
             } catch (e) { console.warn('[Preload] stats kickoff failed:', e); }
+
+            // ── MARKET BOT ───────────────────────────────────────────────
+            // initSalesBotPanel a un guard _sbInit → pas de double-init possible.
+            // Le panel reste display:none pendant le préchargement.
+            // Au premier clic sur l'onglet, les données sont déjà prêtes.
+            try {
+                if (typeof window.initSalesBotPanel === 'function') {
+                    Promise.resolve(window.initSalesBotPanel()).catch((e) =>
+                        console.warn('[Preload] salesbot init failed:', e?.message)
+                    );
+                }
+            } catch (e) { console.warn('[Preload] salesbot kickoff failed:', e); }
+
         }, 800);
     }
 
@@ -17039,22 +17346,22 @@ window.initSnapshotPanel = function() {
     const SOURCE_LANG = 'en';
 
     const LANGUAGES = [
-        { code: 'en',    name: 'English',     flag: '🇬🇧' },
-        { code: 'fr',    name: 'Français',    flag: '🇫🇷' },
-        { code: 'es',    name: 'Español',     flag: '🇪🇸' },
-        { code: 'de',    name: 'Deutsch',     flag: '🇩🇪' },
-        { code: 'it',    name: 'Italiano',    flag: '🇮🇹' },
-        { code: 'pt',    name: 'Português',   flag: '🇵🇹' },
-        { code: 'nl',    name: 'Nederlands',  flag: '🇳🇱' },
-        { code: 'pl',    name: 'Polski',      flag: '🇵🇱' },
-        { code: 'tr',    name: 'Türkçe',      flag: '🇹🇷' },
-        { code: 'ru',    name: 'Русский',     flag: '🇷🇺' },
-        { code: 'ar',    name: 'العربية',     flag: '🇸🇦' },
-        { code: 'zh-CN', name: '中文',         flag: '🇨🇳' },
-        { code: 'ja',    name: '日本語',       flag: '🇯🇵' },
-        { code: 'ko',    name: '한국어',        flag: '🇰🇷' },
-        { code: 'hi',    name: 'हिन्दी',       flag: '🇮🇳' },
-        { code: 'vi',    name: 'Tiếng Việt',  flag: '🇻🇳' }
+        { code: 'en',    name: 'English',     flag: '🇺🇸', abbr: 'EN' },
+        { code: 'fr',    name: 'Français',    flag: '🇫🇷', abbr: 'FR' },
+        { code: 'es',    name: 'Español',     flag: '🇪🇸', abbr: 'ES' },
+        { code: 'de',    name: 'Deutsch',     flag: '🇩🇪', abbr: 'DE' },
+        { code: 'it',    name: 'Italiano',    flag: '🇮🇹', abbr: 'IT' },
+        { code: 'pt',    name: 'Português',   flag: '🇵🇹', abbr: 'PT' },
+        { code: 'nl',    name: 'Nederlands',  flag: '🇳🇱', abbr: 'NL' },
+        { code: 'pl',    name: 'Polski',      flag: '🇵🇱', abbr: 'PL' },
+        { code: 'tr',    name: 'Türkçe',      flag: '🇹🇷', abbr: 'TR' },
+        { code: 'ru',    name: 'Русский',     flag: '🇷🇺', abbr: 'RU' },
+        { code: 'ar',    name: 'العربية',     flag: '🇸🇦', abbr: 'AR' },
+        { code: 'zh-CN', name: '中文',         flag: '🇨🇳', abbr: 'ZH' },
+        { code: 'ja',    name: '日本語',       flag: '🇯🇵', abbr: 'JA' },
+        { code: 'ko',    name: '한국어',        flag: '🇰🇷', abbr: 'KO' },
+        { code: 'hi',    name: 'हिन्दी',       flag: '🇮🇳', abbr: 'HI' },
+        { code: 'vi',    name: 'Tiếng Việt',  flag: '🇻🇳', abbr: 'VI' }
     ];
 
     const SKIP_TAGS = new Set([
@@ -17403,7 +17710,7 @@ window.initSnapshotPanel = function() {
             <div class="cwtf-lang-menu" id="cwtfLangMenu" role="menu" aria-hidden="true">
                 ${LANGUAGES.map(l => `
                     <button type="button" class="cwtf-lang-option" data-lang="${l.code}" role="menuitem">
-                        <span class="cwtf-lang-flag" aria-hidden="true">${l.flag}</span>
+                        <span class="cwtf-lang-abbr" aria-hidden="true">${l.abbr}</span>
                         <span class="cwtf-lang-name">${l.name}</span>
                         <span class="cwtf-lang-check" aria-hidden="true">✓</span>
                     </button>
@@ -17411,13 +17718,8 @@ window.initSnapshotPanel = function() {
             </div>
         `;
 
-        const authSep = document.querySelector('.topnav-auth-sep');
-        if (authSep && authSep.parentNode) {
-            authSep.parentNode.insertBefore(wrap, authSep);
-        } else {
-            const tabs = document.querySelector('.topnav-tabs');
-            (tabs || document.body).appendChild(wrap);
-        }
+        // Positionner en bas à droite (fixed), pas dans la topnav
+        document.body.appendChild(wrap);
 
         const loader = document.createElement('div');
         loader.className = 'cwtf-lang-loader';
@@ -18023,6 +18325,65 @@ window.initSnapshotPanel = function() {
     } else {
         bootstrap();
     }
+})();
+</script>
+<script>
+/* ── Drag-to-scroll sur le tableau Top Collections ── */
+(function () {
+    const style = document.createElement('style');
+    style.textContent = `
+        #statsTableWrap.has-hscroll { cursor: grab; }
+        #statsTableWrap.has-hscroll * { cursor: inherit !important; }
+        #statsTableWrap.is-dragging,
+        #statsTableWrap.is-dragging * { cursor: grabbing !important; }
+    `;
+    document.head.appendChild(style);
+
+    function updateGrabCursor(wrap) {
+        const hasScroll = wrap.scrollWidth > wrap.clientWidth;
+        wrap.classList.toggle('has-hscroll', hasScroll);
+    }
+
+    function initDragScroll() {
+        const wrap = document.getElementById('statsTableWrap');
+        if (!wrap || wrap._dragWired) return;
+        wrap._dragWired = true;
+
+        let isDragging = false, startX = 0, scrollLeft = 0;
+
+        updateGrabCursor(wrap);
+        new ResizeObserver(() => updateGrabCursor(wrap)).observe(wrap);
+
+        wrap.addEventListener('mousedown', e => {
+            if (e.button !== 0 || !wrap.classList.contains('has-hscroll')) return;
+            isDragging = true;
+            startX = e.pageX - wrap.offsetLeft;
+            scrollLeft = wrap.scrollLeft;
+            wrap.classList.add('is-dragging');
+            wrap.style.userSelect = 'none';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (!isDragging) return;
+            const x = e.pageX - wrap.offsetLeft;
+            wrap.scrollLeft = scrollLeft - (x - startX);
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            wrap.classList.remove('is-dragging');
+            wrap.style.userSelect = '';
+        });
+    }
+
+    const t = setInterval(() => {
+        if (document.getElementById('statsTableWrap')) {
+            initDragScroll();
+            clearInterval(t);
+        }
+    }, 200);
 })();
 </script>
 </body>
