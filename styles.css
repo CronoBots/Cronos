@@ -18,12 +18,9 @@
 }
 
 [data-theme="cdc"] {
-    --color2: #2C2C2C;
-    --text-dark: #fff;
     --collection-bg: #0b1426;
     --page-bg: #0f1a30;
     --shadow: 0 2px 4px rgba(0,0,0,0.1);
-    --color1: #00B3FF;
 }
 
 @font-face {
@@ -75,7 +72,7 @@ body {
     display: flex;
     flex-direction: column;
     -webkit-font-smoothing: antialiased;
-    touch-action: manipulation;
+    touch-action: pan-y;
     overscroll-behavior: none;
 }
 
@@ -427,7 +424,9 @@ body {
     box-sizing: border-box;
     margin-top: calc(var(--navbar-height) + env(safe-area-inset-top));
     height: calc(100vh - var(--navbar-height) - env(safe-area-inset-top));
-    overflow: hidden; /* scroll uniquement dans .app-main */
+    /* clip au lieu de hidden : empêche le scroll sans créer de BFC
+       → les box-shadow (halos) des cartes ne sont plus coupés */
+    overflow: clip;
 }
 
 
@@ -442,6 +441,14 @@ h1 {
     font-size: 2rem;
     text-align: center;
     margin: 20px 0;
+}
+
+/* Annule le margin global h1 pour le bloc titre de la home
+   — doit être ici (avant les règles spécifiques) pour garantir
+   l'ordre de cascade et éviter le décalage au premier chargement */
+.home-title-h1 {
+    margin: 0 !important;
+    font-size: clamp(32px, 4vw, 56px) !important;
 }
 
 a {
@@ -882,6 +889,11 @@ a:hover {
 .no-results {
     font-size: 1.2em;
 }
+
+/* Éléments profil cachés par défaut — élimine les ghost spaces (margin-top: 20px sur .error) */
+#profileViewContent { display: none; }
+#error { display: none; }
+#error:not(:empty) { display: block; } /* s'affiche automatiquement quand il a du contenu */
 
 .timestamp {
     display: none;
@@ -2760,24 +2772,9 @@ a:hover {
 
 
 /* === UX fixes: enable scroll + disable text selection (except form fields) === */
-html, body {
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-}
+/* html, body: overflow géré par la règle initiale + html,body { overflow-x: clip } plus bas */
 
-/* Override: body must not scroll — app-main is the scroll container */
-html {
-    overflow: hidden !important;
-}
-body {
-    overflow: hidden !important;
-}
-
-/* Safer touch scrolling on mobile browsers */
-body {
-    touch-action: pan-y;
-    overscroll-behavior: auto;
-}
+/* touch-action: pan-y et overscroll-behavior: auto fusionnés dans le bloc body principal */
 
 /* Prevent selecting/click-highlighting text across the page */
 body, body * {
@@ -3712,13 +3709,17 @@ body {
 
 .app-main {
     margin-left: var(--sidebar-width);
-    padding: 20px 20px 20px;
+    padding: 40px 100px 40px;
     min-width: 0;
     box-sizing: border-box;
 
     height: 100%;
     overflow-y: auto;
-    overflow-x: hidden;
+    /* clip : empêche le scroll horizontal sans créer de BFC */
+    overflow-x: clip;
+    /* 80px de marge avant le clip → les box-shadow (halos) des cartes
+       restent visibles même quand elles sont proches du bord de app-main */
+    overflow-clip-margin: 80px;
     -webkit-overflow-scrolling: touch;
 }
 
@@ -3854,13 +3855,13 @@ body {
 .nft-container,
 .updates-container,
 .asset-count-bar {
-    overflow-x: hidden;
+    overflow-x: clip;
     max-width: 100%;
 }
 
 /* --- Layout: navbar begins after sidebar; right pane no horizontal scroll --- */
 .app-main {
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
 }
 
 .nft-container,
@@ -3871,7 +3872,9 @@ body {
 }
 
 html, body {
-    overflow-x: hidden !important;
+    /* clip au lieu de hidden : évite les scrollbars horizontaux sans créer
+       de scroll container — les box-shadow proches du bord viewport restent visibles */
+    overflow-x: clip;
 }
 
 
@@ -4680,12 +4683,25 @@ body.is-collage-view #collectionTitle {
   overflow: visible !important;
 }
 
-/* 2) Create an inner safe area inside the scrollport so scaled cards stay visible */
-.app-main {
-  padding-top: calc(20px + var(--nft-hover-gutter)) !important;
-  padding-left: var(--nft-hover-gutter) !important;
-  padding-right: var(--nft-hover-gutter) !important;
+/* 2) Create an inner safe area inside the scrollport so scaled cards stay visible.
+   Scoped to body.view--profile : le gutter n'est nécessaire que dans la vue
+   profil/explorer (NFT cards avec zoom au hover). Les panneaux fullscreen
+   (Home, Stats, Drops, Snapshot…) n'en ont pas besoin. */
+body.view--profile .app-main {
+  padding-top: calc(0px + var(--nft-hover-gutter)) !important;
+  padding-left: 25px !important;
+  padding-right: 75px !important;
   padding-bottom: 24px !important;
+}
+
+/* ── Écart latéral uniforme — tous les panneaux fullscreen (hors profil) ──
+   Contrecarre le padding:0 posé en JS par _showFullscreenPanel / showStatsView.
+   La valeur 24px s'additionne au padding interne de chaque panneau (~20px)
+   pour un écart visuel total d'environ 44px de chaque côté. */
+body:not(.view--profile) .app-main {
+  padding-top: 40px !important;
+  padding-left: 55px !important;
+  padding-right: 55px !important;
 }
 
 /* 3) Keep the header area visually at the same vertical position */
@@ -4699,7 +4715,7 @@ body.is-collage-view #collectionTitle {
 }
 
 
-/* 4) Don't add gutters in collage mode (keep full-bleed) */
+/* 4) En mode collage, supprimer aussi les gutters (full-bleed) */
 body.is-collage-view .app-main,
 .app-main.is-collage-view {
   padding: 0 !important;
@@ -11263,8 +11279,10 @@ body.is-profile-loading #profileLoadingOverlay * {
 
 /* ── Shell ── */
 .topnav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
+    position: sticky;
+    top: 0;
+    width: 100%;
+    flex-shrink: 0;
     height: var(--topnav-height);
     background: var(--collection-bg);
     border-bottom: 1px solid rgba(0, 179, 255, 0.15);
@@ -11286,9 +11304,19 @@ body.is-profile-loading #profileLoadingOverlay * {
 .topnav-brand {
     display: flex;
     align-items: center;
+    gap: 4px;
     padding: 0 20px;
     border-right: 1px solid rgba(255, 255, 255, 0.07);
     flex-shrink: 0;
+}
+
+.topnav-logo-img {
+    height: 28px;
+    width: auto;
+    display: block;
+    flex-shrink: 0;
+    position: relative;
+    top: 0.5px;
 }
 
 .topnav-logo-text {
@@ -11478,8 +11506,8 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 
 .main-content {
-    margin-top: calc(var(--topnav-height) + var(--navbar-height) + env(safe-area-inset-top)) !important;
-    top: calc(var(--topnav-height) + var(--navbar-height) + env(safe-area-inset-top)) !important;
+    margin-top: calc(var(--navbar-height) + env(safe-area-inset-top)) !important;
+    top: 0 !important;
     height: calc(100vh - var(--topnav-height) - var(--navbar-height) - env(safe-area-inset-top)) !important;
 }
 
@@ -11517,19 +11545,15 @@ body.is-profile-loading #profileLoadingOverlay * {
 
 .stats-panel {
     padding: 0 20px 20px;
-    height: 100%;
+    height: auto;
+    min-height: 100%;
     box-sizing: border-box;
-    /* PAS de overflow:hidden ici : ça clippait le halo bleu de
-       .stats-table-wrap (qui s'étend ~80px en dehors du cadre). Le scroll
-       horizontal du tableau est porté par .stats-table-wrap (overflow-x:auto)
-       donc le parent peut rester en visible sans risque. */
     overflow: visible;
     display: flex;
     flex-direction: column;
 }
 #statsTableWrap {
-    flex: 1;
-    min-height: 0;
+    flex: none;
 }
 
 /* Header — aligné sur drops-inner / snapshot-inner pour que le titre TOP
@@ -11537,7 +11561,7 @@ body.is-profile-loading #profileLoadingOverlay * {
    Le padding latéral et bottom est porté par .stats-panel ; ici on ne
    contrôle que l'écart vertical au-dessus du titre. */
 .stats-panel-header {
-    padding-top: clamp(8px, 1.5vh, 20px);
+    padding-top: clamp(4px, 0.6vh, 10px);
     /* Gap filtres → tableau : 0 ici + margin-top 8px sur .stats-table-wrap
        pour matcher EXACTEMENT le rythme du Market Bot (.sb-results-wrap a
        margin-top:8px par rapport à la barre de filtres). */
@@ -11734,7 +11758,7 @@ body.is-profile-loading #profileLoadingOverlay * {
 /* Table wrapper — NO vertical scroll, page scroll only */
 .stats-table-wrap {
     overflow-x: auto;
-    overflow-y: auto;
+    overflow-y: clip;
     /* height set dynamically by JS */
     border-radius: 14px;
     border: 1px solid rgba(0,179,255,0.5);
@@ -12888,10 +12912,15 @@ body.is-profile-loading #profileLoadingOverlay * {
 .home-hero {
     position: relative;
     overflow: hidden;
-    padding: clamp(40px, 6vh, 72px) 20px clamp(32px, 5vh, 56px);
-    /* Pas de background — le hero se fond avec le fond de la page */
     background: transparent;
     flex-shrink: 0;
+}
+/* Hero réduit à l'ambient bg uniquement — tout le contenu est dans le spotlight */
+.home-hero--ambient-only {
+    padding: 0;
+    height: 0;
+    overflow: visible;
+    pointer-events: none;
 }
 .home-hero-bg {
     position: absolute;
@@ -13039,18 +13068,119 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 
 /* ── BODY ── */
-/* Largeur alignée sur celle des onglets Drops / Top Collections / Snapshot
-   (qui utilisent ~20px de padding latéral et fillent toute la largeur de la
-   fenêtre). On retire le max-width:1200px qui contraignait la home, et on
-   passe le padding latéral de 32px à 20px pour matcher exactement. */
 .home-body {
     flex: 1;
-    padding: 32px 20px 64px;
+    padding: 0 75px 50px;
     display: flex;
     flex-direction: column;
-    gap: 40px;
+    gap: 32px;
     width: 100%;
     box-sizing: border-box;
+}
+
+/* ── DEUX COLONNES : Top Collections | Community Chat ── */
+.home-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+}
+@media (max-width: 860px) {
+    .home-two-col { grid-template-columns: 1fr; }
+}
+
+/* ── COMMUNITY CHAT — inline card ── */
+.home-community-section { display: flex; flex-direction: column; }
+
+.home-community-live {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #4ade80;
+    background: rgba(74, 222, 128, 0.12);
+    border: 1px solid rgba(74, 222, 128, 0.3);
+    padding: 3px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.home-community-card {
+    display: flex;
+    flex-direction: column;
+    background: rgba(11, 20, 38, 0.85);
+    /* Halo identique à .stats-table-wrap (Top Collections) */
+    border: 1px solid rgba(0, 179, 255, 0.5);
+    border-radius: 18px;
+    overflow: hidden;
+    height: 320px;
+    box-shadow:
+        0 0 0  1px rgba(0, 179, 255, 0.55),
+        0 0 40px rgba(0, 179, 255, 0.35),
+        0 0 80px rgba(0, 179, 255, 0.18);
+}
+.home-community-card .home-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,179,255,0.18) transparent;
+}
+.home-community-card .home-chat-locked {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(0, 0, 0, 0.25);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 0.02em;
+}
+.home-community-card .home-chat-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.home-community-card .home-chat-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #fff;
+    font-size: 12.5px;
+    font-family: sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.home-community-card .home-chat-input:focus {
+    border-color: rgba(0, 179, 255, 0.45);
+}
+.home-community-card .home-chat-send {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(0, 179, 255, 0.18);
+    border: 1px solid rgba(0, 179, 255, 0.35);
+    color: #00B3FF;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s, border-color 0.2s;
+}
+.home-community-card .home-chat-send:hover {
+    background: rgba(0, 179, 255, 0.30);
+    border-color: rgba(0, 179, 255, 0.6);
 }
 
 /* ── SECTION ── */
@@ -13350,7 +13480,7 @@ body.is-profile-loading #profileLoadingOverlay * {
     min-height: 0;
 }
 .home-chat-msg {
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.55;
     padding: 8px 12px;
     border-radius: 10px;
@@ -13390,7 +13520,7 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 .home-chat-msg-user {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 800;
     letter-spacing: 0.06em;
     color: #00B3FF;
@@ -13710,7 +13840,7 @@ body.is-profile-loading #profileLoadingOverlay * {
     box-sizing: border-box;
     /* Aligné sur drops-inner / snapshot-inner pour que le titre démarre à la
        même hauteur que dans les autres onglets. */
-    padding: clamp(8px, 1.5vh, 20px) 20px 64px;
+    padding: clamp(4px, 0.6vh, 10px) 20px 64px;
     display: flex;
     flex-direction: column;
     gap: 0;
@@ -14015,6 +14145,9 @@ body.is-profile-loading #profileLoadingOverlay * {
     display: flex; justify-content: center;
     padding: 24px 0 0;
 }
+#statsLoadMoreWrap {
+    padding-bottom: 40px;
+}
 .sb-loadmore-btn {
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.1);
@@ -14137,11 +14270,11 @@ body.is-profile-loading #profileLoadingOverlay * {
 .topnav-tab--signin:hover svg { stroke: #fff; }
 
 .topnav-tab--signout {
-    padding: 0 10px !important;
-    color: rgba(255,255,255,0.2) !important;
-    border-left: none !important;
+    padding: 0 14px !important;
+    color: rgba(255,255,255,0.5) !important;
+    border-left: 1px solid rgba(255,255,255,0.06) !important;
 }
-.topnav-tab--signout svg { stroke: rgba(255,255,255,0.2); }
+.topnav-tab--signout svg { stroke: rgba(255,255,255,0.5); }
 .topnav-tab--signout:hover {
     color: #f87171 !important;
     background: rgba(248,113,113,0.07) !important;
@@ -15663,7 +15796,7 @@ code.sup-card-address {
     box-sizing: border-box;
 }
 .drops-inner {
-    padding: clamp(8px, 1.5vh, 20px) 20px 0;
+    padding: clamp(4px, 0.6vh, 10px) 20px 0;
     display: flex;
     flex-direction: column;
     gap: 32px;
@@ -15704,7 +15837,7 @@ code.sup-card-address {
 .drops-page-sub {
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 12px;
-    color: rgba(255,255,255,0.4);
+    color: #00B3FF;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     margin: 8px 0 0;
@@ -15780,6 +15913,7 @@ code.sup-card-address {
 }
 .drops-grid--ended {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 24px;
 }
 
 /* ── Carte commune ── */
@@ -17483,7 +17617,7 @@ code.sup-card-address {
    SNAPSHOT PANEL
    ══════════════════════════════════════════════════════════════════════════ */
 .snapshot-panel { min-height:100%; box-sizing:border-box; }
-.snapshot-inner { padding:clamp(8px,1.5vh,20px) 20px 80px; display:flex; flex-direction:column; gap:0; }
+.snapshot-inner { padding:clamp(4px,0.6vh,10px) 20px 80px; display:flex; flex-direction:column; gap:0; }
 /* Marges entre les drops-sections du panel — reproduit l'espacement du
    market bot où sb-inner utilise gap:0 et chaque section a un margin-bottom
    explicite. Évite les doubles espaces qu'auraient additionné gap + margin. */
@@ -17501,7 +17635,7 @@ code.sup-card-address {
 .snapshot-page-header-left { text-align:center; }
 .snapshot-page-title { font-family:'Geomanist-Bold',sans-serif; font-size:clamp(32px,4vw,56px); font-weight:800; color:#fff; letter-spacing:0.06em; text-transform:uppercase; margin:0; line-height:1; display:flex; align-items:center; justify-content:center; gap:14px; }
 .snapshot-page-title svg { width:clamp(24px,3vw,38px); height:clamp(24px,3vw,38px); color:#00B3FF; flex-shrink:0; }
-.snapshot-page-sub { font-family:'Geomanist-Bold',sans-serif; font-size:12px; color:rgba(255,255,255,0.4); letter-spacing:0.1em; text-transform:uppercase; margin:8px 0 0; }
+.snapshot-page-sub { font-family:'Geomanist-Bold',sans-serif; font-size:12px; color:#00B3FF; letter-spacing:0.1em; text-transform:uppercase; margin:8px 0 0; }
 .snapshot-header-right { display:flex; align-items:center; gap:16px; flex-shrink:0; }
 /* Filters bar — MÊMES margins/paddings que .stats-panel-title-row de Top
    Collections, pour avoir un rythme vertical identique entre les deux pages
@@ -18272,7 +18406,7 @@ code.sup-card-address {
 .sb-paused-toast {
     position: fixed;
     bottom: 18px;
-    left: 50%;
+    left: calc(50% - (100vw - 100%) / 2 - 8px);
     transform: translateX(-50%) translateY(10px);
     background: rgba(15, 20, 35, 0.88);
     backdrop-filter: blur(8px);
@@ -23006,20 +23140,19 @@ a.snap-holder-username:hover {
    DOM, translates via Google's public endpoint and caches in localStorage.
    ════════════════════════════════════════════════════════════════════════ */
 #cwtfLangSwitcher {
-    position: relative;
     display: flex;
     align-items: center;
-    height: 100%;
+    padding: 24px 100px 32px;
     font-family: 'Geomanist-Bold', sans-serif;
 }
 .cwtf-lang-btn {
     display: flex;
     align-items: center;
     gap: 7px;
-    padding: 0 18px;
-    background: none;
-    border: none;
-    border-left: 1px solid rgba(255,255,255,0.06);
+    padding: 8px 14px;
+    background: rgba(13, 24, 41, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
     color: rgba(255,255,255,0.4);
     font-family: inherit;
     font-size: 11px;
@@ -23027,17 +23160,17 @@ a.snap-holder-username:hover {
     text-transform: uppercase;
     cursor: pointer;
     white-space: nowrap;
-    height: 100%;
-    position: relative;
-    transition: color .2s ease, background .2s ease;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: color .2s ease, border-color .2s ease;
 }
 .cwtf-lang-btn:hover {
-    color: rgba(255,255,255,0.78);
-    background: rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.75);
+    border-color: rgba(0,179,255,0.35);
 }
 .cwtf-lang-btn--open {
     color: var(--color1, #00b3ff);
-    background: rgba(0,179,255,0.05);
+    border-color: rgba(0,179,255,0.5);
 }
 .cwtf-lang-icon { width: 14px; height: 14px; flex-shrink: 0; }
 .cwtf-lang-code {
@@ -23051,26 +23184,28 @@ a.snap-holder-username:hover {
     transition: transform .2s ease;
 }
 .cwtf-lang-btn--open .cwtf-lang-caret { transform: rotate(180deg); }
+/* Menu s'ouvre VERS LE HAUT */
 .cwtf-lang-menu {
     position: absolute;
-    top: calc(100% - 2px);
+    bottom: calc(100% + 8px);
     right: 0;
-    min-width: 220px;
-    max-height: 380px;
+    top: auto;
+    min-width: 200px;
+    max-height: 360px;
     overflow-y: auto;
     overflow-x: hidden;
     padding: 6px;
-    background: rgba(13, 24, 41, 0.96);
+    background: rgba(13, 24, 41, 0.97);
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 14px;
     box-shadow:
-        0 12px 40px rgba(0,0,0,0.55),
-        0 0 0 1px rgba(0,179,255,0.04),
+        0 -8px 32px rgba(0,0,0,0.55),
+        0 0 0 1px rgba(0,179,255,0.05),
         inset 0 1px 0 rgba(255,255,255,0.04);
     backdrop-filter: blur(16px) saturate(140%);
     -webkit-backdrop-filter: blur(16px) saturate(140%);
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(8px);
     pointer-events: none;
     transition: opacity .18s ease, transform .18s ease;
     z-index: 10000;
@@ -23089,9 +23224,9 @@ a.snap-holder-username:hover {
 .cwtf-lang-option {
     display: flex;
     align-items: center;
-    gap: 11px;
+    gap: 0;
     width: 100%;
-    padding: 9px 12px;
+    padding: 8px 12px;
     background: none;
     border: none;
     border-radius: 9px;
@@ -23111,19 +23246,26 @@ a.snap-holder-username:hover {
     background: rgba(0,179,255,0.14);
     color: var(--color1, #00b3ff);
 }
-.cwtf-lang-flag {
-    font-size: 16px;
+/* Code abrégé (EN, FR…) aligné à gauche, largeur fixe */
+.cwtf-lang-abbr {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.4);
+    width: 28px;
     flex-shrink: 0;
-    line-height: 1;
-    font-family: 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;
+    text-align: left;
 }
-.cwtf-lang-name { flex: 1; font-weight: 500; }
+.cwtf-lang-option--active .cwtf-lang-abbr { color: var(--color1, #00b3ff); }
+.cwtf-lang-name { flex: 1; font-weight: 500; padding-left: 4px; }
 .cwtf-lang-check {
     opacity: 0;
     color: var(--color1, #00b3ff);
     font-weight: 700;
     font-size: 13px;
     transition: opacity .15s ease;
+    margin-left: 8px;
 }
 .cwtf-lang-option--active .cwtf-lang-check { opacity: 1; }
 
@@ -23504,20 +23646,27 @@ a.snap-holder-username:hover {
    2 sur ~768px, 1 sur mobile). */
 .home-featured-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 20px;
+    /* Toutes les cartes sur 1 ligne, largeur égale */
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+}
+
+/* Featured Artists — pas de soulignement */
+.home-creator-card,
+.home-creator-card:hover,
+.home-creator-card:focus {
+    text-decoration: none !important;
+    color: inherit !important;
 }
 
 .home-feat-v3 {
     position: relative;
     overflow: hidden;
-    border-radius: 18px;
+    border-radius: 16px;
     background: rgba(11, 20, 38, 0.85);
-    /* Bordure cyan plus visible — pour bien découper le contour des
-       featured cards (le 0.07 de blanc précédent était quasi invisible). */
     border: 1.5px solid rgba(0, 179, 255, 0.22);
     cursor: pointer;
-    min-height: 380px;
+    min-height: 320px;
     display: flex;
     flex-direction: column;
     isolation: isolate;
@@ -23542,14 +23691,14 @@ a.snap-holder-username:hover {
 /* ── HERO — top portion, image dominante ── */
 .home-feat-v3-hero {
     position: relative;
-    /* Format 1500×500 (= 3:1) — c'est le format standard des banners
-       de collections sur Crypto.com NFT. Avec aspect-ratio, la zone
-       hero scale automatiquement avec la largeur de la carte tout en
-       gardant le bon ratio, donc les banners s'affichent en plein
-       cadre sans cropping ni espace vide. */
+    /* Ratio 3:1 = format natif des bannières 1500×500 de Crypto.com NFT.
+       Les bannières standard remplissent donc exactement la zone (cover).
+       Les autres images (logos carrés, bannières non-standard) remplissent
+       toute la hauteur via auto 100% et le backdrop flou comble les côtés. */
     aspect-ratio: 3 / 1;
     overflow: hidden;
     background: rgba(0, 0, 0, 0.4);
+    flex-shrink: 0;
 }
 
 /* Backdrop blurred wallpaper — TOUJOURS affiché, fournit le wallpaper
@@ -23569,23 +23718,23 @@ a.snap-holder-username:hover {
                 opacity 0.4s ease;
 }
 
-/* Foreground image — TOUJOURS `contain` pour qu'on voit l'IMAGE EN
-   ENTIER (halos, wordmarks, personnages…), peu importe son format.
-   La couche bg (ci-dessus) gère la zone autour. */
+/* Foreground image — par défaut `auto 100%` : l'image (logo carré ou bannière
+   non-standard) occupe toute la HAUTEUR de la zone hero, centrée horizontalement.
+   Le backdrop flou remplit l'espace restant sur les côtés. */
 .home-feat-v3-hero-img {
     position: absolute;
     inset: 0;
-    background-size: contain;
+    background-size: auto 100%;
     background-repeat: no-repeat;
     background-position: center;
     z-index: 1;
     transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
                 filter 0.4s ease;
 }
-/* Si on a un banner (image conçue pour être full-bleed) — on garde
-   contain mais on remonte légèrement la luminosité pour un rendu
-   plus vibrant (les banners sont déjà brightness-friendly). */
+/* Bannières 1500×500 (has-banner) — `cover` : elles sont conçues pour remplir
+   exactement le cadre 3:1, donc elles s'affichent entièrement et sans espace vide. */
 .home-feat-v3--has-banner .home-feat-v3-hero-img {
+    background-size: cover;
     filter: brightness(0.95) saturate(1.05);
 }
 .home-feat-v3:hover .home-feat-v3-hero-img {
@@ -23770,6 +23919,45 @@ a.snap-holder-username:hover {
     letter-spacing: 0.01em;
     line-height: 1.1;
     white-space: nowrap;
+}
+
+/* ── NFT Sample Strip — 6 miniatures sur une ligne, sans labels ── */
+.home-feat-v3-nfts {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 5px;
+}
+.home-feat-v3-nfts-loading {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 44px;
+    opacity: 0.35;
+}
+.home-feat-v3-nft {
+    border-radius: 7px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: border-color 0.2s ease;
+    cursor: pointer;
+}
+.home-feat-v3:hover .home-feat-v3-nft {
+    border-color: rgba(0, 179, 255, 0.22);
+}
+.home-feat-v3-nft-img-wrap {
+    width: 100%;
+    aspect-ratio: 1;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.5);
+}
+.home-feat-v3-nft-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    /* Pas de transition/zoom : les miniatures NFT sont statiques au hover */
 }
 
 /* CTA button — l'élément qui DONNE ENVIE DE CLIQUER */
@@ -24043,16 +24231,18 @@ a.snap-holder-username:hover {
 
 .home-spotlight {
     position: relative;
+    display: flex;
+    flex-direction: column;
     background: linear-gradient(135deg, rgba(0, 179, 255, 0.06), rgba(0, 179, 255, 0.02) 50%, rgba(11, 20, 38, 0.6));
-    border: 1.5px solid rgba(0, 179, 255, 0.22);
+    /* Halo identique à .stats-table-wrap (Top Collections) */
+    border: 1px solid rgba(0, 179, 255, 0.5);
     border-radius: 22px;
     overflow: hidden;
     isolation: isolate;
-    /* Halo cyan diffus en arrière-plan pour signaler l'importance */
     box-shadow:
-        0 0 0 1px rgba(0, 179, 255, 0.10),
-        0 24px 60px rgba(0, 179, 255, 0.08),
-        0 12px 32px rgba(0, 0, 0, 0.45);
+        0 0 0  1px rgba(0, 179, 255, 0.55),
+        0 0 40px rgba(0, 179, 255, 0.35),
+        0 0 80px rgba(0, 179, 255, 0.18);
 }
 .home-spotlight::before {
     content: '';
@@ -24069,20 +24259,19 @@ a.snap-holder-username:hover {
 /* ── Slides container — toutes les slides empilées, une seule visible ── */
 .home-spotlight-slides {
     position: relative;
-    min-height: 320px;
+    flex: 1;
+    min-height: 0;
     z-index: 1;
 }
 .home-spotlight-slide {
     position: absolute;
     inset: 0;
-    padding: 56px 56px 76px;
+    padding: 10px 40px 44px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     justify-content: center;
-    gap: 18px;
     cursor: pointer;
-    /* Toutes invisibles par défaut, fade + slide pour la transition */
     opacity: 0;
     transform: translateX(28px);
     pointer-events: none;
@@ -24096,29 +24285,70 @@ a.snap-holder-username:hover {
     pointer-events: auto;
 }
 
-/* ── Badge (NEW / LIVE / BETA) ── */
+/* ── Inner — layout HORIZONTAL : icône gauche, titre + description droite ── */
+.home-spotlight-slide-inner {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 24px;
+    width: 100%;
+}
+.home-spotlight-slide-text {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+/* Description + CTA en colonne */
+.home-spotlight-slide-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.home-spotlight-slide-bottom .home-spotlight-desc {
+    margin: 0;
+}
+.home-spotlight-slide-bottom .home-spotlight-cta {
+    margin-top: 0;
+    align-self: flex-start;
+}
+.home-spotlight-slide.is-active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+/* ── Badge — couleurs selon le type (identiques aux badges des onglets de nav) ── */
 .home-spotlight-badge {
     position: absolute;
     top: 24px;
     right: 28px;
-    padding: 5px 12px;
-    background: rgba(0, 179, 255, 0.15);
-    border: 1px solid rgba(0, 179, 255, 0.45);
-    border-radius: 999px;
+    padding: 3px 10px;
+    border-radius: 4px;
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 800;
-    letter-spacing: 0.18em;
-    color: #00B3FF;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     z-index: 2;
+    /* Défaut vert — tous les slides sont "NEW" */
+    color: #4ade80;
+    background: rgba(74,222,128,0.12);
+    border: 1px solid rgba(74,222,128,0.4);
+}
+/* BETA → ambre (snapshot uniquement) */
+[data-tab-target="snapshot"] .home-spotlight-badge {
+    color: #fbbf24;
+    background: rgba(251,191,36,0.12);
+    border-color: rgba(251,191,36,0.35);
 }
 
-/* ── Icône — gros pictogramme cyan avec halo ── */
+/* ── Icône — taille adaptée au layout horizontal ── */
 .home-spotlight-icon {
-    width: 88px;
-    height: 88px;
-    border-radius: 18px;
+    width: 108px;
+    height: 108px;
+    border-radius: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -24128,13 +24358,17 @@ a.snap-holder-username:hover {
     flex-shrink: 0;
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.08),
-        0 0 32px rgba(0, 179, 255, 0.18);
+        0 0 40px rgba(0, 179, 255, 0.22);
+}
+.home-spotlight-icon svg {
+    width: 62px !important;
+    height: 62px !important;
 }
 
-/* ── Titre — gros et lisible ── */
+/* ── Titre — adapté au layout horizontal compact ── */
 .home-spotlight-title {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: clamp(28px, 4vw, 44px);
+    font-size: clamp(22px, 2.8vw, 36px);
     font-weight: 800;
     color: #fff;
     margin: 0;
@@ -24143,14 +24377,18 @@ a.snap-holder-username:hover {
     text-transform: uppercase;
 }
 
-/* ── Description — bien lisible, max-width pour ne pas trop étaler ── */
+/* ── Description — compacte pour le layout horizontal ── */
 .home-spotlight-desc {
     font-family: sans-serif;
-    font-size: clamp(14px, 1.4vw, 17px);
+    font-size: clamp(13px, 1.2vw, 15px);
     color: rgba(255, 255, 255, 0.65);
-    line-height: 1.65;
+    line-height: 1.55;
     margin: 0;
-    max-width: 720px;
+    max-width: 100%;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 /* ── CTA — pill cyan accent ── */
@@ -24179,11 +24417,8 @@ a.snap-holder-username:hover {
 
 /* ── Progress bar (auto-cycle indicator) ── */
 .home-spotlight-progress {
-    position: absolute;
-    bottom: 56px;
-    left: 56px;
-    right: 56px;
-    height: 2px;
+    width: 100%;
+    height: 1.5px;
     background: rgba(0, 179, 255, 0.10);
     border-radius: 2px;
     overflow: hidden;
@@ -24197,7 +24432,7 @@ a.snap-holder-username:hover {
     transition: width 0.1s linear;
 }
 
-/* ── Controls (prev / dots / next) ── */
+/* ── Controls (prev / progress+dots / next) — une seule ligne ── */
 .home-spotlight-controls {
     position: absolute;
     bottom: 18px;
@@ -24207,8 +24442,17 @@ a.snap-holder-username:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 18px;
+    gap: 14px;
     z-index: 3;
+}
+/* Bloc central : progress bar au-dessus des dots */
+.home-spotlight-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    flex: 1;
+    max-width: 360px;
 }
 .home-spotlight-arrow {
     width: 36px;
@@ -24263,14 +24507,23 @@ a.snap-holder-username:hover {
 /* ── Responsive ── */
 @media (max-width: 760px) {
     .home-spotlight-slide {
-        padding: 36px 24px 80px;
-        gap: 14px;
+        padding: 16px 20px 56px;
     }
-    .home-spotlight-icon { width: 64px; height: 64px; }
-    .home-spotlight-icon svg { width: 40px; height: 40px; }
-    .home-spotlight-progress { left: 24px; right: 24px; bottom: 60px; }
+    .home-spotlight-slide-inner {
+        flex-direction: row;
+        gap: 16px;
+    }
+    .home-spotlight-slide-bottom {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .home-spotlight-icon { width: 60px; height: 60px; }
+    .home-spotlight-icon svg { width: 34px !important; height: 34px !important; }
+    .home-spotlight-progress { left: 24px; right: 24px; bottom: 50px; }
     .home-spotlight-controls { padding: 0 16px; gap: 12px; }
-    .home-spotlight-badge { top: 16px; right: 18px; }
+    .home-spotlight-badge { top: 14px; right: 16px; }
+    .home-feat-v3-nfts { grid-template-columns: repeat(6, 1fr); }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -24348,8 +24601,795 @@ a.snap-holder-username:hover {
     }
 }
 
-/* Padding bas du body pour ne pas que la dernière section soit cachée
-   par le ticker fixed-bottom. La hauteur du ticker est ~38px + 1.5px
-   border + 16px margin de sécurité = ~56px. */
-body { padding-bottom: 56px; box-sizing: border-box; }
+/* Tag "Market Bot · X collections" dans le titre Live Activity */
+.home-live-title-tag {
+    font-size: 11px;
+    color: #00B3FF;
+    letter-spacing: 0.06em;
+    opacity: 0.75;
+    font-weight: 400;
+    text-transform: none;
+}
+
+/* Ticker bas de page supprimé — le padding-bottom n'est plus nécessaire */
+body { box-sizing: border-box; }
+
+/* Spotlight CTA pill — caché : toute la slide est déjà un bouton cliquable */
+.home-spotlight-cta { display: none !important; }
+/* Slide bottom — description sans CTA */
+.home-spotlight-slide-bottom {
+    display: flex;
+    flex-direction: column;
+}
+.home-spotlight-slide-bottom .home-spotlight-desc {
+    margin: 0;
+    max-width: none;
+}
+
+/* ── LIVE ACTIVITY card — remplace le ticker bas de page ── */
+.home-live-section { display: flex; flex-direction: column; }
+
+.home-live-card {
+    display: flex;
+    flex-direction: column;
+    background: rgba(11, 20, 38, 0.85);
+    /* Halo identique à .stats-table-wrap (Top Collections) */
+    border: 1px solid rgba(0, 179, 255, 0.5);
+    border-radius: 18px;
+    overflow: hidden;
+    height: 320px;
+    box-shadow:
+        0 0 0  1px rgba(0, 179, 255, 0.55),
+        0 0 40px rgba(0, 179, 255, 0.35),
+        0 0 80px rgba(0, 179, 255, 0.18);
+}
+.home-live-feed {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,179,255,0.18) transparent;
+}
+/* Items du ticker — grille 2 colonnes compacte dans la carte */
+#cbTicker.home-live-card .cb-ticker-track,
+#cbTicker.home-live-card .cb-ticker-track > * {
+    animation: none !important;
+    transform: none !important;
+    white-space: normal;
+}
+#cbTicker.home-live-card .cb-ticker-track {
+    display: grid !important;
+    flex-direction: unset !important;
+    grid-template-columns: 1fr 1fr;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 6px 8px;
+    gap: 3px;
+    align-content: start;
+    flex: 1;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,179,255,0.15) transparent;
+}
+#cbTicker.home-live-card .cb-ticker-item {
+    display: flex !important;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 8px;
+    border-radius: 8px;
+    border-bottom: none !important;
+    background: rgba(255,255,255,0.03);
+    text-decoration: none;
+    transition: background 0.15s;
+    min-width: 0;
+    overflow: hidden;
+    color: inherit;
+    font-size: 11px;
+}
+#cbTicker.home-live-card .cb-ticker-item:hover { background: rgba(0,179,255,0.08); }
+#cbTicker.home-live-card .cb-ticker-img {
+    width: 26px;
+    height: 26px;
+    border-radius: 5px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+/* Badge SOLD/LISTED coloré */
+#cbTicker.home-live-card .cb-ticker-verb {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 5px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+#cbTicker.home-live-card .cb-tk-sale .cb-ticker-verb  { background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+#cbTicker.home-live-card .cb-tk-list .cb-ticker-verb  { background: rgba(0,179,255,0.12);  color: #00B3FF; border: 1px solid rgba(0,179,255,0.3);  }
+/* Nom de l'asset — tronqué */
+#cbTicker.home-live-card .cb-ticker-asset {
+    color: #fff;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+    font-size: 11px;
+}
+/* Prix et infos secondaires */
+#cbTicker.home-live-card .cb-ticker-price {
+    color: #4ade80;
+    font-weight: 700;
+    flex-shrink: 0;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+}
+#cbTicker.home-live-card .cb-ticker-by   { display: none; }
+#cbTicker.home-live-card .cb-ticker-time {
+    color: rgba(255,255,255,0.3);
+    flex-shrink: 0;
+    font-size: 9px;
+}
+#cbTicker.home-live-card .cb-ticker-empty {
+    grid-column: 1 / -1;
+    padding: 20px;
+    color: rgba(255,255,255,0.3);
+    font-size: 12px;
+    text-align: center;
+    display: block;
+}
+
+/* Label LIVE dans le header section */
+.home-live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #4ade80;
+    background: rgba(74,222,128,0.12);
+    border: 1px solid rgba(74,222,128,0.3);
+    padding: 3px 9px;
+    border-radius: 20px;
+}
+.home-live-badge::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 6px rgba(74,222,128,0.8);
+    animation: livePulse 1.6s ease-in-out infinite;
+}
+@keyframes livePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+/* Online members badge dans le chat */
+.home-chat-header-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.home-chat-online-badge {
+    font-size: 10px;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+/* ── Panneau membres en ligne (bas du chat) ── */
+.home-chat-online-panel {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 7px 12px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    background: rgba(0,0,0,0.15);
+    flex-shrink: 0;
+}
+.home-chat-op-label {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #4ade80;
+    margin-right: 2px;
+    flex-shrink: 0;
+}
+.home-chat-op-item {
+    position: relative;
+    cursor: default;
+}
+.home-chat-op-avatar,
+.home-chat-op-initial {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1.5px solid rgba(74,222,128,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    color: #fff;
+    background: rgba(0,179,255,0.25);
+}
+.home-chat-op-item:hover .home-chat-op-avatar,
+.home-chat-op-item:hover .home-chat-op-initial {
+    border-color: #4ade80;
+    box-shadow: 0 0 8px rgba(74,222,128,0.5);
+}
+.home-chat-op-more {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    color: rgba(255,255,255,0.45);
+    padding: 0 4px;
+}
+
+
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 5px rgba(74,222,128,0.7);
+    flex-shrink: 0;
+}
+
+
+/* ── Titre de la home — annule le margin-bottom double avec gap body ── */
+.home-page-title-block { margin-bottom: 0 !important; }
+
+/* ── Deux colonnes bottom (Top Collections + Top Creators) ── */
+.home-two-col--bottom { align-items: start; }
+
+/* ── FEATURED CREATORS grid ── */
+/* ═══════════════════════════════════════════════════════════════════════
+   FEATURED ARTISTS — spotlight 1 artiste à la fois
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Wrapper pleine largeur */
+.home-fa-spotlight {
+    position: relative;
+    width: 100%;
+    height: 340px;
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1.5px solid rgba(0, 179, 255, 0.45);
+    box-shadow:
+        0 0 0 1px rgba(0, 179, 255, 0.30),
+        0 0 40px rgba(0, 179, 255, 0.25),
+        0 0 80px rgba(0, 179, 255, 0.12),
+        0 12px 40px rgba(0, 0, 0, 0.5);
+    transition: border-color 0.25s, box-shadow 0.25s;
+}
+.home-fa-spotlight:hover {
+    border-color: rgba(0,179,255,0.65);
+    box-shadow:
+        0 0 0 1px rgba(0,179,255,0.45),
+        0 0 55px rgba(0,179,255,0.35),
+        0 0 100px rgba(0,179,255,0.18),
+        0 16px 50px rgba(0,0,0,0.6);
+}
+
+/* Slides empilées */
+.home-fa-slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.55s cubic-bezier(0.2,0.8,0.2,1);
+}
+.home-fa-slide.is-active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Bannière cover en fond */
+.home-fa-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center top;
+    z-index: 0;
+}
+.home-fa-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        100deg,
+        rgba(7,14,28,0.98) 0%,
+        rgba(7,14,28,0.90) 35%,
+        rgba(7,14,28,0.55) 62%,
+        rgba(7,14,28,0.20) 100%
+    );
+}
+
+/* Contenu par-dessus */
+.home-fa-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    padding: 28px 32px 56px;
+    gap: 36px;
+    align-items: center;
+}
+
+/* ── Identité (gauche) ── */
+.home-fa-identity {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 240px;
+    max-width: 260px;
+    flex-shrink: 0;
+}
+.home-fa-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2.5px solid rgba(0,179,255,0.5);
+    box-shadow: 0 0 24px rgba(0,179,255,0.3), 0 4px 16px rgba(0,0,0,0.5);
+    display: block;
+}
+.home-fa-avatar--fallback {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: rgba(0,179,255,0.15);
+    border: 2.5px solid rgba(0,179,255,0.35);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 30px; color: #00B3FF;
+}
+.home-fa-name-row {
+    display: flex; align-items: center; gap: 7px; margin-top: 4px;
+}
+.home-fa-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 20px; font-weight: 800;
+    color: #fff; letter-spacing: 0.02em; line-height: 1.1;
+}
+.home-fa-verified { width: 16px; height: 16px; flex-shrink: 0; }
+.home-fa-role {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px; color: #00B3FF;
+    letter-spacing: 0.1em; text-transform: uppercase;
+}
+.home-fa-bio {
+    font-family: sans-serif;
+    font-size: 12px; color: rgba(255,255,255,0.55);
+    line-height: 1.6; margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.home-fa-cta {
+    display: inline-flex; align-items: center;
+    padding: 7px 16px;
+    background: rgba(0,179,255,0.12);
+    border: 1px solid rgba(0,179,255,0.38);
+    border-radius: 8px;
+    color: #00B3FF;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px; font-weight: 800;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    text-decoration: none;
+    width: fit-content;
+    transition: background 0.2s, border-color 0.2s;
+    margin-top: 4px;
+}
+.home-fa-cta:hover { background: rgba(0,179,255,0.22); border-color: rgba(0,179,255,0.65); }
+
+/* Séparateur vertical */
+.home-fa-divider {
+    width: 1px;
+    align-self: stretch;
+    background: rgba(255,255,255,0.08);
+    flex-shrink: 0;
+}
+
+/* ── Collections (droite) ── */
+.home-fa-cols-wrap {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column; gap: 10px;
+}
+.home-fa-cols-label {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: rgba(255,255,255,0.3);
+}
+.home-fa-cols {
+    display: flex; flex-direction: column; gap: 8px;
+    overflow: hidden;
+}
+.home-fa-col {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    text-decoration: none; color: inherit;
+    transition: background 0.18s, border-color 0.18s, transform 0.18s;
+    min-width: 0;
+}
+.home-fa-col:hover {
+    background: rgba(0,179,255,0.08);
+    border-color: rgba(0,179,255,0.28);
+    transform: translateX(4px);
+}
+.home-fa-col-logo {
+    width: 44px; height: 44px;
+    border-radius: 10px; object-fit: cover;
+    border: 1px solid rgba(255,255,255,0.08);
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.04);
+}
+.home-fa-col-logo--empty {
+    width: 44px; height: 44px; border-radius: 10px;
+    background: linear-gradient(135deg, rgba(0,179,255,0.1), rgba(0,0,0,0.2));
+    border: 1px solid rgba(255,255,255,0.06);
+    flex-shrink: 0;
+}
+.home-fa-col-info {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column; gap: 2px;
+}
+.home-fa-col-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 13px; font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.home-fa-col-stats {
+    display: flex; gap: 12px; align-items: center;
+}
+.home-fa-col-vol {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px; color: #4ade80; font-weight: 700;
+}
+.home-fa-col-floor {
+    font-size: 11px; color: rgba(255,255,255,0.35); font-family: sans-serif;
+}
+.home-fa-col-items {
+    font-size: 10px; color: rgba(255,255,255,0.25); font-family: sans-serif;
+    flex-shrink: 0;
+}
+.home-fa-no-cols {
+    font-size: 12px; color: rgba(255,255,255,0.25);
+    font-family: sans-serif; font-style: italic; padding: 12px 0;
+}
+
+/* ── Navigation (dots + numéro) ── */
+.home-fa-nav {
+    position: absolute;
+    bottom: 18px; left: 32px;
+    display: flex; align-items: center; gap: 12px;
+    z-index: 4;
+}
+.home-fa-prev, .home-fa-next {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: rgba(7,15,30,0.65);
+    border: 1px solid rgba(0,179,255,0.22);
+    color: rgba(255,255,255,0.65);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(6px);
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.home-fa-prev:hover, .home-fa-next:hover {
+    background: rgba(0,179,255,0.15);
+    border-color: rgba(0,179,255,0.55); color: #00B3FF;
+}
+.home-fa-dots {
+    display: flex; align-items: center; gap: 7px;
+}
+.home-fa-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    border: none; cursor: pointer; padding: 0;
+    transition: background 0.25s, width 0.3s;
+}
+.home-fa-dot.is-active {
+    background: #00B3FF;
+    width: 20px; border-radius: 4px;
+    box-shadow: 0 0 8px rgba(0,179,255,0.6);
+}
+.home-fa-counter {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px; color: rgba(255,255,255,0.3);
+    letter-spacing: 0.06em; margin-left: 4px;
+}
+
+.home-creators-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.home-creator-card {
+    position: relative;
+    border-radius: 18px;
+    background: rgba(11, 20, 38, 0.88);
+    border: 1.5px solid rgba(0, 179, 255, 0.22);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    transition: transform 0.28s cubic-bezier(0.2,0.8,0.2,1), border-color 0.22s, box-shadow 0.28s;
+}
+.home-creator-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(0,179,255,0.55);
+    box-shadow: 0 0 0 1px rgba(0,179,255,0.35), 0 0 50px rgba(0,179,255,0.25), 0 18px 40px rgba(0,0,0,0.5);
+}
+
+/* Bannière Featured Artists — masquée */
+.home-creator-banner-wrap { display: none !important; }
+
+/* Body */
+.home-creator-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+}
+
+.home-creator-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(0, 179, 255, 0.35);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    /* Plus de margin-top négatif : pas de bannière à chevaucher */
+    margin-top: 0;
+    background: rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+}
+.home-creator-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.home-creator-name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.home-creator-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.01em;
+}
+.home-creator-verified {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+.home-creator-role {
+    font-size: 11px;
+    color: #00B3FF;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-family: 'Geomanist-Bold', sans-serif;
+}
+.home-creator-bio {
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.55;
+    margin: 0;
+    font-family: sans-serif;
+}
+.home-creator-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+.home-creator-stat { display: flex; flex-direction: column; gap: 1px; }
+.home-creator-stat-val {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 14px;
+    color: #fff;
+    font-weight: 700;
+}
+.home-creator-stat-lbl {
+    font-size: 9px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+.home-creator-cta {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    color: #00B3FF;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: letter-spacing 0.2s;
+}
+.home-creator-card:hover .home-creator-cta { letter-spacing: 0.10em; }
+
+/* Top Collections/Creators en listes alignées */
+.home-two-col--bottom .cb-creators-section .cb-creators-list { gap: 2px; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CORRECTIFS GLOBAUX — premier chargement + icônes onglets
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Titre home : forcer l'espacement correct dès le premier affichage.
+   La règle précédente (.home-page-title-block) s'appliquait trop tard.
+   On cible directement le bloc dans son contexte home-panel. */
+
+/* Supprimer les icônes SVG dans tous les titres d'onglets
+   (drops-page-title, snapshot-page-title) */
+.drops-page-title svg,
+.snapshot-page-title svg,
+.sb-header .drops-page-title svg,
+.stats-page-title-block .drops-page-title svg { display: none !important; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   HOME TITLE BLOCK — bloc titre custom, sans dépendance à
+   stats-page-title-block (dont le margin-bottom causait des conflits).
+   ═══════════════════════════════════════════════════════════════════════ */
+.home-title-block {
+    text-align: center;
+    margin: 0 !important;
+    padding: 0 !important;
+    flex-shrink: 0;
+    /* Force un contexte de rendu stable dès le premier paint */
+    contain: layout style;
+}
+.home-title-h1 {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: clamp(32px, 4vw, 56px);
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    /* Annule le margin par défaut du navigateur sur h1 (0.67em) */
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1;
+    display: block;
+}
+.home-title-sub {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px;
+    color: #00B3FF;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 8px 0 0 !important;
+    padding: 0 !important;
+    display: block;
+}
+
+/* ── 2-col spotlight + chat ── */
+.home-two-col--spotlight {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 24px;
+    /* stretch : les deux colonnes ont la même hauteur → titres alignés */
+    align-items: stretch;
+}
+@media (max-width: 900px) {
+    .home-two-col--spotlight { grid-template-columns: 1fr; }
+}
+
+/* Les deux sections ont une hauteur explicite identique.
+   Les deux ont maintenant un section-header à l'intérieur →
+   les titres s'alignent et les cartes ont la même hauteur restante */
+.home-spotlight-section,
+.home-community-section {
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+    /* PAS de overflow:hidden ici → les box-shadow (halos) ne sont plus coupés */
+}
+/* Le spotlight card — hauteur réduite pour laisser place à Live Activity */
+.home-spotlight {
+    flex: 0 0 270px;
+    min-height: 0;
+}
+/* Les slides : contraintes par la hauteur de la section */
+.home-spotlight-slides {
+    min-height: 0;
+    flex: 1;
+}
+/* Live Activity intégrée sous le spotlight */
+.home-live-subsection {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+}
+.home-live-subsection .home-live-card {
+    flex: 1;
+    height: auto !important;
+    min-height: 0;
+}
+.home-section-header--sub {
+    padding-bottom: 8px;
+}
+/* Le chat card remplit la hauteur restante dans sa section (après le header) */
+.home-community-card {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;       /* clip le contenu INTERNE — ne coupe PAS son propre halo */
+    display: flex;
+    flex-direction: column;
+}
+/* Messages : scrollables dans la hauteur accordée par la carte */
+.home-community-card .home-chat-messages {
+    flex: 1;
+    min-height: 0;          /* indispensable pour le scroll dans un flex child */
+    overflow-y: auto;
+}
+
+/* ── LIVE ACTIVITY — pleine largeur, items en 2 colonnes compactes 2 lignes max ── */
+.home-live-card--wide {
+    height: 160px;
+}
+#cbTicker.home-live-card--wide .cb-ticker-track {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    grid-auto-rows: 1fr;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    flex-direction: unset !important;
+    padding: 4px 6px;
+    gap: 2px;
+    align-content: start;
+}
+#cbTicker.home-live-card--wide .cb-ticker-item {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+    border-right: none;
+    text-decoration: none;
+    font-size: 11px;
+    min-width: unset;
+    max-width: unset;
+    white-space: nowrap;
+    overflow: hidden;
+}
+#cbTicker.home-live-card--wide .cb-ticker-img { width: 26px; height: 26px; border-radius: 5px; flex-shrink: 0; }
+#cbTicker.home-live-card--wide .cb-ticker-verb { color: rgba(255,255,255,0.45); flex-shrink: 0; }
+#cbTicker.home-live-card--wide .cb-ticker-asset { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#cbTicker.home-live-card--wide .cb-ticker-price { font-weight: 700; color: #4ade80; flex-shrink: 0; margin-left: 4px; }
+#cbTicker.home-live-card--wide .cb-ticker-by { display: none; }
+#cbTicker.home-live-card--wide .cb-ticker-time { display: none; }
+
+/* Supprimer les styles orphelins du home-spotlight-right (plus utilisé) */
+.home-spotlight-right { display: contents; }
+
+/* Home padding latéral : géré par la règle .home-body base (20px) — app-main zeroed via JS inline !important */
 
