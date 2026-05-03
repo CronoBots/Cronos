@@ -8326,7 +8326,7 @@ document.addEventListener('DOMContentLoaded', initialize);
                     anon:    !sessionUser,
                     username: sessionUser?.username    || null,
                     display:  sessionUser?.displayName || sessionUser?.username || null,
-                    avatar:   sessionUser?.avatar?.url || null
+                    avatar:   sessionUser?.avatarUrl   || null
                 });
                 myRef.onDisconnect().remove();
 
@@ -16657,8 +16657,8 @@ window.initSnapshotPanel = function() {
             const logo  = col.logo?.url   || '';
             const items = col.metrics?.items;
             card.innerHTML = `
-                ${logo ? `<img class="home-feat-logo" src="${_fcEsc(logo)}" alt="${escapeHtml(col.name)}" loading="lazy" onerror="this.style.display='none'"/>` : ''}
-                <span class="home-feat-name">${_fcEsc(col.name || '—')}${col.verified ? ' <span class="cb-verified" title="Verified">✓</span>' : ''}</span>
+                ${logo ? `<img class="home-feat-logo" src="${escapeHtml(logo)}" alt="${escapeHtml(col.name)}" loading="lazy" onerror="this.style.display='none'"/>` : ''}
+                <span class="home-feat-name">${escapeHtml(col.name || '—')}${col.verified ? ' <span class="cb-verified" title="Verified">✓</span>' : ''}</span>
                 ${items ? `<span class="cb-feat-items">${fmtNum(items)} items</span>` : ''}
                 <span class="home-feat-cta">Explore →</span>`;
             card.addEventListener('click', () => {
@@ -16761,8 +16761,8 @@ window.initSnapshotPanel = function() {
         row.className = 'home-top-row';
         row.innerHTML = `
             <span class="home-top-rank">${i + 1}</span>
-            <img class="home-top-logo" src="${_fcEsc(c.logo?.url || '')}" alt="" loading="lazy"/>
-            <span class="home-top-name">${_fcEsc(c.name || '—')}${c.verified ? ' <span class="cb-verified" title="Verified">✓</span>' : ''}</span>
+            <img class="home-top-logo" src="${escapeHtml(c.logo?.url || '')}" alt="" loading="lazy"/>
+            <span class="home-top-name">${escapeHtml(c.name || '—')}${c.verified ? ' <span class="cb-verified" title="Verified">✓</span>' : ''}</span>
             <span class="home-top-floor">${floor > 0 ? fmtUSD(floor) : '—'}</span>
             <span class="home-top-vol">${vol > 0 ? fmtUSD(vol) : '—'}</span>
             <span class="home-top-chg ${chgFmt.cls === 'cb-up' ? 'home-top-up' : chgFmt.cls === 'cb-down' ? 'home-top-down' : ''}">${chgFmt.text}</span>`;
@@ -16881,10 +16881,10 @@ window.initSnapshotPanel = function() {
             row.className = 'cb-creator-row';
             row.innerHTML = `
                 <span class="cb-creator-rank">${i + 1}</span>
-                <img class="cb-creator-avatar" src="${_fcEsc(u.avatar?.url || '')}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"/>
+                <img class="cb-creator-avatar" src="${escapeHtml(u.avatar?.url || '')}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"/>
                 <div class="cb-creator-info">
-                    <span class="cb-creator-name">${_fcEsc(u.displayName || u.username || '—')}${u.verified ? ' <span class="cb-verified">✓</span>' : ''}</span>
-                    <span class="cb-creator-handle">@${_fcEsc(u.username || '—')}</span>
+                    <span class="cb-creator-name">${escapeHtml(u.displayName || u.username || '—')}${u.verified ? ' <span class="cb-verified">✓</span>' : ''}</span>
+                    <span class="cb-creator-handle">@${escapeHtml(u.username || '—')}</span>
                 </div>
                 <span class="cb-creator-sales">${sales > 0 ? fmtUSD(sales) : '—'}</span>`;
             row.addEventListener('click', () => {
@@ -17015,12 +17015,12 @@ window.initSnapshotPanel = function() {
             const cls    = isList ? 'cb-tk-list' : 'cb-tk-sale';
             const img    = e.asset?.cover?.url || '';
             return `
-                <a class="cb-ticker-item ${cls}" href="https://crypto.com/nft/asset/${_fcEsc(e.asset?.id || '')}" target="_blank" rel="noopener">
-                    ${img ? `<img class="cb-ticker-img" src="${_fcEsc(img)}" alt="" loading="lazy"/>` : ''}
+                <a class="cb-ticker-item ${cls}" href="https://crypto.com/nft/asset/${escapeHtml(e.asset?.id || '')}" target="_blank" rel="noopener">
+                    ${img ? `<img class="cb-ticker-img" src="${escapeHtml(img)}" alt="" loading="lazy"/>` : ''}
                     <span class="cb-ticker-verb">${verb}</span>
-                    <span class="cb-ticker-asset">${_fcEsc(e.asset?.name || '—')}</span>
+                    <span class="cb-ticker-asset">${escapeHtml(e.asset?.name || '—')}</span>
                     ${price > 1 ? `<span class="cb-ticker-price">${fmtUSD(price)}</span>` : ''}
-                    <span class="cb-ticker-by">${_fcEsc(isList ? seller : buyer)}</span>
+                    <span class="cb-ticker-by">${escapeHtml(isList ? seller : buyer)}</span>
                     <span class="cb-ticker-time">${timeAgo(e.createdAt)}</span>
                 </a>`;
         }).join('');
@@ -17718,8 +17718,9 @@ window.initSnapshotPanel = function() {
             </div>
         `;
 
-        // Positionner en bas à droite (fixed), pas dans la topnav
-        document.body.appendChild(wrap);
+        // Positionner en bas du contenu scrollable (visible quand on scrolle)
+        const mainEl = document.getElementById('appMain') || document.body;
+        mainEl.appendChild(wrap);
 
         const loader = document.createElement('div');
         loader.className = 'cwtf-lang-loader';
