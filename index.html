@@ -18510,5 +18510,141 @@ window.initSnapshotPanel = function() {
     }, 200);
 })();
 </script>
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE OPTIMIZATIONS JS — CRONOS.WTF
+   ═══════════════════════════════════════════════════════════════════════════ */
+(function () {
+    'use strict';
+
+    /* ──────────────────────────────────────────────────────────────────────
+       1. BOUTON LOUPE MOBILE (≤600px)
+          Injecte un bouton dans le topnav pour rouvrir la barre de
+          recherche (cachée à ce breakpoint) en overlay plein-écran.
+       ─────────────────────────────────────────────────────────────────── */
+    function initMobileSearch() {
+        if (window.innerWidth > 600) return;
+        var topnavInner = document.querySelector('.topnav-inner');
+        var searchInput = document.getElementById('topnavSearchInput');
+        var searchWrap  = searchInput && searchInput.closest('.topnav-search-wrap');
+        if (!topnavInner || !searchWrap || topnavInner._mobileSearchWired) return;
+        topnavInner._mobileSearchWired = true;
+
+        var btn = document.createElement('button');
+        btn.className = 'topnav-mobile-search-btn';
+        btn.setAttribute('aria-label', 'Search');
+        btn.setAttribute('type', 'button');
+        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><line x1="13.5" y1="13.5" x2="18" y2="18"/></svg>';
+
+        var tabs = topnavInner.querySelector('.topnav-tabs');
+        if (tabs) topnavInner.insertBefore(btn, tabs);
+
+        btn.addEventListener('click', function () {
+            var open = searchWrap.classList.toggle('is-mobile-open');
+            if (open) { requestAnimationFrame(function () { searchInput && searchInput.focus(); }); }
+        });
+        document.addEventListener('click', function (e) {
+            if (!searchWrap.contains(e.target) && e.target !== btn)
+                searchWrap.classList.remove('is-mobile-open');
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') searchWrap.classList.remove('is-mobile-open');
+        });
+    }
+
+    /* ──────────────────────────────────────────────────────────────────────
+       2. TOUCH SUPPORT pour le drag-to-scroll de #statsTableWrap
+          Le script existant ne couvre que les événements souris (mouse).
+       ─────────────────────────────────────────────────────────────────── */
+    function patchDragScrollWithTouch() {
+        var wrap = document.getElementById('statsTableWrap');
+        if (!wrap || wrap._touchDragWired) return;
+        wrap._touchDragWired = true;
+        var startX = 0, scrollLeft = 0;
+        wrap.addEventListener('touchstart', function (e) {
+            startX = e.touches[0].pageX;
+            scrollLeft = wrap.scrollLeft;
+        }, { passive: true });
+        wrap.addEventListener('touchmove', function (e) {
+            wrap.scrollLeft = scrollLeft - (e.touches[0].pageX - startX);
+        }, { passive: true });
+    }
+
+    /* ──────────────────────────────────────────────────────────────────────
+       3. SIDEBAR OVERLAY MOBILE — Bouton profil flottant (≤640px)
+          Ouvre la sidebar en overlay en vue profil sur smartphone.
+       ─────────────────────────────────────────────────────────────────── */
+    function initMobileSidebarToggle() {
+        if (window.innerWidth > 640) return;
+        if (document.getElementById('mobileSidebarToggle')) return;
+        var sidebar = document.getElementById('leftSidebar');
+        if (!sidebar) return;
+
+        var btn = document.createElement('button');
+        btn.id = 'mobileSidebarToggle';
+        btn.setAttribute('aria-label', 'Open profile sidebar');
+        btn.setAttribute('type', 'button');
+        btn.style.cssText = [
+            'display:none', 'position:fixed',
+            'bottom:calc(24px + env(safe-area-inset-bottom))',
+            'left:16px', 'z-index:1998',
+            'background:var(--collection-bg,#0b1426)',
+            'border:1px solid rgba(0,179,255,0.35)',
+            'border-radius:50%', 'width:48px', 'height:48px',
+            'align-items:center', 'justify-content:center',
+            'cursor:pointer',
+            'box-shadow:0 4px 20px rgba(0,0,0,0.5)',
+            'color:#00B3FF'
+        ].join(';');
+        btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
+        document.body.appendChild(btn);
+
+        var observer = new MutationObserver(function () {
+            btn.style.display = document.body.classList.contains('view--profile') ? 'flex' : 'none';
+        });
+        observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+        btn.addEventListener('click', function () {
+            document.body.classList.toggle('sidebar-open');
+        });
+        document.addEventListener('click', function (e) {
+            if (document.body.classList.contains('sidebar-open') &&
+                !sidebar.contains(e.target) && e.target !== btn) {
+                document.body.classList.remove('sidebar-open');
+            }
+        });
+    }
+
+    /* ──────────────────────────────────────────────────────────────────────
+       4. ORIENTATION CHANGE — Réinitialise les patches au retournement
+       ─────────────────────────────────────────────────────────────────── */
+    window.addEventListener('orientationchange', function () {
+        var sw = document.querySelector('.topnav-search-wrap');
+        if (sw) sw.classList.remove('is-mobile-open');
+        initMobileSearch();
+        initMobileSidebarToggle();
+    }, { passive: true });
+
+    /* ──────────────────────────────────────────────────────────────────────
+       BOOTSTRAP
+       ─────────────────────────────────────────────────────────────────── */
+    function bootstrap() {
+        initMobileSearch();
+        initMobileSidebarToggle();
+        var t = setInterval(function () {
+            if (document.getElementById('statsTableWrap')) {
+                patchDragScrollWithTouch();
+                clearInterval(t);
+            }
+        }, 200);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootstrap);
+    } else {
+        bootstrap();
+    }
+})();
+</script>
 </body>
 </html>
