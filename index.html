@@ -1118,16 +1118,40 @@
         <div class="home-section-header">
           <h2 class="home-section-title">Community Chat</h2>
           <div class="home-chat-header-row">
-            <span class="home-chat-online-badge" id="homeChatOnline" style="display:none;">
-              <span class="home-chat-online-dot"></span>
-              <span id="homeChatOnlineCount">0</span> online
-            </span>
             <span class="home-community-live" id="homeChatStatus">connecting…</span>
           </div>
         </div>
+
+        <!-- ── Barre de stats premium ── -->
+        <div class="home-chat-stats-bar" id="homeChatStatsBar">
+          <div class="home-chat-stat" id="homeChatStatConnected" style="display:none;">
+            <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.2"/><path d="M2.5 17c0-3.2 3.4-5.8 7.5-5.8s7.5 2.6 7.5 5.8"/></svg>
+            <span id="homeChatConnectedCount">0</span>
+            <span class="home-chat-stat-label">viewers</span>
+          </div>
+          <div class="home-chat-stat-sep" id="homeChatStatSep1" style="display:none;"></div>
+          <div class="home-chat-stat home-chat-stat--online" id="homeChatStatOnline" style="display:none;">
+            <span class="home-chat-stat-dot home-chat-stat-dot--online"></span>
+            <span id="homeChatOnlineCount">0</span>
+            <span class="home-chat-stat-label">online</span>
+            <!-- Stack d'avatars inline -->
+            <div class="home-chat-stat-avatars" id="homeChatStatAvatars"></div>
+          </div>
+          <div class="home-chat-stat-sep" id="homeChatStatSep2" style="display:none;"></div>
+          <div class="home-chat-stat home-chat-stat--offline" id="homeChatStatOffline" style="display:none;">
+            <span class="home-chat-stat-dot home-chat-stat-dot--offline"></span>
+            <span id="homeChatOfflineCount">0</span>
+            <span class="home-chat-stat-label">offline</span>
+            <div class="home-chat-stat-avatars" id="homeChatStatAvatarsOffline"></div>
+          </div>
+          <!-- badge "online" legacy (masqué, conservé pour la compat JS) -->
+          <span id="homeChatOnline" style="display:none;"></span>
+        </div>
+
         <div class="home-community-card">
           <div class="home-chat-messages" id="homeChatMessages"></div>
-          <div class="home-chat-online-panel" id="homeChatOnlinePanel" style="display:none;"></div>
+          <!-- Panneau bas supprimé — les avatars sont dans la stats bar -->
+          <div id="homeChatOnlinePanel" style="display:none;"></div>
           <div class="home-chat-locked" id="homeChatLocked" style="display:none;">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
             <span>Sign in to chat</span>
@@ -8077,15 +8101,76 @@ document.addEventListener('DOMContentLoaded', initialize);
         };
         const FB_READY = FB_CONFIG.apiKey && FB_CONFIG.apiKey !== "YOUR_API_KEY";
 
-        let fbDb = null;
+        let fbDb          = null;
         let fbInitialized = false;
-        let lastSendAt = 0;
+        let lastSendAt    = 0;
+
+        // ── Variables de présence hoistées — accessibles depuis refreshAuthState ──
+        let _presenceRef    = null;   // référence Firebase chat/presence
+        let _myPresenceRef  = null;   // référence de la clé de session courante
+        let _currentSessKey = null;   // clé de session active (u_username ou s_xxx)
+
+        // ── Intercepteur localStorage — émet cronos:auth sur le même onglet ──
+        // Le `storage` event natif ne se déclenche que dans les autres onglets,
+        // donc on patche setItem/removeItem pour notifier le chat immédiatement.
+        (function patchStorage() {
+            const _set = localStorage.setItem.bind(localStorage);
+            const _del = localStorage.removeItem.bind(localStorage);
+            localStorage.setItem = function(k, v) {
+                _set(k, v);
+                if (k === 'cronos_logged_user')
+                    window.dispatchEvent(new CustomEvent('cronos:auth', { detail: { action: 'login' } }));
+            };
+            localStorage.removeItem = function(k) {
+                _del(k);
+                if (k === 'cronos_logged_user')
+                    window.dispatchEvent(new CustomEvent('cronos:auth', { detail: { action: 'logout' } }));
+            };
+        })();
 
         function getCurrentUser() {
             try {
                 const saved = JSON.parse(localStorage.getItem('cronos_logged_user') || 'null');
                 return saved?.username ? saved : null;
             } catch(e) { return null; }
+        }
+
+        // Met à jour la présence Firebase quand le statut auth change.
+        // Appelée aussi bien au démarrage qu'après un login/logout en live.
+        function syncPresence() {
+            if (!fbDb || !_presenceRef) return;
+            const user   = getCurrentUser();
+            const newKey = user ? 'u_' + user.username : _currentSessKey;
+            if (!newKey) return;
+
+            // Si la clé a changé (anon → identifié ou inverse) : nettoyer l'ancienne
+            if (_currentSessKey && _currentSessKey !== newKey) {
+                _presenceRef.child(_currentSessKey).remove().catch(() => {});
+                if (_myPresenceRef) _myPresenceRef.onDisconnect().cancel().catch(() => {});
+            }
+
+            _currentSessKey  = newKey;
+            _myPresenceRef   = _presenceRef.child(newKey);
+
+            const payload = {
+                t:        Date.now(),
+                anon:     !user,
+                username: user?.username    || null,
+                display:  user?.displayName || user?.username || null,
+                avatar:   user?.avatarUrl   || null
+            };
+            _myPresenceRef.set(payload);
+            _myPresenceRef.onDisconnect().remove();
+
+            // Persister dans chat/members si identifié
+            if (user) {
+                fbDb.ref(`chat/members/${newKey}`).set({
+                    username: user.username,
+                    display:  user.displayName || user.username,
+                    avatar:   user.avatarUrl   || null,
+                    lastSeen: firebase.database.ServerValue.TIMESTAMP
+                });
+            }
         }
 
         function refreshAuthState() {
@@ -8097,6 +8182,8 @@ document.addEventListener('DOMContentLoaded', initialize);
                 if (inputRow) inputRow.style.display = 'none';
                 if (locked)   locked.style.display   = 'flex';
             }
+            // Mettre à jour la présence Firebase si déjà initialisé
+            syncPresence();
         }
 
         function escapeHtml(s) {
@@ -8105,23 +8192,23 @@ document.addEventListener('DOMContentLoaded', initialize);
 
         function formatTime(ts) {
             const d = new Date(ts || Date.now());
-            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
         }
 
-        // Affichage horodaté : aujourd'hui = heure seule, hier = "Yesterday · HH:MM",
-        // plus ancien = "Apr 15 · HH:MM" pour qu'on voie d'un coup d'œil quand
-        // un message a été envoyé sans surcharger l'UI.
+        // Affichage horodaté aligné : aujourd'hui = "HH:MM", hier = "Yest · HH:MM",
+        // plus ancien = "DD MMM · HH:MM". Le span reçoit une largeur min fixe
+        // pour que les timestamps s'alignent à droite quel que soit le contenu.
         function formatDateTime(ts) {
             if (!ts) return '';
             const d = new Date(ts);
             const now = new Date();
-            const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const hhmm = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
             const sameDay = d.toDateString() === now.toDateString();
-            if (sameDay) return time;
+            if (sameDay) return hhmm;
             const y = new Date(now); y.setDate(y.getDate() - 1);
-            if (d.toDateString() === y.toDateString()) return `Yesterday · ${time}`;
-            const dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
-            return `${dateStr} · ${time}`;
+            if (d.toDateString() === y.toDateString()) return `Yest · ${hhmm}`;
+            const dateStr = d.toLocaleDateString([], { day: '2-digit', month: 'short' });
+            return `${dateStr} · ${hhmm}`;
         }
 
         // Édition inline : remplace le body par un textarea + Save/Cancel.
@@ -8284,6 +8371,30 @@ document.addEventListener('DOMContentLoaded', initialize);
             });
         }
 
+        // Génère un stack d'avatars chevauchants dans un conteneur donné.
+        // isOffline=true → style grisé + opacité réduite.
+        function renderAvatarStack(container, members, max, isOffline) {
+            if (!container) return;
+            if (!members || members.length === 0) {
+                container.style.display = 'none';
+                container.innerHTML = '';
+                return;
+            }
+            container.style.display = 'flex';
+            const shown = members.slice(0, max);
+            const extra = members.length - max;
+            const offCls = isOffline ? ' home-chat-sa-avatar--offline' : '';
+            container.innerHTML =
+                shown.map(m => `
+                    <span class="home-chat-sa-item${isOffline ? ' home-chat-sa-item--offline' : ''}" title="${_fcEsc((m.display || m.username) + (isOffline ? ' (offline)' : ''))}">
+                        ${m.avatar
+                            ? `<img class="home-chat-sa-avatar${offCls}" src="${_fcEsc(m.avatar)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><span class="home-chat-sa-initial${offCls}" style="display:none">${escapeHtml((m.display||m.username)[0].toUpperCase())}</span>`
+                            : `<span class="home-chat-sa-initial${offCls}">${_fcEsc((m.display||m.username)[0].toUpperCase())}</span>`
+                        }
+                    </span>`).join('') +
+                (extra > 0 ? `<span class="home-chat-sa-more">${isOffline ? '' : ''}+${extra}</span>` : '');
+        }
+
         async function ensureInit() {
             if (fbInitialized) return;
             fbInitialized = true;
@@ -8313,58 +8424,68 @@ document.addEventListener('DOMContentLoaded', initialize);
                 });
                 if (status) status.textContent = 'live';
 
-                // ── Présence en ligne — tous les visiteurs (même anonymes) ──
-                const presenceRef = fbDb.ref('chat/presence');
-                // Clé de session : username si connecté, sinon ID aléatoire
+                // ── Présence en ligne ──
+                _presenceRef = fbDb.ref('chat/presence');
                 const sessionUser = getCurrentUser();
-                const sessionKey = sessionUser
+                _currentSessKey = sessionUser
                     ? 'u_' + sessionUser.username
                     : 's_' + Math.random().toString(36).slice(2, 10);
-                const myRef = presenceRef.child(sessionKey);
-                myRef.set({
-                    t:       Date.now(),
-                    anon:    !sessionUser,
-                    username: sessionUser?.username    || null,
-                    display:  sessionUser?.displayName || sessionUser?.username || null,
-                    avatar:   sessionUser?.avatarUrl   || null
-                });
-                myRef.onDisconnect().remove();
 
-                presenceRef.on('value', snap => {
-                    const count = snap.numChildren();
-                    const badge = document.getElementById('homeChatOnline');
-                    const countEl = document.getElementById('homeChatOnlineCount');
-                    if (badge) {
-                        badge.style.display = 'flex';
-                        if (countEl) countEl.textContent = count;
-                    }
-                    // Panneau membres en ligne (bas du chat)
-                    const panel = document.getElementById('homeChatOnlinePanel');
-                    if (panel) {
-                        const members = [];
-                        snap.forEach(child => {
-                            const v = child.val();
-                            if (!v.anon && v.username) members.push(v);
-                        });
-                        if (members.length === 0) {
-                            panel.style.display = 'none';
-                        } else {
-                            panel.style.display = 'flex';
-                            const MAX = 10;
-                            const shown = members.slice(0, MAX);
-                            const extra = members.length - MAX;
-                            panel.innerHTML =
-                                '<span class="home-chat-op-label">Online</span>' +
-                                shown.map(m => `
-                                    <span class="home-chat-op-item" title="${_fcEsc(m.display || m.username)}">
-                                        ${m.avatar
-                                            ? `<img class="home-chat-op-avatar" src="${_fcEsc(m.avatar)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><span class="home-chat-op-initial" style="display:none">${escapeHtml((m.display||m.username)[0].toUpperCase())}</span>`
-                                            : `<span class="home-chat-op-initial">${_fcEsc((m.display||m.username)[0].toUpperCase())}</span>`
-                                        }
-                                    </span>`).join('') +
-                                (extra > 0 ? `<span class="home-chat-op-more">+${extra}</span>` : '');
+                // Appel initial via syncPresence (écrit présence + members)
+                syncPresence();
+
+                // ── Présence temps réel ──
+                _presenceRef.on('value', snap => {
+                    const onlineKeys  = new Set();
+                    const namedOnline = [];
+                    snap.forEach(child => {
+                        const v = child.val();
+                        if (!v.anon && v.username) {
+                            onlineKeys.add('u_' + v.username);
+                            namedOnline.push(v);
                         }
-                    }
+                    });
+                    const totalConnected = snap.numChildren();
+
+                    // Récupérer tous les membres connus pour calculer les offline
+                    fbDb.ref('chat/members').once('value', membersSnap => {
+                        const namedOffline = [];
+                        membersSnap.forEach(child => {
+                            if (!onlineKeys.has(child.key)) {
+                                namedOffline.push(child.val());
+                            }
+                        });
+
+                        const onlineCount  = namedOnline.length;
+                        const offlineCount = namedOffline.length;
+
+                        // ── Stats bar ──
+                        const statConnected   = document.getElementById('homeChatStatConnected');
+                        const statOnlineEl    = document.getElementById('homeChatStatOnline');
+                        const statOfflineEl   = document.getElementById('homeChatStatOffline');
+                        const statSep1        = document.getElementById('homeChatStatSep1');
+                        const statSep2        = document.getElementById('homeChatStatSep2');
+                        const connectedCount  = document.getElementById('homeChatConnectedCount');
+                        const countEl         = document.getElementById('homeChatOnlineCount');
+                        const offlineCountEl  = document.getElementById('homeChatOfflineCount');
+                        const avatarsEl       = document.getElementById('homeChatStatAvatars');
+                        const avatarsOffEl    = document.getElementById('homeChatStatAvatarsOffline');
+
+                        if (connectedCount) connectedCount.textContent = totalConnected;
+                        if (countEl)        countEl.textContent        = onlineCount;
+                        if (offlineCountEl) offlineCountEl.textContent = offlineCount;
+
+                        if (statConnected) statConnected.style.display = totalConnected > 0  ? 'flex'  : 'none';
+                        if (statSep1)      statSep1.style.display      = onlineCount > 0     ? 'block' : 'none';
+                        if (statOnlineEl)  statOnlineEl.style.display  = onlineCount > 0     ? 'flex'  : 'none';
+                        if (statSep2)      statSep2.style.display      = offlineCount > 0    ? 'block' : 'none';
+                        if (statOfflineEl) statOfflineEl.style.display = offlineCount > 0    ? 'flex'  : 'none';
+
+                        // Stack avatars online
+                        renderAvatarStack(avatarsEl, namedOnline, 6, false);
+                        // Stack avatars offline
+                        renderAvatarStack(avatarsOffEl, namedOffline, 6, true);
+                    });
                 });
             } catch(e) {
                 console.error('[Community chat] Firebase init failed:', e);
@@ -8406,7 +8527,9 @@ document.addEventListener('DOMContentLoaded', initialize);
         refreshAuthState();
         ensureInit();
 
-        // Refresh auth state when user logs in/out in another tab
+        // Refresh auth state when user logs in/out — même onglet (cronos:auth)
+        // ou autre onglet (storage natif)
+        window.addEventListener('cronos:auth', () => refreshAuthState());
         window.addEventListener('storage', e => {
             if (e.key === 'cronos_logged_user') refreshAuthState();
         });
