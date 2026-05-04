@@ -24816,16 +24816,34 @@ body { box-sizing: border-box; }
 }
 .home-chat-stat:first-child { padding-left: 0; }
 .home-chat-stat svg { flex-shrink: 0; opacity: 0.6; }
-.home-chat-stat span:first-of-type { color: #fff; font-size: 13px; }
+/* Bloc nombre + label empilés verticalement */
+.home-chat-stat-text {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    line-height: 1;
+}
+.home-chat-stat-text span:first-child { color: #fff; font-size: 13px; line-height: 1; }
 .home-chat-stat-label {
     font-size: 9px !important;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: rgba(255,255,255,0.35) !important;
+    line-height: 1;
 }
+/* Members stat */
+.home-chat-stat--members { color: #00B3FF; }
+.home-chat-stat--members svg { opacity: 0.7; stroke: #00B3FF; }
+.home-chat-stat--members .home-chat-stat-text span:first-child { color: #00B3FF; }
+.home-chat-stat--members .home-chat-stat-label { color: rgba(0,179,255,0.45) !important; }
 .home-chat-stat--online { color: #4ade80; }
 .home-chat-stat--online span:first-of-type { color: #4ade80; }
-.home-chat-stat--offline { color: rgba(255,255,255,0.4); }
+.home-chat-stat--online .home-chat-stat-text span:first-child { color: #4ade80; }
+.home-chat-stat--online .home-chat-stat-label { color: rgba(74,222,128,0.45) !important; }
+.home-chat-stat--offline { color: #f87171; }
+.home-chat-stat--offline .home-chat-stat-text span:first-child { color: #f87171; }
+.home-chat-stat--offline .home-chat-stat-label { color: rgba(248,113,113,0.45) !important; }
 .home-chat-stat-dot {
     width: 7px; height: 7px;
     border-radius: 50%;
@@ -24910,8 +24928,8 @@ body { box-sizing: border-box; }
     filter: grayscale(1);
     box-shadow: 0 0 0 1.5px rgba(255,255,255,0.15) !important;
 }
-.home-chat-stat--offline { color: rgba(255,255,255,0.35); }
-.home-chat-stat--offline .home-chat-stat-label { color: rgba(255,255,255,0.25) !important; }
+.home-chat-stat--offline { color: #f87171; }
+.home-chat-stat--offline .home-chat-stat-label { color: rgba(248,113,113,0.45) !important; }
 /* ── Panneau bas — masqué (avatars déplacés dans la stats bar) ── */
 .home-chat-online-panel { display: none !important; }
 
@@ -25739,25 +25757,56 @@ body { box-sizing: border-box; }
 
 
 /* ─────────────────────────────────────────────────────────────────────────
-   11. HOME SPOTLIGHT & COMMUNITY — hauteur fixe 500px inadaptée sur mobile
+   11. HOME SPOTLIGHT & COMMUNITY — hauteur adaptée sur mobile
    ───────────────────────────────────────────────────────────────────────── */
+
+/* Tablette (≤900px) : on passe en colonne, on garde des hauteurs explicites
+   pour que les slides flex:1 aient un parent de référence               */
 @media (max-width: 900px) {
-    .home-spotlight-section,
+    /* Spotlight : hauteur réduite mais explicite → les slides restent visibles */
+    .home-spotlight-section {
+        height: 320px !important;
+    }
+    .home-spotlight {
+        flex: 0 0 200px !important;
+    }
+    /* Chat : hauteur autonome maintenue */
     .home-community-section {
         height: auto !important;
         min-height: 0 !important;
     }
-    .home-spotlight {
-        flex: unset !important;
+    .home-community-card {
+        height: 340px !important;
     }
     .home-live-card--wide {
         height: auto !important;
-        min-height: 120px;
+        min-height: 100px;
     }
 }
+
+/* Smartphone (≤600px) : spotlight compact, chat pleine utilité */
 @media (max-width: 600px) {
+    .home-spotlight-section {
+        height: 260px !important;
+    }
+    .home-spotlight {
+        flex: 0 0 160px !important;
+    }
+    .home-community-card {
+        height: 300px !important;
+    }
     #cbTicker.home-live-card--wide .cb-ticker-track {
         grid-template-columns: 1fr !important;
+    }
+}
+
+/* Très petits écrans (≤390px) */
+@media (max-width: 390px) {
+    .home-spotlight-section {
+        height: 240px !important;
+    }
+    .home-community-card {
+        height: 260px !important;
     }
 }
 
@@ -25840,4 +25889,143 @@ body { box-sizing: border-box; }
 .suggestions,
 .topnav-suggestions {
     -webkit-overflow-scrolling: touch;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EMOJI REACTIONS — Style Discord
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Barre flottante au survol (Discord-style) ── */
+.home-chat-react-bar {
+    position: absolute;
+    top: -18px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: #0d1829;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 3px 6px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    transform: translateY(4px);
+    z-index: 10;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+/* Nécessite position:relative sur le message */
+.home-chat-msg--community {
+    position: relative;
+}
+/* Afficher la barre au survol du message */
+.home-chat-msg--community:hover .home-chat-react-bar {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+/* Sur mobile : toujours visible (pas de hover) */
+@media (hover: none) {
+    .home-chat-react-bar {
+        opacity: 1;
+        pointer-events: auto;
+        transform: none;
+        position: static;
+        margin-bottom: 4px;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        justify-content: flex-start;
+    }
+}
+
+/* ── Boutons emoji dans la barre ── */
+.home-chat-react-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+    padding: 2px 3px;
+    border-radius: 6px;
+    transition: transform 0.12s ease, background 0.12s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.home-chat-react-btn:hover {
+    transform: scale(1.3);
+    background: rgba(255,255,255,0.08);
+}
+.home-chat-react-btn:active {
+    transform: scale(1.1);
+}
+
+/* ── Pills de réaction sous le message ── */
+.home-chat-reactions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 5px;
+}
+.home-chat-reaction-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 2px 8px 2px 6px;
+    cursor: pointer;
+    font-family: sans-serif;
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    line-height: 1.4;
+}
+.home-chat-reaction-pill:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.2);
+    transform: scale(1.05);
+}
+.home-chat-reaction-pill:active {
+    transform: scale(0.97);
+}
+/* Pill avec ma propre réaction — mise en évidence bleue */
+.home-chat-reaction-pill--mine {
+    background: rgba(0,179,255,0.15);
+    border-color: rgba(0,179,255,0.4);
+    color: #00B3FF;
+}
+.home-chat-reaction-pill--mine:hover {
+    background: rgba(0,179,255,0.22);
+    border-color: rgba(0,179,255,0.6);
+}
+.home-chat-reaction-emoji {
+    font-size: 13px;
+    line-height: 1;
+}
+.home-chat-reaction-count {
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+}
+
+/* ── Chat — Message d'erreur de validation ── */
+.home-chat-error {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    background: rgba(248, 113, 113, 0.12);
+    border: 1px solid rgba(248, 113, 113, 0.35);
+    border-radius: 8px;
+    color: #f87171;
+    font-family: sans-serif;
+    font-size: 11px;
+    padding: 6px 12px;
+    margin-bottom: 6px;
+    letter-spacing: 0.02em;
+    transition: opacity 0.4s ease;
+    line-height: 1.4;
 }
