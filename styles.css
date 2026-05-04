@@ -25757,56 +25757,91 @@ body { box-sizing: border-box; }
 
 
 /* ─────────────────────────────────────────────────────────────────────────
-   11. HOME SPOTLIGHT & COMMUNITY — hauteur adaptée sur mobile
+   11. HOME SPOTLIGHT & COMMUNITY — layout mobile complet
+   ─────────────────────────────────────────────────────────────────────────
+   Les slides sont position:absolute;inset:0 — ils ont besoin d'un parent
+   avec une hauteur EXPLICITE (pas juste flex-basis) pour être visibles.
+   On utilise height directement sur .home-spotlight, pas flex-basis.
    ───────────────────────────────────────────────────────────────────────── */
 
-/* Tablette (≤900px) : on passe en colonne, on garde des hauteurs explicites
-   pour que les slides flex:1 aient un parent de référence               */
+/* Tablette (≤900px) ────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
-    /* Spotlight : hauteur réduite mais explicite → les slides restent visibles */
-    .home-spotlight-section {
-        height: 320px !important;
-    }
-    .home-spotlight {
-        flex: 0 0 200px !important;
-    }
-    /* Chat : hauteur autonome maintenue */
+    /* Section : hauteur auto → chaque enfant gère sa propre hauteur */
+    .home-spotlight-section,
     .home-community-section {
         height: auto !important;
-        min-height: 0 !important;
     }
+
+    /* Spotlight card : hauteur DIRECTE (pas flex-basis) */
+    .home-spotlight {
+        height: 220px !important;
+        flex: none !important;
+        min-height: 220px !important;
+    }
+
+    /* Live subsection sous le spotlight : hauteur auto */
+    .home-live-subsection {
+        flex: none !important;
+        height: auto !important;
+    }
+    .home-live-card--wide {
+        height: 140px !important;
+    }
+
+    /* Chat */
     .home-community-card {
         height: 340px !important;
     }
-    .home-live-card--wide {
-        height: auto !important;
-        min-height: 100px;
-    }
 }
 
-/* Smartphone (≤600px) : spotlight compact, chat pleine utilité */
+/* Smartphone (≤600px) ─────────────────────────────────────────────────── */
 @media (max-width: 600px) {
-    .home-spotlight-section {
-        height: 260px !important;
-    }
     .home-spotlight {
-        flex: 0 0 160px !important;
+        height: 200px !important;
+        min-height: 200px !important;
     }
-    .home-community-card {
-        height: 300px !important;
+    /* Padding des slides : réduit pour tenir dans 200px */
+    .home-spotlight-slide {
+        padding: 12px 16px 40px !important;
+    }
+    .home-spotlight-slide-inner {
+        gap: 12px !important;
+    }
+    /* Icône spotlight : plus petite sur mobile */
+    .home-spotlight-icon {
+        width: 64px !important;
+        height: 64px !important;
+        min-width: 64px !important;
+        border-radius: 14px !important;
+    }
+    .home-spotlight-icon svg {
+        width: 32px !important;
+        height: 32px !important;
+    }
+    /* Live Activity plus compacte */
+    .home-live-card--wide {
+        height: 120px !important;
     }
     #cbTicker.home-live-card--wide .cb-ticker-track {
         grid-template-columns: 1fr !important;
     }
+    /* Chat */
+    .home-community-card {
+        height: 300px !important;
+    }
 }
 
-/* Très petits écrans (≤390px) */
+/* Très petits écrans (≤390px) ─────────────────────────────────────────── */
 @media (max-width: 390px) {
-    .home-spotlight-section {
-        height: 240px !important;
+    .home-spotlight {
+        height: 180px !important;
+        min-height: 180px !important;
     }
     .home-community-card {
         height: 260px !important;
+    }
+    .home-live-card--wide {
+        height: 100px !important;
     }
 }
 
