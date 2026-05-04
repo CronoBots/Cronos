@@ -1124,25 +1124,44 @@
 
         <!-- ── Barre de stats premium ── -->
         <div class="home-chat-stats-bar" id="homeChatStatsBar">
+          <!-- Viewers anonymes -->
           <div class="home-chat-stat" id="homeChatStatConnected" style="display:none;">
             <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.2"/><path d="M2.5 17c0-3.2 3.4-5.8 7.5-5.8s7.5 2.6 7.5 5.8"/></svg>
-            <span id="homeChatConnectedCount">0</span>
-            <span class="home-chat-stat-label">viewers</span>
+            <div class="home-chat-stat-text">
+              <span id="homeChatConnectedCount">0</span>
+              <span class="home-chat-stat-label">viewers</span>
+            </div>
           </div>
           <div class="home-chat-stat-sep" id="homeChatStatSep1" style="display:none;"></div>
+          <!-- Membres en ligne -->
           <div class="home-chat-stat home-chat-stat--online" id="homeChatStatOnline" style="display:none;">
             <span class="home-chat-stat-dot home-chat-stat-dot--online"></span>
-            <span id="homeChatOnlineCount">0</span>
-            <span class="home-chat-stat-label">online</span>
-            <!-- Stack d'avatars inline -->
+            <div class="home-chat-stat-text">
+              <span id="homeChatOnlineCount">0</span>
+              <span class="home-chat-stat-label">online</span>
+            </div>
             <div class="home-chat-stat-avatars" id="homeChatStatAvatars"></div>
           </div>
           <div class="home-chat-stat-sep" id="homeChatStatSep2" style="display:none;"></div>
+          <!-- Membres récemment vus (offline) -->
           <div class="home-chat-stat home-chat-stat--offline" id="homeChatStatOffline" style="display:none;">
             <span class="home-chat-stat-dot home-chat-stat-dot--offline"></span>
-            <span id="homeChatOfflineCount">0</span>
-            <span class="home-chat-stat-label">offline</span>
+            <div class="home-chat-stat-text">
+              <span id="homeChatOfflineCount">0</span>
+              <span class="home-chat-stat-label">offline</span>
+            </div>
             <div class="home-chat-stat-avatars" id="homeChatStatAvatarsOffline"></div>
+          </div>
+          <div class="home-chat-stat-sep" id="homeChatStatSep3" style="display:none;"></div>
+          <!-- Total membres inscrits -->
+          <div class="home-chat-stat home-chat-stat--members" id="homeChatStatMembers" style="display:none;">
+            <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="7" cy="7" r="3"/><path d="M1 17c0-2.8 2.7-5 6-5"/><circle cx="14" cy="8" r="2.5"/><path d="M11 17c0-2.4 2-4 3-4s3 1.6 3 4"/>
+            </svg>
+            <div class="home-chat-stat-text">
+              <span id="homeChatMembersCount">0</span>
+              <span class="home-chat-stat-label">members</span>
+            </div>
           </div>
           <!-- badge "online" legacy (masqué, conservé pour la compat JS) -->
           <span id="homeChatOnline" style="display:none;"></span>
@@ -1156,6 +1175,7 @@
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
             <span>Sign in to chat</span>
           </div>
+          <div class="home-chat-error" id="homeChatError" style="display:none;"></div>
           <div class="home-chat-input-row" id="homeChatInputRow">
             <input class="home-chat-input" id="homeChatInput" type="text" placeholder="Message community…" autocomplete="off" spellcheck="false" maxlength="500"/>
             <button class="home-chat-send" id="homeChatSend" type="button">
@@ -8296,6 +8316,74 @@ document.addEventListener('DOMContentLoaded', initialize);
             catch(e) { console.error('[Community chat] delete failed:', e); }
         }
 
+        // ── Emoji reactions ─────────────────────────────────────────────────────
+        // On utilise l'INDEX (0-5) comme data-emoji-idx pour éviter tout problème
+        // d'encodage Unicode des emojis composés dans les attributs data-*.
+        const QUICK_EMOJIS = ['❤️','😂','😮','🔥','👀','💎'];
+        const EMOJI_KEYS   = ['heart','joy','wow','fire','eyes','gem'];
+        let _reactionsListener = null;
+        let _cachedReactions   = {};   // cache local pour les updates rapides
+
+        // Toggle : ajoute ou retire la réaction — utilise l'index pour sécurité
+        async function toggleReaction(msgKey, idx) {
+            const sessKey = _currentSessKey;
+            if (!msgKey || !sessKey || !fbDb) {
+                console.warn('[Reactions] toggleReaction blocked — msgKey:', msgKey, 'sessKey:', sessKey, 'fbDb:', !!fbDb);
+                return;
+            }
+            const emojiKey = EMOJI_KEYS[idx];
+            if (!emojiKey) return;
+            const path = 'chat/reactions/' + msgKey + '/' + emojiKey + '/' + sessKey;
+            try {
+                const ref  = fbDb.ref(path);
+                const snap = await ref.once('value');
+                if (snap.exists()) { await ref.remove(); }
+                else               { await ref.set(true); }
+            } catch(e) {
+                console.error('[Reactions] Firebase write failed:', path, e);
+            }
+        }
+
+        // Met à jour l'affichage des pills pour un message
+        function updateReactionDisplay(div, reactions) {
+            let bar = div.querySelector('.home-chat-reactions');
+            if (!bar) {
+                bar = document.createElement('div');
+                bar.className = 'home-chat-reactions';
+                const body = div.querySelector('.home-chat-msg-body');
+                if (body) body.after(bar); else div.appendChild(bar);
+            }
+            bar.innerHTML = '';
+            let hasAny = false;
+            EMOJI_KEYS.forEach((emojiKey, idx) => {
+                const users = (reactions && reactions[emojiKey]) || {};
+                const count = Object.keys(users).length;
+                if (count === 0) return;
+                hasAny = true;
+                const mine  = !!(_currentSessKey && users[_currentSessKey]);
+                const emoji = QUICK_EMOJIS[idx];
+                const pill  = document.createElement('button');
+                pill.type      = 'button';
+                pill.className = 'home-chat-reaction-pill' + (mine ? ' home-chat-reaction-pill--mine' : '');
+                pill.innerHTML = '<span class="home-chat-reaction-emoji">' + emoji + '</span>'
+                               + '<span class="home-chat-reaction-count">' + count + '</span>';
+                pill.addEventListener('click', () => toggleReaction(div.dataset.msgKey, idx));
+                bar.appendChild(pill);
+            });
+            bar.style.display = hasAny ? 'flex' : 'none';
+        }
+
+        // Écoute toutes les réactions en temps réel — appelé APRÈS que _currentSessKey est défini
+        function startReactionsListener() {
+            if (!fbDb || _reactionsListener) return;
+            _reactionsListener = fbDb.ref('chat/reactions').on('value', snap => {
+                _cachedReactions = snap.val() || {};
+                msgs.querySelectorAll('[data-msg-key]').forEach(div => {
+                    updateReactionDisplay(div, _cachedReactions[div.dataset.msgKey] || {});
+                });
+            });
+        }
+
         function renderMessage(msg, key) {
             const me = getCurrentUser();
             const isMine = !!(me && msg.user && msg.user === me.username);
@@ -8303,7 +8391,15 @@ document.addEventListener('DOMContentLoaded', initialize);
             div.className = 'home-chat-msg home-chat-msg--community' + (isMine ? ' home-chat-msg--mine' : '');
             if (key) div.dataset.msgKey = key;
             if (msg.user) div.dataset.msgUser = msg.user;
+
+            // Barre emoji flottante (style Discord) — index utilisé pour éviter les bugs Unicode
+            const reactBarHtml = key ? `
+                <div class="home-chat-react-bar" aria-label="Quick reactions">
+                    ${QUICK_EMOJIS.map((e, i) => `<button class="home-chat-react-btn" type="button" data-emoji-idx="${i}" title="${e}">${e}</button>`).join('')}
+                </div>` : '';
+
             div.innerHTML = `
+                ${reactBarHtml}
                 <div class="home-chat-msg-meta">
                     <span class="home-chat-msg-user">${_fcEsc(msg.display || msg.user || 'Anonymous')}</span>
                     <span class="home-chat-msg-meta-right">
@@ -8321,11 +8417,25 @@ document.addEventListener('DOMContentLoaded', initialize);
                     </span>
                 </div>
                 <div class="home-chat-msg-body">${_fcEsc(msg.text || '')}</div>
+                <div class="home-chat-reactions" style="display:none;"></div>
             `;
+
             if (isMine && key) {
                 div.querySelector('.home-chat-msg-edit-btn')?.addEventListener('click', () => startEdit(div, key, msg.text || ''));
                 div.querySelector('.home-chat-msg-delete-btn')?.addEventListener('click', () => deleteMsg(key));
             }
+
+            // Boutons de la barre emoji — index numérique (évite les problèmes d'encodage Unicode)
+            if (key) {
+                div.querySelectorAll('.home-chat-react-btn').forEach(btn => {
+                    btn.addEventListener('click', e => {
+                        e.stopPropagation();
+                        const idx = parseInt(btn.dataset.emojiIdx, 10);
+                        toggleReaction(key, idx);
+                    });
+                });
+            }
+
             msgs.appendChild(div);
             msgs.scrollTop = msgs.scrollHeight;
         }
@@ -8423,7 +8533,6 @@ document.addEventListener('DOMContentLoaded', initialize);
                     removeMessageById(snap.key);
                 });
                 if (status) status.textContent = 'live';
-
                 // ── Présence en ligne ──
                 _presenceRef = fbDb.ref('chat/presence');
                 const sessionUser = getCurrentUser();
@@ -8433,6 +8542,26 @@ document.addEventListener('DOMContentLoaded', initialize);
 
                 // Appel initial via syncPresence (écrit présence + members)
                 syncPresence();
+
+                // ── Listener réactions — lancé APRÈS _currentSessKey (évite sessKey=null) ──
+                startReactionsListener();
+
+                // ── Heartbeat — re-écrit la présence toutes les 30s ──────────────────
+                // Sans ça, Firebase coupe les connexions WebSocket inactives (surtout
+                // sur iOS Safari qui tue les sockets en arrière-plan), ce qui déclenche
+                // onDisconnect().remove() et fait passer l'utilisateur offline alors
+                // qu'il est toujours sur la page.
+                setInterval(function () {
+                    if (fbDb && _myPresenceRef) syncPresence();
+                }, 30000);
+
+                // ── Visibilitychange — re-connecte quand l'onglet redevient actif ────
+                // Quand l'utilisateur revient sur l'onglet après l'avoir mis en fond
+                // (ou après le déverrouillage du téléphone), on force un syncPresence
+                // immédiat pour rétablir la présence.
+                document.addEventListener('visibilitychange', function () {
+                    if (!document.hidden && fbDb && _presenceRef) syncPresence();
+                });
 
                 // ── Présence temps réel ──
                 _presenceRef.on('value', snap => {
@@ -8445,7 +8574,8 @@ document.addEventListener('DOMContentLoaded', initialize);
                             namedOnline.push(v);
                         }
                     });
-                    const totalConnected = snap.numChildren();
+                    // "viewers" = visiteurs anonymes uniquement (sans les membres nommés)
+                    const totalConnected = snap.numChildren() - namedOnline.length;
 
                     // Récupérer tous les membres connus pour calculer les offline
                     fbDb.ref('chat/members').once('value', membersSnap => {
@@ -8475,8 +8605,9 @@ document.addEventListener('DOMContentLoaded', initialize);
                         if (countEl)        countEl.textContent        = onlineCount;
                         if (offlineCountEl) offlineCountEl.textContent = offlineCount;
 
+                        // Sep1 : visible uniquement si viewers > 0 ET online > 0
                         if (statConnected) statConnected.style.display = totalConnected > 0  ? 'flex'  : 'none';
-                        if (statSep1)      statSep1.style.display      = onlineCount > 0     ? 'block' : 'none';
+                        if (statSep1)      statSep1.style.display      = (totalConnected > 0 && onlineCount > 0) ? 'block' : 'none';
                         if (statOnlineEl)  statOnlineEl.style.display  = onlineCount > 0     ? 'flex'  : 'none';
                         if (statSep2)      statSep2.style.display      = offlineCount > 0    ? 'block' : 'none';
                         if (statOfflineEl) statOfflineEl.style.display = offlineCount > 0    ? 'flex'  : 'none';
@@ -8485,6 +8616,15 @@ document.addEventListener('DOMContentLoaded', initialize);
                         renderAvatarStack(avatarsEl, namedOnline, 6, false);
                         // Stack avatars offline
                         renderAvatarStack(avatarsOffEl, namedOffline, 6, true);
+
+                        // ── Séparateur + compteur members ───────────────────
+                        const statSep3      = document.getElementById('homeChatStatSep3');
+                        const statMembers   = document.getElementById('homeChatStatMembers');
+                        const membersCount  = document.getElementById('homeChatMembersCount');
+                        const totalMembers  = membersSnap.numChildren();
+                        if (membersCount) membersCount.textContent = totalMembers;
+                        if (statSep3)    statSep3.style.display    = totalMembers > 0 ? 'block' : 'none';
+                        if (statMembers) statMembers.style.display = totalMembers > 0 ? 'flex'  : 'none';
                     });
                 });
             } catch(e) {
@@ -8494,12 +8634,57 @@ document.addEventListener('DOMContentLoaded', initialize);
             }
         }
 
+        // ── Filtres de contenu ────────────────────────────────────────────────
+        const URL_PATTERN = /https?:\/\/|www\.|\.com|\.net|\.org|\.io|\.gg|discord\.gg|t\.me\//i;
+
+        const BANNED_WORDS = [
+            // Français
+            'merde','putain','connard','connasse','salope','enculé','encule',
+            'fdp','fils de pute','pute','salopard','bâtard','batard','batarde','bâtarde',
+            'nique','niquer','va te faire','casse toi','casse-toi','ta gueule',
+            'ferme ta gueule','abruti','crétin','cretin','imbécile','imbecile',
+            // English
+            'fuck','shit','bitch','asshole','bastard','cunt','nigger','nigga',
+            'faggot','retard','motherfucker','dickhead','wanker','prick',
+            'dumbass','scumbag','moron'
+        ];
+
+        // Regex construite depuis la liste — \b pour éviter les faux positifs
+        // (ex: "connard" bloqué, mais pas "connection")
+        const BANNED_RE = new RegExp('\\b(' + BANNED_WORDS.join('|') + ')\\b', 'i');
+
+        let _chatErrorTimer = null;
+        function showChatError(msg) {
+            const el = document.getElementById('homeChatError');
+            if (!el) return;
+            el.textContent = msg;
+            el.style.display = 'flex';
+            clearTimeout(_chatErrorTimer);
+            _chatErrorTimer = setTimeout(() => {
+                el.style.opacity = '0';
+                setTimeout(() => { el.style.display = 'none'; el.style.opacity = ''; }, 400);
+            }, 3500);
+        }
+
         async function sendMessage() {
             const user = getCurrentUser();
             if (!user || !fbDb || !input) return;
             const text = (input.value || '').trim();
             if (!text) return;
             if (text.length > 500) return;
+
+            // ── Validation liens ──────────────────────────────────────────
+            if (URL_PATTERN.test(text)) {
+                showChatError('🚫 Links are not allowed in the chat.');
+                return;
+            }
+
+            // ── Validation insultes ───────────────────────────────────────
+            if (BANNED_RE.test(text)) {
+                showChatError('🚫 Please keep the chat respectful — no offensive language.');
+                return;
+            }
+
             // Simple rate limit : 1 msg / 500ms
             const now = Date.now();
             if (now - lastSendAt < 500) return;
