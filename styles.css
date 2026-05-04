@@ -25472,3 +25472,372 @@ body { box-sizing: border-box; }
 
 /* Home padding latéral : géré par la règle .home-body base (20px) — app-main zeroed via JS inline !important */
 
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE OPTIMIZATIONS — CRONOS.WTF
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   1. FIX IOS ZOOM — font-size ≥ 16px sur tous les inputs actifs
+      iOS Safari zoome automatiquement si font-size < 16px au focus.
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .topnav-search-input {
+        font-size: 16px !important;
+        letter-spacing: 0.01em;
+    }
+    .login-modal-input {
+        font-size: 16px !important;
+    }
+    .snapshot-col-select {
+        font-size: 16px !important;
+    }
+    input,
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   2. PADDING EXCESSIF — .app-main (100px) et .home-body (75px) sur mobile
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .app-main {
+        padding: 20px 16px 24px !important;
+    }
+    .home-body {
+        padding: 0 16px 32px !important;
+        gap: 24px !important;
+    }
+}
+@media (max-width: 480px) {
+    .app-main {
+        padding: 16px 12px 20px !important;
+    }
+    .home-body {
+        padding: 0 12px 24px !important;
+        gap: 20px !important;
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   3. TOPNAV MOBILE — Bouton loupe + barre de recherche en overlay (≤600px)
+   ───────────────────────────────────────────────────────────────────────── */
+.topnav-mobile-search-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 0 12px;
+    cursor: pointer;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+@media (max-width: 600px) {
+    .topnav-mobile-search-btn {
+        display: flex;
+    }
+    .topnav-search-wrap.is-mobile-open {
+        display: flex !important;
+        position: fixed;
+        top: var(--topnav-height, 52px);
+        left: 0;
+        right: 0;
+        z-index: 9000;
+        background: var(--collection-bg, #0b1426);
+        padding: 10px 14px;
+        border-bottom: 1px solid rgba(0, 179, 255, 0.18);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+    .topnav-search-wrap.is-mobile-open .topnav-search-input {
+        width: 100% !important;
+        font-size: 16px !important;
+    }
+    .topnav-search-kbd {
+        display: none !important;
+    }
+    .topnav-tab {
+        padding: 0 10px !important;
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   4. HOVER COLLANTS SUR TOUCH — @media (hover:none) neutralise les effets
+      qui restent "actifs" après un tap sur iOS/Android.
+   ───────────────────────────────────────────────────────────────────────── */
+@media (hover: none) {
+    .home-creator-card:hover {
+        transform: none !important;
+        box-shadow: none !important;
+        border-color: rgba(0, 179, 255, 0.22) !important;
+    }
+    .home-creator-card:hover .home-creator-cta {
+        letter-spacing: 0.06em !important;
+    }
+    .navbar-menu a#loginLink:hover {
+        transform: none !important;
+    }
+    .login-modal-btn:hover:not(:disabled) {
+        transform: none !important;
+    }
+    .nft-card:hover img,
+    .nft-card:hover video {
+        transform: translate(-50%, -50%) !important;
+    }
+    .topnav-tab:hover:not(.topnav-tab--disabled) {
+        background: none !important;
+    }
+    .suggestion-item:hover {
+        background-color: transparent !important;
+    }
+    .suggestion-item:active {
+        background-color: rgba(0, 179, 255, 0.18) !important;
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   5. SAFE AREA INSETS — Barre home iPhone / Dynamic Island
+   ───────────────────────────────────────────────────────────────────────── */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .app-main,
+    .home-panel,
+    .stats-panel,
+    .sb-panel,
+    .drops-panel,
+    .snap-panel {
+        padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+    .login-modal-backdrop {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   6. LOGIN MODAL — Paddings adaptés aux très petits écrans (< 440px)
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 440px) {
+    .login-modal {
+        padding: 28px 20px 24px !important;
+        border-radius: 16px !important;
+        margin: 0 10px;
+    }
+    .login-modal-title {
+        font-size: 1.1rem;
+    }
+    .login-modal-btn {
+        padding: 14px !important;
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   7. SUGGESTIONS DROPDOWN — max-height réduite sur petit écran
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .suggestions,
+    .topnav-suggestions {
+        max-height: 55vh !important;
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   8. TOPNAV TABS — Scrollable horizontalement sur très petits écrans
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+    .topnav-inner {
+        flex-wrap: nowrap;
+        overflow: hidden;
+    }
+    .topnav-tabs {
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        flex-shrink: 1;
+        min-width: 0;
+    }
+    .topnav-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    .topnav-tab {
+        scroll-snap-align: start;
+        flex-shrink: 0;
+        min-width: 44px;
+        min-height: 44px;
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   9. TAILLE DE TAP MINIMUM 44×44px (recommandation Apple / WCAG)
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .topnav-tab,
+    .topnav-tab--signin,
+    .topnav-tab--signout {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    .login-modal-close {
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    .nft-card-action-btn,
+    .nft-card .btn,
+    .nft-card button {
+        min-height: 40px;
+        min-width: 40px;
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   10. STATS TABLE — Indicateur de scroll horizontal sur mobile
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    #statsTableWrap {
+        -webkit-mask-image: linear-gradient(
+            to right,
+            transparent 0px,
+            black 12px,
+            black calc(100% - 12px),
+            transparent 100%
+        );
+        mask-image: linear-gradient(
+            to right,
+            transparent 0px,
+            black 12px,
+            black calc(100% - 12px),
+            transparent 100%
+        );
+        cursor: default !important;
+    }
+    #statsTableWrap.has-hscroll {
+        cursor: default !important;
+    }
+    #statsTableWrap.has-hscroll * {
+        cursor: inherit !important;
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   11. HOME SPOTLIGHT & COMMUNITY — hauteur fixe 500px inadaptée sur mobile
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .home-spotlight-section,
+    .home-community-section {
+        height: auto !important;
+        min-height: 0 !important;
+    }
+    .home-spotlight {
+        flex: unset !important;
+    }
+    .home-live-card--wide {
+        height: auto !important;
+        min-height: 120px;
+    }
+}
+@media (max-width: 600px) {
+    #cbTicker.home-live-card--wide .cb-ticker-track {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   12. NFT CONTAINER — Grille fluide sur smartphone
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+    .nft-container.small-size {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+        gap: 8px !important;
+    }
+    .nft-container.large-size {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   13. PROFILE HEADER — Centré en colonne sur smartphone
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+    .profile-header-content {
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        gap: 12px !important;
+        padding: 0 12px !important;
+    }
+    .profile-picture--round {
+        margin: 0 auto !important;
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   14. SIDEBAR — Overlay en vue profil sur mobile (≤640px)
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+    body.view--profile {
+        --sidebar-width: 0px !important;
+    }
+    body.view--profile #leftSidebar {
+        position: fixed !important;
+        left: -320px;
+        top: 0;
+        bottom: 0;
+        width: 280px !important;
+        z-index: 2000;
+        transition: left 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+        overflow-y: auto;
+    }
+    body.view--profile.sidebar-open #leftSidebar {
+        left: 0 !important;
+    }
+    body.view--profile.sidebar-open::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 1999;
+    }
+    body.view--profile .app-main {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   15. SCROLL MOMENTUM — Renforcement du scroll fluide iOS
+   ───────────────────────────────────────────────────────────────────────── */
+.app-main,
+.home-panel,
+.stats-panel,
+.sb-panel,
+.drops-panel,
+.snap-panel,
+.suggestions,
+.topnav-suggestions {
+    -webkit-overflow-scrolling: touch;
+}
