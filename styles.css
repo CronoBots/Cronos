@@ -13504,12 +13504,25 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 /* Community chat — message avec user + timestamp */
 .home-chat-msg--community {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
     color: rgba(255,255,255,0.9);
     align-self: stretch;
     max-width: 100%;
     padding: 6px 10px 8px;
+    transition: background 0.15s, border-color 0.15s;
+}
+.home-chat-msg--community:hover {
+    background: rgba(255,255,255,0.055);
+    border-color: rgba(255,255,255,0.11);
+}
+.home-chat-msg--mine {
+    background: rgba(0,179,255,0.07) !important;
+    border-color: rgba(0,179,255,0.18) !important;
+}
+.home-chat-msg--mine:hover {
+    background: rgba(0,179,255,0.11) !important;
+    border-color: rgba(0,179,255,0.25) !important;
 }
 .home-chat-msg-meta {
     display: flex;
@@ -13531,8 +13544,15 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 .home-chat-msg-time {
     font-size: 9px;
-    color: rgba(255,255,255,0.35);
+    color: rgba(255,255,255,0.3);
     flex-shrink: 0;
+    /* Largeur fixe pour aligner tous les horodatages sur la même colonne */
+    display: inline-block;
+    min-width: 70px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-family: 'SF Mono', 'Fira Mono', 'Consolas', monospace;
+    letter-spacing: 0.02em;
 }
 /* Bloc droit du méta-header : heure + (edited) + actions edit/delete.
    On groupe pour avoir un alignement stable même quand un message est édité
@@ -24770,6 +24790,65 @@ body { box-sizing: border-box; }
     50% { opacity: 0.4; }
 }
 /* Online members badge dans le chat */
+/* ── Barre de stats premium du chat ── */
+.home-chat-stats-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: rgba(0,179,255,0.04);
+    border: 1px solid rgba(0,179,255,0.15);
+    border-radius: 10px;
+    padding: 6px 14px;
+    margin-bottom: 10px;
+    min-height: 32px;
+    flex-wrap: wrap;
+    gap: 4px 0;
+}
+.home-chat-stat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 10px;
+    font-size: 11px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    letter-spacing: 0.04em;
+    color: rgba(255,255,255,0.55);
+}
+.home-chat-stat:first-child { padding-left: 0; }
+.home-chat-stat svg { flex-shrink: 0; opacity: 0.6; }
+.home-chat-stat span:first-of-type { color: #fff; font-size: 13px; }
+.home-chat-stat-label {
+    font-size: 9px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.35) !important;
+}
+.home-chat-stat--online { color: #4ade80; }
+.home-chat-stat--online span:first-of-type { color: #4ade80; }
+.home-chat-stat--offline { color: rgba(255,255,255,0.4); }
+.home-chat-stat-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.home-chat-stat-dot--online {
+    background: #4ade80;
+    box-shadow: 0 0 6px rgba(74,222,128,0.8);
+    animation: chatPulse 2.2s ease-in-out infinite;
+}
+.home-chat-stat-dot--offline {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+@keyframes chatPulse {
+    0%, 100% { box-shadow: 0 0 5px rgba(74,222,128,0.7); }
+    50%       { box-shadow: 0 0 10px rgba(74,222,128,1), 0 0 18px rgba(74,222,128,0.4); }
+}
+.home-chat-stat-sep {
+    width: 1px; height: 14px;
+    background: rgba(255,255,255,0.1);
+    flex-shrink: 0;
+}
 .home-chat-header-row {
     display: flex;
     align-items: center;
@@ -24784,57 +24863,57 @@ body { box-sizing: border-box; }
     align-items: center;
     gap: 4px;
 }
-/* ── Panneau membres en ligne (bas du chat) ── */
-.home-chat-online-panel {
+/* ── Stack d'avatars inline dans la stats bar ── */
+.home-chat-stat-avatars {
     display: flex;
     align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-    padding: 7px 12px;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    background: rgba(0,0,0,0.15);
-    flex-shrink: 0;
+    margin-left: 6px;
+    /* chevauchement façon Notion/Linear */
 }
-.home-chat-op-label {
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 9px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #4ade80;
-    margin-right: 2px;
-    flex-shrink: 0;
-}
-.home-chat-op-item {
+.home-chat-sa-item {
     position: relative;
+    /* chaque avatar empiète de 6px sur le précédent */
+    margin-left: -6px;
     cursor: default;
+    transition: transform 0.15s;
 }
-.home-chat-op-avatar,
-.home-chat-op-initial {
-    width: 24px;
-    height: 24px;
+.home-chat-sa-item:first-child { margin-left: 0; }
+.home-chat-sa-item:hover { transform: translateY(-2px); z-index: 2; }
+.home-chat-sa-avatar,
+.home-chat-sa-initial {
+    width: 20px; height: 20px;
     border-radius: 50%;
     object-fit: cover;
-    border: 1.5px solid rgba(74,222,128,0.45);
+    border: 1.5px solid #0b1426;
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 10px;
+    font-size: 8px;
     font-weight: 800;
     color: #fff;
-    background: rgba(0,179,255,0.25);
+    background: rgba(0,179,255,0.3);
+    box-shadow: 0 0 0 1.5px rgba(74,222,128,0.5);
 }
-.home-chat-op-item:hover .home-chat-op-avatar,
-.home-chat-op-item:hover .home-chat-op-initial {
-    border-color: #4ade80;
-    box-shadow: 0 0 8px rgba(74,222,128,0.5);
-}
-.home-chat-op-more {
+.home-chat-sa-more {
+    margin-left: 2px;
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 10px;
-    color: rgba(255,255,255,0.45);
-    padding: 0 4px;
+    font-size: 9px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.02em;
 }
+/* Avatars offline — grisés et semi-transparents */
+.home-chat-sa-item--offline { opacity: 0.45; }
+.home-chat-sa-item--offline:hover { opacity: 0.7; transform: translateY(-2px); }
+.home-chat-sa-avatar--offline,
+.home-chat-sa-initial--offline {
+    filter: grayscale(1);
+    box-shadow: 0 0 0 1.5px rgba(255,255,255,0.15) !important;
+}
+.home-chat-stat--offline { color: rgba(255,255,255,0.35); }
+.home-chat-stat--offline .home-chat-stat-label { color: rgba(255,255,255,0.25) !important; }
+/* ── Panneau bas — masqué (avatars déplacés dans la stats bar) ── */
+.home-chat-online-panel { display: none !important; }
 
 
     display: inline-block;
