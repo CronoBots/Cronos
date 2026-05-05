@@ -13122,7 +13122,7 @@ body.is-profile-loading #profileLoadingOverlay * {
 .home-community-card .home-chat-messages {
     flex: 1;
     overflow-y: auto;
-    padding: 12px 16px;
+    padding: 12px 16px 8px;
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -13558,9 +13558,9 @@ body.is-profile-loading #profileLoadingOverlay * {
    On groupe pour avoir un alignement stable même quand un message est édité
    ou que les boutons apparaissent sur les messages "à moi". */
 .home-chat-msg-meta-right {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 6px;
     flex-shrink: 0;
 }
 .home-chat-msg-edited {
@@ -13569,12 +13569,16 @@ body.is-profile-loading #profileLoadingOverlay * {
     font-style: italic;
 }
 .home-chat-msg-actions {
+    position: absolute;
+    right: calc(100% + 2px); /* à gauche du timestamp, ne décale pas l'heure */
+    top: 50%;
+    transform: translateY(-50%);
     display: flex;
     align-items: center;
     gap: 2px;
-    /* Cachés au repos, révélés au hover du message — UX type Slack/Discord */
     opacity: 0;
     transition: opacity 0.15s;
+    white-space: nowrap;
 }
 .home-chat-msg--mine:hover .home-chat-msg-actions { opacity: 1; }
 .home-chat-msg-action {
@@ -24930,6 +24934,30 @@ body { box-sizing: border-box; }
 }
 .home-chat-stat--offline { color: #f87171; }
 .home-chat-stat--offline .home-chat-stat-label { color: rgba(248,113,113,0.45) !important; }
+/* ── 3 points de chargement du chat ── */
+.home-chat-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 1;
+    padding: 20px 0;
+}
+.home-chat-loading span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--color1);
+    opacity: 0.3;
+    animation: chatDotPulse 1.2s ease-in-out infinite;
+}
+.home-chat-loading span:nth-child(2) { animation-delay: 0.2s; }
+.home-chat-loading span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes chatDotPulse {
+    0%, 80%, 100% { opacity: 0.15; transform: scale(0.85); }
+    40%            { opacity: 1;    transform: scale(1);    }
+}
+
 /* ── Panneau bas — masqué (avatars déplacés dans la stats bar) ── */
 .home-chat-online-panel { display: none !important; }
 
@@ -26031,19 +26059,16 @@ body { box-sizing: border-box; }
     pointer-events: auto;
     transform: translateY(0);
 }
-/* Sur mobile : toujours visible (pas de hover) */
+/* Sur mobile : cachée par défaut, révélée via .is-react-open (tap JS) */
 @media (hover: none) {
     .home-chat-react-bar {
+        opacity: 0;
+        pointer-events: none;
+    }
+    .home-chat-msg--community.is-react-open .home-chat-react-bar {
         opacity: 1;
         pointer-events: auto;
-        transform: none;
-        position: static;
-        margin-bottom: 4px;
-        background: transparent;
-        border: none;
-        box-shadow: none;
-        padding: 0;
-        justify-content: flex-start;
+        transform: translateY(0);
     }
 }
 
@@ -26135,4 +26160,485 @@ body { box-sizing: border-box; }
     letter-spacing: 0.02em;
     transition: opacity 0.4s ease;
     line-height: 1.4;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE OPTIMIZATIONS — AUTRES ONGLETS (Stats, Market Bot, Drops,
+   Snapshot, Support)
+   Complément du bloc "MOBILE OPTIMIZATIONS" existant qui ne couvrait
+   que la Home.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   A. MARGES GLOBALES app-main — trop larges (55px) sur mobile
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    body:not(.view--profile) .app-main {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+        padding-top: 20px !important;
+    }
+}
+@media (max-width: 480px) {
+    body:not(.view--profile) .app-main {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        padding-top: 14px !important;
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   B. TOP COLLECTIONS (stats-panel)
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Barre de contrôles : wrap sur mobile */
+@media (max-width: 768px) {
+    .stats-panel-title-row {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .stats-controls-bar {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    /* Recherche pleine largeur */
+    .stats-search-wrap {
+        flex: 1 1 100% !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    .stats-summary {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    /* Titre de page */
+    .stats-page-title,
+    .stats-panel h1 {
+        font-size: clamp(22px, 5vw, 36px) !important;
+    }
+}
+
+@media (max-width: 600px) {
+    /* Barre chaînes + filtres : scrollable horizontalement */
+    .stats-chain-filter {
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        flex-shrink: 0;
+    }
+    .stats-chain-filter::-webkit-scrollbar { display: none; }
+
+    /* Résumé : réduire l'espacement */
+    .stats-summary-item { gap: 3px; }
+    .stats-summary-label { font-size: 10px; }
+    .stats-summary-val   { font-size: 11px; }
+    .stats-summary-sep   { display: none; }
+
+    /* Table wrapper : scroll horizontal + indicateur de fond */
+    #statsTableWrap,
+    .stats-table-wrap {
+        margin-top: 12px !important;
+        border-radius: 10px !important;
+    }
+    /* Réduire légèrement les colonnes pour tenir sur mobile */
+    .scol-collection { width: 160px; }
+    .scol-chain      { width: 46px;  }
+
+    /* Barre de filtres (période) */
+    .stats-period-bar {
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        padding-bottom: 2px;
+    }
+    .stats-period-bar::-webkit-scrollbar { display: none; }
+    .stats-period-btn { flex-shrink: 0; }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   C. MARKET BOT (sb-panel)
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .sb-inner {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    /* Toolbar principale : autoriser le retour à la ligne */
+    .sb-toolbar {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    /* Les dropdowns positionnés à droite peuvent dépasser — on les colle à gauche */
+    .sb-alarm-panel,
+    .sb-request-dropdown,
+    .stats-col-dropdown,
+    .sb-col-dropdown-rich {
+        right: auto !important;
+        left: 0 !important;
+        max-width: calc(100vw - 20px) !important;
+    }
+}
+
+@media (max-width: 600px) {
+    /* Résultats : scroll horizontal */
+    .sb-results-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 10px !important;
+    }
+    /* Boutons de la toolbar : taille de tap minimum */
+    .sb-col-selector-btn,
+    .sb-alarm-btn,
+    .sb-request-btn,
+    .snapshot-run-btn,
+    .snapshot-cancel-btn,
+    .snapshot-export-btn {
+        min-height: 40px;
+        padding: 0 10px !important;
+    }
+    /* Sélecteur de collection : pleine largeur */
+    .sb-col-selector-wrap {
+        flex: 1 1 100% !important;
+        max-width: 100% !important;
+    }
+    /* Libellé du sélecteur tronqué */
+    #sbColLabel {
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    /* Résultats item : adapter la taille des textes */
+    .sb-result-name  { font-size: 12px; }
+    .sb-result-price { font-size: 12px; }
+    .sb-result-col   { font-size: 10px; }
+    /* Panel alarme : pleine largeur */
+    .sb-alarm-panel {
+        width: calc(100vw - 20px) !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        right: auto !important;
+    }
+    /* Barre de sous-onglets (Sales/Listings) : scrollable */
+    .sb-tabs-bar {
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+    }
+    .sb-tabs-bar::-webkit-scrollbar { display: none; }
+    .sb-tab { flex-shrink: 0; }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   D. DROPS (drops-panel)
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .drops-inner {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        gap: 20px !important;
+    }
+    /* En-tête : centré en colonne */
+    .drops-page-header {
+        flex-direction: column !important;
+        align-items: center !important;
+        margin-bottom: -10px !important;
+    }
+    .drops-header-right {
+        justify-content: center;
+    }
+    /* Grilles : 1 colonne */
+    .drops-grid--ended {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+        gap: 12px !important;
+    }
+    /* Timeline : scroll horizontal */
+    .drops-timeline-wrap {
+        padding-bottom: 4px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Titre "DROPS" : taille réduite */
+    .drops-page-title {
+        font-size: clamp(22px, 6vw, 34px) !important;
+        gap: 8px !important;
+    }
+    .drops-page-title svg { width: 22px !important; height: 22px !important; }
+
+    /* Sections : moins d'espacement */
+    .drops-section-label {
+        font-size: 14px !important;
+        letter-spacing: 0.12em !important;
+    }
+    /* Grilles ended : mini cards */
+    .drops-grid--ended {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)) !important;
+        gap: 8px !important;
+    }
+    /* Corps de la carte : padding réduit */
+    .drop-card-body {
+        padding: 10px 12px 12px !important;
+    }
+    /* Banner live : ratio plus haut sur mobile pour montrer l'image */
+    .drop-card--live .drop-card-img-wrap {
+        aspect-ratio: 16/10 !important;
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   E. SNAPSHOT (snapshot-panel)
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .snapshot-inner {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    /* Barre de filtres : en colonne */
+    .snapshot-filters-bar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+    .snapshot-filters-left,
+    .snapshot-filters-right {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    /* Barre de progression : pleine largeur */
+    .snapshot-inline-progress {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex-shrink: 1 !important;
+    }
+    /* Statistiques summary : grille 3 colonnes */
+    .snapshot-summary {
+        flex-wrap: wrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .snapshot-stat {
+        flex: 1 1 30%;
+        min-width: 80px;
+        padding: 14px 10px !important;
+    }
+}
+
+@media (max-width: 600px) {
+    /* En-tête */
+    .snapshot-page-header {
+        flex-direction: column !important;
+        align-items: center !important;
+        margin-bottom: 16px !important;
+    }
+    .snapshot-page-title {
+        font-size: clamp(20px, 5.5vw, 32px) !important;
+    }
+    /* Input de recherche : pleine largeur */
+    .snapshot-id-wrap,
+    .stats-search-wrap.snapshot-id-wrap {
+        flex: 1 1 100% !important;
+        max-width: 100% !important;
+    }
+    /* Boutons : taille de tap */
+    .snapshot-run-btn,
+    .snapshot-cancel-btn,
+    .snapshot-export-btn {
+        font-size: 10px !important;
+        padding: 0 10px !important;
+    }
+    /* Stats summary : 2 colonnes sur petit écran */
+    .snapshot-stat { flex: 1 1 45%; }
+    .snapshot-stat-val { font-size: clamp(16px, 4vw, 24px) !important; }
+
+    /* Table résultats : scroll horizontal */
+    .snapshot-table-wrap {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 10px;
+    }
+    /* Toolbar table : flex-wrap */
+    .snapshot-table-toolbar {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .snapshot-table-search-wrap {
+        flex: 1 1 100%;
+    }
+    /* Options toggles : taille réduite sur petit écran */
+    .snapshot-opt-toggle-title { font-size: 9px !important; }
+    .snapshot-opt-toggle-sub   { display: none !important; }
+
+    /* Bannière collection : hauteur réduite */
+    .snapshot-collection-banner-media {
+        min-height: 140px !important;
+    }
+    /* Logo/résumé stats en bas de bannière */
+    .snapshot-summary {
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 8px !important;
+    }
+    .snapshot-stat {
+        flex: 1 1 calc(33% - 4px);
+        padding: 8px 6px !important;
+        border-right: none !important;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .snapshot-stat:nth-child(3n) { border-right: none !important; }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   F. SUPPORT (sup-panel)
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    /* Body : réduire les paddings */
+    .sup2-body {
+        padding: 32px 16px 48px !important;
+        gap: 32px !important;
+    }
+    /* Row top : story + goal en colonne */
+    .sup2-row--top {
+        flex-direction: column !important;
+        gap: 24px !important;
+    }
+    .sup2-story-block,
+    .sup2-goal-block {
+        max-width: 100% !important;
+    }
+    /* Grille donation : 1 colonne */
+    .sup2-donate-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+    /* Grille supporters : 1 colonne */
+    .sup2-supporters-list {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media (max-width: 600px) {
+    /* Hero : padding réduit */
+    .sup2-hero-inner {
+        padding: 32px 16px 24px !important;
+    }
+    .sup2-title {
+        font-size: clamp(32px, 8vw, 52px) !important;
+    }
+    .sup2-subtitle {
+        font-size: 13px !important;
+    }
+    /* Carte de don : adresse tronquée */
+    .sup2-donate-addr {
+        font-size: 9px !important;
+        word-break: break-all;
+    }
+    .sup2-donate-addr-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 6px !important;
+    }
+    .sup2-copy-btn { align-self: flex-end; }
+    /* Domaine */
+    .sup2-donate-domain { font-size: 18px !important; }
+    /* Pills : wrap */
+    .sup2-impact-pills {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .sup2-pill {
+        flex: 1 1 calc(50% - 8px);
+        min-width: 0;
+    }
+    /* Texte story : taille lisible */
+    .sup2-story-content p { font-size: 13px !important; }
+}
+
+@media (max-width: 400px) {
+    .sup2-donate-addr { font-size: 8px !important; }
+    .sup2-pill        { flex: 1 1 100%; }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   G. HOVER COLLANTS — neutralise les effets persistants sur touch
+      (complète le bloc @media (hover:none) existant)
+   ───────────────────────────────────────────────────────────────────────── */
+@media (hover: none) {
+    /* Stats table */
+    .stats-tr:hover { background: transparent !important; }
+    /* Drops */
+    .drop-card:hover {
+        transform: none !important;
+        border-color: rgba(255,255,255,0.06) !important;
+        box-shadow: none !important;
+    }
+    .drop-card--live:hover {
+        border-color: rgba(0,179,255,0.5) !important;
+        box-shadow:
+            0 0 0  1px rgba(0,179,255,0.55),
+            0 0 40px rgba(0,179,255,0.35),
+            0 0 80px rgba(0,179,255,0.18) !important;
+    }
+    /* Snapshot preset items */
+    .snapshot-preset-item:hover { background: transparent !important; }
+    /* Support : donors */
+    .sup2-supporter-item:hover {
+        background: rgba(255,255,255,0.02) !important;
+        border-color: rgba(255,255,255,0.06) !important;
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   H. DROPDOWNS — ne débordent plus de l'écran sur mobile
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+    /* Ajuste les dropdowns de sélecteur de collection (Market Bot + Snapshot) */
+    .stats-col-dropdown,
+    .sb-col-dropdown-rich {
+        max-height: 55vh !important;
+        overflow-y: auto !important;
+        left: 0 !important;
+        right: auto !important;
+        width: calc(100vw - 20px) !important;
+        max-width: 340px !important;
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   I. LANGUE SWITCHER — padding latéral cohérent
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    #cwtfLangSwitcher {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+}
+@media (max-width: 480px) {
+    #cwtfLangSwitcher {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   J. TITRES DE PAGES — taille clamp fluide pour tous les onglets
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+    .snapshot-page-title,
+    .drops-page-title,
+    .stats-page-title {
+        font-size: clamp(20px, 6vw, 32px) !important;
+        letter-spacing: 0.04em !important;
+    }
 }
