@@ -12633,22 +12633,85 @@ function buildLiveCard(drop) {
 
         <!-- Packs -->
         ${drop.packs && drop.packs.length > 0 ? (() => {
-          // Identifier le pack "BEST DEAL" : le moins cher parmi ceux non sold out
           const priceOf = p => Number(String(p.price || '').replace(/[^0-9.]/g,'')) || Infinity;
+
+          if (drop.isSupport) {
+            const RARITY_META = {
+              Common:    { color:'#4ade80', bg:'rgba(74,222,128,0.15)',  border:'rgba(74,222,128,0.4)'  },
+              Rare:      { color:'#38bdf8', bg:'rgba(56,189,248,0.15)',  border:'rgba(56,189,248,0.4)'  },
+              Epic:      { color:'#a78bfa', bg:'rgba(167,139,250,0.15)', border:'rgba(167,139,250,0.4)' },
+              Legendary: { color:'#fbbf24', bg:'rgba(251,191,36,0.15)',  border:'rgba(251,191,36,0.4)'  },
+              Mythic:    { color:'#f87171', bg:'rgba(248,113,113,0.15)', border:'rgba(248,113,113,0.4)' }
+            };
+
+            // Tri par prix croissant
+            const sorted = [...drop.packs].sort((a,b) => priceOf(a) - priceOf(b));
+
+            const cards = sorted.map(p => {
+              const rm = RARITY_META[p.rarity] || { color:'#fff', bg:'rgba(255,255,255,0.1)', border:'rgba(255,255,255,0.2)' };
+              return `
+              <a class="dli-pack dli-pack--card${p.soldOut ? ' dli-pack--sold' : ''}" href="${shopUrl}" target="_blank" rel="noopener" data-card-color="${p.rarity.toLowerCase()}">
+                <div class="dli-pack-img-wrap dli-pack-img-wrap--lg">
+                  <img class="dli-pack-img" src="${p.cover}" alt="${p.name}" loading="lazy" onerror="this.style.background='rgba(255,255,255,0.05)'"/>
+                  ${p.soldOut ? '<div class="dli-pack-sold-overlay"><span class="dli-pack-sold-stripe">SOLD OUT</span></div>' : ''}
+                </div>
+                <div class="dli-pack-body">
+                  <span class="dli-pack-name">${p.name}</span>
+                  <span class="dli-pack-price-main">${p.price || ''}</span>
+                  <div class="dli-rarity-trait" style="border-color:${rm.border};background:${rm.bg}">
+                    <span class="dli-rarity-trait-label">RARITY</span>
+                    <span class="dli-rarity-trait-value" style="color:${rm.color}">${p.rarity}</span>
+                  </div>
+                </div>
+              </a>`;
+            }).join('');
+
+            const futurePacks = [
+              { num:2, name:'Elemental Fusion', desc:'Clay · Salt · Copper · Lava · Plasma · Nebula…' },
+              { num:3, name:'Living System',    desc:'Roots · Skin · Jungle · Energy Core · Prism…'  },
+              { num:4, name:'Cyber Evolution',  desc:'Wireframe · AI Pattern · Synthwave · Black Hole…' },
+              { num:5, name:'Cosmic Ascent',    desc:'Quantum Field · Void · Universe · Liquid Glass…' }
+            ];
+            const comingSoonHTML = `
+            <div class="dli-coming-soon-wrap">
+              <div class="dli-section-label" style="margin-top:28px">Coming Soon — 4 More Packs</div>
+              <div class="dli-future-packs-grid">
+                ${futurePacks.map(fp => `
+                <div class="dli-future-pack-card">
+                  <div class="dli-future-pack-lock">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="28" height="28"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  </div>
+                  <div class="dli-future-pack-info">
+                    <span class="dli-future-pack-num">Pack ${fp.num}</span>
+                    <span class="dli-future-pack-title">${fp.name}</span>
+                    <span class="dli-future-pack-desc">${fp.desc}</span>
+                    <span class="dli-future-pack-meta">20 unique NFTs · 5 rarities</span>
+                  </div>
+                  <span class="dli-future-badge">COMING SOON</span>
+                </div>`).join('')}
+              </div>
+            </div>`;
+
+            return `
+            <div class="dli-section">
+              <div class="dli-section-label">Pack 1 — Genesis Mix · 20 NFTs · prix croissant</div>
+              <div class="dli-packs dli-packs--grid">${cards}</div>
+              ${comingSoonHTML}
+            </div>`;
+          }
+
+          // ── non-support : comportement original ──
           const availPacks = drop.packs.filter(p => !p.soldOut);
           const bestDealPrice = availPacks.length > 1 ? Math.min(...availPacks.map(priceOf)) : null;
           return `
         <div class="dli-section">
-          <div class="dli-section-label">${drop.isSupport ? `Pack 1 — Genesis Mix · 20 NFTs` : `Packs${totalPacks > 1 ? ` · ${totalPacks} tier${totalPacks > 1 ? 's' : ''}` : ''}`}</div>
+          <div class="dli-section-label">Packs${totalPacks > 1 ? ` · ${totalPacks} tier${totalPacks > 1 ? 's' : ''}` : ''}</div>
           <div class="dli-packs dli-packs--grid">
             ${drop.packs.map(p => {
               const pAvail = p.available ?? 0;
               const pTotal = p.total ?? 0;
               const pPct = pTotal > 0 ? Math.round(((pTotal - pAvail) / pTotal) * 100) : 0;
               const isBestDeal = bestDealPrice !== null && !p.soldOut && priceOf(p) === bestDealPrice;
-              // Per-pack deep-link : si on a l'asset id du pack (récupéré via
-              // GetDropAssetsQuery), on construit le lien direct vers le pack
-              // sur Crypto.com. Sinon on retombe sur shopUrl générique.
               const packUrl = (p.id && !drop.isSupport)
                 ? `https://crypto.com/nft/drops-event/${drop.id}?asset=${p.id}&detail-page=DROP&event=${drop.id}`
                 : shopUrl;
@@ -12690,7 +12753,8 @@ function buildLiveCard(drop) {
               </div>
             </a>`;}).join('')}
           </div>
-        </div>`;})() : ''}
+        </div>`;
+        })() : ''}
 
         <!-- Early Access -->
         ${drop.earlyAccess && drop.eaEligibility && new Date(drop.startAt) > new Date() ? `
@@ -13485,35 +13549,33 @@ window.initDropsPanel = async function() {
     isSupport: true,
     name: 'CRONOS.WTF',
     description: '<strong>This platform survives because of you.</strong> CRONOS.WTF runs on a single laptop, paid for out of pocket — no VC, no team, no token, no ads. Every line of code, every feature, every overnight bug fix is built and maintained by one person who genuinely cares about the Crypto.com/NFT ecosystem. <br><br>The <strong>CRONOS.WTF</strong> NFT collection launches with <strong>5 packs of 20 unique material textures</strong> — 100 NFTs total, each sculpted directly from the CRONOS.WTF logo as a hyper-realistic 3D engraved render. Common, Rare, Epic, Legendary and Mythic rarities across 5 themed packs, with prices starting at <strong>just $29</strong> — accessible to anyone who has used the tools and wants to give back. Every single mint goes <strong>100%</strong> toward keeping the lights on: domain renewal, hosting, server costs, and the countless hours of development that make this place useful. <br><br>Think about how often you actually use this site. The profile explorer that lets you check any wallet in seconds. The collection browser with rarity ranks and floor prices already filtered for you. The live drops tracker that catches every new mint on Crypto.com/NFT before it goes viral. The snapshot generator that builds holder reports in one click. The market stats updated in real time. The sales bot pinging you about deals worth catching. <strong>None of this would exist without someone paying for it</strong> — and right now, that someone is one person, alone. <br><br>If any of these tools have ever saved you time, helped you avoid a bad deal, or made your day in this ecosystem a little easier — <strong>this is the moment to give back</strong>. Mint a texture. Carry a piece of the platform. Be part of the infrastructure that keeps it running.',
-    cover: SUPPORT_COVER,  // bannière large (haut de la carte)
-    logo:  SUPPORT_LOGO,   // carré (timeline + slot vidéo)
+    cover: SUPPORT_COVER,
+    logo:  SUPPORT_LOGO,
     creator: { displayName: 'Unscoop', avatar: SUPPORT_LOGO, verified: true },
     startAt: new Date(Date.now() - 86400000).toISOString(),
     endAt:   new Date(Date.now() + 365 * 86400000 * 100).toISOString(),
     earlyAccess: false,
-    // ── Wave 1 — 5 NFTs released together. Cheapest = auto-tagged BEST DEAL.
-    // Images loaded from local /NFT folder until real NFTs are minted.
     packs: [
-      { name: 'WHITE.WTF',        cover: 'WHITE.WTF.png',        perPack: '1 of 1', color: 'White',        rarity: 'Common',    price: '$29',  available: null, total: null, soldOut: false },
-      { name: 'SAND.WTF',         cover: 'SAND.WTF.png',         perPack: '1 of 1', color: 'Sand',         rarity: 'Common',    price: '$29',  available: null, total: null, soldOut: false },
-      { name: 'CONCRETE.WTF',     cover: 'CONCRETE.WTF.png',     perPack: '1 of 1', color: 'Concrete',     rarity: 'Common',    price: '$39',  available: null, total: null, soldOut: false },
-      { name: 'GRASS.WTF',        cover: 'GRASS.WTF.png',        perPack: '1 of 1', color: 'Grass',        rarity: 'Common',    price: '$29',  available: null, total: null, soldOut: false },
-      { name: 'SMOKE.WTF',        cover: 'SMOKE.WTF.png',        perPack: '1 of 1', color: 'Smoke',        rarity: 'Common',    price: '$39',  available: null, total: null, soldOut: false },
-      { name: 'DIGITAL_GRID.WTF', cover: 'DIGITAL_GRID.WTF.png', perPack: '1 of 1', color: 'Digital',      rarity: 'Common',    price: '$49',  available: null, total: null, soldOut: false },
-      { name: 'SPACE_DUST.WTF',   cover: 'SPACE_DUST.WTF.png',   perPack: '1 of 1', color: 'Space',        rarity: 'Common',    price: '$49',  available: null, total: null, soldOut: false },
-      { name: 'CLAY.WTF',         cover: 'CLAY.WTF.png',         perPack: '1 of 1', color: 'Clay',         rarity: 'Common',    price: '$39',  available: null, total: null, soldOut: false },
-      { name: 'STONE.WTF',        cover: 'STONE.WTF.png',        perPack: '1 of 1', color: 'Stone',        rarity: 'Rare',      price: '$59',  available: null, total: null, soldOut: false },
-      { name: 'MARBLE.WTF',       cover: 'MARBLE.WTF.png',       perPack: '1 of 1', color: 'Marble',       rarity: 'Rare',      price: '$69',  available: null, total: null, soldOut: false },
-      { name: 'STEEL.WTF',        cover: 'STEEL.WTF.png',        perPack: '1 of 1', color: 'Steel',        rarity: 'Rare',      price: '$79',  available: null, total: null, soldOut: false },
-      { name: 'LEATHER.WTF',      cover: 'LEATHER.WTF.png',      perPack: '1 of 1', color: 'Leather',      rarity: 'Rare',      price: '$89',  available: null, total: null, soldOut: false },
-      { name: 'CIRCUIT.WTF',      cover: 'CIRCUIT.WTF.png',      perPack: '1 of 1', color: 'Circuit',      rarity: 'Rare',      price: '$99',  available: null, total: null, soldOut: false },
-      { name: 'MOSS.WTF',         cover: 'MOSS.WTF.png',         perPack: '1 of 1', color: 'Moss',         rarity: 'Rare',      price: '$59',  available: null, total: null, soldOut: false },
-      { name: 'GOLD.WTF',         cover: 'GOLD.WTF.png',         perPack: '1 of 1', color: 'Gold',         rarity: 'Epic',      price: '$119', available: null, total: null, soldOut: false },
-      { name: 'FIRE.WTF',         cover: 'FIRE.WTF.png',         perPack: '1 of 1', color: 'Fire',         rarity: 'Epic',      price: '$139', available: null, total: null, soldOut: false },
-      { name: 'ELECTRIC.WTF',     cover: 'ELECTRIC.WTF.png',     perPack: '1 of 1', color: 'Electric',     rarity: 'Epic',      price: '$149', available: null, total: null, soldOut: false },
-      { name: 'GLITCH.WTF',       cover: 'GLITCH.WTF.png',       perPack: '1 of 1', color: 'Glitch',       rarity: 'Epic',      price: '$139', available: null, total: null, soldOut: false },
-      { name: 'GALAXY.WTF',       cover: 'GALAXY.WTF.png',       perPack: '1 of 1', color: 'Galaxy',       rarity: 'Legendary', price: '$229', available: null, total: null, soldOut: false },
-      { name: 'DIAMOND.WTF',      cover: 'DIAMOND.WTF.png',      perPack: '1 of 1', color: 'Diamond',      rarity: 'Mythic',    price: '$299', available: null, total: null, soldOut: false }
+      { name: 'WHITE.WTF',        cover: 'WHITE.WTF.png',        perPack: '1 of 1', color: 'White',    rarity: 'Common',    price: '$29',  available: null, total: null, soldOut: false },
+      { name: 'SAND.WTF',         cover: 'SAND.WTF.png',         perPack: '1 of 1', color: 'Sand',     rarity: 'Common',    price: '$29',  available: null, total: null, soldOut: false },
+      { name: 'CONCRETE.WTF',     cover: 'CONCRETE.WTF.png',     perPack: '1 of 1', color: 'Concrete', rarity: 'Common',    price: '$39',  available: null, total: null, soldOut: false },
+      { name: 'GRASS.WTF',        cover: 'GRASS.WTF.png',        perPack: '1 of 1', color: 'Grass',    rarity: 'Common',    price: '$29',  available: null, total: null, soldOut: false },
+      { name: 'SMOKE.WTF',        cover: 'SMOKE.WTF.png',        perPack: '1 of 1', color: 'Smoke',    rarity: 'Common',    price: '$39',  available: null, total: null, soldOut: false },
+      { name: 'DIGITAL_GRID.WTF', cover: 'DIGITAL_GRID.WTF.png', perPack: '1 of 1', color: 'Digital',  rarity: 'Common',    price: '$49',  available: null, total: null, soldOut: false },
+      { name: 'SPACE_DUST.WTF',   cover: 'SPACE_DUST.WTF.png',   perPack: '1 of 1', color: 'Space',    rarity: 'Common',    price: '$49',  available: null, total: null, soldOut: false },
+      { name: 'CLAY.WTF',         cover: 'CLAY.WTF.png',         perPack: '1 of 1', color: 'Clay',     rarity: 'Common',    price: '$39',  available: null, total: null, soldOut: false },
+      { name: 'STONE.WTF',        cover: 'STONE.WTF.png',        perPack: '1 of 1', color: 'Stone',    rarity: 'Rare',      price: '$59',  available: null, total: null, soldOut: false },
+      { name: 'MARBLE.WTF',       cover: 'MARBLE.WTF.png',       perPack: '1 of 1', color: 'Marble',   rarity: 'Rare',      price: '$69',  available: null, total: null, soldOut: false },
+      { name: 'STEEL.WTF',        cover: 'STEEL.WTF.png',        perPack: '1 of 1', color: 'Steel',    rarity: 'Rare',      price: '$79',  available: null, total: null, soldOut: false },
+      { name: 'LEATHER.WTF',      cover: 'LEATHER.WTF.png',      perPack: '1 of 1', color: 'Leather',  rarity: 'Rare',      price: '$89',  available: null, total: null, soldOut: false },
+      { name: 'CIRCUIT.WTF',      cover: 'CIRCUIT.WTF.png',      perPack: '1 of 1', color: 'Circuit',  rarity: 'Rare',      price: '$99',  available: null, total: null, soldOut: false },
+      { name: 'MOSS.WTF',         cover: 'MOSS.WTF.png',         perPack: '1 of 1', color: 'Moss',     rarity: 'Rare',      price: '$59',  available: null, total: null, soldOut: false },
+      { name: 'GOLD.WTF',         cover: 'GOLD.WTF.png',         perPack: '1 of 1', color: 'Gold',     rarity: 'Epic',      price: '$119', available: null, total: null, soldOut: false },
+      { name: 'FIRE.WTF',         cover: 'FIRE.WTF.png',         perPack: '1 of 1', color: 'Fire',     rarity: 'Epic',      price: '$139', available: null, total: null, soldOut: false },
+      { name: 'ELECTRIC.WTF',     cover: 'ELECTRIC.WTF.png',     perPack: '1 of 1', color: 'Electric', rarity: 'Epic',      price: '$149', available: null, total: null, soldOut: false },
+      { name: 'GLITCH.WTF',       cover: 'GLITCH.WTF.png',       perPack: '1 of 1', color: 'Glitch',   rarity: 'Epic',      price: '$139', available: null, total: null, soldOut: false },
+      { name: 'GALAXY.WTF',       cover: 'GALAXY.WTF.png',       perPack: '1 of 1', color: 'Galaxy',   rarity: 'Legendary', price: '$229', available: null, total: null, soldOut: false },
+      { name: 'DIAMOND.WTF',      cover: 'DIAMOND.WTF.png',      perPack: '1 of 1', color: 'Diamond',  rarity: 'Mythic',    price: '$299', available: null, total: null, soldOut: false }
     ]
   };
   dropsToRender.live = dropsToRender.live || [];
