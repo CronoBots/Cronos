@@ -8378,13 +8378,38 @@ document.addEventListener('DOMContentLoaded', initialize);
             if (!fbDb || _reactionsListener) return;
             _reactionsListener = fbDb.ref('chat/reactions').on('value', snap => {
                 _cachedReactions = snap.val() || {};
+                // Vérifie si on est déjà en bas avant la mise à jour
+                const atBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 40;
                 msgs.querySelectorAll('[data-msg-key]').forEach(div => {
                     updateReactionDisplay(div, _cachedReactions[div.dataset.msgKey] || {});
                 });
+                // Re-scroll après que les pills de réaction ont été rendues
+                if (atBottom) { _chatScrollToBottom(); }
             });
         }
 
-        function renderMessage(msg, key) {
+        // Scroll fiable — debounce pour le chargement initial (50 msgs en rafale),
+        // immédiat pour les nouveaux messages entrants.
+        let _scrollDebounceTimer = null;
+        function _chatScrollToBottom(instant) {
+            clearTimeout(_scrollDebounceTimer);
+            if (instant) {
+                // Nouveau message unique → scroll immédiat + confirmation après rendu emoji
+                msgs.scrollTop = msgs.scrollHeight;
+                requestAnimationFrame(() => {
+                    msgs.scrollTop = msgs.scrollHeight;
+                    setTimeout(() => { msgs.scrollTop = msgs.scrollHeight; }, 80);
+                });
+            } else {
+                // Chargement initial (rafale) → attendre que tous les msgs soient rendus
+                _scrollDebounceTimer = setTimeout(() => {
+                    msgs.scrollTop = msgs.scrollHeight;
+                    requestAnimationFrame(() => { msgs.scrollTop = msgs.scrollHeight; });
+                }, 150);
+            }
+        }
+
+        function renderMessage(msg, key, instant) {
             const me = getCurrentUser();
             const isMine = !!(me && msg.user && msg.user === me.username);
             const div = document.createElement('div');
@@ -8434,10 +8459,35 @@ document.addEventListener('DOMContentLoaded', initialize);
                         toggleReaction(key, idx);
                     });
                 });
+
+                // Mobile : long press (500ms) pour afficher la barre emoji
+                // → évite le conflit avec le scroll (tap rapide)
+                if (key) {
+                    let _lpTimer = null;
+                    let _lpMoved  = false;
+
+                    div.addEventListener('touchstart', e => {
+                        if (e.target.closest('button')) return;
+                        _lpMoved = false;
+                        _lpTimer = setTimeout(() => {
+                            if (_lpMoved) return;
+                            div.classList.add('is-react-open');
+                            msgs.querySelectorAll('.home-chat-msg--community.is-react-open').forEach(other => {
+                                if (other !== div) other.classList.remove('is-react-open');
+                            });
+                            // Vibration légère si disponible
+                            if (navigator.vibrate) navigator.vibrate(30);
+                        }, 500);
+                    }, { passive: true });
+
+                    div.addEventListener('touchmove',  () => { _lpMoved = true; clearTimeout(_lpTimer); }, { passive: true });
+                    div.addEventListener('touchend',   () => clearTimeout(_lpTimer), { passive: true });
+                    div.addEventListener('touchcancel',() => clearTimeout(_lpTimer), { passive: true });
+                }
             }
 
             msgs.appendChild(div);
-            msgs.scrollTop = msgs.scrollHeight;
+            _chatScrollToBottom(instant);
         }
 
         // Re-render d'un message existant suite à un child_changed (édition).
@@ -8521,10 +8571,29 @@ document.addEventListener('DOMContentLoaded', initialize);
                 // Subscribe to the last 50 messages — on capture la clé
                 // (snap.key) pour pouvoir cibler le message lors d'une édition
                 // ou suppression ultérieure.
+                // Afficher les 3 points pendant le chargement initial
+                const _loadingDots = document.createElement('div');
+                _loadingDots.className = 'home-chat-loading';
+                _loadingDots.innerHTML = '<span></span><span></span><span></span>';
+                msgs.parentNode.insertBefore(_loadingDots, msgs);
+                msgs.style.display = 'none';
+
+                let _initialLoadDone = false;
                 fbDb.ref('chat/messages').limitToLast(50).on('child_added', snap => {
                     const v = snap.val();
-                    if (v) renderMessage(v, snap.key);
+                    if (v) renderMessage(v, snap.key, _initialLoadDone);
                 });
+
+                // Après 600ms : retirer les dots, afficher les messages scrollés au bas
+                setTimeout(() => {
+                    _initialLoadDone = true;
+                    msgs.style.display = '';
+                    msgs.scrollTop = msgs.scrollHeight;
+                    requestAnimationFrame(() => {
+                        msgs.scrollTop = msgs.scrollHeight;
+                        _loadingDots.remove();
+                    });
+                }, 600);
                 fbDb.ref('chat/messages').limitToLast(50).on('child_changed', snap => {
                     const v = snap.val();
                     if (v) updateMessageInPlace(snap.key, v);
@@ -8706,6 +8775,14 @@ document.addEventListener('DOMContentLoaded', initialize);
         send?.addEventListener('click', sendMessage);
         input?.addEventListener('keydown', e => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+        });
+
+        // Fermer la barre emoji si on clique en dehors d'un message (mobile)
+        msgs?.addEventListener('click', e => {
+            if (!window.matchMedia('(hover: none)').matches) return;
+            if (!e.target.closest('.home-chat-msg--community')) {
+                msgs.querySelectorAll('.is-react-open').forEach(el => el.classList.remove('is-react-open'));
+            }
         });
 
         // Chat inline — toujours visible, init immédiat
@@ -10282,17 +10359,7 @@ document.addEventListener('DOMContentLoaded', initialize);
             localStorage.setItem(LS_KEY, JSON.stringify(data));
             showUser(user.displayName || user.username, user.avatar?.url);
             closeModal();
-            // Naviguer après login
-            window._pfHasProfile = true;
-            if (typeof selectSuggestion === 'function') {
-                selectSuggestion(user.username);
-            } else {
-                const usernameInput = document.getElementById('usernameInput');
-                if (usernameInput) {
-                    usernameInput.value = user.username;
-                    setTimeout(() => { if (typeof fetchProfileAndNFTs === 'function') fetchProfileAndNFTs(); }, 100);
-                }
-            }
+            // Pas de redirection automatique — l'utilisateur reste sur la page en cours
         } catch(e) {
             if (errorEl) { errorEl.textContent = e.message || 'Error. Try again.'; errorEl.style.display = 'block'; }
             if (submitText) submitText.textContent = 'Go to my profile';
