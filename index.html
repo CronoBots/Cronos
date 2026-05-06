@@ -20200,14 +20200,15 @@ window.initSnapshotPanel = function() {
         var bd = document.getElementById('cryptoPickerBackdrop');
         var sb = document.getElementById('cryptoPickerSearch');
         if (!bd) return;
-        bd.style.display = 'flex';
+        bd.removeAttribute('style');         /* drop the initial inline display:none */
+        bd.classList.add('is-open');
         if (sb) { sb.value = ''; sb.focus(); }
         renderPickerList('');
         fetchInstruments().then(function () { renderPickerList(sb && sb.value || ''); });
     }
     function closePicker() {
         var bd = document.getElementById('cryptoPickerBackdrop');
-        if (bd) bd.style.display = 'none';
+        if (bd) bd.classList.remove('is-open');
     }
     function renderPickerList(q) {
         var list = document.getElementById('cryptoPickerList');
