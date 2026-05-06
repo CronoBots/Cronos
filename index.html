@@ -7374,6 +7374,8 @@ document.addEventListener('DOMContentLoaded', initialize);
     // ── Listeners filtres ─────────────────────────────────────────────────
     let _cpSize = 'small';    // small | medium | large
     let _cpOverlay = 'none';  // both | rank | price | none
+    let _collectionHasRanks = false;  // true si la collection a un système de rareté
+    let _collectionTotalNfts = 0;     // pour afficher rank/total
 
     function updateCpGrid() {
         const grid = document.getElementById('cpNftGrid');
@@ -7411,6 +7413,24 @@ document.addEventListener('DOMContentLoaded', initialize);
         const c = col?.collection;
         const m = met?.collectionMetric;
         if (!c) return;
+
+        // Détection de la rareté + total NFTs (pour rank/total dans les cards)
+        _collectionHasRanks = !!(c.enableInternalRarity || c.enableExternalRarity || c.enableOfficialRarity);
+        _collectionTotalNfts = Number(c.metrics?.items) || Number(c.totalSupply) || Number(m?.totalSupply) || 0;
+        // Désactive ou ré-active le bouton "Rarity" du tri en fonction du support
+        const rarityBtn = document.querySelector('#cpSortGroup [data-cpsort="rank-asc"]');
+        if (rarityBtn) {
+            rarityBtn.disabled = !_collectionHasRanks;
+            rarityBtn.style.opacity = _collectionHasRanks ? '' : '0.35';
+            rarityBtn.style.cursor  = _collectionHasRanks ? '' : 'not-allowed';
+            rarityBtn.title = _collectionHasRanks ? '' : 'No rarity rank for this collection';
+        }
+        // Si on était en tri rank et que la collection n'a pas de rang, retombe sur Name
+        if (!_collectionHasRanks && _cpSort === 'rank-asc') {
+            _cpSort = 'name-asc';
+            document.querySelectorAll('#cpSortGroup [data-cpsort]').forEach(b =>
+                b.classList.toggle('stats-tr-btn--active', b.dataset.cpsort === 'name-asc'));
+        }
 
         // Banner
         const banner = document.getElementById('cpBanner');
@@ -7549,7 +7569,7 @@ document.addEventListener('DOMContentLoaded', initialize);
         const card = document.createElement('div');
         card.className = 'cp-nft-card';
 
-        // Image wrapper (pour le badge superposé)
+        // Image wrapper (sans badge superposé désormais — tout passe sous l'image)
         const imgWrap = document.createElement('div');
         imgWrap.className = 'cp-nft-img-wrap';
 
@@ -7559,37 +7579,52 @@ document.addEventListener('DOMContentLoaded', initialize);
         img.alt = a.name || '';
         img.loading = 'lazy';
         imgWrap.appendChild(img);
-
-        const price = fmtPrice(a.defaultListingV2?.salePriceDecimalUSD);
-        const showRank  = _cpOverlay === 'both' || _cpOverlay === 'rank';
-        const showPrice = _cpOverlay === 'both' || _cpOverlay === 'price';
-
-        // Badge rank superposé
-        if (a.defaultRarityRank && showRank) {
-            const badge = document.createElement('span');
-            badge.className = 'cp-nft-rank-badge';
-            badge.innerHTML = '<svg width="9" height="9" viewBox="0 0 20 20" fill="#00B3FF" style="flex-shrink:0"><path d="M10 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L10 14.3l-4.8 2.5.9-5.4L2.2 7.7l5.4-.8z"/></svg>#' + a.defaultRarityRank;
-            imgWrap.appendChild(badge);
-        }
-
-        // Badge prix superposé
-        if (price && showPrice) {
-            const priceBadge = document.createElement('span');
-            priceBadge.className = 'cp-nft-price-badge';
-            priceBadge.textContent = price;
-            imgWrap.appendChild(priceBadge);
-        }
-
         card.appendChild(imgWrap);
 
-        // Footer nom — masqué si overlay=none pour une grille 100% images
+        const priceTxt  = fmtPrice(a.defaultListingV2?.salePriceDecimalUSD);
+        const showRank  = (_cpOverlay === 'both' || _cpOverlay === 'rank') && _collectionHasRanks;
+        const showPrice = _cpOverlay === 'both' || _cpOverlay === 'price';
+        const showLikes = _cpOverlay === 'both';
+
+        // Footer info SOUS l'image — masqué si overlay=none (grille 100% images)
         if (_cpOverlay !== 'none') {
             const info = document.createElement('div');
             info.className = 'cp-nft-info';
+
+            // Nom centré
             const name = document.createElement('div');
             name.className = 'cp-nft-name';
             name.textContent = a.name || '—';
             info.appendChild(name);
+
+            // Rang sous forme "#X / total" si la collection en a et que showRank actif
+            if (showRank && a.defaultRarityRank) {
+                const r = document.createElement('div');
+                r.className = 'cp-nft-rank';
+                const total = _collectionTotalNfts ? '/' + _collectionTotalNfts.toLocaleString('en-US') : '';
+                r.innerHTML = '<svg width="9" height="9" viewBox="0 0 20 20" fill="#00B3FF" style="flex-shrink:0"><path d="M10 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L10 14.3l-4.8 2.5.9-5.4L2.2 7.7l5.4-.8z"/></svg>'
+                            + '<span>' + a.defaultRarityRank + total + '</span>';
+                info.appendChild(r);
+            }
+
+            // Prix
+            if (priceTxt && showPrice) {
+                const p = document.createElement('div');
+                p.className = 'cp-nft-price';
+                p.textContent = priceTxt;
+                info.appendChild(p);
+            }
+
+            // Likes — affichés uniquement quand overlay = "ALL" (both)
+            if (showLikes) {
+                const likes = Number(a.likes) || 0;
+                const l = document.createElement('div');
+                l.className = 'cp-nft-likes';
+                l.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="#f87171" style="flex-shrink:0"><path d="M12 21s-7-4.534-7-10a4 4 0 017-2.646A4 4 0 0119 11c0 5.466-7 10-7 10z"/></svg>'
+                            + '<span>' + likes.toLocaleString('en-US') + '</span>';
+                info.appendChild(l);
+            }
+
             card.appendChild(info);
         }
 
@@ -7707,6 +7742,7 @@ document.addEventListener('DOMContentLoaded', initialize);
         document.addEventListener('click', e => {
             const btn = e.target.closest('#cpSortGroup [data-cpsort]');
             if (!btn) return;
+            if (btn.disabled) return;  /* Rarity désactivé si pas de rank */
             const isPrice = btn.classList.contains('cp-sort-price-btn');
             const wasActive = btn.classList.contains('stats-tr-btn--active');
             if (isPrice && wasActive) {
@@ -7722,6 +7758,15 @@ document.addEventListener('DOMContentLoaded', initialize);
             _cpSort = btn.dataset.cpsort;
             document.querySelectorAll('#cpSortGroup [data-cpsort]').forEach(b =>
                 b.classList.toggle('stats-tr-btn--active', b === btn));
+
+            /* Auto-switch : cliquer sur Price bascule le filtre Listed sur "Listed"
+               (un tri par prix n'a de sens que sur les NFTs listés). */
+            if (isPrice && _cpListed !== 'listed') {
+                _cpListed = 'listed';
+                document.querySelectorAll('#cpListedGroup [data-cplisted]').forEach(b =>
+                    b.classList.toggle('stats-cf-btn--active', b.dataset.cplisted === 'listed'));
+            }
+
             applyFilters();
         });
 
@@ -7732,6 +7777,22 @@ document.addEventListener('DOMContentLoaded', initialize);
             _cpListed = btn.dataset.cplisted;
             document.querySelectorAll('#cpListedGroup [data-cplisted]').forEach(b =>
                 b.classList.toggle('stats-cf-btn--active', b === btn));
+
+            /* Auto-switch : cliquer sur "All" remet le tri sur Name (le tri par
+               prix ne s'applique qu'aux NFTs listés ; passer en All sans
+               revenir à Name produirait un tri pas pertinent). */
+            if (_cpListed === 'all' && _cpSort && _cpSort.startsWith('price-')) {
+                _cpSort = 'name-asc';
+                document.querySelectorAll('#cpSortGroup [data-cpsort]').forEach(b => {
+                    if (b.classList.contains('cp-sort-price-btn')) {
+                        /* Reset le bouton Price à son état initial (asc + flèche ↑) */
+                        b.dataset.cpsort = 'price-asc';
+                        b.textContent = 'Price ↑';
+                    }
+                    b.classList.toggle('stats-tr-btn--active', b.dataset.cpsort === 'name-asc');
+                });
+            }
+
             applyFilters();
         });
 
