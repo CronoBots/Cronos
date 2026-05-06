@@ -27390,3 +27390,85 @@ body { box-sizing: border-box; }
     }
 }
 
+/* ── Chat : membres en ligne visibles directement sur mobile ──
+   Sur mobile, plus de bouton-qui-ouvre-modal pour voir les membres :
+   on affiche la sidebar membres en bandeau horizontal compact en haut
+   de la carte chat, avec uniquement les membres en ligne. */
+@media (max-width: 700px) {
+    /* Carte chat empilée verticalement (sidebar en haut, messages en bas) */
+    .home-community-card {
+        flex-direction: column !important;
+    }
+
+    /* Sidebar : visible, en bandeau horizontal au-dessus des messages */
+    .home-chat-members-sidebar {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center;
+        gap: 8px;
+        width: 100% !important;
+        max-height: none;
+        padding: 8px 12px !important;
+        background: rgba(0,179,255,0.04);
+        border-left: none !important;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+    }
+    .home-chat-members-sidebar::-webkit-scrollbar { display: none; }
+
+    /* Cache section offline, footer, placeholder vide — mobile = online only */
+    #homeChatStatOffline,
+    .home-chat-members-footer,
+    .home-chat-members-empty {
+        display: none !important;
+    }
+
+    /* Section online en flex row inline (le label + la liste côte à côte) */
+    #homeChatStatOnline {
+        flex-direction: row !important;
+        align-items: center;
+        gap: 8px;
+        padding: 0 !important;
+        flex: 1;
+        min-width: 0;
+    }
+    #homeChatStatOnline .home-chat-members-label {
+        margin-bottom: 0 !important;
+        padding: 0 !important;
+        flex-shrink: 0;
+    }
+    #homeChatStatOnline .home-chat-members-list {
+        flex-direction: row !important;
+        flex-wrap: nowrap;
+        gap: 6px;
+        overflow: visible;
+    }
+    #homeChatStatOnline .home-chat-member {
+        flex-direction: row !important;
+        gap: 5px;
+        padding: 2px 8px 2px 4px;
+        background: rgba(255,255,255,0.04);
+        border-radius: 14px;
+        flex-shrink: 0;
+    }
+    #homeChatStatOnline .home-chat-member-avatar,
+    #homeChatStatOnline .home-chat-member-initial {
+        width: 20px !important;
+        height: 20px !important;
+        font-size: 9px !important;
+    }
+    #homeChatStatOnline .home-chat-member-name {
+        font-size: 11px !important;
+        max-width: 100px;
+    }
+
+    /* Bouton members : plus jamais affiché (les membres sont déjà visibles) */
+    .home-chat-members-btn { display: none !important; }
+    /* Modal : désactivé sur mobile aussi (au cas où le JS l'ouvrirait) */
+    .home-chat-members-modal { display: none !important; }
+}
+
+
