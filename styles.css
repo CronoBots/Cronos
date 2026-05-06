@@ -25203,16 +25203,15 @@ body { box-sizing: border-box; }
     scrollbar-color: rgba(0,179,255,0.15) transparent;
 }
 
-/* ── Items en grille : colonnes parfaitement alignées ──────────────────
-   Col 1 : image     32px
-   Col 2 : badge     54px   (SOLD / LISTED)
-   Col 3 : nom       flex:1  (tronqué)
-   Col 4 : prix      62px   (right-align)
-   Col 5 : temps     30px   (right-align)
-   ─────────────────────────────────────────────────────────────────── */
+/* ── Items en grille : 4 colonnes alignées sur le header ────────────
+   Col 1 : Event badge          60px
+   Col 2 : Item (image + nom)   flex:1
+   Col 3 : Price                90px (right-align)
+   Col 4 : Time                 60px (right-align)
+   La colonne "by" (cachée via display:none) est sautée par le grid. */
 #cbTicker.home-live-card .cb-ticker-item {
     display: grid !important;
-    grid-template-columns: 54px 32px 1fr 62px 30px;
+    grid-template-columns: 60px 1fr 90px 60px;
     align-items: center;
     column-gap: 6px;
     padding: 6px 10px;
@@ -27844,10 +27843,10 @@ body { box-sizing: border-box; }
    grille alignée pile sur celle des items en dessous. */
 #cbTicker.home-live-card .cb-ticker-header {
     display: grid;
-    grid-template-columns: 54px 32px 1fr 62px 30px;
+    grid-template-columns: 60px 1fr 90px 60px;
     align-items: center;
-    column-gap: 6px;
-    padding: 8px 10px;
+    column-gap: 8px;
+    padding: 10px 14px;
     background: rgba(0, 179, 255, 0.06);
     border-bottom: 1px solid rgba(0, 179, 255, 0.18);
 }
@@ -27879,21 +27878,71 @@ body { box-sizing: border-box; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   HOME — Halo cyan au hover sur toutes les cartes (sans zoom/translation)
+   HOME — Halo cyan au hover sur toutes les cartes (sans zoom/translation).
+   Aligné sur l'intensité du halo de "Featured Artist" (.home-fa-spotlight)
+   pour une cohérence visuelle entre toutes les cartes du home.
    ═══════════════════════════════════════════════════════════════════════════ */
 .home-spotlight,
 .home-community-card,
 .home-live-card,
-.home-top-list {
-    transition: box-shadow 0.18s ease, border-color 0.18s ease;
+.home-top-list,
+.home-feat-card {
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
 }
 .home-spotlight:hover,
 .home-community-card:hover,
 .home-live-card:hover,
-.home-top-list:hover {
-    border-color: rgba(0, 179, 255, 0.75);
+.home-top-list:hover,
+.home-feat-card:hover {
+    border-color: rgba(0, 179, 255, 0.65) !important;
     box-shadow:
-        0 0 0 1px rgba(0, 179, 255, 0.65),
-        0 0 50px rgba(0, 179, 255, 0.32),
-        0 0 90px rgba(0, 179, 255, 0.16);
+        0 0 0 1px rgba(0, 179, 255, 0.45),
+        0 0 55px rgba(0, 179, 255, 0.35),
+        0 0 100px rgba(0, 179, 255, 0.18),
+        0 16px 50px rgba(0, 0, 0, 0.6);
+}
+
+/* ── Live Feed : Item = image + nom dans la même cellule grid ──
+   La cellule "Item" contient maintenant flex-row [image][nom] pour
+   un rendu plus propre et un alignement cohérent. */
+#cbTicker.home-live-card .cb-ticker-item-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+#cbTicker.home-live-card .cb-ticker-item-info .cb-ticker-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+#cbTicker.home-live-card .cb-ticker-item-info .cb-ticker-asset {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    color: #fff;
+    font-weight: 600;
+}
+
+/* Padding général aligné sur le header (10/14) pour matcher l'alignement
+   visuel des colonnes. */
+#cbTicker.home-live-card .cb-ticker-item {
+    padding: 8px 14px !important;
+    column-gap: 8px !important;
+}
+
+/* Prix et temps un peu plus généreux pour respirer */
+#cbTicker.home-live-card .cb-ticker-price {
+    font-size: 13px !important;
+    padding-right: 4px;
+}
+#cbTicker.home-live-card .cb-ticker-time {
+    font-size: 11px !important;
+    padding-right: 4px;
 }
