@@ -12254,6 +12254,16 @@ async function sha256hex(str) {
         topnavInput.addEventListener('focus', refocusBehavior);
         topnavInput.addEventListener('click', refocusBehavior);
 
+        // Mobile : verrouille le scroll de la page tant que la barre de recherche
+        // est focus. Évite que le contenu glisse derrière le clavier et le
+        // dropdown, et supprime le rubber-band qui exposait le fond.
+        topnavInput.addEventListener('focus', () => {
+            document.body.classList.add('is-search-focused');
+        });
+        topnavInput.addEventListener('blur', () => {
+            document.body.classList.remove('is-search-focused');
+        });
+
         topnavInput.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
                 // Juste hide — on préserve le contenu pour permettre
