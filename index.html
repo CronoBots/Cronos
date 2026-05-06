@@ -2763,9 +2763,24 @@ const homeUrl = "https://cronobots.github.io/Cronos";
 function parseUrlHash() {
     const hash = window.location.hash.substring(1);
     if (!hash) return { username: null, collection: null };
+    /* Slugs d'onglet réservés — ne sont JAMAIS des usernames même s'ils
+       remplissent le hash. Sans cette protection, ouvrir directement
+       https://www.cronos.wtf/#home déclenche un fetch profile pour
+       l'utilisateur "home" qui n'existe pas → écran noir. */
+    const TAB_SLUGS_RESERVED = new Set(['home', 'top', 'market', 'drops', 'snap', 'support', 'me']);
     const parts = hash.split('/#').map(decodeURIComponent);
+    let username = parts[0] || null;
+    if (username) {
+        const trimmed = username.trim();
+        if (TAB_SLUGS_RESERVED.has(trimmed)) {
+            username = null;
+        } else if (trimmed.startsWith('@')) {
+            /* Le préfixe @ indique explicitement un username — on retire l'@ */
+            username = trimmed.slice(1) || null;
+        }
+    }
     return {
-        username: parts[0] || null,
+        username: username,
         collection: parts[1] || null
     };
 }
