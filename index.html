@@ -12355,6 +12355,19 @@ async function sha256hex(str) {
 
     function applyHashRoute() {
         const raw = (window.location.hash || '').replace(/^#/, '').trim();
+        // Nettoyage défensif : si on n'est PAS en train d'aller vers un profil,
+        // on cache les éléments hérités de la vue profil qui peuvent rester
+        // visibles depuis une session précédente (ex: noResults en gras au
+        // milieu de la home, navbar flottante avec NEWEST + size buttons).
+        const goingToProfile = raw.startsWith('@') || (raw.length > 0 && !SLUG_TO_TAB[raw]);
+        if (!goingToProfile) {
+            ['nftContainer','timestamp','error','noResults','profileLoadingOverlay'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+            const fb = document.querySelector('.navbar--floating-controls');
+            if (fb) fb.style.display = 'none';
+        }
         // 1) Slug d'onglet ?
         if (raw && SLUG_TO_TAB[raw]) {
             const tabName = SLUG_TO_TAB[raw];
