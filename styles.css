@@ -13183,6 +13183,88 @@ body.is-profile-loading #profileLoadingOverlay * {
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     font-family: sans-serif;
 }
+
+/* ── Header droit du chat ── */
+.home-chat-header-right {
+    display: flex; align-items: center; gap: 8px;
+}
+
+/* ── Bouton badge membres (visible mobile uniquement) ── */
+.home-chat-members-btn {
+    display: none;
+    align-items: center; gap: 5px;
+    background: rgba(0,179,255,0.08);
+    border: 1px solid rgba(0,179,255,0.25);
+    border-radius: 20px;
+    padding: 3px 10px 3px 7px;
+    color: rgba(255,255,255,0.75);
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px; font-weight: 800; letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+.home-chat-members-btn:hover { background: rgba(0,179,255,0.15); border-color: rgba(0,179,255,0.5); }
+
+/* ── Modal membres mobile — slide-up depuis le bas ── */
+.home-chat-members-modal {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 2000;
+    background: #0b1426;
+    border-top: 1px solid rgba(0,179,255,0.35);
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.65);
+    max-height: 55vh;
+    overflow-y: auto;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.2,0.8,0.2,1);
+}
+.home-chat-members-modal.is-open {
+    display: block;
+    transform: translateY(0);
+    animation: slideUp 0.3s cubic-bezier(0.2,0.8,0.2,1);
+}
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+}
+.home-chat-members-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    position: sticky; top: 0; background: #0b1426;
+}
+.home-chat-members-modal-title {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 13px; font-weight: 800;
+    color: #fff; letter-spacing: 0.07em; text-transform: uppercase;
+}
+.home-chat-members-modal-close {
+    background: none; border: none;
+    color: rgba(255,255,255,0.4); font-size: 22px;
+    line-height: 1; cursor: pointer; padding: 0;
+    transition: color 0.15s;
+}
+.home-chat-members-modal-close:hover { color: #fff; }
+.home-chat-members-modal-body { padding: 8px 0 env(safe-area-inset-bottom, 16px); }
+.home-chat-members-section--modal {
+    padding: 0 14px 12px;
+}
+.home-chat-members-section--modal .home-chat-members-label { padding: 6px 0 8px; }
+.home-chat-members-section--modal .home-chat-member { padding: 7px 4px; border-radius: 8px; }
+.home-chat-members-section--modal .home-chat-member-avatar,
+.home-chat-members-section--modal .home-chat-member-initial {
+    width: 32px; height: 32px; font-size: 13px;
+}
+.home-chat-members-section--modal .home-chat-member-name { font-size: 13.5px; }
+
+/* ── Sur mobile : sidebar cachée, bouton badge visible ── */
+@media (max-width: 700px) {
+    .home-chat-members-sidebar   { display: none !important; }
+    .home-chat-members-btn       { display: flex !important; }
+    .home-community-card { max-height: none; }
+}
 .home-chat-members-footer {
     display: flex; align-items: center; gap: 5px;
     margin-top: auto; padding: 8px 12px;
@@ -25252,6 +25334,7 @@ body { box-sizing: border-box; }
     scrollbar-color: rgba(0,179,255,0.18) transparent;
 }
 /* Items du ticker — grille 2 colonnes compacte dans la carte */
+/* ── Live Feed track ── */
 #cbTicker.home-live-card .cb-ticker-track,
 #cbTicker.home-live-card .cb-ticker-track > * {
     animation: none !important;
@@ -25263,82 +25346,91 @@ body { box-sizing: border-box; }
     flex-direction: column !important;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 4px 6px;
-    gap: 2px;
+    padding: 4px 0;
+    gap: 1px;
     align-content: start;
     flex: 1;
     scrollbar-width: thin;
     scrollbar-color: rgba(0,179,255,0.15) transparent;
 }
+
+/* ── Items en grille : colonnes parfaitement alignées ──────────────────
+   Col 1 : image     32px
+   Col 2 : badge     54px   (SOLD / LISTED)
+   Col 3 : nom       flex:1  (tronqué)
+   Col 4 : prix      62px   (right-align)
+   Col 5 : temps     30px   (right-align)
+   ─────────────────────────────────────────────────────────────────── */
 #cbTicker.home-live-card .cb-ticker-item {
-    display: flex !important;
+    display: grid !important;
+    grid-template-columns: 32px 54px 1fr 62px 30px;
     align-items: center;
-    gap: 7px;
-    padding: 5px 8px;
-    border-radius: 8px;
-    border-bottom: none !important;
-    background: rgba(255,255,255,0.03);
+    column-gap: 6px;
+    padding: 6px 10px;
+    border-radius: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+    background: transparent;
     text-decoration: none;
-    transition: background 0.15s;
+    transition: background 0.12s;
     min-width: 0;
-    overflow: hidden;
     color: inherit;
     font-size: 11px;
+    width: 100%;
+    box-sizing: border-box;
 }
-#cbTicker.home-live-card .cb-ticker-item:hover { background: rgba(0,179,255,0.08); }
+#cbTicker.home-live-card .cb-ticker-item:last-child { border-bottom: none !important; }
+#cbTicker.home-live-card .cb-ticker-item:hover { background: rgba(0,179,255,0.06); }
+
+/* Col 1 — Image */
 #cbTicker.home-live-card .cb-ticker-img {
-    width: 26px;
-    height: 26px;
+    width: 28px; height: 28px;
     border-radius: 5px;
     object-fit: cover;
-    flex-shrink: 0;
+    display: block;
+    justify-self: center;
 }
-/* Badge SOLD/LISTED coloré */
+
+/* Col 2 — Badge SOLD / LISTED */
 #cbTicker.home-live-card .cb-ticker-verb {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 8px;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-size: 8px; font-weight: 800;
+    letter-spacing: 0.07em; text-transform: uppercase;
     padding: 2px 5px;
     border-radius: 3px;
-    flex-shrink: 0;
-}
-#cbTicker.home-live-card .cb-tk-sale .cb-ticker-verb  { background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
-#cbTicker.home-live-card .cb-tk-list .cb-ticker-verb  { background: rgba(0,179,255,0.12);  color: #00B3FF; border: 1px solid rgba(0,179,255,0.3);  }
-/* Nom de l'asset — tronqué */
-#cbTicker.home-live-card .cb-ticker-asset {
-    color: #fff;
-    font-weight: 600;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    text-align: center;
+    justify-self: start;
     white-space: nowrap;
-    flex: 1;
-    min-width: 0;
-    font-size: 11px;
 }
-/* Prix et infos secondaires */
+#cbTicker.home-live-card .cb-tk-sale .cb-ticker-verb { background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+#cbTicker.home-live-card .cb-tk-list .cb-ticker-verb { background: rgba(0,179,255,0.12);  color: #00B3FF; border: 1px solid rgba(0,179,255,0.3); }
+
+/* Col 3 — Nom (tronqué) */
+#cbTicker.home-live-card .cb-ticker-asset {
+    color: #fff; font-weight: 600;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    min-width: 0; font-size: 11px;
+}
+
+/* Col 4 — Prix (aligné à droite) */
 #cbTicker.home-live-card .cb-ticker-price {
-    color: #fff;
-    font-weight: 700;
-    flex-shrink: 0;
+    color: #fff; font-weight: 700;
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 11px;
+    text-align: right;
+    white-space: nowrap;
 }
+
+/* Col 5 — Temps (aligné à droite) */
 #cbTicker.home-live-card .cb-ticker-by   { display: none; }
 #cbTicker.home-live-card .cb-ticker-time {
     color: rgba(255,255,255,0.35);
-    flex-shrink: 0;
     font-size: 9px;
-    margin-left: auto;  /* pousse le temps tout à droite */
+    text-align: right;
+    white-space: nowrap;
+    margin-left: 0; /* reset — géré par la grille */
 }
-/* Pas de ligne sous le header "Market Bot · Live Feed" */
-.home-live-section .home-section-header {
-    border-bottom: none;
-    padding-bottom: 0;
-    flex-wrap: wrap;
-    gap: 4px;
-}
+
+/* ── Message vide ── */
 #cbTicker.home-live-card .cb-ticker-empty {
     grid-column: 1 / -1;
     padding: 20px;
@@ -25346,6 +25438,38 @@ body { box-sizing: border-box; }
     font-size: 12px;
     text-align: center;
     display: block;
+}
+
+/* ── Pas de ligne sous le header "Market Bot · Live Feed" ── */
+.home-live-section .home-section-header {
+    border-bottom: none;
+    padding-bottom: 0;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+/* ── Mobile : live feed pleine largeur, colonnes adaptées ── */
+@media (max-width: 860px) {
+    .home-two-col--chat-live {
+        grid-template-columns: 1fr !important;
+    }
+    .home-live-section,
+    .home-live-card {
+        width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box;
+    }
+    /* Sur mobile rétrécit la col badge pour gagner de la place */
+    #cbTicker.home-live-card .cb-ticker-item {
+        grid-template-columns: 28px 48px 1fr 56px 28px;
+        padding: 7px 10px;
+        font-size: 12px;
+    }
+    #cbTicker.home-live-card .cb-ticker-img { width: 26px; height: 26px; }
+    #cbTicker.home-live-card .cb-ticker-asset { font-size: 12px; }
+    #cbTicker.home-live-card .cb-ticker-price { font-size: 12px; }
+    #cbTicker.home-live-card .cb-ticker-time  { font-size: 10px; }
+    #cbTicker.home-live-card .cb-ticker-verb  { font-size: 9px; }
 }
 
 /* Label LIVE dans le header section */
@@ -26889,4 +27013,160 @@ body { box-sizing: border-box; }
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 80px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   OPTIMISATION MOBILE — UNIFORMISATION LARGEUR TOUS ONGLETS
+   Aligne le padding latéral de chaque onglet sur celui de l'onglet Home.
+   Cible : smartphones ≤ 768px (padding=16px) et ≤ 480px (padding=12px).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Base : tous les panels intérieurs alignés sur home-body ── */
+@media (max-width: 768px) {
+    /* Market Bot */
+    .sb-inner {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+    .sb-filters-bar {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .sb-filters-right {
+        flex-wrap: wrap;
+        gap: 6px;
+        width: 100%;
+    }
+    .sb-filters-left {
+        width: 100%;
+    }
+    /* sb-search full width */
+    .sb-search-wrap {
+        min-width: 0 !important;
+        flex: 1 !important;
+    }
+    /* Groupe boutons mode Sales/Listings/Auctions/All : scrollable */
+    .sb-mode-group, .sb-sort-group {
+        overflow-x: auto;
+        overflow-y: hidden;
+        flex-shrink: 0;
+        scrollbar-width: none;
+    }
+    .sb-mode-group::-webkit-scrollbar,
+    .sb-sort-group::-webkit-scrollbar { display: none; }
+
+    /* Top Collections */
+    .stats-panel {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+    .stats-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .stats-filters-row,
+    .stats-chain-filter,
+    .stats-timerange {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    /* Drops */
+    .drops-inner {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+    .drops-page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    /* Snapshot */
+    .snapshot-inner {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+    .snapshot-filters-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .snapshot-filters-left,
+    .snapshot-filters-right {
+        width: 100%;
+    }
+    /* La barre de recherche snapshot prend toute la largeur */
+    .stats-search-wrap.snapshot-id-wrap {
+        width: 100%;
+        max-width: 100% !important;
+    }
+    .snapshot-id-suggestions {
+        max-width: 100% !important;
+    }
+
+    /* Support */
+    .sup-inner,
+    .sup-inner--wide {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+
+    /* Collections Explorer */
+    .cp-inner {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+
+    /* Profile / app-main — déjà géré mais renforcement */
+    .app-main {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+
+    /* Filtres flottants du profil */
+    .navbar.navbar--floating-controls {
+        padding: 8px 16px !important;
+        gap: 6px !important;
+        flex-wrap: wrap !important;
+    }
+}
+
+/* ── Très petit écran ≤ 480px : réduit encore à 12px ── */
+@media (max-width: 480px) {
+    .sb-inner,
+    .stats-panel,
+    .drops-inner,
+    .snapshot-inner,
+    .sup-inner,
+    .sup-inner--wide,
+    .cp-inner,
+    .app-main {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    /* Market Bot : une ligne par filtre en colonne */
+    .sb-view-toggle { display: none; } /* cache vue cards/table sur très petits écrans */
+    .sb-price-input  { width: 60px !important; }
+
+    /* Stats : masque les colonnes moins utiles sur petit écran */
+    .stats-th--ownerspct,
+    .stats-td--ownerspct,
+    .stats-th--creatorsales,
+    .stats-td--creatorsales { display: none !important; }
+
+    /* Snapshot : progress bar pleine largeur */
+    .snapshot-inline-progress {
+        width: 100% !important;
+        margin-top: 6px;
+    }
+
+    /* Support : cartes en une colonne */
+    .sup2-supporters-list {
+        grid-template-columns: 1fr !important;
+    }
+    .sup-pricing-grid {
+        grid-template-columns: 1fr !important;
+    }
 }
