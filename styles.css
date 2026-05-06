@@ -13296,11 +13296,12 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 .home-top-th {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 9px;
+    font-size: 13px;
     font-weight: 800;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: rgba(0,179,255,0.55);
+    color: rgba(0,179,255,0.7);
+    padding: 4px 0;
 }
 .home-top-th--r { text-align: right; }
 
@@ -24990,12 +24991,24 @@ a.snap-holder-username:hover {
     grid-template-columns: 3fr 1fr;   /* live feed = ~25% de la largeur */
     align-items: stretch;
 }
-.home-two-col--chat-live .home-section {
-    display: flex; flex-direction: column;
+/* Force les deux sections (chat / live) à avoir EXACTEMENT la même hauteur :
+   les sections sont flex:column, leur header ne shrink pas, leur card prend
+   tout le reste avec flex:1. Comme align-items:stretch sur la grille parent,
+   les sections sont aussi hautes l'une que l'autre, et donc les cards aussi. */
+.home-two-col--chat-live > .home-section {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+.home-two-col--chat-live > .home-section > .home-section-header {
+    flex-shrink: 0;
 }
 .home-two-col--chat-live .home-community-card,
 .home-two-col--chat-live .home-live-card {
-    flex: 1; height: auto; min-height: 340px;
+    flex: 1 1 0;
+    height: auto;
+    min-height: 340px;
+    min-width: 0;
 }
 @media (max-width: 860px) {
     .home-two-col--chat-live { grid-template-columns: 1fr; }
@@ -27620,10 +27633,14 @@ body { box-sizing: border-box; }
 
 .home-crypto-card-chart-wrap {
     position: relative;
-    width: 100%;
-    margin-top: 4px;
-    margin-bottom: 8px;
+    /* Le graph se colle aux bords gauche/droite/bas de la carte en
+       débordant du padding du parent via des marges négatives. */
+    width: auto;
+    margin: 4px -16px -12px;
     cursor: crosshair;
+    overflow: hidden;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
 }
 .home-crypto-card-chart {
     width: 100%;
@@ -27817,6 +27834,8 @@ body { box-sizing: border-box; }
     .home-crypto-card { padding: 12px 14px 10px; }
     .home-crypto-card-price { font-size: 20px; }
     .home-crypto-card-chart { height: 50px; }
+    /* Marges négatives ajustées pour le padding mobile (14/10 au lieu de 16/12) */
+    .home-crypto-card-chart-wrap { margin: 4px -14px -10px; }
 }
 
 /* ── Header de colonnes du Live Feed (home) ─────────────────────────────
@@ -27834,11 +27853,11 @@ body { box-sizing: border-box; }
 }
 #cbTicker.home-live-card .cb-ticker-th {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 9px;
+    font-size: 13px;
     font-weight: 800;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: rgba(0, 179, 255, 0.6);
+    color: rgba(0, 179, 255, 0.7);
     text-align: left;
 }
 #cbTicker.home-live-card .cb-ticker-th--r { text-align: right; }
