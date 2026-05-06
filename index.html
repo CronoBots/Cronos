@@ -20177,13 +20177,21 @@ window.initSnapshotPanel = function() {
     function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]); }); }
 
     /* Build a sparkline SVG path from candle closes. Returns also the
-       point coordinates and original close values so we can hit-test
-       and show a hover tooltip. */
+       point coordinates and original close values + timestamps so we can
+       hit-test and show a hover tooltip with price + heure. */
     function buildSparkline(candles, w, h) {
-        var empty = { line: '', area: '', up: false, pts: [], values: [], min: 0, max: 0, w: w, h: h };
+        var empty = { line: '', area: '', up: false, pts: [], values: [], times: [], min: 0, max: 0, w: w, h: h };
         if (!candles.length) return empty;
-        var closes = candles.map(function (c) { return Number(c.c) || Number(c.close) || 0; }).filter(function (v) { return v > 0; });
-        if (closes.length < 2) return empty;
+        var rows = candles.map(function (c) {
+            return {
+                v: Number(c.c) || Number(c.close) || 0,
+                /* L'API renvoie un timestamp ms en `t`; fallback 0 si absent */
+                t: Number(c.t) || Number(c.time) || 0
+            };
+        }).filter(function (r) { return r.v > 0; });
+        if (rows.length < 2) return empty;
+        var closes = rows.map(function (r) { return r.v; });
+        var times  = rows.map(function (r) { return r.t; });
         var min = Math.min.apply(null, closes);
         var max = Math.max.apply(null, closes);
         var range = (max - min) || 1;
@@ -20195,7 +20203,7 @@ window.initSnapshotPanel = function() {
         var line = 'M ' + pts.map(function (p) { return p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' L ');
         var area = line + ' L ' + pts[pts.length - 1][0].toFixed(1) + ' ' + h + ' L ' + pts[0][0].toFixed(1) + ' ' + h + ' Z';
         var up = closes[closes.length - 1] >= closes[0];
-        return { line: line, area: area, up: up, pts: pts, values: closes, min: min, max: max, w: w, h: h };
+        return { line: line, area: area, up: up, pts: pts, values: closes, times: times, min: min, max: max, w: w, h: h };
     }
 
     function pairSymbol(pair) {
@@ -20236,7 +20244,24 @@ window.initSnapshotPanel = function() {
             line.style.display = '';
             dot.setAttribute('cx', p[0]); dot.setAttribute('cy', p[1]);
             dot.style.display = '';
-            tip.textContent = fmtPrice(spark.values[bestI]);
+            /* Tooltip = prix + heure du point survolé */
+            var ts = spark.times[bestI];
+            var timeLabel = '';
+            if (ts > 0) {
+                var d = new Date(ts);
+                /* Format compact selon la timeframe : 24h → HH:MM, 7d → DD MMM HH:MM,
+                   30d → DD MMM. Le navigateur s'occupe du fuseau local. */
+                if (_globalTf === '24h') {
+                    timeLabel = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                } else if (_globalTf === '7d') {
+                    timeLabel = d.toLocaleDateString([], { day: '2-digit', month: 'short' })
+                              + ' · ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                } else {
+                    timeLabel = d.toLocaleDateString([], { day: '2-digit', month: 'short' });
+                }
+            }
+            tip.innerHTML = '<span class="cb-tt-price">' + escapeHtml(fmtPrice(spark.values[bestI])) + '</span>'
+                          + (timeLabel ? '<span class="cb-tt-time">' + escapeHtml(timeLabel) + '</span>' : '');
             tip.style.display = '';
             /* Position de la bulle (en pixels relatifs au wrap, sans déborder) */
             var pxX = (p[0] / spark.w) * rect.width;

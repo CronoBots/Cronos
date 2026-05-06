@@ -12403,13 +12403,14 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 
 /* ── BANNIÈRE pleine largeur ──
-   Format cible : 1500×500 (ratio 3:1). Le conteneur prend la hauteur
-   500px sur les écrans larges, et se réduit proportionnellement sur
-   les viewports plus étroits via clamp pour rester équilibré. */
+   Travaillée comme la bannière des "Featured Artists" (.home-fa-spotlight) :
+   hauteur fixée à 340px, pleine largeur, image en cover. Dégradé optionnel
+   pour la lisibilité du titre superposé.
+   Sur petit écran on rétrécit à clamp pour conserver des proportions. */
 .cp-banner-full {
     position: relative;
     width: 100%;
-    height: clamp(180px, 33vw, 500px);
+    height: clamp(180px, 23vw, 340px);
     overflow: hidden;
     flex-shrink: 0;
 }
@@ -12419,7 +12420,7 @@ body.is-profile-loading #profileLoadingOverlay * {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center 30%;
+    object-position: center top;
     display: block;
 }
 .cp-hero-placeholder {
@@ -12595,7 +12596,7 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 .cp-sort-group { margin: 0; }
 .cp-listed-group { margin: 0; }
-.cp-size-toggle { display: none; }
+.cp-size-toggle { display: inline-flex; }
 .cp-view-toggle {
     display: flex;
     align-items: center;
@@ -27579,7 +27580,9 @@ body { box-sizing: border-box; }
 
 .home-crypto-card-header {
     display: flex;
-    align-items: center;
+    /* baseline pour que le symbole (gauche) et le prix (haut du stack droit)
+       soient sur la même ligne typographique. */
+    align-items: baseline;
     justify-content: space-between;
     gap: 8px;
     margin-bottom: 10px;
@@ -27606,16 +27609,18 @@ body { box-sizing: border-box; }
 }
 .home-crypto-card-symbol {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 15px;
+    font-size: 20px;
     font-weight: 800;
     color: #fff;
     letter-spacing: 0.05em;
+    line-height: 1;
 }
 .home-crypto-card-pair {
     color: rgba(255,255,255,0.4);
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 600;
     margin-left: 4px;
+    line-height: 1;
 }
 .home-crypto-card-remove {
     background: none;
@@ -27709,20 +27714,31 @@ body { box-sizing: border-box; }
 .home-crypto-card-chart--down path.area { fill: rgba(248,113,113,0.10); }
 .home-crypto-card-chart--down .hover-dot { stroke: #f87171; }
 
-/* Bulle tooltip qui suit le curseur */
+/* Bulle tooltip qui suit le curseur (prix + heure du point survolé) */
 .home-crypto-card-chart-tooltip {
     position: absolute;
-    background: rgba(0,0,0,0.85);
+    background: rgba(0,0,0,0.88);
     color: #fff;
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 10.5px;
     font-variant-numeric: tabular-nums;
-    padding: 3px 7px;
+    padding: 4px 8px;
     border-radius: 5px;
-    border: 1px solid rgba(0,179,255,0.3);
+    border: 1px solid rgba(0,179,255,0.35);
     pointer-events: none;
     white-space: nowrap;
     z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+.home-crypto-card-chart-tooltip .cb-tt-price { font-weight: 800; }
+.home-crypto-card-chart-tooltip .cb-tt-time {
+    font-size: 8.5px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 0.05em;
 }
 
 /* ── Toggle de période global (header de la section, à droite) ── */
