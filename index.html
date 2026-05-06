@@ -1712,7 +1712,7 @@
       <!-- Feed -->
       <div class="sb-feed" id="sbFeed"></div>
       <!-- Table -->
-      <div class="sb-table-wrap" id="sbTableWrap" style="display:none;"><table class="sb-table"><thead><tr><th class="sb-th sb-th--center sb-th--time">Time</th><th class="sb-th sb-th--center sb-th--event">Event</th><th class="sb-th">Item</th><th class="sb-th sb-th--center sb-th--rarity">Rank</th><th class="sb-th">Price</th><th class="sb-th">From</th><th class="sb-th">To</th></tr></thead><tbody id="sbTableBody"></tbody></table></div>
+      <div class="sb-table-wrap" id="sbTableWrap" style="display:none;"><table class="sb-table"><thead><tr><th class="sb-th sb-th--center sb-th--event">Event</th><th class="sb-th">Item</th><th class="sb-th sb-th--center sb-th--rarity">Rank</th><th class="sb-th">Price</th><th class="sb-th">From</th><th class="sb-th">To</th><th class="sb-th sb-th--center sb-th--time">Time</th></tr></thead><tbody id="sbTableBody"></tbody></table></div>
     </div>
 
     <!-- Load more -->
@@ -9400,13 +9400,8 @@ document.addEventListener('DOMContentLoaded', initialize);
         const floorSpan = _floorHtml(price, isListing, true, node._colId);
         const tr = document.createElement('tr');
         tr.className = 'sb-tr' + (isHighlight ? ' sb-tr--highlight' : '');
-        // TIME first (left-most), then EVENT, ITEM, RANK, PRICE, FROM, TO.
-        // Plus de flèche ↗ ni de flamme 🔥 dans la table : la mise en
-        // évidence des "grosses ventes" est portée par le fond du <tr>
-        // (.sb-tr--highlight, gradient ambré), plus discret et plus
-        // élégant que l'emoji.
+        // Ordre des colonnes : EVENT, ITEM, RANK, PRICE, FROM, TO, TIME (last).
         tr.innerHTML =
-            '<td class="sb-td sb-td--time sb-td--center">' + date + '</td>' +
             '<td class="sb-td sb-td--event sb-td--center"><span class="sb-evt-label ' + evtCls + '">' + evtLabel + '</span></td>' +
             '<td class="sb-td sb-td--item"><div class="sb-td-inner"><img class="sb-row-img" src="' + imgUrl + '" alt="" loading="lazy"/><span class="sb-row-name">' + name + '</span></div></td>' +
             '<td class="sb-td sb-td--rarity sb-td--center">' + rankCell + '</td>' +
@@ -9414,7 +9409,8 @@ document.addEventListener('DOMContentLoaded', initialize);
                 '<span class="sb-card-price ' + pClass + '">' + priceUsd + '</span>' + floorSpan +
             '</div></td>' +
             '<td class="sb-td sb-td--from" style="color:#f87171">' + seller + '</td>' +
-            '<td class="sb-td sb-td--to" style="color:#4ade80">' + (isListing ? '—' : buyer) + '</td>';
+            '<td class="sb-td sb-td--to" style="color:#4ade80">' + (isListing ? '—' : buyer) + '</td>' +
+            '<td class="sb-td sb-td--time sb-td--center">' + date + '</td>';
         tr.addEventListener('click', function() { window.open(assetUrl, '_blank', 'noopener'); });
         if (typeof window._sbCheckAlarm === 'function') window._sbCheckAlarm(price, node.nature, node._colId);
         return tr;
@@ -18511,8 +18507,8 @@ window.initSnapshotPanel = function() {
             const img    = e.asset?.cover?.url || '';
             return `
                 <a class="cb-ticker-item ${cls}" href="https://crypto.com/nft/asset/${escapeHtml(e.asset?.id || '')}" target="_blank" rel="noopener">
-                    ${img ? `<img class="cb-ticker-img" src="${escapeHtml(img)}" alt="" loading="lazy"/>` : ''}
                     <span class="cb-ticker-verb">${verb}</span>
+                    ${img ? `<img class="cb-ticker-img" src="${escapeHtml(img)}" alt="" loading="lazy"/>` : ''}
                     <span class="cb-ticker-asset">${escapeHtml(e.asset?.name || '—')}</span>
                     <span class="cb-ticker-price">${price > 0 ? fmtUSD(price) : ''}</span>
                     <span class="cb-ticker-by">${escapeHtml(isList ? seller : buyer)}</span>
