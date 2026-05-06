@@ -1313,6 +1313,28 @@
 
     </div><!-- fin home-two-col--chat-live -->
 
+    <!-- ── Crypto Prices (live from Crypto.com Exchange) ── -->
+    <section class="home-section home-crypto-section">
+      <div class="home-section-header">
+        <h2 class="home-section-title">Crypto Prices</h2>
+        <button class="home-section-action" id="cryptoAddBtn" type="button">+ Add token</button>
+      </div>
+      <div class="home-crypto-grid" id="homeCryptoGrid">
+        <div class="home-crypto-loading"><span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span></div>
+      </div>
+      <!-- Picker (modal-like), hidden by default -->
+      <div class="home-crypto-picker" id="cryptoPickerBackdrop" style="display:none;" aria-hidden="true">
+        <div class="home-crypto-picker-card" role="dialog" aria-label="Add a crypto pair">
+          <div class="home-crypto-picker-header">
+            <span class="home-crypto-picker-title">Add a token</span>
+            <button class="home-crypto-picker-close" id="cryptoPickerClose" type="button" aria-label="Close">×</button>
+          </div>
+          <input class="home-crypto-picker-search" id="cryptoPickerSearch" type="text" placeholder="Search BTC, ETH, SOL…" autocomplete="off" spellcheck="false"/>
+          <div class="home-crypto-picker-list" id="cryptoPickerList"></div>
+        </div>
+      </div>
+    </section>
+
     <!-- ── Featured Collections ── -->
     <section class="home-section home-section--featured">
       <div class="home-section-header">
@@ -18546,6 +18568,7 @@ window.initSnapshotPanel = function() {
                 renderTopCollections(_currentRange);
             }, { once: false });
             startTicker();
+            if (typeof window._initCryptoPrices === 'function') window._initCryptoPrices();
         }
     };
 
@@ -19962,6 +19985,296 @@ window.initSnapshotPanel = function() {
         document.addEventListener('DOMContentLoaded', bootstrap);
     } else {
         bootstrap();
+    }
+})();
+</script>
+
+<!-- ── CRYPTO PRICES MODULE — live from Crypto.com Exchange public API ── -->
+<script>
+(function() {
+    'use strict';
+    var EXCHANGE = 'https://api.crypto.com/exchange/v1/public';
+    var LS_KEY   = 'cronos_crypto_pairs_v1';
+    var DEFAULT_PAIRS = ['CRO_USD'];
+    var REFRESH_MS = 30000;
+    var TF_MAP = {
+        '24h': { timeframe: '15m', limit: 96 },
+        '7d':  { timeframe: '4h',  limit: 42 },
+        '30d': { timeframe: '1D',  limit: 30 }
+    };
+
+    var _pairs = loadPairs();
+    var _state = {};      /* pair -> { tf, ticker, candles } */
+    var _instruments = null;  /* cached list of all tradable pairs */
+    var _refreshTimer = null;
+
+    function loadPairs() {
+        try {
+            var raw = localStorage.getItem(LS_KEY);
+            if (raw) {
+                var arr = JSON.parse(raw);
+                if (Array.isArray(arr) && arr.length > 0) return arr.slice();
+            }
+        } catch (e) {}
+        return DEFAULT_PAIRS.slice();
+    }
+    function savePairs() {
+        try { localStorage.setItem(LS_KEY, JSON.stringify(_pairs)); } catch (e) {}
+    }
+
+    async function jsonGet(url) {
+        var r = await fetch(url, { method: 'GET' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return await r.json();
+    }
+
+    async function fetchTicker(pair) {
+        try {
+            var d = await jsonGet(EXCHANGE + '/get-tickers?instrument_name=' + encodeURIComponent(pair));
+            var arr = d && d.result && d.result.data;
+            return Array.isArray(arr) && arr.length ? arr[0] : null;
+        } catch (e) { return null; }
+    }
+    async function fetchCandles(pair, tf) {
+        try {
+            var cfg = TF_MAP[tf] || TF_MAP['24h'];
+            var d = await jsonGet(EXCHANGE + '/get-candlestick?instrument_name=' + encodeURIComponent(pair)
+                                  + '&timeframe=' + cfg.timeframe + '&count=' + cfg.limit);
+            var arr = d && d.result && d.result.data;
+            return Array.isArray(arr) ? arr : [];
+        } catch (e) { return []; }
+    }
+    async function fetchInstruments() {
+        if (_instruments) return _instruments;
+        try {
+            var d = await jsonGet(EXCHANGE + '/get-instruments');
+            var arr = d && d.result && d.result.data;
+            if (Array.isArray(arr)) {
+                /* keep only spot pairs ending in stable/fiat for clarity */
+                _instruments = arr
+                    .filter(function (it) { return it.inst_type === 'CCY_PAIR' || it.instrument_type === 'CCY_PAIR' || /_(USD|USDT|USDC|EUR)$/.test(it.symbol || it.instrument_name || ''); })
+                    .map(function (it) { return it.symbol || it.instrument_name; })
+                    .filter(Boolean)
+                    .sort();
+            }
+        } catch (e) { _instruments = []; }
+        return _instruments || [];
+    }
+
+    function fmtPrice(n) {
+        if (!isFinite(n) || n === 0) return '—';
+        if (n >= 1000) return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+        if (n >= 1)    return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+        if (n >= 0.01) return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 4 });
+        return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 6 });
+    }
+    function fmtPct(n) {
+        if (!isFinite(n)) return '0.00%';
+        var s = (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
+        return s;
+    }
+    function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]); }); }
+
+    /* Build a sparkline SVG path from candle closes */
+    function buildSparkline(candles, w, h) {
+        if (!candles.length) return { line: '', area: '', up: false };
+        var closes = candles.map(function (c) { return Number(c.c) || Number(c.close) || 0; }).filter(function (v) { return v > 0; });
+        if (closes.length < 2) return { line: '', area: '', up: false };
+        var min = Math.min.apply(null, closes);
+        var max = Math.max.apply(null, closes);
+        var range = (max - min) || 1;
+        var pts = closes.map(function (v, i) {
+            var x = (i / (closes.length - 1)) * (w - 4) + 2;
+            var y = h - 4 - ((v - min) / range) * (h - 8);
+            return [x, y];
+        });
+        var line = 'M ' + pts.map(function (p) { return p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' L ');
+        var area = line + ' L ' + pts[pts.length - 1][0].toFixed(1) + ' ' + h + ' L ' + pts[0][0].toFixed(1) + ' ' + h + ' Z';
+        var up = closes[closes.length - 1] >= closes[0];
+        return { line: line, area: area, up: up };
+    }
+
+    function pairSymbol(pair) {
+        var parts = (pair || '').split('_');
+        return parts[0] || pair;
+    }
+    function pairQuote(pair) {
+        var parts = (pair || '').split('_');
+        return parts[1] || '';
+    }
+
+    async function loadPairData(pair) {
+        var st = _state[pair] = _state[pair] || { tf: '24h' };
+        var [ticker, candles] = await Promise.all([fetchTicker(pair), fetchCandles(pair, st.tf)]);
+        st.ticker = ticker;
+        st.candles = candles;
+        renderCard(pair);
+    }
+
+    function renderCard(pair) {
+        var grid = document.getElementById('homeCryptoGrid');
+        if (!grid) return;
+        var st = _state[pair] || { tf: '24h' };
+        var ticker = st.ticker || {};
+        var price = Number(ticker.a) || Number(ticker.last) || Number(ticker.b) || 0;
+        var pct = Number(ticker.c) || 0;  /* 24h change percent */
+        if (Math.abs(pct) > 0 && Math.abs(pct) < 1 && ticker.h && ticker.l) {
+            /* fallback computation if API uses fraction */
+            pct = pct * 100;
+        }
+        var spark = buildSparkline(st.candles || [], 280, 60);
+        var changeCls = pct > 0.0001 ? 'home-crypto-card-change--up'
+                       : pct < -0.0001 ? 'home-crypto-card-change--down' : 'home-crypto-card-change--zero';
+        var chartCls = spark.up ? 'home-crypto-card-chart--up' : 'home-crypto-card-chart--down';
+        var canRemove = pair !== 'CRO_USD';
+
+        var card = grid.querySelector('[data-pair="' + pair + '"]');
+        var html =
+            '<div class="home-crypto-card-header">' +
+                '<div>' +
+                    '<span class="home-crypto-card-symbol">' + escapeHtml(pairSymbol(pair)) + '</span>' +
+                    '<span class="home-crypto-card-pair">/ ' + escapeHtml(pairQuote(pair)) + '</span>' +
+                '</div>' +
+                (canRemove ? '<button class="home-crypto-card-remove" data-action="remove" title="Remove">×</button>' : '') +
+            '</div>' +
+            '<div class="home-crypto-card-price-row">' +
+                '<span class="home-crypto-card-price">' + fmtPrice(price) + '</span>' +
+                '<span class="home-crypto-card-change ' + changeCls + '">' + fmtPct(pct) + '</span>' +
+            '</div>' +
+            '<svg class="home-crypto-card-chart ' + chartCls + '" viewBox="0 0 280 60" preserveAspectRatio="none">' +
+                (spark.area ? '<path class="area" d="' + spark.area + '"/>' : '') +
+                (spark.line ? '<path class="line" d="' + spark.line + '"/>' : '') +
+            '</svg>' +
+            '<div class="home-crypto-card-tf">' +
+                ['24h','7d','30d'].map(function (tf) {
+                    return '<button class="home-crypto-card-tf-btn' + (tf === st.tf ? ' home-crypto-card-tf-btn--active' : '') + '" data-tf="' + tf + '">' + tf.toUpperCase() + '</button>';
+                }).join('') +
+            '</div>';
+
+        if (!card) {
+            card = document.createElement('div');
+            card.className = 'home-crypto-card';
+            card.dataset.pair = pair;
+            grid.appendChild(card);
+        }
+        card.innerHTML = html;
+    }
+
+    function renderAll() {
+        var grid = document.getElementById('homeCryptoGrid');
+        if (!grid) return;
+        /* Clear loading + cards that are no longer in _pairs */
+        var loading = grid.querySelector('.home-crypto-loading');
+        if (loading) loading.remove();
+        Array.from(grid.querySelectorAll('[data-pair]')).forEach(function (el) {
+            if (_pairs.indexOf(el.dataset.pair) < 0) el.remove();
+        });
+        /* Render each pair */
+        _pairs.forEach(function (p) { renderCard(p); loadPairData(p); });
+    }
+
+    function onGridClick(e) {
+        var btn = e.target.closest('button');
+        if (!btn) return;
+        var card = e.target.closest('[data-pair]');
+        var pair = card && card.dataset.pair;
+        if (!pair) return;
+
+        if (btn.dataset.action === 'remove') {
+            _pairs = _pairs.filter(function (p) { return p !== pair; });
+            savePairs();
+            delete _state[pair];
+            card.remove();
+            return;
+        }
+        if (btn.dataset.tf) {
+            _state[pair] = _state[pair] || {};
+            _state[pair].tf = btn.dataset.tf;
+            renderCard(pair);
+            loadPairData(pair);
+        }
+    }
+
+    /* ── Picker (modal d'ajout) ── */
+    function openPicker() {
+        var bd = document.getElementById('cryptoPickerBackdrop');
+        var sb = document.getElementById('cryptoPickerSearch');
+        if (!bd) return;
+        bd.style.display = 'flex';
+        if (sb) { sb.value = ''; sb.focus(); }
+        renderPickerList('');
+        fetchInstruments().then(function () { renderPickerList(sb && sb.value || ''); });
+    }
+    function closePicker() {
+        var bd = document.getElementById('cryptoPickerBackdrop');
+        if (bd) bd.style.display = 'none';
+    }
+    function renderPickerList(q) {
+        var list = document.getElementById('cryptoPickerList');
+        if (!list) return;
+        var items = (_instruments || []).filter(function (s) {
+            if (!q) return true;
+            return s.toUpperCase().indexOf(q.toUpperCase()) >= 0;
+        }).slice(0, 200);
+        if (!items.length) {
+            list.innerHTML = '<div class="home-crypto-picker-item" style="opacity:0.4;cursor:default">' + (_instruments ? 'No match' : 'Loading…') + '</div>';
+            return;
+        }
+        list.innerHTML = items.map(function (p) {
+            var already = _pairs.indexOf(p) >= 0;
+            return '<div class="home-crypto-picker-item" data-pair="' + escapeHtml(p) + '">' +
+                       '<span class="home-crypto-picker-item-pair">' + escapeHtml(p) + '</span>' +
+                       (already ? '<span class="home-crypto-picker-item-already">✓ added</span>' : '') +
+                   '</div>';
+        }).join('');
+    }
+    function onPickerListClick(e) {
+        var it = e.target.closest('.home-crypto-picker-item');
+        if (!it || !it.dataset.pair) return;
+        var pair = it.dataset.pair;
+        if (_pairs.indexOf(pair) < 0) {
+            _pairs.push(pair);
+            savePairs();
+            renderCard(pair);
+            loadPairData(pair);
+        }
+        closePicker();
+    }
+
+    function init() {
+        var grid = document.getElementById('homeCryptoGrid');
+        if (!grid) return;
+        if (grid.dataset.bound === '1') return;
+        grid.dataset.bound = '1';
+
+        renderAll();
+        if (_refreshTimer) clearInterval(_refreshTimer);
+        _refreshTimer = setInterval(function () {
+            _pairs.forEach(function (p) { loadPairData(p); });
+        }, REFRESH_MS);
+
+        grid.addEventListener('click', onGridClick);
+        var addBtn = document.getElementById('cryptoAddBtn');
+        if (addBtn) addBtn.addEventListener('click', openPicker);
+        var closeBtn = document.getElementById('cryptoPickerClose');
+        if (closeBtn) closeBtn.addEventListener('click', closePicker);
+        var bd = document.getElementById('cryptoPickerBackdrop');
+        if (bd) bd.addEventListener('click', function (e) { if (e.target === bd) closePicker(); });
+        var sb = document.getElementById('cryptoPickerSearch');
+        if (sb) sb.addEventListener('input', function () { renderPickerList(sb.value); });
+        var list = document.getElementById('cryptoPickerList');
+        if (list) list.addEventListener('click', onPickerListClick);
+    }
+
+    window._initCryptoPrices = init;
+
+    /* If home is already initialized when this script loads, init now */
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+            if (document.getElementById('homeCryptoGrid')) init();
+        });
+    } else {
+        if (document.getElementById('homeCryptoGrid')) init();
     }
 })();
 </script>

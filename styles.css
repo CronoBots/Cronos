@@ -27489,3 +27489,244 @@ body { box-sizing: border-box; }
 
 
 
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CRYPTO PRICES — Section home avec prix live + sparkline 24h/7d/30d
+   ═══════════════════════════════════════════════════════════════════════════ */
+.home-crypto-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+}
+.home-crypto-loading {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    padding: 30px 0;
+}
+
+.home-crypto-card {
+    position: relative;
+    background: rgba(11, 20, 38, 0.7);
+    border: 1px solid rgba(0, 179, 255, 0.45);
+    border-radius: 14px;
+    padding: 14px 16px 12px;
+    box-shadow:
+        0 0 0 1px rgba(0,179,255,0.4),
+        0 0 30px rgba(0,179,255,0.18),
+        0 0 60px rgba(0,179,255,0.08);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.home-crypto-card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 0 0 1px rgba(0,179,255,0.55),
+        0 0 40px rgba(0,179,255,0.25),
+        0 0 80px rgba(0,179,255,0.12);
+}
+
+.home-crypto-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+.home-crypto-card-symbol {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.05em;
+}
+.home-crypto-card-pair {
+    color: rgba(255,255,255,0.4);
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 4px;
+}
+.home-crypto-card-remove {
+    background: none;
+    border: 0;
+    color: rgba(255,255,255,0.3);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+    transition: color 0.12s;
+}
+.home-crypto-card-remove:hover { color: rgba(248,113,113,0.85); }
+
+.home-crypto-card-price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+.home-crypto-card-price {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+}
+.home-crypto-card-change {
+    font-size: 12px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.05);
+}
+.home-crypto-card-change--up   { color: #4ade80; background: rgba(74,222,128,0.12); }
+.home-crypto-card-change--down { color: #f87171; background: rgba(248,113,113,0.12); }
+.home-crypto-card-change--zero { color: rgba(255,255,255,0.45); }
+
+.home-crypto-card-chart {
+    width: 100%;
+    height: 60px;
+    display: block;
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+.home-crypto-card-chart path.area {
+    fill: rgba(0,179,255,0.12);
+}
+.home-crypto-card-chart path.line {
+    fill: none;
+    stroke: #00B3FF;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.home-crypto-card-chart--up path.line   { stroke: #4ade80; }
+.home-crypto-card-chart--up path.area   { fill: rgba(74,222,128,0.12); }
+.home-crypto-card-chart--down path.line { stroke: #f87171; }
+.home-crypto-card-chart--down path.area { fill: rgba(248,113,113,0.10); }
+
+.home-crypto-card-tf {
+    display: inline-flex;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 1px;
+}
+.home-crypto-card-tf-btn {
+    background: transparent;
+    border: 0;
+    color: rgba(255,255,255,0.5);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 4px 9px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    font-family: inherit;
+}
+.home-crypto-card-tf-btn:hover { color: rgba(255,255,255,0.85); }
+.home-crypto-card-tf-btn--active {
+    background: rgba(0,179,255,0.18);
+    color: #00B3FF;
+}
+
+/* ── Picker (modal d'ajout de token) ── */
+.home-crypto-picker {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 9000;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+.home-crypto-picker[style*="display: none"] { display: none !important; }
+.home-crypto-picker-card {
+    background: #0d1829;
+    border: 1px solid rgba(0,179,255,0.3);
+    border-radius: 14px;
+    padding: 16px;
+    width: 360px;
+    max-width: 100%;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+}
+.home-crypto-picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.home-crypto-picker-title {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+.home-crypto-picker-close {
+    background: none;
+    border: 0;
+    color: rgba(255,255,255,0.5);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+}
+.home-crypto-picker-close:hover { color: #fff; }
+.home-crypto-picker-search {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: #fff;
+    font-size: 13px;
+    font-family: inherit;
+    margin-bottom: 10px;
+    outline: none;
+}
+.home-crypto-picker-search:focus { border-color: rgba(0,179,255,0.5); }
+.home-crypto-picker-list {
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,179,255,0.2) transparent;
+}
+.home-crypto-picker-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.12s;
+    color: #fff;
+    font-size: 13px;
+}
+.home-crypto-picker-item:hover { background: rgba(0,179,255,0.1); }
+.home-crypto-picker-item-pair {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+.home-crypto-picker-item-already {
+    font-size: 10px;
+    color: rgba(74,222,128,0.7);
+}
+
+/* Mobile : grille en 1 colonne, padding réduit */
+@media (max-width: 640px) {
+    .home-crypto-grid { grid-template-columns: 1fr; }
+    .home-crypto-card { padding: 12px 14px 10px; }
+    .home-crypto-card-price { font-size: 20px; }
+    .home-crypto-card-chart { height: 50px; }
+}
