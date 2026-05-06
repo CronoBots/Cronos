@@ -1333,13 +1333,12 @@
       </div>
     </section>
 
-    <!-- ── Top Collections 24H + Top Creators — 2 colonnes ── -->
+    <!-- ── Top Collections 24H ── -->
     <div class="home-two-col home-two-col--bottom">
 
       <section class="home-section">
         <div class="home-section-header">
           <h2 class="home-section-title">Top Collections <span class="home-section-badge">24H</span></h2>
-          <button class="home-section-action" id="homeGoStats2" type="button">Full ranking →</button>
         </div>
         <div class="home-top-list" id="homeTopList">
           <div class="home-top-list-header">
@@ -1349,22 +1348,6 @@
             <span class="home-top-th home-top-th--r">Floor</span>
             <span class="home-top-th home-top-th--r">Volume</span>
             <span class="home-top-th home-top-th--r">Change</span>
-          </div>
-          <div class="home-top-loading"><span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span></div>
-        </div>
-      </section>
-
-      <section class="home-section cb-creators-section">
-        <div class="home-section-header">
-          <h2 class="home-section-title">Top Creators</h2>
-          <span class="home-section-badge cb-badge-muted">All time · Primary</span>
-        </div>
-        <div class="cb-creators-list" id="cbTopCreatorsList">
-          <div class="home-top-list-header home-top-list-header--creators">
-            <span class="home-top-th">#</span>
-            <span class="home-top-th"></span>
-            <span class="home-top-th">Creator</span>
-            <span class="home-top-th home-top-th--r">Primary Sales</span>
           </div>
           <div class="home-top-loading"><span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span></div>
         </div>
@@ -9032,9 +9015,6 @@ document.addEventListener('DOMContentLoaded', initialize);
     // ── Boutons nav ───────────────────────────────────────────────────────
     function initNavButtons() {
         document.getElementById('homeGoStats')?.addEventListener('click', () => {
-            document.querySelector('.topnav-tab[data-tab="stats"]')?.click();
-        });
-        document.getElementById('homeGoStats2')?.addEventListener('click', () => {
             document.querySelector('.topnav-tab[data-tab="stats"]')?.click();
         });
         document.getElementById('homeGoDrops')?.addEventListener('click', () => {
@@ -18255,9 +18235,7 @@ window.initSnapshotPanel = function() {
             <span class="home-top-vol">${vol > 0 ? fmtUSD(vol) : '—'}</span>
             <span class="home-top-chg ${chgFmt.cls === 'cb-up' ? 'home-top-up' : chgFmt.cls === 'cb-down' ? 'home-top-down' : ''}">${chgFmt.text}</span>`;
         row.addEventListener('click', () => {
-            if (typeof window.loadCollectionById === 'function') {
-                window.loadCollectionById(c.id);
-            }
+            document.querySelector('.topnav-tab[data-tab="stats"]')?.click();
         });
         return row;
     }
@@ -18359,68 +18337,6 @@ window.initSnapshotPanel = function() {
             const btn = e.target.closest('[data-cb-range]');
             if (!btn) return;
             renderTopCollections(btn.dataset.cbRange);
-        });
-    }
-
-    /* ------------------------------------------------------------------ *
-     * 6.  Top Creators leaderboard
-     * ------------------------------------------------------------------ */
-    const Q_TOP_CREATORS = `query GetTopCreators($excludeUuids: [String!]) {
-        public(cacheId: "topCreators") {
-            users(excludeUuids: $excludeUuids) {
-                uuid username displayName
-                primarySalesDecimalTruncated
-                avatar { url }
-                verified
-            }
-        }
-    }`;
-
-    async function fetchTopCreators() {
-        const data = await gqlBoost('GetTopCreators', Q_TOP_CREATORS, { excludeUuids: [] });
-        return data?.users || [];
-    }
-
-    function renderTopCreatorsSection(creators) {
-        const host = document.getElementById('cbTopCreatorsList');
-        if (!host) return;
-        const header = host.querySelector('.home-top-list-header');
-        if (!creators.length) {
-            if (header) Array.from(host.children).forEach(c => { if (c !== header) c.remove(); });
-            else host.innerHTML = '';
-            const empty = document.createElement('div'); empty.className = 'cb-empty'; empty.textContent = 'No creators data';
-            host.appendChild(empty);
-            return;
-        }
-        // Vider sauf header
-        if (header) Array.from(host.children).forEach(c => { if (c !== header) c.remove(); });
-        else host.innerHTML = '';
-        creators.slice(0, 5).forEach((u, i) => {
-            const sales = Number(u.primarySalesDecimalTruncated) || 0;
-            const row = document.createElement('div');
-            row.className = 'cb-creator-row';
-            row.innerHTML = `
-                <span class="cb-creator-rank">${i + 1}</span>
-                <img class="cb-creator-avatar" src="${escapeHtml(u.avatar?.url || '')}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"/>
-                <div class="cb-creator-info">
-                    <span class="cb-creator-name">${escapeHtml(u.displayName || u.username || '—')}${u.verified ? ' <svg class="home-top-verified" viewBox="0 0 20 20" fill="none" aria-label="Verified"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}</span>
-                    <span class="cb-creator-handle">@${escapeHtml(u.username || '—')}</span>
-                </div>
-                <span class="cb-creator-sales">${sales > 0 ? fmtUSD(sales) : '—'}</span>`;
-            row.addEventListener('click', () => {
-                // Reuse the existing username->profile loader if present
-                if (typeof window.loadProfileByUsername === 'function') {
-                    window.loadProfileByUsername(u.username);
-                } else {
-                    // fallback — drop username in the search bar and trigger search
-                    const bar = document.getElementById('topnavSearchInput');
-                    if (bar) {
-                        bar.value = u.username;
-                        bar.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
-                }
-            });
-            host.appendChild(row);
         });
     }
 
@@ -18579,8 +18495,6 @@ window.initSnapshotPanel = function() {
             injectHomeScaffolding();
             injectRangeToggle();
             renderTopCollections('ONE_DAY');
-            // Top creators
-            try { const u = await fetchTopCreators(); renderTopCreatorsSection(u); } catch(e) {}
             window.addEventListener('cronos:statsLoaded', () => {
                 _topColsCache = null;
                 renderTopCollections(_currentRange);
@@ -18618,23 +18532,6 @@ window.initSnapshotPanel = function() {
                 </div>`;
             // Append to body so it floats above all panel content as a TV ticker
             document.body.appendChild(ticker);
-        }
-
-        // (b) Top Creators section — appended after Top Collections section
-        if (!document.getElementById('cbTopCreatorsList')) {
-            const section = document.createElement('section');
-            section.className = 'home-section cb-creators-section';
-            section.innerHTML = `
-                <div class="home-section-header">
-                    <h2 class="home-section-title">Top Creators</h2>
-                    <span class="home-section-badge cb-badge-muted">All time · Primary sales</span>
-                </div>
-                <div class="cb-creators-list" id="cbTopCreatorsList">
-                    <div class="home-top-loading"><span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span></div>
-                </div>`;
-            const topListSection = document.getElementById('homeTopList')?.closest('.home-section');
-            if (topListSection) topListSection.insertAdjacentElement('afterend', section);
-            else homePanel.querySelector('.home-body')?.appendChild(section);
         }
     }
 
