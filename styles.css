@@ -27170,3 +27170,123 @@ body { box-sizing: border-box; }
         grid-template-columns: 1fr !important;
     }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE OPTIMIZATIONS — additions ciblées (audit 2026-05)
+   Aucune règle ici n'affecte la version desktop : tout est dans @media.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Tablette / petit laptop : tabs scrollables si overflow ── */
+@media (max-width: 768px) {
+    .topnav-tabs {
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+    .topnav-tabs::-webkit-scrollbar { display: none; }
+
+    /* Drops : grille en 2 colonnes max sur tablette */
+    .drops-live-grid,
+    .drops-grid,
+    .drops-grid--soldout,
+    .drops-grid--upcoming,
+    .drops-grid--ended {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+/* ── Smartphone ≤ 520px ── */
+@media (max-width: 520px) {
+    /* Logo texte caché pour libérer la barre du haut */
+    .topnav-logo-text { display: none !important; }
+
+    /* Recherche topnav : prend toute la place restante */
+    .topnav-search-wrap {
+        padding: 0 8px !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+    }
+
+    /* Modal de login : marges et taille adaptées au pouce */
+    .login-modal {
+        padding: 24px 16px !important;
+        max-width: calc(100vw - 24px) !important;
+        border-radius: 16px !important;
+    }
+    /* Empêche le zoom auto iOS sur focus (font-size >= 16px) */
+    .login-modal-input {
+        font-size: 16px !important;
+        min-height: 44px !important;
+    }
+
+    /* Dropdown certify : recadrée, jamais hors écran */
+    .certify-dropdown {
+        width: auto !important;
+        left: 6px !important;
+        right: 6px !important;
+        max-width: calc(100vw - 12px) !important;
+    }
+}
+
+/* ── Smartphone ≤ 480px ── */
+@media (max-width: 480px) {
+    /* Drops : une seule colonne sur petit écran */
+    .drops-live-grid,
+    .drops-grid,
+    .drops-grid--soldout,
+    .drops-grid--upcoming,
+    .drops-grid--ended {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Collections panel : titre + logo empilés verticalement */
+    .cp-title-block {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+    }
+    .cp-hero-logo {
+        width: 48px !important;
+        height: 48px !important;
+    }
+
+    /* Support : cartes donate en une colonne (override grid auto-fill 320px) */
+    .sup2-donate-grid {
+        grid-template-columns: 1fr !important;
+    }
+    /* Atténue les orbes décoratifs pour économiser le GPU */
+    .sup2-orb {
+        width: 200px !important;
+        height: 200px !important;
+        filter: blur(40px) !important;
+    }
+
+    /* Boutons de download : empilés verticalement, gap réduit */
+    .download-buttons {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    /* Profile header : empile photo + infos verticalement (déjà partiel ci-dessus,
+       on ajoute le retrait de la marge gauche héritée du desktop) */
+    .profile-header-content {
+        margin-left: 0 !important;
+    }
+
+    /* Photo de profil dans la sidebar : réduite pour ne pas déborder */
+    .left-sidebar .profile-picture--round img,
+    .left-sidebar .profile-picture--round {
+        max-width: 140px !important;
+        max-height: 140px !important;
+    }
+
+    /* Stats / Snapshot / Market Bot : scroll tactile renforcé sur les tables */
+    .stats-table-wrap,
+    .snapshot-table-wrap,
+    .sb-table-wrap {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+}
