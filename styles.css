@@ -26935,17 +26935,21 @@ body { box-sizing: border-box; }
         padding-right: 16px !important;
     }
 
-    /* Profile / app-main — déjà géré mais renforcement.
-       NB: la règle desktop "body:not(.view--profile) .app-main { padding: 40px 55px }"
-       (ligne ~4701) utilise !important + sélecteur plus spécifique (0,2,1) ;
-       il faut donc reproduire la même spécificité ici pour la battre sur mobile. */
-    .app-main {
-        padding-left: 16px !important;
-        padding-right: 16px !important;
-    }
+    /* Profile / app-main — alignement sur le pattern home : app-main n'a
+       PAS de padding propre sur mobile, ce sont les conteneurs intérieurs
+       (sb-inner / drops-inner / cp-inner / etc.) qui portent les 16px de
+       marge, comme home-body le fait pour la home. Résultat : les cartes
+       se posent à 16px du bord d'écran sur tous les onglets, comme la home.
+       NB: la règle desktop body:not(.view--profile) .app-main { padding: 40px 55px }
+       (ligne ~4701) a une spécificité (0,2,1) avec !important — il faut
+       reproduire la même spécificité pour la battre. */
     body:not(.view--profile) .app-main {
-        padding-left: 16px !important;
-        padding-right: 16px !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    .app-main {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
 
     /* Filtres flottants du profil */
@@ -26964,15 +26968,15 @@ body { box-sizing: border-box; }
     .snapshot-inner,
     .sup-inner,
     .sup-inner--wide,
-    .cp-inner,
-    .app-main {
+    .cp-inner {
         padding-left: 12px !important;
         padding-right: 12px !important;
     }
-    /* Override de la règle desktop body:not(.view--profile) .app-main */
-    body:not(.view--profile) .app-main {
-        padding-left: 12px !important;
-        padding-right: 12px !important;
+    /* app-main reste à 0 (la marge est portée par les conteneurs intérieurs) */
+    body:not(.view--profile) .app-main,
+    .app-main {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
 
     /* Market Bot : une ligne par filtre en colonne */
