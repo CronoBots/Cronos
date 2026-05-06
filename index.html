@@ -1208,7 +1208,15 @@
       <section class="home-section home-community-section">
         <div class="home-section-header">
           <h2 class="home-section-title">Community Chat</h2>
-          <span class="home-community-live" id="homeChatStatus">connecting…</span>
+          <div class="home-chat-header-right">
+            <!-- Badge membres — visible seulement sur mobile, ouvre le modal -->
+            <button class="home-chat-members-btn" id="homeChatMembersBtn" type="button" aria-label="Show members" style="display:none;">
+              <span class="home-chat-stat-dot home-chat-stat-dot--online" id="homeMobileMemberDot"></span>
+              <span id="homeMobileMemberCount">0</span>
+              <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="7" cy="7" r="3"/><path d="M1 17c0-2.8 2.7-5 6-5"/><circle cx="14" cy="8" r="2.5"/><path d="M11 17c0-2.4 2-4 3-4s3 1.6 3 4"/></svg>
+            </button>
+            <span class="home-community-live" id="homeChatStatus">connecting…</span>
+          </div>
         </div>
 
         <div class="home-community-card">
@@ -1263,6 +1271,30 @@
           </div>
         </div>
       </section>
+
+      <!-- Modal membres mobile — en dehors de la carte, positionné par JS -->
+      <div class="home-chat-members-modal" id="homeChatMembersModal" aria-hidden="true">
+        <div class="home-chat-members-modal-header">
+          <span class="home-chat-members-modal-title">Members</span>
+          <button class="home-chat-members-modal-close" id="homeChatMembersClose" type="button" aria-label="Close">×</button>
+        </div>
+        <div class="home-chat-members-modal-body">
+          <div class="home-chat-members-section home-chat-members-section--modal" id="homeChatModalOnline" style="display:none;">
+            <div class="home-chat-members-label">
+              <span class="home-chat-stat-dot home-chat-stat-dot--online"></span>
+              Online — <span id="homeChatModalOnlineCount">0</span>
+            </div>
+            <div class="home-chat-members-list" id="homeChatModalAvatars"></div>
+          </div>
+          <div class="home-chat-members-section home-chat-members-section--modal" id="homeChatModalOffline" style="display:none;">
+            <div class="home-chat-members-label">
+              <span class="home-chat-stat-dot home-chat-stat-dot--offline"></span>
+              Offline — <span id="homeChatModalOfflineCount">0</span>
+            </div>
+            <div class="home-chat-members-list" id="homeChatModalAvatarsOffline"></div>
+          </div>
+        </div>
+      </div>
 
       <!-- LIVE ACTIVITY — colonne droite -->
       <section class="home-section home-live-section">
@@ -8223,6 +8255,31 @@ document.addEventListener('DOMContentLoaded', initialize);
         const status  = document.getElementById('homeChatStatus');
         if (!msgs) return;
 
+        // ── Modal membres mobile — open / close ──────────────────────────
+        (function() {
+            const btn   = document.getElementById('homeChatMembersBtn');
+            const modal = document.getElementById('homeChatMembersModal');
+            const close = document.getElementById('homeChatMembersClose');
+            if (!btn || !modal) return;
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                modal.classList.add('is-open');
+                modal.removeAttribute('aria-hidden');
+            });
+            close?.addEventListener('click', () => {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+            });
+            // Ferme si clic sur le backdrop (hors modal)
+            document.addEventListener('click', e => {
+                if (modal.classList.contains('is-open') && !modal.contains(e.target) && e.target !== btn)
+                    modal.classList.remove('is-open');
+            });
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape') modal.classList.remove('is-open');
+            });
+        })();
+
         // ─── Firebase config — À REMPLIR ───
         const FB_CONFIG = {
             apiKey:       "AIzaSyBs9uiHzJILf2TCmF2XrDi1PvthGDTxs9Y",
@@ -8834,6 +8891,32 @@ document.addEventListener('DOMContentLoaded', initialize);
                         renderAvatarStack(avatarsEl, namedOnline, 6, false);
                         // Stack avatars offline
                         renderAvatarStack(avatarsOffEl, namedOffline, 6, true);
+
+                        // ── Sync modal mobile ────────────────────────────────
+                        const modalOnline  = document.getElementById('homeChatModalOnline');
+                        const modalOffline = document.getElementById('homeChatModalOffline');
+                        const modalOnlineCount  = document.getElementById('homeChatModalOnlineCount');
+                        const modalOfflineCount = document.getElementById('homeChatModalOfflineCount');
+                        const modalAvatars    = document.getElementById('homeChatModalAvatars');
+                        const modalAvatarsOff = document.getElementById('homeChatModalAvatarsOffline');
+                        if (modalOnlineCount)  modalOnlineCount.textContent  = onlineCount;
+                        if (modalOfflineCount) modalOfflineCount.textContent = offlineCount;
+                        if (modalOnline)  modalOnline.style.display  = onlineCount  > 0 ? 'flex' : 'none';
+                        if (modalOffline) modalOffline.style.display = offlineCount > 0 ? 'flex' : 'none';
+                        renderAvatarStack(modalAvatars,    namedOnline,  20, false);
+                        renderAvatarStack(modalAvatarsOff, namedOffline, 20, true);
+
+                        // ── Badge mobile dans le header ──────────────────────
+                        const mobileBtn   = document.getElementById('homeChatMembersBtn');
+                        const mobileDot   = document.getElementById('homeMobileMemberDot');
+                        const mobileCount = document.getElementById('homeMobileMemberCount');
+                        if (mobileBtn && (onlineCount + offlineCount) > 0) {
+                            mobileBtn.style.display = 'flex';
+                            if (mobileCount) mobileCount.textContent = onlineCount + offlineCount;
+                            if (mobileDot) {
+                                mobileDot.className = 'home-chat-stat-dot home-chat-stat-dot--' + (onlineCount > 0 ? 'online' : 'offline');
+                            }
+                        }
 
                         // ── Séparateur + compteur members ───────────────────
                         const statSep3      = document.getElementById('homeChatStatSep3');
