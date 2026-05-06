@@ -20212,42 +20212,35 @@ window.initSnapshotPanel = function() {
         var canRemove = pair !== 'CRO_USD';
 
         var card = grid.querySelector('[data-pair="' + pair + '"]');
-        var minLabel = spark.min > 0 ? fmtPrice(spark.min) : '';
-        var maxLabel = spark.max > 0 ? fmtPrice(spark.max) : '';
         var html =
             '<div class="home-crypto-card-header">' +
-                '<div>' +
+                '<div class="home-crypto-card-header-left">' +
                     '<span class="home-crypto-card-symbol">' + escapeHtml(pairSymbol(pair)) + '</span>' +
                     '<span class="home-crypto-card-pair">/ ' + escapeHtml(pairQuote(pair)) + '</span>' +
                 '</div>' +
-                (canRemove ? '<button class="home-crypto-card-remove" data-action="remove" title="Remove">×</button>' : '') +
-            '</div>' +
-            '<div class="home-crypto-card-price-row">' +
-                '<span class="home-crypto-card-price">' + fmtPrice(price) + '</span>' +
-                '<span class="home-crypto-card-change ' + changeCls + '">' +
-                    fmtPct(pct) + '<span class="home-crypto-card-change-period">' + (st.tf || '24h').toUpperCase() + '</span>' +
-                '</span>' +
+                '<div class="home-crypto-card-header-right">' +
+                    '<span class="home-crypto-card-price">' + fmtPrice(price) + '</span>' +
+                    '<span class="home-crypto-card-change ' + changeCls + '">' +
+                        fmtPct(pct) + '<span class="home-crypto-card-change-period">' + (st.tf || '24h').toUpperCase() + '</span>' +
+                    '</span>' +
+                    (canRemove ? '<button class="home-crypto-card-remove" data-action="remove" title="Remove">×</button>' : '') +
+                '</div>' +
             '</div>' +
             '<div class="home-crypto-card-chart-wrap">' +
+                /* Toggle de timeframe en overlay top-right du graphique */
+                '<div class="home-crypto-card-tf">' +
+                    ['24h','7d','30d'].map(function (tf) {
+                        return '<button class="home-crypto-card-tf-btn' + (tf === st.tf ? ' home-crypto-card-tf-btn--active' : '') + '" data-tf="' + tf + '">' + tf.toUpperCase() + '</button>';
+                    }).join('') +
+                '</div>' +
                 '<svg class="home-crypto-card-chart ' + chartCls + '" viewBox="0 0 280 60" preserveAspectRatio="none">' +
-                    /* Échelle horizontale discrète : ligne min + ligne max en pointillé */
-                    (spark.values.length ? '<line class="grid-line" x1="2" y1="4" x2="278" y2="4" stroke-dasharray="2 3"/>' +
-                                           '<line class="grid-line" x1="2" y1="56" x2="278" y2="56" stroke-dasharray="2 3"/>' : '') +
                     (spark.area ? '<path class="area" d="' + spark.area + '"/>' : '') +
                     (spark.line ? '<path class="line" d="' + spark.line + '"/>' : '') +
                     /* Indicateur hover (caché par défaut) */
                     '<line class="hover-line" x1="-10" y1="0" x2="-10" y2="60" stroke-dasharray="2 2" style="display:none"/>' +
                     '<circle class="hover-dot" cx="-10" cy="-10" r="3" style="display:none"/>' +
                 '</svg>' +
-                /* Étiquettes min / max aux coins */
-                (maxLabel ? '<span class="home-crypto-card-chart-max">' + maxLabel + '</span>' : '') +
-                (minLabel ? '<span class="home-crypto-card-chart-min">' + minLabel + '</span>' : '') +
                 '<span class="home-crypto-card-chart-tooltip" style="display:none"></span>' +
-            '</div>' +
-            '<div class="home-crypto-card-tf">' +
-                ['24h','7d','30d'].map(function (tf) {
-                    return '<button class="home-crypto-card-tf-btn' + (tf === st.tf ? ' home-crypto-card-tf-btn--active' : '') + '" data-tf="' + tf + '">' + tf.toUpperCase() + '</button>';
-                }).join('') +
             '</div>';
 
         if (!card) {
