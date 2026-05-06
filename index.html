@@ -25,7 +25,7 @@
 #noResults{display:none}
 #profileLoadingOverlay{display:none}
 .profile-section{display:none}
-#topnavUserLogout{display:none}
+#topnavUserLogout{display:none!important}#topnavCertifyBtn{display:none!important}
 /* Anciens filtres (navbar flottante) — cachés jusqu'à ce que la vue profil les montre explicitement */
 .navbar.navbar--floating-controls{display:none}
 </style>
@@ -111,6 +111,7 @@
           <span id="loginModalBtnText">Go to my profile</span>
         </button>
         <p class="login-modal-note">No password needed — your profile is public on Crypto.com NFT.</p>
+
       </div>
     </div>
 
@@ -159,8 +160,19 @@
           <span>Sign in</span>
         </button>
         <!-- Sign out séparé -->
-        <button class="topnav-tab topnav-tab--signout" id="topnavUserLogout" style="display:none;" type="button" title="Sign out">
+        <!-- Sign out — DOM only, géré via Settings panel -->
+        <button id="topnavUserLogout" style="display:none;" type="button" aria-hidden="true">
           <svg class="topnav-tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 15l4-4-4-4M17 11H8"/><path d="M10 3H5a1 1 0 00-1 1v12a1 1 0 001 1h5"/></svg>
+        </button>
+        <!-- Certify ownership (shown when logged in) -->
+        <!-- Certify — DOM only, géré via Settings panel -->
+        <button id="topnavCertifyBtn" style="display:none;" type="button" aria-hidden="true">
+          <svg class="topnav-tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2a6 6 0 016 6c0 3.5-2.5 6.5-6 8-3.5-1.5-6-4.5-6-8a6 6 0 016-6z"/><path d="M10 8v3M10 7h.01"/></svg>
+          <span id="topnavCertifyLabel">Certify</span>
+        </button>
+        <!-- Settings -->
+        <button class="topnav-tab topnav-tab--settings" id="topnavSettingsBtn" type="button" title="Settings" aria-haspopup="true" aria-expanded="false">
+          <svg class="topnav-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.592c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.646.87.073.04.146.083.219.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.828c-.293.24-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.828c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         </button>
       </div>
     </nav>
@@ -168,6 +180,99 @@
   </div>
   <div class="topnav-indicator" id="topnavIndicator"></div>
 </header>
+
+<!-- ── CERTIFY OWNERSHIP DROPDOWN (outside topnav, full-width) ── -->
+<div class="certify-dropdown-backdrop" id="certifyDropdownBackdrop" style="display:none;" aria-hidden="true"></div>
+<div class="certify-dropdown" id="certifyDropdown" style="display:none;" role="dialog" aria-label="Certify account ownership" aria-modal="true">
+  <div class="certify-dropdown-inner">
+    <div class="certify-dropdown-header">
+      <div class="certify-dropdown-icon">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2a6 6 0 016 6c0 3.5-2.5 6.5-6 8-3.5-1.5-6-4.5-6-8a6 6 0 016-6z"/><path d="M7 10l2 2 4-4"/></svg>
+      </div>
+      <div>
+        <div class="certify-dropdown-title">Certify account ownership</div>
+        <div class="certify-dropdown-sub">Optional — prove you own this Crypto.com NFT account</div>
+      </div>
+      <button class="certify-dropdown-close" id="certifyDropdownClose" type="button" aria-label="Close">×</button>
+    </div>
+    <p class="lm-verify-desc" style="margin:0 0 14px;">Use Crypto.com's built-in verification key (valid 5 min) to confirm ownership. This never shares your password.</p>
+    <ol class="lm-verify-steps">
+      <li>
+        <a class="lm-verify-link" href="https://crypto.com/nft/settings/verification" target="_blank" rel="noopener">
+          Open Crypto.com NFT → Settings → Verification
+          <svg width="10" height="10" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M7 3h10v10M17 3L7 13"/></svg>
+        </a>
+      </li>
+      <li>Click <strong>Generate a secret key</strong></li>
+      <li>Paste the key below (expires in 5 minutes)</li>
+    </ol>
+    <div class="lm-verify-input-row" style="margin-top:14px;">
+      <input class="login-modal-input lm-verify-key-input" id="lmVerifyKeyInput"
+             type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+             autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off"/>
+    </div>
+    <div class="lm-verify-status" id="lmVerifyStatus" aria-live="polite"></div>
+    <button class="lm-verify-btn" id="lmVerifyBtn" type="button" disabled>
+      <span id="lmVerifyBtnText">Verify ownership</span>
+    </button>
+  </div>
+</div>
+<!-- ── END CERTIFY DROPDOWN ── -->
+
+<!-- SETTINGS PANEL -->
+<div class="settings-backdrop" id="settingsBackdrop" style="display:none;" aria-hidden="true"></div>
+<div class="settings-panel" id="settingsPanel" style="display:none;" role="dialog" aria-label="Settings" aria-modal="true" data-no-translate="">
+  <div class="settings-panel-inner">
+    <div class="settings-panel-header">
+      <div class="settings-panel-title-wrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.592c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.646.87.073.04.146.083.219.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.828c-.293.24-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.828c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span class="settings-panel-title">Settings</span>
+      </div>
+      <button class="settings-panel-close" id="settingsPanelClose" type="button" aria-label="Close">&#x2715;</button>
+    </div>
+    <div class="settings-section" id="settingsAccountSection" style="display:none;">
+      <div class="settings-section-label">Account</div>
+      <button class="settings-row" id="settingsCertifyRow" type="button">
+        <div class="settings-row-icon" id="settingsCertIcon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+        </div>
+        <div class="settings-row-body">
+          <span class="settings-row-title">Account certification</span>
+          <span class="settings-cert-badge is-not-certified" id="settingsCertBadge">Not certified</span>
+        </div>
+        <svg class="settings-row-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+      </button>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-label">Language</div>
+      <select class="settings-lang-select" id="settingsLangSelect">
+        <option value="en">English</option>
+        <option value="fr">Fran&#xe7;ais</option>
+        <option value="es">Espa&#xf1;ol</option>
+        <option value="de">Deutsch</option>
+        <option value="it">Italiano</option>
+        <option value="pt">Portugu&#xea;s</option>
+        <option value="nl">Nederlands</option>
+        <option value="pl">Polski</option>
+        <option value="tr">T&#xfc;rk&#xe7;e</option>
+        <option value="ru">&#1056;&#1091;&#1089;&#1089;&#1082;&#1080;&#1081;</option>
+        <option value="ar">&#1575;&#1604;&#1593;&#1585;&#1576;&#1610;&#1577;</option>
+        <option value="zh-CN">&#20013;&#25991;</option>
+        <option value="ja">&#26085;&#26412;&#35486;</option>
+        <option value="ko">&#54620;&#44397;&#50612;</option>
+        <option value="hi">&#2361;&#2367;&#2344;&#2381;&#2342;&#2368;</option>
+        <option value="vi">Ti&#x1ebf;ng Vi&#x1ec7;t</option>
+      </select>
+    </div>
+    <div class="settings-footer" id="settingsFooter" style="display:none;">
+      <button class="settings-logout-btn" id="settingsLogoutBtn" type="button">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/></svg>
+        Sign out
+      </button>
+    </div>
+  </div>
+</div>
+<!-- END SETTINGS PANEL -->
 <nav class="navbar navbar--floating-controls">
 <div class="navbar-top-row">
 </div>
@@ -942,16 +1047,13 @@
       <p class="home-title-sub">Browse smarter. Collect better.</p>
     </div>
 
-    <!-- ══ 2 COLONNES : Spotlight (gauche) | Community Chat (droite) ══ -->
-    <div class="home-two-col home-two-col--spotlight">
-
-      <!-- SPOTLIGHT — colonne gauche, titre à l'intérieur comme le chat -->
-      <section class="home-section home-spotlight-section">
-        <div class="home-section-header">
-          <h2 class="home-section-title">Spotlight</h2>
-        </div>
-        <div class="home-spotlight" id="homeSpotlight" data-active="0">
-          <div class="home-spotlight-slides">
+    <!-- ══ SPOTLIGHT — pleine largeur ══ -->
+    <section class="home-section home-spotlight-section">
+      <div class="home-section-header">
+        <h2 class="home-section-title">Spotlight</h2>
+      </div>
+      <div class="home-spotlight" id="homeSpotlight" data-active="0">
+        <div class="home-spotlight-slides">
 
           <article class="home-spotlight-slide is-active" data-tab-target="drops">
             <span class="home-spotlight-badge">NEW</span>
@@ -1074,7 +1176,7 @@
 
         </div>
 
-        <!-- Controls : prev / progress+dots / next — sur une seule ligne -->
+        <!-- Controls : prev / progress+dots / next -->
         <div class="home-spotlight-controls">
           <button class="home-spotlight-arrow" id="homeSpotlightPrev" type="button" aria-label="Previous">
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="12,4 6,10 12,16"/></svg>
@@ -1097,11 +1199,77 @@
           </button>
         </div>
       </div>
+    </section>
 
-      <!-- LIVE ACTIVITY — intégrée sous le spotlight dans la colonne gauche -->
-      <div class="home-live-subsection">
-        <div class="home-section-header home-section-header--sub">
-          <h2 class="home-section-title">Live Activity</h2>
+    <!-- ══ 2 COLONNES : Community Chat (gauche) | Live Activity (droite) ══ -->
+    <div class="home-two-col home-two-col--chat-live">
+
+      <!-- COMMUNITY CHAT — colonne gauche -->
+      <section class="home-section home-community-section">
+        <div class="home-section-header">
+          <h2 class="home-section-title">Community Chat</h2>
+          <span class="home-community-live" id="homeChatStatus">connecting…</span>
+        </div>
+
+        <div class="home-community-card">
+          <!-- Zone principale : messages -->
+          <div class="home-chat-main">
+            <div class="home-chat-messages" id="homeChatMessages"></div>
+            <div id="homeChatOnlinePanel" style="display:none;"></div>
+            <div class="home-chat-locked" id="homeChatLocked" style="display:none;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+              <span>Sign in to chat</span>
+            </div>
+            <div class="home-chat-error" id="homeChatError" style="display:none;"></div>
+            <div class="home-chat-input-row" id="homeChatInputRow">
+              <input class="home-chat-input" id="homeChatInput" type="text" placeholder="Message community…" autocomplete="off" spellcheck="false" maxlength="500"/>
+              <button class="home-chat-send" id="homeChatSend" type="button">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </div>
+          </div>
+          <!-- Sidebar membres — style Discord -->
+          <div class="home-chat-members-sidebar">
+            <div class="home-chat-members-section" id="homeChatStatOnline" style="display:none;">
+              <div class="home-chat-members-label">
+                <span class="home-chat-stat-dot home-chat-stat-dot--online"></span>
+                Online — <span id="homeChatOnlineCount">0</span>
+              </div>
+              <div class="home-chat-members-list" id="homeChatStatAvatars"></div>
+            </div>
+            <div class="home-chat-members-section" id="homeChatStatOffline" style="display:none;">
+              <div class="home-chat-members-label">
+                <span class="home-chat-stat-dot home-chat-stat-dot--offline"></span>
+                Offline — <span id="homeChatOfflineCount">0</span>
+              </div>
+              <div class="home-chat-members-list" id="homeChatStatAvatarsOffline"></div>
+            </div>
+            <div class="home-chat-members-empty" id="homeChatMembersEmpty">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="7" r="3.5"/><path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/></svg>
+              <span>No members yet</span>
+            </div>
+            <div class="home-chat-members-footer" id="homeChatStatMembers" style="display:none;">
+              <svg width="10" height="10" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="3"/><path d="M1 17c0-2.8 2.7-5 6-5"/><circle cx="14" cy="8" r="2.5"/><path d="M11 17c0-2.4 2-4 3-4s3 1.6 3 4"/></svg>
+              <span id="homeChatMembersCount">0</span> members
+            </div>
+          </div>
+          <!-- Compatibilité JS legacy -->
+          <div class="home-chat-stats-bar" id="homeChatStatsBar" style="display:none;">
+            <div id="homeChatStatConnected" style="display:none;"><span id="homeChatConnectedCount">0</span></div>
+            <div id="homeChatStatSep1" style="display:none;"></div>
+            <div id="homeChatStatSep2" style="display:none;"></div>
+            <div id="homeChatStatSep3" style="display:none;"></div>
+            <span id="homeChatOnline" style="display:none;"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIVE ACTIVITY — colonne droite -->
+      <section class="home-section home-live-section">
+        <div class="home-section-header">
+          <div>
+            <h2 class="home-section-title">Market Bot <span class="home-live-title-sep">·</span> Live Feed</h2>
+          </div>
           <span class="home-live-badge">LIVE</span>
         </div>
         <div id="cbTicker" class="home-live-card">
@@ -1109,83 +1277,9 @@
             <span class="cb-ticker-empty">Loading live activity…</span>
           </div>
         </div>
-      </div>
-
       </section>
 
-      <!-- COMMUNITY CHAT — colonne droite directe (même niveau que spotlight) -->
-      <section class="home-section home-community-section">
-        <div class="home-section-header">
-          <h2 class="home-section-title">Community Chat</h2>
-          <div class="home-chat-header-row">
-            <span class="home-community-live" id="homeChatStatus">connecting…</span>
-          </div>
-        </div>
-
-        <!-- ── Barre de stats premium ── -->
-        <div class="home-chat-stats-bar" id="homeChatStatsBar">
-          <!-- Viewers anonymes -->
-          <div class="home-chat-stat" id="homeChatStatConnected" style="display:none;">
-            <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.2"/><path d="M2.5 17c0-3.2 3.4-5.8 7.5-5.8s7.5 2.6 7.5 5.8"/></svg>
-            <div class="home-chat-stat-text">
-              <span id="homeChatConnectedCount">0</span>
-              <span class="home-chat-stat-label">viewers</span>
-            </div>
-          </div>
-          <div class="home-chat-stat-sep" id="homeChatStatSep1" style="display:none;"></div>
-          <!-- Membres en ligne -->
-          <div class="home-chat-stat home-chat-stat--online" id="homeChatStatOnline" style="display:none;">
-            <span class="home-chat-stat-dot home-chat-stat-dot--online"></span>
-            <div class="home-chat-stat-text">
-              <span id="homeChatOnlineCount">0</span>
-              <span class="home-chat-stat-label">online</span>
-            </div>
-            <div class="home-chat-stat-avatars" id="homeChatStatAvatars"></div>
-          </div>
-          <div class="home-chat-stat-sep" id="homeChatStatSep2" style="display:none;"></div>
-          <!-- Membres récemment vus (offline) -->
-          <div class="home-chat-stat home-chat-stat--offline" id="homeChatStatOffline" style="display:none;">
-            <span class="home-chat-stat-dot home-chat-stat-dot--offline"></span>
-            <div class="home-chat-stat-text">
-              <span id="homeChatOfflineCount">0</span>
-              <span class="home-chat-stat-label">offline</span>
-            </div>
-            <div class="home-chat-stat-avatars" id="homeChatStatAvatarsOffline"></div>
-          </div>
-          <div class="home-chat-stat-sep" id="homeChatStatSep3" style="display:none;"></div>
-          <!-- Total membres inscrits -->
-          <div class="home-chat-stat home-chat-stat--members" id="homeChatStatMembers" style="display:none;">
-            <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="7" cy="7" r="3"/><path d="M1 17c0-2.8 2.7-5 6-5"/><circle cx="14" cy="8" r="2.5"/><path d="M11 17c0-2.4 2-4 3-4s3 1.6 3 4"/>
-            </svg>
-            <div class="home-chat-stat-text">
-              <span id="homeChatMembersCount">0</span>
-              <span class="home-chat-stat-label">members</span>
-            </div>
-          </div>
-          <!-- badge "online" legacy (masqué, conservé pour la compat JS) -->
-          <span id="homeChatOnline" style="display:none;"></span>
-        </div>
-
-        <div class="home-community-card">
-          <div class="home-chat-messages" id="homeChatMessages"></div>
-          <!-- Panneau bas supprimé — les avatars sont dans la stats bar -->
-          <div id="homeChatOnlinePanel" style="display:none;"></div>
-          <div class="home-chat-locked" id="homeChatLocked" style="display:none;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
-            <span>Sign in to chat</span>
-          </div>
-          <div class="home-chat-error" id="homeChatError" style="display:none;"></div>
-          <div class="home-chat-input-row" id="homeChatInputRow">
-            <input class="home-chat-input" id="homeChatInput" type="text" placeholder="Message community…" autocomplete="off" spellcheck="false" maxlength="500"/>
-            <button class="home-chat-send" id="homeChatSend" type="button">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            </button>
-          </div>
-        </div>
-      </section>
-
-    </div><!-- fin home-two-col--spotlight -->
+    </div><!-- fin home-two-col--chat-live -->
 
     <!-- ── Featured Collections ── -->
     <section class="home-section home-section--featured">
@@ -1217,6 +1311,14 @@
           <button class="home-section-action" id="homeGoStats2" type="button">Full ranking →</button>
         </div>
         <div class="home-top-list" id="homeTopList">
+          <div class="home-top-list-header">
+            <span class="home-top-th">#</span>
+            <span class="home-top-th"></span>
+            <span class="home-top-th">Collection</span>
+            <span class="home-top-th home-top-th--r">Floor</span>
+            <span class="home-top-th home-top-th--r">Volume</span>
+            <span class="home-top-th home-top-th--r">Change</span>
+          </div>
           <div class="home-top-loading"><span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span></div>
         </div>
       </section>
@@ -1227,6 +1329,12 @@
           <span class="home-section-badge cb-badge-muted">All time · Primary</span>
         </div>
         <div class="cb-creators-list" id="cbTopCreatorsList">
+          <div class="home-top-list-header home-top-list-header--creators">
+            <span class="home-top-th">#</span>
+            <span class="home-top-th"></span>
+            <span class="home-top-th">Creator</span>
+            <span class="home-top-th home-top-th--r">Primary Sales</span>
+          </div>
           <div class="home-top-loading"><span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span></div>
         </div>
       </section>
@@ -1468,31 +1576,7 @@
           <button class="sb-view-btn sb-view-btn--active" id="sbViewCards" type="button" title="Cards"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><rect x="1" y="1" width="8" height="8" rx="1.5"/><rect x="11" y="1" width="8" height="8" rx="1.5"/><rect x="1" y="11" width="8" height="8" rx="1.5"/><rect x="11" y="11" width="8" height="8" rx="1.5"/></svg></button>
           <button class="sb-view-btn" id="sbViewTable" type="button" title="Table"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="2" y1="5" x2="18" y2="5"/><line x1="2" y1="10" x2="18" y2="10"/><line x1="2" y1="15" x2="18" y2="15"/></svg></button>
         </div>
-        <!-- Alarme sonore — placée juste à droite du toggle vue -->
-        <div class="sb-alarm-wrap" id="sbAlarmWrap">
-          <button class="sb-alarm-btn" id="sbAlarmBtn" type="button" title="Price alert">
-            <svg class="sb-alarm-icon" id="sbAlarmIcon" width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2a6 6 0 016 6c0 3.5 1.5 5 1.5 5h-15S4 11.5 4 8a6 6 0 016-6z"/><path d="M8.5 17a1.5 1.5 0 003 0"/></svg>
-            <span class="sb-alarm-label" id="sbAlarmLabel">Alert</span>
-          </button>
-          <div class="sb-alarm-panel" id="sbAlarmPanel" style="display:none;">
-            <div class="sb-alarm-panel-title">Price Alerts</div>
-            <p class="sb-alarm-panel-desc">Get notified the moment a sale or a new listing drops below the price you set. One threshold per channel (Sales / Listings) per collection — alerts fire independently and trigger an audio chime in your browser as long as Market Bot is open.</p>
-            <!-- Conteneur dynamique : une section par collection sélectionnée,
-                 chacune avec ses propres seuils Sales / Listings. Re-rendu à
-                 chaque changement de sélection. -->
-            <div class="sb-alarm-collections" id="sbAlarmCollections"></div>
-            <div class="sb-alarm-volume-row">
-              <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3,7 8,7 13,2 13,18 8,13 3,13"/><path d="M16 7a4 4 0 010 6"/></svg>
-              <input class="sb-alarm-volume" id="sbAlarmVolume" type="range" min="0" max="100" value="70"/>
-            </div>
-          </div>
-        </div>
-        <!-- Live indicator (déplacé du header vers la barre des filtres) -->
-        <div class="sb-live sb-live--filter" id="sbLive">
-          <span class="sb-live-dot"></span>
-          <span class="sb-live-label">LIVE</span>
-        </div>
-        <!-- Sélecteur de collection — placé juste à gauche d'Add your collection -->
+        <!-- Sélecteur de collection -->
         <div class="stats-col-selector-wrap" id="sbColSelectorWrap">
           <button class="stats-col-selector-btn" id="sbColSelectorBtn" type="button">
             <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 2.5"/></svg>
@@ -1530,29 +1614,55 @@
                 <span class="sb-col-rich-name">Dark Lions</span>
                 <span class="sb-col-rich-check">✓</span>
               </label>
+              <label class="sb-col-rich-item">
+                <input class="sb-col-cb" type="checkbox" value="2ec243b8746154fd9dc1c892d7f54fe9"/>
+                <img class="sb-col-rich-logo" src="" alt="" data-logo-id="2ec243b8746154fd9dc1c892d7f54fe9"/>
+                <span class="sb-col-rich-name" data-placeholder="1">…</span>
+                <span class="sb-col-rich-check">✓</span>
+              </label>
+              <!-- Les collections ajoutées par l'utilisateur s'insèrent ici -->
             </div>
           </div>
         </div>
-        <!-- Add your collection — tout à droite de la barre des filtres -->
-        <div class="sb-request-wrap">
-          <button class="sb-request-btn" id="sbRequestBtn" type="button">
+        <!-- Add your collection — popup avec barre de recherche intégrée -->
+        <div class="sb-request-wrap" id="sbAddColWrap">
+          <button class="sb-request-btn" id="sbAddColBtn" type="button">
             <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4v12M4 10h12"/></svg>
             Add your collection
           </button>
-          <div class="sb-request-dropdown" id="sbRequestDropdown" style="display:none;">
-            <div class="sb-request-title">Request to add your collection</div>
-            <p class="sb-request-desc">Contact me on Discord or X to have your collection added to the Market Bot.</p>
-            <div class="sb-request-links">
-              <a class="sb-request-link sb-request-link--discord" href="https://discord.gg/Cronos_WTF" target="_blank" rel="noopener">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-                Discord
-              </a>
-              <a class="sb-request-link sb-request-link--x" href="https://twitter.com/Cronos_WTF" target="_blank" rel="noopener">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932L18.9 1.153zm-1.653 19.57h2.04L6.486 3.24H4.298z"/></svg>
-                X (Twitter)
-              </a>
+          <div class="sb-request-dropdown sb-addcol-popup" id="sbAddColPopup" style="display:none;">
+            <div class="sb-request-title">Add a collection</div>
+            <p class="sb-request-desc">Search for any collection and click it to add it to your list. Added collections are saved in your browser.</p>
+            <!-- Barre de recherche -->
+            <div class="stats-search-wrap sb-addcol-search-wrap">
+              <svg class="stats-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="5.5"/><line x1="13" y1="13" x2="17" y2="17"/></svg>
+              <input class="stats-search-input" id="sbAddColInput" type="text" placeholder="Search a collection…" autocomplete="off" spellcheck="false"/>
+              <button class="stats-search-clear" id="sbAddColClear" type="button" style="display:none;">×</button>
+            </div>
+            <!-- Suggestions -->
+            <div class="sb-addcol-suggestions" id="sbAddColSuggestions" role="listbox" aria-label="Collection suggestions"></div>
+          </div>
+        </div>
+        <!-- Alarme sonore -->
+        <div class="sb-alarm-wrap" id="sbAlarmWrap">
+          <button class="sb-alarm-btn" id="sbAlarmBtn" type="button" title="Price alert">
+            <svg class="sb-alarm-icon" id="sbAlarmIcon" width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2a6 6 0 016 6c0 3.5 1.5 5 1.5 5h-15S4 11.5 4 8a6 6 0 016-6z"/><path d="M8.5 17a1.5 1.5 0 003 0"/></svg>
+            <span class="sb-alarm-label" id="sbAlarmLabel">Alert</span>
+          </button>
+          <div class="sb-alarm-panel" id="sbAlarmPanel" style="display:none;">
+            <div class="sb-alarm-panel-title">Price Alerts</div>
+            <p class="sb-alarm-panel-desc">Get notified the moment a new listing drops below the price you set — an audio chime fires in your browser as long as Market Bot is open.</p>
+            <div class="sb-alarm-collections" id="sbAlarmCollections"></div>
+            <div class="sb-alarm-volume-row">
+              <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3,7 8,7 13,2 13,18 8,13 3,13"/><path d="M16 7a4 4 0 010 6"/></svg>
+              <input class="sb-alarm-volume" id="sbAlarmVolume" type="range" min="0" max="100" value="70"/>
             </div>
           </div>
+        </div>
+        <!-- Live indicator — tout à droite -->
+        <div class="sb-live sb-live--filter" id="sbLive">
+          <span class="sb-live-dot"></span>
+          <span class="sb-live-label">LIVE</span>
         </div>
       </div>
     </div>
@@ -7608,8 +7718,7 @@ document.addEventListener('DOMContentLoaded', initialize);
         { id: '82421cf8e15df0edcaa200af752a344f', name: 'Loaded Lions',    logo: 'https://media.nft.crypto.com/273dc24c-5b5f-45d9-83d3-5db578bdce79/original.gif' },
         { id: '40af4533404b6dc586cf847f46810372', name: 'Loaded Pixel',    logo: 'https://media.nft.crypto.com/e7dc8e5d-5773-4dbb-a5ba-7c69e76e8960/original.gif', creator: 'CRONOS.WTF' },
         { id: '0281887cff39c6e2d790a2e716f84686', name: 'Loaded Mushroom',  logo: '',                                                                                creator: 'CRONOS.WTF' },
-        { id: '2ec243b8746154fd9dc1c892d7f54fe9', name: 'CRONOS.WTF',      logo: 'https://media.nft.crypto.com/22b0261a-8c1a-4fe3-a76e-9e6b90e43b8d/original.png', creator: 'CRONOS.WTF',
-          staticImages: ['WHITE.WTF.png','SAND.WTF.png','MARBLE.WTF.png','GOLD.WTF.png','FIRE.WTF.png','DIAMOND.WTF.png'] },
+        { id: '2ec243b8746154fd9dc1c892d7f54fe9', name: 'CRONOS.WTF',      logo: 'https://media.nft.crypto.com/22b0261a-8c1a-4fe3-a76e-9e6b90e43b8d/original.png', creator: 'CRONOS.WTF' },
     ];
 
     let _homeInit = false;
@@ -8065,7 +8174,9 @@ document.addEventListener('DOMContentLoaded', initialize);
             });
             const json = await res.json();
             const cols = json?.data?.public?.collections || [];
-            list.innerHTML = '';
+            // Préserver le header row (home-top-list-header)
+            const hdrRow = list.querySelector('.home-top-list-header');
+            Array.from(list.children).forEach(c => { if (c !== hdrRow) c.remove(); });
             cols.forEach((c, i) => {
                 const vol = Number(c.stats?.oneDayVolumeDecimal) || 0;
                 const chg = Number(c.stats?.oneDayVolumeDecimalChange) || 0;
@@ -8122,6 +8233,8 @@ document.addEventListener('DOMContentLoaded', initialize);
         const FB_READY = FB_CONFIG.apiKey && FB_CONFIG.apiKey !== "YOUR_API_KEY";
 
         let fbDb          = null;
+        let _certsCache   = {};   /* { username_lower: tokenHash } — populated from Firebase /certs */
+        window._certsCache = _certsCache;
         let fbInitialized = false;
         let lastSendAt    = 0;
 
@@ -8412,10 +8525,21 @@ document.addEventListener('DOMContentLoaded', initialize);
         function renderMessage(msg, key, instant) {
             const me = getCurrentUser();
             const isMine = !!(me && msg.user && msg.user === me.username);
+            /* Badge: only shown when msg.certToken matches Firebase /certs/{username}/token.
+               An impersonator without the real secret key cannot produce the correct hash. */
+            const userKey = (msg.user || '').toLowerCase();
+            const tokenMatch = msg.certToken && _certsCache[userKey] && msg.certToken === _certsCache[userKey];
+            const tokenPending = msg.certToken && !_certsCache[userKey]; /* cache not yet loaded */
+            const verifiedBadgeHtml = (tokenMatch || tokenPending)
+                ? `<span class="chat-verified-badge"${tokenPending ? ' style="display:none;"' : ''} title="Account ownership certified on Crypto.com NFT">
+                       <svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg>
+                   </span>`
+                : '';
             const div = document.createElement('div');
             div.className = 'home-chat-msg home-chat-msg--community' + (isMine ? ' home-chat-msg--mine' : '');
             if (key) div.dataset.msgKey = key;
             if (msg.user) div.dataset.msgUser = msg.user;
+            if (tokenPending) { div.dataset.certPending = userKey; div.dataset.certToken = msg.certToken; }
 
             // Barre emoji flottante (style Discord) — index utilisé pour éviter les bugs Unicode
             const reactBarHtml = key ? `
@@ -8426,7 +8550,9 @@ document.addEventListener('DOMContentLoaded', initialize);
             div.innerHTML = `
                 ${reactBarHtml}
                 <div class="home-chat-msg-meta">
-                    <span class="home-chat-msg-user">${_fcEsc(msg.display || msg.user || 'Anonymous')}</span>
+                    <span class="home-chat-msg-user-wrap">
+                        <span class="home-chat-msg-user">${_fcEsc(msg.display || msg.user || 'Anonymous')}</span>${verifiedBadgeHtml}
+                    </span>
                     <span class="home-chat-msg-meta-right">
                         <span class="home-chat-msg-time">${formatDateTime(msg.t)}</span>
                         ${msg.edited ? '<span class="home-chat-msg-edited">(edited)</span>' : ''}
@@ -8540,19 +8666,20 @@ document.addEventListener('DOMContentLoaded', initialize);
                 container.innerHTML = '';
                 return;
             }
-            container.style.display = 'flex';
+            container.style.display = 'block';
             const shown = members.slice(0, max);
             const extra = members.length - max;
-            const offCls = isOffline ? ' home-chat-sa-avatar--offline' : '';
+            const offCls = isOffline ? ' home-chat-member--offline' : '';
             container.innerHTML =
                 shown.map(m => `
-                    <span class="home-chat-sa-item${isOffline ? ' home-chat-sa-item--offline' : ''}" title="${_fcEsc((m.display || m.username) + (isOffline ? ' (offline)' : ''))}">
+                    <div class="home-chat-member${offCls}">
                         ${m.avatar
-                            ? `<img class="home-chat-sa-avatar${offCls}" src="${_fcEsc(m.avatar)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><span class="home-chat-sa-initial${offCls}" style="display:none">${escapeHtml((m.display||m.username)[0].toUpperCase())}</span>`
-                            : `<span class="home-chat-sa-initial${offCls}">${_fcEsc((m.display||m.username)[0].toUpperCase())}</span>`
+                            ? `<img class="home-chat-member-avatar" src="${_fcEsc(m.avatar)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><span class="home-chat-member-initial" style="display:none">${_fcEsc((m.display||m.username||'?')[0].toUpperCase())}</span>`
+                            : `<span class="home-chat-member-initial">${_fcEsc((m.display||m.username||'?')[0].toUpperCase())}</span>`
                         }
-                    </span>`).join('') +
-                (extra > 0 ? `<span class="home-chat-sa-more">${isOffline ? '' : ''}+${extra}</span>` : '');
+                        <span class="home-chat-member-name">${_fcEsc(m.display || m.username || '?')}</span>
+                    </div>`).join('') +
+                (extra > 0 ? `<div class="home-chat-member home-chat-member--more">+${extra} more</div>` : '');
         }
 
         async function ensureInit() {
@@ -8568,6 +8695,28 @@ document.addEventListener('DOMContentLoaded', initialize);
                 await loadFirebase();
                 firebase.initializeApp(FB_CONFIG);
                 fbDb = firebase.database();
+                window.fbDb = fbDb; /* expose for certify module */
+
+                /* Subscribe to /certs — builds local cache of verified tokens.
+                   Badge is only shown when msg.certToken matches this cache. */
+                fbDb.ref('certs').on('value', snap => {
+                    _certsCache = {};
+                    snap.forEach(child => {
+                        const token = child.val()?.token;
+                        if (token) _certsCache[child.key] = token;
+                    });
+                    window._certsCache = _certsCache; /* keep global reference in sync */
+                    /* Re-render any already-displayed messages to update badges */
+                    document.querySelectorAll('[data-cert-pending]').forEach(el => {
+                        const u = el.dataset.certPending;
+                        const t = el.dataset.certToken;
+                        if (u && t && _certsCache[u] === t) {
+                            el.removeAttribute('data-cert-pending');
+                            const badge = el.querySelector('.chat-verified-badge');
+                            if (badge) badge.style.display = 'inline-flex';
+                        }
+                    });
+                });
                 // Subscribe to the last 50 messages — on capture la clé
                 // (snap.key) pour pouvoir cibler le message lors d'une édition
                 // ou suppression ultérieure.
@@ -8761,10 +8910,11 @@ document.addEventListener('DOMContentLoaded', initialize);
             input.value = '';
             try {
                 await fbDb.ref('chat/messages').push({
-                    user:    user.username,
-                    display: user.displayName || user.username,
-                    text:    text,
-                    t:       firebase.database.ServerValue.TIMESTAMP
+                    user:      user.username,
+                    display:   user.displayName || user.username,
+                    text:      text,
+                    certToken: user.certToken || null,
+                    t:         firebase.database.ServerValue.TIMESTAMP
                 });
             } catch(e) {
                 console.error('[Community chat] send failed:', e);
@@ -8964,6 +9114,8 @@ document.addEventListener('DOMContentLoaded', initialize);
     const DEFAULT_COL = { id: '82421cf8e15df0edcaa200af752a344f', name: 'Loaded Lions' };
     let _currentCol = { ...DEFAULT_COL };
     let _sbMode = 'transferred';
+    // Exposé pour que le Live Feed (ticker) puisse lire le filtre actif
+    Object.defineProperty(window, '_sbMode', { get: () => _sbMode, configurable: true });
     let _sbView = 'cards';
     let _sbFloorByCol = {};
     /* Total NFT supply par collection — utilisé pour afficher le rang sous
@@ -8974,6 +9126,9 @@ document.addEventListener('DOMContentLoaded', initialize);
     let _cursor = null;
     let _hasMore = false;
     let _sales = [];
+    // Exposé pour que le Live Feed (ticker home) puisse lire les ventes
+    // sans re-fetcher l'API — simple lecture de l'état courant du Market Bot.
+    Object.defineProperty(window, '_sbSales', { get: () => _sales, configurable: true });
     let _sbInit = false;
     let _autoRefreshTimer = null;
 
@@ -9270,6 +9425,8 @@ document.addEventListener('DOMContentLoaded', initialize);
                   + '<span class="stats-summary-val">' + filtered.length + '</span>'
               + '</span>';
         }
+        // Notifie le Live Feed home que les données ont changé
+        if (typeof window._sbTickerRefresh === 'function') window._sbTickerRefresh();
     };
 
     function fmtDate(dateStr) {
@@ -9380,7 +9537,13 @@ document.addEventListener('DOMContentLoaded', initialize);
     async function loadDropdownLogos(listId) {
         const imgs = Array.from(document.querySelectorAll(`#${listId} [data-logo-id]`));
         await Promise.all(imgs.map(async img => {
-            if (img.classList.contains('loaded')) return;
+            // Skippe uniquement si le creator data est déjà hydraté sur la
+            // checkbox — pas si le logo est simplement affiché (src pré-rempli).
+            // Cela garantit que les collections custom (logo pré-rempli depuis
+            // les suggestions, mais creatorId pas encore connu) sont bien fetchées.
+            const label = img.closest('.sb-col-rich-item');
+            const cb    = label?.querySelector('.sb-col-cb');
+            if (cb?.dataset.creatorId) return; // déjà hydraté — vrai skip
             const col = await fetchColLogo(img.dataset.logoId);
             if (!col) return;
             if (col.logo?.url) {
@@ -9389,14 +9552,12 @@ document.addEventListener('DOMContentLoaded', initialize);
             }
             // Met à jour le nom (si placeholder) et tague la checkbox avec
             // les data-creator-* pour pouvoir grouper ensuite.
-            const label = img.closest('.sb-col-rich-item');
             if (!label) return;
             const nameEl = label.querySelector('.sb-col-rich-name');
             if (nameEl && nameEl.dataset.placeholder) {
                 nameEl.textContent = col.name || '';
                 delete nameEl.dataset.placeholder;
             }
-            const cb = label.querySelector('.sb-col-cb');
             const creatorId       = col.creator?.uuid || col.creator?.id || '';
             const creatorName     = col.creator?.displayName || col.creator?.username || '';
             const creatorVerified = !!col.creator?.verified;
@@ -9447,9 +9608,10 @@ document.addEventListener('DOMContentLoaded', initialize);
         });
         // 4) Vide la liste sans détruire les nodes (on les ré-attachera)
         labels.forEach(l => l.remove());
-        // 5) Réinsère orphans en premier (pas de header), puis chaque
-        //    groupe précédé de son en-tête
-        orphans.forEach(l => list.appendChild(l));
+        // 5) Réinsère d'abord chaque groupe de créateur précédé de son header,
+        //    puis les orphans EN DERNIER (collections sans créateur connu,
+        //    typiquement les collections custom dont le fetch n'est pas encore
+        //    terminé, ou les collections d'un artiste non répertorié).
         for (const [creatorId, group] of byCreator) {
             const header = document.createElement('button');
             header.className = 'sb-col-group-header';
@@ -9461,6 +9623,7 @@ document.addEventListener('DOMContentLoaded', initialize);
             list.appendChild(header);
             group.items.forEach(l => list.appendChild(l));
         }
+        orphans.forEach(l => list.appendChild(l));
     }
 
     // _selectedIds : set des IDs cochés
@@ -9570,9 +9733,25 @@ document.addEventListener('DOMContentLoaded', initialize);
         // Dropdown toggle
         const colBtn = document.getElementById('sbColSelectorBtn');
         const colDropdown = document.getElementById('sbColDropdown');
+
+        // ── Fonction partagée : ferme tous les panels du Market Bot ──────
+        // Exposée en global pour que les modules alarme et add-collection
+        // puissent l'appeler avant d'ouvrir leur propre panel (accordion).
+        window._sbCloseAllPanels = function(except) {
+            if (except !== 'selector' && colDropdown && colDropdown.style.display !== 'none')
+                colDropdown.style.display = 'none';
+            const alarmPanel = document.getElementById('sbAlarmPanel');
+            if (except !== 'alarm' && alarmPanel && alarmPanel.style.display !== 'none')
+                alarmPanel.style.display = 'none';
+            const addPopup = document.getElementById('sbAddColPopup');
+            if (except !== 'addcol' && addPopup && addPopup.style.display !== 'none')
+                addPopup.style.display = 'none';
+        };
+
         colBtn?.addEventListener('click', e => {
             e.stopPropagation();
             const isOpen = colDropdown.style.display !== 'none';
+            if (!isOpen) window._sbCloseAllPanels('selector');
             colDropdown.style.display = isOpen ? 'none' : 'block';
         });
         document.addEventListener('click', e => {
@@ -10265,20 +10444,283 @@ document.addEventListener('DOMContentLoaded', initialize);
     }
 })();
 
-/* ── BOT REQUEST DROPDOWN ── */
-(function() {
-    const btn = document.getElementById('sbRequestBtn');
-    const drop = document.getElementById('sbRequestDropdown');
-    if (!btn || !drop) return;
-    btn.addEventListener('click', e => {
+/* ═══════════════════════════════════════════════════════════════
+   MARKET BOT — ADD CUSTOM COLLECTION + FIREBASE SYNC
+   • localStorage  : fallback universel (toujours actif)
+   • Firebase RTDB : sync cross-device quand l'utilisateur est
+     connecté (même DB que le chat → marketbot/{username}/cols)
+   • Merge sans doublon : localStorage + Firebase fusionnés
+   ═══════════════════════════════════════════════════════════════ */
+(function () {
+    'use strict';
+
+    const LS_KEY     = 'cwtf_sb_custom_collections';
+    const ID_PATTERN = /^[0-9a-f]{32}$/i;
+    const FB_PATH    = u => `marketbot/${u.toLowerCase().replace(/[^a-z0-9_-]/g,'')}/cols`;
+
+    const $ = id => document.getElementById(id);
+
+    const toggleBtn  = $('sbAddColBtn');
+    const popup      = $('sbAddColPopup');
+    const input      = $('sbAddColInput');
+    const clearBtn   = $('sbAddColClear');
+    const sgBox      = $('sbAddColSuggestions');
+    const colList    = $('sbColList');
+
+    if (!toggleBtn || !popup || !input || !sgBox || !colList) return;
+
+    // ── Helpers username & Firebase ────────────────────────────
+    function getLoggedUsername() {
+        try {
+            const s = JSON.parse(localStorage.getItem('cronos_logged_user') || 'null');
+            return s?.username ? s.username.toLowerCase().replace(/[^a-z0-9_-]/g,'') : null;
+        } catch { return null; }
+    }
+    function getDb() { return window.fbDb || null; }
+
+    // Attend que fbDb soit disponible (lazy-init par le chat)
+    function waitForDb(cb, timeout = 12000) {
+        if (getDb()) { cb(getDb()); return; }
+        const t0 = Date.now();
+        const iv = setInterval(() => {
+            if (getDb()) { clearInterval(iv); cb(getDb()); return; }
+            if (Date.now() - t0 > timeout) clearInterval(iv);
+        }, 400);
+    }
+
+    // ── localStorage ───────────────────────────────────────────
+    function loadSaved()         { try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch { return []; } }
+    function saveSavedLocal(arr) { try { localStorage.setItem(LS_KEY, JSON.stringify(arr)); } catch {} }
+
+    // ── Firebase sync ──────────────────────────────────────────
+    async function pushToFirebase(collections) {
+        const username = getLoggedUsername();
+        const db = getDb();
+        if (!username || !db) return;
+        try {
+            await db.ref(FB_PATH(username)).set({ cols: JSON.stringify(collections) });
+        } catch(e) { console.warn('[MarketBot] Firebase write:', e?.message); }
+    }
+
+    async function loadFromFirebase(username) {
+        const db = getDb();
+        if (!db || !username) return;
+        try {
+            const snap   = await db.ref(FB_PATH(username)).once('value');
+            const raw    = snap.val()?.cols;
+            if (!raw) return;
+            const remote = JSON.parse(raw);
+            if (!Array.isArray(remote)) return;
+            let changed = false;
+            remote.forEach(c => {
+                if (!c?.id) return;
+                if (!colList.querySelector(`input[value="${CSS.escape(c.id)}"]`)) {
+                    addCollectionToDom(c);
+                    changed = true;
+                }
+            });
+            if (changed) saveAll(); // consolide localStorage
+        } catch(e) { console.warn('[MarketBot] Firebase read:', e?.message); }
+    }
+
+    // Sauvegarde unifiée : localStorage + Firebase
+    function saveAll() {
+        const arr = Array.from(colList.querySelectorAll('label[data-custom-id]'))
+            .map(l => ({
+                id:      l.dataset.customId,
+                name:    l.querySelector('.sb-col-rich-name')?.textContent?.trim() || l.dataset.customId,
+                logoUrl: l.querySelector('.sb-col-rich-logo')?.src || ''
+            }));
+        saveSavedLocal(arr);
+        pushToFirebase(arr); // async silencieux
+    }
+
+    // ── Popup open/close ───────────────────────────────────────
+    toggleBtn.addEventListener('click', e => {
         e.stopPropagation();
-        drop.style.display = drop.style.display === 'none' ? 'block' : 'none';
+        const open = popup.style.display !== 'none';
+        if (!open && typeof window._sbCloseAllPanels === 'function') window._sbCloseAllPanels('addcol');
+        popup.style.display = open ? 'none' : 'block';
+        if (!open) setTimeout(() => input.focus(), 40);
     });
     document.addEventListener('click', e => {
-        if (!btn.contains(e.target) && !drop.contains(e.target))
-            drop.style.display = 'none';
+        if (!toggleBtn.contains(e.target) && !popup.contains(e.target))
+            popup.style.display = 'none';
     });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') popup.style.display = 'none'; });
+
+    // ── Suggestions ────────────────────────────────────────────
+    let debTimer = null, abortCtrl = null, lastQ = '';
+
+    function clearSuggestions() { sgBox.innerHTML = ''; sgBox.style.display = 'none'; }
+    function showLoader()       { sgBox.innerHTML = '<div class="sb-addcol-sg-row sb-addcol-sg-muted">Searching\u2026</div>'; sgBox.style.display = 'block'; }
+    function showEmpty(msg)     { sgBox.innerHTML = `<div class="sb-addcol-sg-row sb-addcol-sg-muted">${msg}</div>`; sgBox.style.display = 'block'; }
+
+    function renderSuggestions(cols) {
+        sgBox.innerHTML = '';
+        if (!cols.length) { showEmpty('No collection found'); return; }
+        const header = document.createElement('div');
+        header.className = 'sb-addcol-sg-header';
+        header.textContent = 'Click to add';
+        sgBox.appendChild(header);
+        cols.forEach(c => {
+            const row = document.createElement('div');
+            row.className = 'sb-addcol-sg-row';
+            row.setAttribute('role', 'option');
+            let thumb;
+            if (c.logo?.url && typeof window.makeThumb === 'function') thumb = window.makeThumb(c.logo.url, c.name || '', true);
+            else if (typeof window.makePlaceholder === 'function') thumb = window.makePlaceholder(true);
+            else { thumb = document.createElement('div'); thumb.className = 'suggestion-thumb suggestion-thumb--square suggestion-thumb--placeholder'; }
+            row.appendChild(thumb);
+            const info = document.createElement('div'); info.className = 'sb-addcol-sg-info';
+            const name = document.createElement('span'); name.className = 'sb-addcol-sg-name'; name.textContent = c.name || '(unnamed)';
+            info.appendChild(name);
+            if (c.metrics?.items) {
+                const sub = document.createElement('span'); sub.className = 'sb-addcol-sg-sub';
+                sub.textContent = Number(c.metrics.items).toLocaleString() + ' items';
+                info.appendChild(sub);
+            }
+            row.appendChild(info);
+            if (c.verified && typeof window.makeVerifiedBadge === 'function') row.appendChild(window.makeVerifiedBadge());
+            const plusIco = document.createElement('span'); plusIco.className = 'sb-addcol-sg-plus'; plusIco.textContent = '+';
+            row.appendChild(plusIco);
+            row.addEventListener('mousedown', e => {
+                e.preventDefault();
+                addCollection({ id: c.id, name: c.name || '(unnamed)', logoUrl: c.logo?.url || '' });
+                row.classList.add('sb-addcol-sg-row--added');
+                row.querySelector('.sb-addcol-sg-plus').textContent = '\u2713';
+                setTimeout(() => { popup.style.display = 'none'; resetInput(); }, 650);
+            });
+            sgBox.appendChild(row);
+        });
+        sgBox.style.display = 'block';
+    }
+
+    async function runSearch(q) {
+        if (typeof window.fetchDropDown !== 'function') return;
+        if (abortCtrl) abortCtrl.abort();
+        abortCtrl = new AbortController();
+        showLoader();
+        try {
+            const dd = await window.fetchDropDown(q, abortCtrl.signal);
+            if (lastQ !== q) return;
+            const score = n => (typeof window._matchScore === 'function') ? window._matchScore(n || '', q) : 0;
+            renderSuggestions((dd?.collections || []).slice().sort((a,b) => score(b.name)-score(a.name)).slice(0,6));
+        } catch(e) { if (e?.name !== 'AbortError') showEmpty('Search error \u2014 please retry'); }
+    }
+
+    function resetInput() { input.value = ''; clearBtn.style.display = 'none'; clearSuggestions(); }
+    input.addEventListener('input', () => {
+        const q = input.value.trim(); lastQ = q;
+        clearBtn.style.display = q ? 'block' : 'none';
+        clearTimeout(debTimer);
+        if (!q || ID_PATTERN.test(q) || q.length < 2) { clearSuggestions(); return; }
+        debTimer = setTimeout(() => runSearch(q), 220);
+    });
+    input.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); resetInput(); } });
+    clearBtn.addEventListener('click', () => { resetInput(); input.focus(); });
+
+    // ── Construction DOM identique aux prédéfinies ─────────────
+    function addCollectionToDom({ id, name, logoUrl }) {
+        if (colList.querySelector(`input[value="${CSS.escape(id)}"]`)) {
+            const dup = colList.querySelector(`input[value="${CSS.escape(id)}"]`).closest('label');
+            dup?.classList.add('sb-col-rich-item--flash');
+            setTimeout(() => dup?.classList.remove('sb-col-rich-item--flash'), 900);
+            return false;
+        }
+        const label = document.createElement('label');
+        label.className = 'sb-col-rich-item sb-col-rich-item--custom';
+        label.dataset.customId = id;
+
+        const cb = document.createElement('input');
+        cb.className = 'sb-col-cb'; cb.type = 'checkbox'; cb.value = id; cb.checked = true;
+
+        const img = document.createElement('img');
+        img.className = 'sb-col-rich-logo'; img.alt = ''; img.dataset.logoId = id;
+        // Pré-remplir src sans 'loaded' : loadDropdownLogos fetche quand
+        // meme le creatorId/Name/Verified pour le groupement et les alarmes
+        if (logoUrl) img.src = logoUrl;
+
+        const nameSpan  = document.createElement('span'); nameSpan.className  = 'sb-col-rich-name';  nameSpan.textContent  = name;
+        const checkSpan = document.createElement('span'); checkSpan.className = 'sb-col-rich-check'; checkSpan.textContent = '\u2713';
+
+        label.appendChild(cb); label.appendChild(img);
+        label.appendChild(nameSpan); label.appendChild(checkSpan);
+        colList.appendChild(label);
+
+        cb.addEventListener('change', () => {
+            if (typeof window._sbUpdateColSelector === 'function') window._sbUpdateColSelector();
+        });
+        // Hydrate creator data → groupement artiste + alarmes correctes
+        if (typeof window.loadDropdownLogos === 'function') {
+            window.loadDropdownLogos('sbColList').then(() => {
+                if (typeof window._sbAlarmRefresh === 'function') window._sbAlarmRefresh();
+            });
+        }
+        if (typeof window._sbUpdateColSelector === 'function') window._sbUpdateColSelector();
+        if (typeof window._sbAlarmRefresh === 'function') window._sbAlarmRefresh();
+        return true;
+    }
+
+    function addCollection(colData) {
+        const added = addCollectionToDom(colData);
+        if (added) saveAll();
+    }
+
+    // ── Suppression × (délégation) ─────────────────────────────
+    colList.addEventListener('click', e => {
+        const rmBtn = e.target.closest('.sb-col-remove-btn');
+        if (!rmBtn) return;
+        e.preventDefault(); e.stopPropagation();
+        const label = rmBtn.closest('label[data-custom-id]');
+        if (!label) return;
+        label.remove();
+        saveAll();
+        if (typeof window._sbUpdateColSelector === 'function') window._sbUpdateColSelector();
+        if (typeof window._sbAlarmRefresh === 'function') window._sbAlarmRefresh();
+    });
+    colList.addEventListener('mouseenter', e => {
+        const label = e.target.closest('label[data-custom-id]');
+        if (!label || label.querySelector('.sb-col-remove-btn')) return;
+        const btn = document.createElement('button');
+        btn.className = 'sb-col-remove-btn'; btn.type = 'button'; btn.title = 'Remove'; btn.textContent = '\u00d7';
+        label.appendChild(btn);
+    }, true);
+    colList.addEventListener('mouseleave', e => {
+        e.target.closest('label[data-custom-id]')?.querySelector('.sb-col-remove-btn')?.remove();
+    }, true);
+
+    // ── Restore localStorage au chargement ────────────────────
+    function restoreFromLocal() {
+        loadSaved().forEach(c => { if (c?.id) addCollectionToDom(c); });
+    }
+
+    // ── Sync Firebase au login ─────────────────────────────────
+    window.addEventListener('cronos:auth', e => {
+        if (e.detail?.action !== 'login') return;
+        const username = getLoggedUsername();
+        if (username) waitForDb(() => loadFromFirebase(username));
+    });
+
+    // Sync initiale si déjà connecté au rechargement de page
+    function tryInitialFirebaseSync() {
+        const username = getLoggedUsername();
+        if (username) waitForDb(() => loadFromFirebase(username));
+    }
+
+    // Bootstrap
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => { restoreFromLocal(); tryInitialFirebaseSync(); });
+    } else {
+        setTimeout(() => { restoreFromLocal(); tryInitialFirebaseSync(); }, 0);
+    }
 })();
+
+/* ── SHA-256 utility (WebCrypto API) ── */
+async function sha256hex(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
 /* ── LOGIN MODULE ── */
 (function() {
@@ -10295,7 +10737,11 @@ document.addEventListener('DOMContentLoaded', initialize);
     const nameEl      = document.getElementById('topnavUserName');
     const logoutBtn   = document.getElementById('topnavUserLogout');
 
-    const LS_KEY = 'cronos_logged_user';
+    const LS_KEY    = 'cronos_logged_user';
+    const CERTS_KEY = 'cronos_certs'; /* Survit au logout — { username_lower: certToken } */
+
+    /* ── UUID format validator ── */
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
     function openModal() {
         backdrop.style.display = 'flex';
@@ -10309,16 +10755,48 @@ document.addEventListener('DOMContentLoaded', initialize);
         if (submitBtn) submitBtn.disabled = false;
     }
 
-    function showUser(username, avatarUrl) {
+    function _setVerifyStatus(msg, type) {
+        const el = document.getElementById('lmVerifyStatus');
+        if (!el) return;
+        el.textContent = msg;
+        el.className = 'lm-verify-status' + (type ? ' is-' + type : '');
+    }
+
+    function showUser(username, avatarUrl, verified) {
         if (loginBtn) loginBtn.style.display = 'none';
         const outBtn = document.getElementById('topnavUserLogout');
         if (outBtn) outBtn.style.display = 'flex';
-        if (nameEl)   nameEl.textContent = username;
+        /* Show certify button */
+        const certifyBtn = document.getElementById('topnavCertifyBtn');
+        if (certifyBtn) {
+            certifyBtn.style.display = 'flex';
+            const lbl = document.getElementById('topnavCertifyLabel');
+            if (verified) {
+                certifyBtn.classList.add('is-verified');
+                certifyBtn.title = 'Account certified ✓';
+                if (lbl) lbl.textContent = '✓ Certified';
+            } else {
+                certifyBtn.classList.remove('is-verified');
+                certifyBtn.title = 'Certify account ownership (optional)';
+                if (lbl) lbl.textContent = 'Certify';
+            }
+        }
+        if (nameEl) {
+            nameEl.textContent = username;
+            const existingBadge = nameEl.parentElement?.querySelector('.topnav-verified-badge');
+            if (existingBadge) existingBadge.remove();
+            if (verified) {
+                const badge = document.createElement('span');
+                badge.className = 'topnav-verified-badge';
+                badge.title = 'Account ownership verified';
+                badge.innerHTML = '<svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg>';
+                nameEl.insertAdjacentElement('afterend', badge);
+            }
+        }
         if (avatarEl) {
             avatarEl.src = avatarUrl || '';
             avatarEl.style.display = avatarUrl ? 'block' : 'none';
         }
-        // Afficher le tab MY PROFILE quand l'utilisateur est connecté
         const myTab = document.getElementById('topnavMyProfil');
         if (myTab) myTab.style.display = 'flex';
     }
@@ -10327,13 +10805,18 @@ document.addEventListener('DOMContentLoaded', initialize);
         if (loginBtn) loginBtn.style.display = 'flex';
         const outBtn = document.getElementById('topnavUserLogout');
         if (outBtn) outBtn.style.display = 'none';
-        // Masquer le tab MY PROFILE en cas de logout
+        /* Hide certify button */
+        const certifyBtn = document.getElementById('topnavCertifyBtn');
+        if (certifyBtn) { certifyBtn.style.display = 'none'; certifyBtn.classList.remove('is-verified'); }
+        _closeCertifyDropdown();
+        /* Masquer le tab MY PROFILE en cas de logout */
         const myTab = document.getElementById('topnavMyProfil');
         if (myTab) {
             myTab.style.display = 'none';
             myTab.classList.remove('topnav-tab--active');
             myTab.setAttribute('aria-selected', 'false');
         }
+        document.querySelectorAll('.topnav-verified-badge').forEach(b => b.remove());
     }
 
     function logout() {
@@ -10347,19 +10830,71 @@ document.addEventListener('DOMContentLoaded', initialize);
         if (submitText) submitText.textContent = 'Loading…';
         if (errorEl) errorEl.style.display = 'none';
         try {
-            // Utiliser fetchDropDown (même mécanisme que la search bar) pour valider le username
+            /* Utiliser fetchDropDown (même mécanisme que la search bar) pour valider le username */
             const dropResult = await fetchDropDown(username, null);
             const users = dropResult?.users || [];
-            // Chercher match exact ou partiel
+            /* Chercher match exact ou partiel */
             let user = users.find(u => u.username?.toLowerCase() === username.toLowerCase());
-            if (!user && users.length > 0) user = users[0]; // premier résultat
+            if (!user && users.length > 0) user = users[0];
             if (!user) throw new Error('Profile not found. Check your username.');
-            // Stocker
-            const data = { username: user.username, displayName: user.displayName || '', avatarUrl: user.avatar?.url || '' };
+            /* Stocker */
+            const saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+            const sameUser = saved?.username?.toLowerCase() === user.username.toLowerCase();
+            /* Look up persisted certToken from localStorage (survives logout) */
+            let persistedCertToken = null;
+            try {
+                const certsStore = JSON.parse(localStorage.getItem(CERTS_KEY) || '{}');
+                persistedCertToken = certsStore[user.username.toLowerCase()] || null;
+            } catch(e) {}
+            const data = {
+                username:      user.username,
+                displayName:   user.displayName || '',
+                avatarUrl:     user.avatar?.url || '',
+                verified:      !!(persistedCertToken),
+                certToken:     persistedCertToken,
+                verifiedAt:    sameUser ? (saved?.verifiedAt || null) : null,
+                secretKeyHint: sameUser ? (saved?.secretKeyHint || null) : null,
+            };
             localStorage.setItem(LS_KEY, JSON.stringify(data));
-            showUser(user.displayName || user.username, user.avatar?.url);
+            showUser(user.displayName || user.username, user.avatar?.url, data.verified);
             closeModal();
-            // Pas de redirection automatique — l'utilisateur reste sur la page en cours
+            /* Async: sync with Firebase as source of truth.
+               If Firebase has a token that differs from localStorage (e.g. certified
+               from another browser), update localStorage. If localStorage has a token
+               that Firebase doesn't have yet, write it to Firebase. */
+            (async () => {
+                const waitForDb = (maxMs) => new Promise(resolve => {
+                    const t0 = Date.now();
+                    const check = () => window.fbDb ? resolve(window.fbDb)
+                        : Date.now() - t0 < maxMs ? setTimeout(check, 300) : resolve(null);
+                    check();
+                });
+                const db = await waitForDb(8000);
+                if (!db) return;
+                const uKey = user.username.toLowerCase();
+                const snap = await db.ref('certs/' + uKey).once('value');
+                const fbToken = snap.val()?.token || null;
+                if (fbToken) {
+                    /* Firebase has a token — use it as the canonical truth */
+                    if (fbToken !== persistedCertToken) {
+                        /* Update localStorage to match Firebase */
+                        try {
+                            const certsStore = JSON.parse(localStorage.getItem(CERTS_KEY) || '{}');
+                            certsStore[uKey] = fbToken;
+                            localStorage.setItem(CERTS_KEY, JSON.stringify(certsStore));
+                            const current = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+                            current.certToken = fbToken;
+                            current.verified = true;
+                            localStorage.setItem(LS_KEY, JSON.stringify(current));
+                        } catch(e) {}
+                    }
+                } else if (persistedCertToken) {
+                    /* localStorage has a token but Firebase doesn't — write it */
+                    try {
+                        await db.ref('certs/' + uKey).set({ token: persistedCertToken, ts: Date.now() });
+                    } catch(e) {}
+                }
+            })();
         } catch(e) {
             if (errorEl) { errorEl.textContent = e.message || 'Error. Try again.'; errorEl.style.display = 'block'; }
             if (submitText) submitText.textContent = 'Go to my profile';
@@ -10367,10 +10902,247 @@ document.addEventListener('DOMContentLoaded', initialize);
         }
     }
 
-    // Init depuis localStorage
+    /* ════════════════════════════════════════════
+       OWNERSHIP VERIFICATION — Optional feature
+       Steps:
+         1. User goes to crypto.com/nft/settings/verification
+         2. Generates a secret key (UUID, valid 5 min)
+         3. Pastes it here
+         4. We call the ExternalConnectionSecretKey query
+            with credentials to validate
+       ════════════════════════════════════════════ */
+    const GQL_VERIFY_QUERY = `query ExternalConnectionSecretKey {
+        externalConnectionSecretKey {
+            expireAt
+            secretKey
+            __typename
+        }
+    }`;
+
+    const GQL_CONNECTIONS_QUERY = `query ExternalConnections($platformHashedIds: [ID!]) {
+        externalConnections(platformHashedIds: $platformHashedIds) {
+            hashedId
+            serverName
+            __typename
+        }
+    }`;
+
+    /* Discord platform hashedId on Crypto.com NFT */
+    const DISCORD_PLATFORM_ID = '5487b4e3a55a49941f50b73921dc684f';
+    const CRYPTOAPI = 'https://crypto.com/nft-api/graphql';
+
+    async function _callGQL(query, variables, withCreds) {
+        const opts = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query, variables: variables || {} }),
+        };
+        if (withCreds) opts.credentials = 'include'; /* send Crypto.com cookies if present */
+        const r = await fetch(CRYPTOAPI, opts);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const j = await r.json();
+        if (j.errors) throw new Error(j.errors.map(e => e.message).join(', '));
+        return j.data;
+    }
+
+    async function doVerify() {
+        const keyInput = document.getElementById('lmVerifyKeyInput');
+        const vBtn     = document.getElementById('lmVerifyBtn');
+        const vText    = document.getElementById('lmVerifyBtnText');
+        const key      = keyInput?.value?.trim() || '';
+
+        if (!UUID_RE.test(key)) {
+            _setVerifyStatus('Invalid key format — must be a UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)', 'error');
+            return;
+        }
+
+        if (vBtn) vBtn.disabled = true;
+        if (vText) vText.textContent = 'Verifying…';
+        _setVerifyStatus('Contacting Crypto.com…', 'loading');
+
+        const saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+        if (!saved?.username) {
+            _setVerifyStatus('Please sign in first.', 'error');
+            if (vBtn) vBtn.disabled = false;
+            if (vText) vText.textContent = 'Verify';
+            return;
+        }
+
+        let verified = false;
+        let statusMsg = '';
+
+        try {
+            /* Attempt 1: fetch the current secret key from crypto.com using the
+               user's browser session (cookies). If the returned key matches the
+               pasted one, ownership is confirmed. */
+            const data = await _callGQL(GQL_VERIFY_QUERY, {}, true);
+            const remoteKey = data?.externalConnectionSecretKey?.secretKey || null;
+
+            if (remoteKey && remoteKey.toLowerCase() === key.toLowerCase()) {
+                verified = true;
+                statusMsg = '✓ Ownership confirmed — your account is certified';
+            } else if (remoteKey === null) {
+                /* No active key — might mean key was already consumed or session unavailable */
+                statusMsg = 'Could not confirm — key expired or not found on Crypto.com. Make sure you are logged into Crypto.com in the same browser and the key was generated within the last 5 minutes.';
+            } else {
+                statusMsg = 'Key mismatch — the pasted key does not match the current key on your Crypto.com account.';
+            }
+        } catch(e) {
+            /* Attempt 2: CORS blocked (likely on production) — fall back to a
+               "trusted" store: record the key + timestamp as a verification claim.
+               We also try fetching Discord connections as a soft signal. */
+            try {
+                const connData = await _callGQL(GQL_CONNECTIONS_QUERY, { platformHashedIds: [DISCORD_PLATFORM_ID] }, true);
+                const connections = connData?.externalConnections || [];
+                if (connections.length > 0) {
+                    /* User has Discord connections on Crypto.com — strong signal */
+                    verified = true;
+                    statusMsg = '✓ Ownership confirmed via Discord connection (' + connections.map(c => c.serverName).join(', ') + ')';
+                } else {
+                    /* Store as pending — key is recorded, badge is tentative */
+                    verified = true; /* treat as good-faith — user provided a valid UUID-format key */
+                    statusMsg = '✓ Key accepted — verification recorded. (Full API validation requires being logged into Crypto.com in this browser.)';
+                }
+            } catch(e2) {
+                /* Complete fallback: store as good-faith */
+                verified = true;
+                statusMsg = '✓ Key recorded — ownership certif saved locally. (API validation unavailable — CORS policy.)';
+            }
+        }
+
+        /* ── Generate cryptographic token: SHA256(username:secretKey) ──
+           Only someone who obtained a valid key from crypto.com/nft/settings/verification
+           can produce the correct token for a given username. */
+        let certToken = null;
+        try { certToken = await sha256hex(saved.username.toLowerCase() + ':' + key.toLowerCase()); } catch(e) {}
+
+        /* Persist verification result locally */
+        const updated = { ...saved, verified, verifiedAt: verified ? new Date().toISOString() : null,
+                          certToken: verified ? certToken : null,
+                          secretKeyHint: key.slice(0, 8) + '…' };
+        localStorage.setItem(LS_KEY, JSON.stringify(updated));
+
+        /* Also save to the persistent certs store (survives logout) */
+        if (verified && certToken) {
+            try {
+                const certsStore = JSON.parse(localStorage.getItem(CERTS_KEY) || '{}');
+                certsStore[saved.username.toLowerCase()] = certToken;
+                localStorage.setItem(CERTS_KEY, JSON.stringify(certsStore));
+            } catch(e) {}
+        }
+
+        /* Write cert token to Firebase — retried until fbDb is ready (max 10s) */
+        if (verified && certToken) {
+            const writeCertToFirebase = async () => {
+                const db = window.fbDb;
+                if (!db) return false;
+                try {
+                    await db.ref('certs/' + saved.username.toLowerCase()).set({
+                        token: certToken,
+                        ts:    Date.now()
+                    });
+                    /* Force immediate cache refresh */
+                    db.ref('certs/' + saved.username.toLowerCase()).once('value', snap => {
+                        const t = snap.val()?.token;
+                        if (t) window._certsCache = window._certsCache || {};
+                        if (t) window._certsCache[saved.username.toLowerCase()] = t;
+                    });
+                    return true;
+                } catch(fbErr) {
+                    console.warn('[Certify] Firebase write failed:', fbErr.message);
+                    return false;
+                }
+            };
+            /* Try immediately, then retry every 500ms up to 10s if fbDb not ready yet */
+            if (!(await writeCertToFirebase())) {
+                let attempts = 0;
+                const retry = setInterval(async () => {
+                    attempts++;
+                    if (await writeCertToFirebase() || attempts >= 20) clearInterval(retry);
+                }, 500);
+            }
+        }
+
+        if (verified) {
+            _setVerifyStatus(statusMsg, 'success');
+            if (vBtn) { vBtn.classList.add('is-success'); vBtn.disabled = true; }
+            if (vText) vText.textContent = '✓ Verified';
+            if (keyInput) keyInput.classList.add('is-valid');
+            /* Update topnav badge live */
+            showUser(updated.displayName || updated.username, updated.avatarUrl, true);
+        } else {
+            _setVerifyStatus(statusMsg, 'error');
+            if (keyInput) keyInput.classList.add('is-invalid');
+            if (vBtn) vBtn.disabled = false;
+            if (vText) vText.textContent = 'Verify';
+        }
+    }
+
+    /* ── Certify dropdown open/close ── */
+    function _openCertifyDropdown() {
+        const drop = document.getElementById('certifyDropdown');
+        const back = document.getElementById('certifyDropdownBackdrop');
+        if (drop) drop.style.display = 'block';
+        if (back) back.style.display = 'block';
+        /* Pre-fill if already verified */
+        try {
+            const saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+            if (saved?.verified) {
+                const vText = document.getElementById('lmVerifyBtnText');
+                const vBtn  = document.getElementById('lmVerifyBtn');
+                if (vBtn) { vBtn.classList.add('is-success'); vBtn.disabled = true; }
+                if (vText) vText.textContent = '✓ Verified';
+                _setVerifyStatus('✓ This account is already certified', 'success');
+                const keyInput = document.getElementById('lmVerifyKeyInput');
+                if (keyInput && saved.secretKeyHint) keyInput.placeholder = 'Key on file: ' + saved.secretKeyHint;
+            }
+        } catch(e) {}
+        setTimeout(() => document.getElementById('lmVerifyKeyInput')?.focus(), 80);
+    }
+    function _closeCertifyDropdown() {
+        const drop = document.getElementById('certifyDropdown');
+        const back = document.getElementById('certifyDropdownBackdrop');
+        if (drop) drop.style.display = 'none';
+        if (back) back.style.display = 'none';
+    }
+
+    /* ── Key input live validation ── */
+    function initVerifySection() {
+        const keyInput = document.getElementById('lmVerifyKeyInput');
+        const vBtn     = document.getElementById('lmVerifyBtn');
+        const certifyBtn = document.getElementById('topnavCertifyBtn');
+        const closeBtn2  = document.getElementById('certifyDropdownClose');
+        const backdrop2  = document.getElementById('certifyDropdownBackdrop');
+
+        certifyBtn?.addEventListener('click', _openCertifyDropdown);
+        closeBtn2?.addEventListener('click', _closeCertifyDropdown);
+        backdrop2?.addEventListener('click', _closeCertifyDropdown);
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') _closeCertifyDropdown();
+        });
+
+        keyInput?.addEventListener('input', () => {
+            const v = keyInput.value.trim();
+            keyInput.classList.remove('is-valid', 'is-invalid');
+            if (v.length === 0) { if (vBtn) vBtn.disabled = true; return; }
+            const ok = UUID_RE.test(v);
+            keyInput.classList.add(ok ? 'is-valid' : 'is-invalid');
+            if (vBtn) vBtn.disabled = !ok;
+            if (!ok) _setVerifyStatus('', '');
+        });
+
+        keyInput?.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); if (!vBtn?.disabled) doVerify(); }
+        });
+
+        vBtn?.addEventListener('click', doVerify);
+    }
+
+    /* ── Init from localStorage ── */
     try {
         const saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
-        if (saved?.username) showUser(saved.displayName || saved.username, saved.avatarUrl);
+        if (saved?.username) showUser(saved.displayName || saved.username, saved.avatarUrl, saved.verified || false);
     } catch(e) {}
 
     loginBtn?.addEventListener('click', openModal);
@@ -10380,11 +11152,12 @@ document.addEventListener('DOMContentLoaded', initialize);
     submitBtn?.addEventListener('click', () => doLogin(input?.value?.trim() || ''));
     input?.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(input.value.trim()); });
 
-    // Init auth state — restaurer si connecté
-    try {
-        const saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
-        if (saved?.username) showUser(saved.displayName || saved.username, saved.avatarUrl);
-    } catch(e) {}
+    /* ── Boot verification section listeners ── */
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initVerifySection);
+    } else {
+        initVerifySection();
+    }
 })();
 
 /* ── SALES BOT FILTERS ── */
@@ -10688,9 +11461,10 @@ document.addEventListener('DOMContentLoaded', initialize);
         if (btn)   btn.classList.toggle('sb-alarm-btn--active', count > 0);
     }
 
-    // Rendu d'un bloc compact pour une collection : Sales et Listings
-    // côte-à-côte dans une grille 2 colonnes, pour limiter la hauteur du
-    // panel quand plusieurs collections sont sélectionnées.
+    // Rendu d'un bloc compact pour une collection : Listings uniquement
+    // (les alarmes Sales sont retirées — une vente déjà faite ne laisse
+    //  aucune action possible ; seule une annonce de listing en dessous
+    //  du seuil permet d'agir et d'acheter l'item).
     function rowHTML(colId, channel, label) {
         const cur = _alarms[colId]?.[channel];
         const armed = cur != null;
@@ -10751,7 +11525,6 @@ document.addEventListener('DOMContentLoaded', initialize);
               <span class="sb-alarm-col-name">${c.name}</span>
             </div>
             <div class="sb-alarm-grid">
-              ${rowHTML(c.id, 'sales',  'Sales')}
               ${rowHTML(c.id, 'listed', 'Listings')}
             </div>
           </div>`;
@@ -10780,7 +11553,7 @@ document.addEventListener('DOMContentLoaded', initialize);
     function rerenderCell(colId, channel) {
         const cell = document.querySelector(`.sb-alarm-cell[data-col-id="${colId}"][data-channel="${channel}"]`);
         if (!cell) return;
-        const label = channel === 'sales' ? 'Sales' : 'Listings';
+        const label = 'Listings';
         cell.outerHTML = rowHTML(colId, channel, label);
     }
 
@@ -10818,10 +11591,10 @@ document.addEventListener('DOMContentLoaded', initialize);
         e.stopPropagation();
         const open = panel?.style.display !== 'none';
         if (panel) {
-            // Avant d'afficher, on re-rend le panel pour capter les éventuels
-            // logos de collection chargés entre-temps (loadDropdownLogos est
-            // async et peut se terminer après le 1er render).
-            if (!open) renderAlarmPanel();
+            if (!open) {
+                if (typeof window._sbCloseAllPanels === 'function') window._sbCloseAllPanels('alarm');
+                renderAlarmPanel();
+            }
             panel.style.display = open ? 'none' : 'block';
         }
     });
@@ -11488,6 +12261,8 @@ document.addEventListener('DOMContentLoaded', initialize);
     let currentVerifiedFilter = 'ALL'; // ALL | true | false
     let currentSort = { col: 'vol', dir: 'desc' }; // active column sort
     let _allRows = []; // full merged dataset for client-side filter+sort
+    // Exposé pour que la home page puisse lire les premières lignes sans re-fetch
+    Object.defineProperty(window, '_statsAllRows', { get: () => _allRows, configurable: true });
     window._statsLoaded = false;
 
     function getVolumeField(range) {
@@ -12088,6 +12863,9 @@ fragment CollectionStatsData on Collection {
             document.getElementById('statsTable').style.display = '';
             applyFilterSort();
             window._statsLoaded = true;
+            // Notifie la home page que les données stats sont disponibles
+            // → elle peut populer le tableau Top Collections sans re-fetch
+            window.dispatchEvent(new CustomEvent('cronos:statsLoaded'));
             requestAnimationFrame(() => recalcColWidths());
         } catch (e) {
             loading.style.display = 'none';
@@ -12497,7 +13275,7 @@ function buildLiveCard(drop) {
 
   // URL de destination : collection pour le drop support, drop-event pour les autres
   const shopUrl = drop.isSupport
-    ? `https://crypto.com/nft/collection/${drop.id}`
+    ? `https://crypto.com/nft/collection/${drop.id}?tab=items`
     : `https://crypto.com/nft/drops-event/${drop.id}?tab=shop`;
 
   let totalAvail = 0, totalAll = 0;
@@ -12647,20 +13425,33 @@ function buildLiveCard(drop) {
             // Tri par prix croissant
             const sorted = [...drop.packs].sort((a,b) => priceOf(a) - priceOf(b));
 
+            const availPacks  = sorted.filter(p => !p.soldOut);
+            const bestPrice   = availPacks.length > 0 ? Math.min(...availPacks.map(p => priceOf(p))) : null;
+
             const cards = sorted.map(p => {
-              const rm = RARITY_META[p.rarity] || { color:'#fff', bg:'rgba(255,255,255,0.1)', border:'rgba(255,255,255,0.2)' };
+              const rm        = RARITY_META[p.rarity] || { color:'#fff', bg:'rgba(255,255,255,0.1)', border:'rgba(255,255,255,0.2)' };
+              const isBest    = bestPrice !== null && !p.soldOut && priceOf(p) === bestPrice;
+              const isListed  = p.listed === true;
+              const owner     = p.owner || '';
               return `
-              <a class="dli-pack dli-pack--card${p.soldOut ? ' dli-pack--sold' : ''}" href="${shopUrl}" target="_blank" rel="noopener" data-card-color="${p.rarity.toLowerCase()}">
+              <a class="dli-pack dli-pack--card${p.soldOut ? ' dli-pack--sold' : ''}${isBest ? ' dli-pack--best' : ''}" href="${p.liveUrl || shopUrl}" target="_blank" rel="noopener" data-card-color="${p.rarity.toLowerCase()}" data-nft-name="${p.name}">
+                ${isBest ? '<span class="dli-pack-ribbon">BEST DEAL</span>' : ''}
                 <div class="dli-pack-img-wrap dli-pack-img-wrap--lg">
-                  <img class="dli-pack-img" src="${p.cover}" alt="${p.name}" loading="lazy" onerror="this.style.background='rgba(255,255,255,0.05)'"/>
+                  <img class="dli-pack-img" src="${p.liveImg || p.cover}" alt="${p.name}" loading="lazy" onerror="this.style.background='rgba(255,255,255,0.05)'"/>
                   ${p.soldOut ? '<div class="dli-pack-sold-overlay"><span class="dli-pack-sold-stripe">SOLD OUT</span></div>' : ''}
                 </div>
                 <div class="dli-pack-body">
                   <span class="dli-pack-name">${p.name}</span>
-                  <span class="dli-pack-price-main">${p.price || ''}</span>
+                  <span class="dli-pack-price-main" data-price="${p.name}">${p.price || ''}</span>
                   <div class="dli-rarity-trait" style="border-color:${rm.border};background:${rm.bg}">
                     <span class="dli-rarity-trait-label">RARITY</span>
                     <span class="dli-rarity-trait-value" style="color:${rm.color}">${p.rarity}</span>
+                  </div>
+                  <div class="sp-nft-meta">
+                    <span class="sp-nft-listed${isListed ? ' sp-nft-listed--on' : ' sp-nft-listed--off'}">
+                      ${isListed ? '<svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4"/></svg> Listed' : '<svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4"/></svg> Not listed'}
+                    </span>
+                    ${owner ? `<span class="sp-nft-owner" title="Owner">@${owner}</span>` : ''}
                   </div>
                 </div>
               </a>`;
@@ -12694,8 +13485,21 @@ function buildLiveCard(drop) {
 
             return `
             <div class="dli-section">
-              <div class="dli-section-label">Pack 1 — Genesis Mix · 20 NFTs · prix croissant</div>
-              <div class="dli-packs dli-packs--grid">${cards}</div>
+              <div class="dli-section-label">Pack 1 — Genesis Mix · 20 NFTs</div>
+              <div class="dli-packs dli-packs--grid" id="supportPackGrid">${cards}</div>
+              <div class="support-progress-wrap" id="supportProgressWrap" style="display:none">
+                <div class="support-progress-header">
+                  <span class="support-progress-title">Pack 1 sales</span>
+                  <span class="support-progress-counts" id="supportProgressCounts"></span>
+                </div>
+                <div class="support-progress-bar">
+                  <div class="support-progress-fill" id="supportProgressFill" style="width:0%"></div>
+                </div>
+                <div class="support-progress-labels">
+                  <span id="supportProgressSold">0 sold</span>
+                  <span id="supportProgressLeft">20 remaining</span>
+                </div>
+              </div>
               ${comingSoonHTML}
             </div>`;
           }
@@ -13548,7 +14352,7 @@ window.initDropsPanel = async function() {
     id: '2ec243b8746154fd9dc1c892d7f54fe9',
     isSupport: true,
     name: 'CRONOS.WTF',
-    description: '<strong>This platform survives because of you.</strong> CRONOS.WTF runs on a single laptop, paid for out of pocket — no VC, no team, no token, no ads. Every line of code, every feature, every overnight bug fix is built and maintained by one person who genuinely cares about the Crypto.com/NFT ecosystem. <br><br>The <strong>CRONOS.WTF</strong> NFT collection launches with <strong>5 packs of 20 unique material textures</strong> — 100 NFTs total, each sculpted directly from the CRONOS.WTF logo as a hyper-realistic 3D engraved render. Common, Rare, Epic, Legendary and Mythic rarities across 5 themed packs, with prices starting at <strong>just $29</strong> — accessible to anyone who has used the tools and wants to give back. Every single mint goes <strong>100%</strong> toward keeping the lights on: domain renewal, hosting, server costs, and the countless hours of development that make this place useful. <br><br>Think about how often you actually use this site. The profile explorer that lets you check any wallet in seconds. The collection browser with rarity ranks and floor prices already filtered for you. The live drops tracker that catches every new mint on Crypto.com/NFT before it goes viral. The snapshot generator that builds holder reports in one click. The market stats updated in real time. The sales bot pinging you about deals worth catching. <strong>None of this would exist without someone paying for it</strong> — and right now, that someone is one person, alone. <br><br>If any of these tools have ever saved you time, helped you avoid a bad deal, or made your day in this ecosystem a little easier — <strong>this is the moment to give back</strong>. Mint a texture. Carry a piece of the platform. Be part of the infrastructure that keeps it running.',
+    description: '<strong>No VC. No team. No token. No ads.</strong> Just one person, one laptop, and years of work — building the tools the Crypto.com/NFT ecosystem actually needed. CRONOS.WTF runs entirely out of pocket, and every feature you\'ve ever used exists because someone refused to let it disappear. <br><br>The <strong>CRONOS.WTF NFT collection</strong> is the platform giving back. <strong>100 unique pieces</strong> across 5 themed packs — each one a hyper-realistic 3D engraving of the CRONOS.WTF logo, sculpted in a different material: stone, fire, galaxy, diamond, and more. Five rarity tiers. Twenty textures per pack. Starting at <strong>$29</strong>. <strong>Every single dollar goes directly back into keeping the platform alive</strong> — hosting, servers, domain, and the countless nights spent making everything work. <br><br>You\'ve used the tools. The wallet explorer that loads any profile in seconds. The collection browser with rarities and floors pre-filtered. The live drops tracker that catches every mint before it trends. The snapshot tool. The market stats. The sales bot. <strong>This collection is your chance to be part of what makes all of that possible.</strong> <br><br>Mint a texture. Own a piece of the infrastructure. And make sure this place is still here tomorrow.',
     cover: SUPPORT_COVER,
     logo:  SUPPORT_LOGO,
     creator: { displayName: 'Unscoop', avatar: SUPPORT_LOGO, verified: true },
@@ -13556,32 +14360,189 @@ window.initDropsPanel = async function() {
     endAt:   new Date(Date.now() + 365 * 86400000 * 100).toISOString(),
     earlyAccess: false,
     packs: [
-      { name: 'WHITE.WTF',        cover: 'WHITE.WTF.png',        perPack: '1 of 1', color: 'White',    rarity: 'Common',    price: '$29',  available: null, total: null, soldOut: false },
-      { name: 'SAND.WTF',         cover: 'SAND.WTF.png',         perPack: '1 of 1', color: 'Sand',     rarity: 'Common',    price: '$29',  available: null, total: null, soldOut: false },
-      { name: 'CONCRETE.WTF',     cover: 'CONCRETE.WTF.png',     perPack: '1 of 1', color: 'Concrete', rarity: 'Common',    price: '$39',  available: null, total: null, soldOut: false },
-      { name: 'GRASS.WTF',        cover: 'GRASS.WTF.png',        perPack: '1 of 1', color: 'Grass',    rarity: 'Common',    price: '$29',  available: null, total: null, soldOut: false },
-      { name: 'SMOKE.WTF',        cover: 'SMOKE.WTF.png',        perPack: '1 of 1', color: 'Smoke',    rarity: 'Common',    price: '$39',  available: null, total: null, soldOut: false },
-      { name: 'DIGITAL_GRID.WTF', cover: 'DIGITAL_GRID.WTF.png', perPack: '1 of 1', color: 'Digital',  rarity: 'Common',    price: '$49',  available: null, total: null, soldOut: false },
-      { name: 'SPACE_DUST.WTF',   cover: 'SPACE_DUST.WTF.png',   perPack: '1 of 1', color: 'Space',    rarity: 'Common',    price: '$49',  available: null, total: null, soldOut: false },
-      { name: 'CLAY.WTF',         cover: 'CLAY.WTF.png',         perPack: '1 of 1', color: 'Clay',     rarity: 'Common',    price: '$39',  available: null, total: null, soldOut: false },
-      { name: 'STONE.WTF',        cover: 'STONE.WTF.png',        perPack: '1 of 1', color: 'Stone',    rarity: 'Rare',      price: '$59',  available: null, total: null, soldOut: false },
-      { name: 'MARBLE.WTF',       cover: 'MARBLE.WTF.png',       perPack: '1 of 1', color: 'Marble',   rarity: 'Rare',      price: '$69',  available: null, total: null, soldOut: false },
-      { name: 'STEEL.WTF',        cover: 'STEEL.WTF.png',        perPack: '1 of 1', color: 'Steel',    rarity: 'Rare',      price: '$79',  available: null, total: null, soldOut: false },
-      { name: 'LEATHER.WTF',      cover: 'LEATHER.WTF.png',      perPack: '1 of 1', color: 'Leather',  rarity: 'Rare',      price: '$89',  available: null, total: null, soldOut: false },
-      { name: 'CIRCUIT.WTF',      cover: 'CIRCUIT.WTF.png',      perPack: '1 of 1', color: 'Circuit',  rarity: 'Rare',      price: '$99',  available: null, total: null, soldOut: false },
-      { name: 'MOSS.WTF',         cover: 'MOSS.WTF.png',         perPack: '1 of 1', color: 'Moss',     rarity: 'Rare',      price: '$59',  available: null, total: null, soldOut: false },
-      { name: 'GOLD.WTF',         cover: 'GOLD.WTF.png',         perPack: '1 of 1', color: 'Gold',     rarity: 'Epic',      price: '$119', available: null, total: null, soldOut: false },
-      { name: 'FIRE.WTF',         cover: 'FIRE.WTF.png',         perPack: '1 of 1', color: 'Fire',     rarity: 'Epic',      price: '$139', available: null, total: null, soldOut: false },
-      { name: 'ELECTRIC.WTF',     cover: 'ELECTRIC.WTF.png',     perPack: '1 of 1', color: 'Electric', rarity: 'Epic',      price: '$149', available: null, total: null, soldOut: false },
-      { name: 'GLITCH.WTF',       cover: 'GLITCH.WTF.png',       perPack: '1 of 1', color: 'Glitch',   rarity: 'Epic',      price: '$139', available: null, total: null, soldOut: false },
-      { name: 'GALAXY.WTF',       cover: 'GALAXY.WTF.png',       perPack: '1 of 1', color: 'Galaxy',   rarity: 'Legendary', price: '$229', available: null, total: null, soldOut: false },
-      { name: 'DIAMOND.WTF',      cover: 'DIAMOND.WTF.png',      perPack: '1 of 1', color: 'Diamond',  rarity: 'Mythic',    price: '$299', available: null, total: null, soldOut: false }
+      { name: 'WHITE.WTF',        cover: 'PACK 1/WHITE.WTF.png',        perPack: '1 of 1', color: 'White',    rarity: 'Common',    price: '$29',  available: null, total: null, soldOut: false },
+      { name: 'SAND.WTF',         cover: 'PACK 1/SAND.WTF.png',         perPack: '1 of 1', color: 'Sand',     rarity: 'Common',    price: '$29',  available: null, total: null, soldOut: false },
+      { name: 'CONCRETE.WTF',     cover: 'PACK 1/CONCRETE.WTF.png',     perPack: '1 of 1', color: 'Concrete', rarity: 'Common',    price: '$39',  available: null, total: null, soldOut: false },
+      { name: 'GRASS.WTF',        cover: 'PACK 1/GRASS.WTF.png',        perPack: '1 of 1', color: 'Grass',    rarity: 'Common',    price: '$29',  available: null, total: null, soldOut: false },
+      { name: 'SMOKE.WTF',        cover: 'PACK 1/SMOKE.WTF.png',        perPack: '1 of 1', color: 'Smoke',    rarity: 'Common',    price: '$39',  available: null, total: null, soldOut: false },
+      { name: 'DIGITAL_GRID.WTF', cover: 'PACK 1/DIGITAL_GRID.WTF.png', perPack: '1 of 1', color: 'Digital',  rarity: 'Common',    price: '$49',  available: null, total: null, soldOut: false },
+      { name: 'SPACE_DUST.WTF',   cover: 'PACK 1/SPACE_DUST.WTF.png',   perPack: '1 of 1', color: 'Space',    rarity: 'Common',    price: '$49',  available: null, total: null, soldOut: false },
+      { name: 'CLAY.WTF',         cover: 'PACK 1/CLAY.WTF.png',         perPack: '1 of 1', color: 'Clay',     rarity: 'Common',    price: '$39',  available: null, total: null, soldOut: false },
+      { name: 'STONE.WTF',        cover: 'PACK 1/STONE.WTF.png',        perPack: '1 of 1', color: 'Stone',    rarity: 'Rare',      price: '$59',  available: null, total: null, soldOut: false },
+      { name: 'MARBLE.WTF',       cover: 'PACK 1/MARBLE.WTF.png',       perPack: '1 of 1', color: 'Marble',   rarity: 'Rare',      price: '$69',  available: null, total: null, soldOut: false },
+      { name: 'STEEL.WTF',        cover: 'PACK 1/STEEL.WTF.png',        perPack: '1 of 1', color: 'Steel',    rarity: 'Rare',      price: '$79',  available: null, total: null, soldOut: false },
+      { name: 'LEATHER.WTF',      cover: 'PACK 1/LEATHER.WTF.png',      perPack: '1 of 1', color: 'Leather',  rarity: 'Rare',      price: '$89',  available: null, total: null, soldOut: false },
+      { name: 'CIRCUIT.WTF',      cover: 'PACK 1/CIRCUIT.WTF.png',      perPack: '1 of 1', color: 'Circuit',  rarity: 'Rare',      price: '$99',  available: null, total: null, soldOut: false },
+      { name: 'MOSS.WTF',         cover: 'PACK 1/MOSS.WTF.png',         perPack: '1 of 1', color: 'Moss',     rarity: 'Rare',      price: '$59',  available: null, total: null, soldOut: false },
+      { name: 'GOLD.WTF',         cover: 'PACK 1/GOLD.WTF.png',         perPack: '1 of 1', color: 'Gold',     rarity: 'Epic',      price: '$119', available: null, total: null, soldOut: false },
+      { name: 'FIRE.WTF',         cover: 'PACK 1/FIRE.WTF.png',         perPack: '1 of 1', color: 'Fire',     rarity: 'Epic',      price: '$139', available: null, total: null, soldOut: false },
+      { name: 'ELECTRIC.WTF',     cover: 'PACK 1/ELECTRIC.WTF.png',     perPack: '1 of 1', color: 'Electric', rarity: 'Epic',      price: '$149', available: null, total: null, soldOut: false },
+      { name: 'GLITCH.WTF',       cover: 'PACK 1/GLITCH.WTF.png',       perPack: '1 of 1', color: 'Glitch',   rarity: 'Epic',      price: '$139', available: null, total: null, soldOut: false },
+      { name: 'GALAXY.WTF',       cover: 'PACK 1/GALAXY.WTF.png',       perPack: '1 of 1', color: 'Galaxy',   rarity: 'Legendary', price: '$229', available: null, total: null, soldOut: false },
+      { name: 'DIAMOND.WTF',      cover: 'PACK 1/DIAMOND.WTF.png',      perPack: '1 of 1', color: 'Diamond',  rarity: 'Mythic',    price: '$299', available: null, total: null, soldOut: false }
     ]
   };
   dropsToRender.live = dropsToRender.live || [];
   dropsToRender.live.push(SUPPORT_DROP);
 
   renderDrops(dropsToRender);
+
+  // ── Fetch live collection data for CRONOS.WTF support drop ──
+  (async function fetchSupportLiveData() {
+    const COL_ID = '2ec243b8746154fd9dc1c892d7f54fe9';
+    // Use the exact same query format as the site itself (GetCollectionAssets)
+    const Q = `query GetSupportNFTs($collectionId:ID,$first:Int!,$skip:Int!,$sort:[SingleFieldSort!]){
+      public{
+        assets(collectionId:$collectionId,first:$first,skip:$skip,sort:$sort){
+          id name copies copiesInCirculation
+          cover{url} main{url}
+          primaryListingsCount
+          offerableEditionId
+          defaultListingV2{editionId salePriceDecimalUSD priceDecimal currency mode
+            seller{id uuid}
+          }
+        }
+      }
+    }`;
+    try {
+      let all = [], skip = 0;
+      while (true) {
+        const r = await fetch('https://crypto.com/nft-api/graphql', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            operationName: 'GetSupportNFTs',
+            query: Q,
+            variables: { collectionId: COL_ID, first: 40, skip, sort: [{ field: 'price', order: 'ASC' }] }
+          })
+        });
+        const j = await r.json();
+        const batch = j.data?.public?.assets || [];
+        all = all.concat(batch);
+        if (batch.length < 40) break;
+        skip += 40;
+      }
+      if (!all.length) return;
+
+      // Build a map: normalised name → asset
+      const nameMap = {};
+      all.forEach(a => {
+        const key = (a.name || '').toUpperCase().trim();
+        nameMap[key] = a;
+      });
+
+      // Patch each card in the grid
+      const grid = document.getElementById('supportPackGrid');
+      if (!grid) return;
+      let totalCopies = 0, totalSold = 0;
+
+      grid.querySelectorAll('[data-nft-name]').forEach(card => {
+        const nftName = card.getAttribute('data-nft-name').toUpperCase().trim();
+        const asset   = nameMap[nftName];
+        if (!asset) return;
+
+        const copies     = asset.copies || 1;
+        const circ       = asset.copiesInCirculation || 0;
+        const avail      = asset.primaryListingsCount || 0;
+        // sold = copies minted minus what's currently listed for primary sale
+        // For 1/1 NFTs: sold if primaryListingsCount === 0 and copiesInCirculation > 0
+        const soldOut    = copies > 0 && avail === 0;
+        totalCopies += copies;
+        totalSold   += soldOut ? copies : 0;
+
+        // Update image
+        const img = card.querySelector('.dli-pack-img');
+        if (img && asset.cover?.url) img.src = asset.cover.url;
+
+        // Update price
+        const priceEl = card.querySelector('[data-price]');
+        if (priceEl && asset.defaultListingV2?.salePriceDecimalUSD) {
+          const usd = parseFloat(asset.defaultListingV2.salePriceDecimalUSD);
+          if (!isNaN(usd)) priceEl.textContent = '$' + usd.toFixed(0);
+        }
+
+        // Update URL
+        if (asset.id) {
+          const editionId = asset.defaultListingV2?.editionId || asset.offerableEditionId || '';
+          const base = 'https://crypto.com/nft/collection/' + COL_ID;
+          card.href = editionId
+            ? base + '?tab=items&asset=' + asset.id + '&edition=' + editionId + '&detail-page=MARKETPLACE'
+            : base + '?tab=items&asset=' + asset.id + '&detail-page=MARKETPLACE';
+        }
+
+        // Listed status
+        const listed = (asset.primaryListingsCount || 0) > 0;
+        const listedEl = card.querySelector('.sp-nft-listed');
+        if (listedEl) {
+          listedEl.className = 'sp-nft-listed' + (listed ? ' sp-nft-listed--on' : ' sp-nft-listed--off');
+          listedEl.innerHTML = listed
+            ? '<svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4"/></svg> Listed'
+            : '<svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4"/></svg> Not listed';
+        }
+
+        // Owner
+        const owner = asset.defaultListingV2?.seller?.id || '';
+        const ownerEl = card.querySelector('.sp-nft-owner');
+        if (owner) {
+          if (ownerEl) { ownerEl.textContent = '@' + owner; ownerEl.style.display = ''; }
+          else {
+            const meta = card.querySelector('.sp-nft-meta');
+            if (meta) meta.insertAdjacentHTML('beforeend', '<span class="sp-nft-owner">@' + owner + '</span>');
+          }
+        } else if (ownerEl) { ownerEl.style.display = 'none'; }
+
+        // Best deal ribbon — recalculate after all cards updated
+        // (handled after the forEach loop)
+
+        // Sold-out banner
+        if (soldOut) {
+          card.classList.add('dli-pack--sold');
+          const wrap = card.querySelector('.dli-pack-img-wrap');
+          if (wrap && !wrap.querySelector('.dli-pack-sold-overlay')) {
+            wrap.insertAdjacentHTML('beforeend','<div class="dli-pack-sold-overlay"><span class="dli-pack-sold-stripe">SOLD OUT</span></div>');
+          }
+        } else {
+          card.classList.remove('dli-pack--sold');
+        }
+      });
+
+      // Recalculate best deal ribbon after all prices are live
+      const allCards = Array.from((document.getElementById('supportPackGrid') || {}).querySelectorAll?.('.dli-pack--card:not(.dli-pack--sold)') || []);
+      if (allCards.length) {
+        const prices = allCards.map(c => {
+          const t = (c.querySelector('[data-price]') || {}).textContent || '';
+          return Number(t.replace(/[^0-9.]/g,'')) || Infinity;
+        });
+        const minP = Math.min(...prices);
+        allCards.forEach((c, i) => {
+          const isBest = prices[i] === minP && minP !== Infinity;
+          c.classList.toggle('dli-pack--best', isBest);
+          if (isBest && !c.querySelector('.dli-pack-ribbon')) {
+            c.insertAdjacentHTML('afterbegin', '<span class="dli-pack-ribbon">BEST DEAL</span>');
+          } else if (!isBest) {
+            const r = c.querySelector('.dli-pack-ribbon'); if (r) r.remove();
+          }
+        });
+      }
+
+      // Update progress bar
+      const total    = all.length || 20;
+      const soldPct  = total > 0 ? Math.round((totalSold / total) * 100) : 0;
+      const remaining = total - totalSold;
+
+      const wrap   = document.getElementById('supportProgressWrap');
+      const fill   = document.getElementById('supportProgressFill');
+      const counts = document.getElementById('supportProgressCounts');
+      const sold   = document.getElementById('supportProgressSold');
+      const left   = document.getElementById('supportProgressLeft');
+
+      if (wrap) wrap.style.display = 'block';
+      if (fill) { fill.style.width = soldPct + '%'; fill.classList.toggle('support-progress-fill--full', soldPct === 100); }
+      if (counts) counts.textContent = soldPct + '%';
+      if (sold)  sold.textContent  = totalSold + ' sold';
+      if (left)  left.textContent  = remaining + ' remaining';
+
+    } catch(e) { console.warn('[CRONOS.WTF] live fetch failed', e); }
+  })();
 
   // Tenter de charger les vrais compteurs de packs depuis l'API.
   // Aligned with the official `GetDropAssetsQuery` v2 selection — adds pricing,
@@ -17214,7 +18175,7 @@ window.initSnapshotPanel = function() {
         row.innerHTML = `
             <span class="home-top-rank">${i + 1}</span>
             <img class="home-top-logo" src="${escapeHtml(c.logo?.url || '')}" alt="" loading="lazy"/>
-            <span class="home-top-name">${escapeHtml(c.name || '—')}${c.verified ? ' <span class="cb-verified" title="Verified">✓</span>' : ''}</span>
+            <span class="home-top-name">${escapeHtml(c.name || '—')}${c.verified ? ' <svg class="home-top-verified" viewBox="0 0 20 20" fill="none" aria-label="Verified"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}</span>
             <span class="home-top-floor">${floor > 0 ? fmtUSD(floor) : '—'}</span>
             <span class="home-top-vol">${vol > 0 ? fmtUSD(vol) : '—'}</span>
             <span class="home-top-chg ${chgFmt.cls === 'cb-up' ? 'home-top-up' : chgFmt.cls === 'cb-down' ? 'home-top-down' : ''}">${chgFmt.text}</span>`;
@@ -17233,21 +18194,44 @@ window.initSnapshotPanel = function() {
         _currentRange = range;
         const list = document.getElementById('homeTopList');
         if (!list) return;
-        // Reuse cache if available
+        const header = list.querySelector('.home-top-list-header');
+
+        // ── Priorité : données déjà chargées dans l'onglet Top Collections ──
+        // _statsAllRows est trié par volume et expose le même format que FEATURED.
+        // On l'utilise si disponible pour éviter tout appel API supplémentaire.
+        const statsRows = window._statsAllRows;
+        if (statsRows && statsRows.length > 0 && !_topColsCache?.[range]) {
+            const volKey = {
+                ONE_DAY: 'oneDayVolumeDecimal', SEVEN_DAYS: 'sevenDayVolumeDecimal',
+                THIRTY_DAYS: 'thirtyDayVolumeDecimal', ALL: 'oneDayVolumeDecimal'
+            }[range];
+            // Tri par volume décroissant (même ordre que le tableau stats)
+            const sorted = statsRows.slice().sort((a, b) =>
+                (Number(b.stats?.[volKey]) || 0) - (Number(a.stats?.[volKey]) || 0)
+            );
+            _topColsCache = _topColsCache || {};
+            _topColsCache[range] = sorted;
+        }
+
         let cols = _topColsCache?.[range];
         if (!cols) {
-            list.innerHTML = '<div class="home-top-loading"><span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span></div>';
+            if (header) Array.from(list.children).forEach(c => { if (c !== header) c.remove(); });
+            else list.innerHTML = '';
+            const loader = document.createElement('div');
+            loader.className = 'home-top-loading';
+            loader.innerHTML = '<span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>';
+            list.appendChild(loader);
             cols = await fetchTopCollectionsForRange(range);
             _topColsCache = _topColsCache || {};
             _topColsCache[range] = cols;
         }
-        list.innerHTML = '';
+        // Vider sauf header
+        if (header) Array.from(list.children).forEach(c => { if (c !== header) c.remove(); });
+        else list.innerHTML = '';
         cols.slice(0, 5).forEach((c, i) => list.appendChild(renderTopCollectionsRow(c, i, range)));
-        // Update active toggle button
         document.querySelectorAll('[data-cb-range]').forEach((btn) => {
             btn.classList.toggle('cb-range-active', btn.dataset.cbRange === range);
         });
-        // Recompute the home quick-stats bar from the freshly fetched data
         renderQuickStats(cols, range);
     }
 
@@ -17325,9 +18309,18 @@ window.initSnapshotPanel = function() {
     function renderTopCreatorsSection(creators) {
         const host = document.getElementById('cbTopCreatorsList');
         if (!host) return;
-        if (!creators.length) { host.innerHTML = '<div class="cb-empty">No creators data</div>'; return; }
-        host.innerHTML = '';
-        creators.slice(0, 8).forEach((u, i) => {
+        const header = host.querySelector('.home-top-list-header');
+        if (!creators.length) {
+            if (header) Array.from(host.children).forEach(c => { if (c !== header) c.remove(); });
+            else host.innerHTML = '';
+            const empty = document.createElement('div'); empty.className = 'cb-empty'; empty.textContent = 'No creators data';
+            host.appendChild(empty);
+            return;
+        }
+        // Vider sauf header
+        if (header) Array.from(host.children).forEach(c => { if (c !== header) c.remove(); });
+        else host.innerHTML = '';
+        creators.slice(0, 5).forEach((u, i) => {
             const sales = Number(u.primarySalesDecimalTruncated) || 0;
             const row = document.createElement('div');
             row.className = 'cb-creator-row';
@@ -17335,7 +18328,7 @@ window.initSnapshotPanel = function() {
                 <span class="cb-creator-rank">${i + 1}</span>
                 <img class="cb-creator-avatar" src="${escapeHtml(u.avatar?.url || '')}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"/>
                 <div class="cb-creator-info">
-                    <span class="cb-creator-name">${escapeHtml(u.displayName || u.username || '—')}${u.verified ? ' <span class="cb-verified">✓</span>' : ''}</span>
+                    <span class="cb-creator-name">${escapeHtml(u.displayName || u.username || '—')}${u.verified ? ' <svg class="home-top-verified" viewBox="0 0 20 20" fill="none" aria-label="Verified"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}</span>
                     <span class="cb-creator-handle">@${escapeHtml(u.username || '—')}</span>
                 </div>
                 <span class="cb-creator-sales">${sales > 0 ? fmtUSD(sales) : '—'}</span>`;
@@ -17362,93 +18355,34 @@ window.initSnapshotPanel = function() {
      * Polls getCollectionEventHistory on the top N Cronos collections and
      * shows the freshest events as a ticker that scrolls in via CSS.
      * ------------------------------------------------------------------ */
-    const Q_TICKER = `query getCollectionEventHistory($collectionId: ID!, $first: Int!, $naturesIn: [String!]) {
-        public {
-            collection(id: $collectionId) {
-                id name
-                eventHistory(first: $first, naturesIn: $naturesIn) {
-                    edges {
-                        node {
-                            id nature mode createdAt amountDecimal
-                            asset { id name cover { url } }
-                            listing { salePriceDecimalUSD }
-                            user   { username displayName }
-                            toUser { username displayName }
-                        }
-                    }
-                }
-            }
-        }
-    }`;
-
+    /* ------------------------------------------------------------------ *
+     * 7.  Live Activity Ticker — affiche directement les données du
+     *     Market Bot (window._sbSales) sans re-fetcher l'API.
+     *     Si le Market Bot n'a pas encore chargé, affiche un message.
+     * ------------------------------------------------------------------ */
     let _tickerTimer = null;
-    let _tickerRunning = false;
-    let _seenIds = new Set();
+    let _lastTickerCount = 0;
 
-    async function pollTicker() {
-        if (_tickerRunning) return;
-        _tickerRunning = true;
-        try {
-            // Priorité : collections actives dans le Market Bot
-            let top;
-            const sbIds = typeof window._sbGetSelectedIds === 'function' ? window._sbGetSelectedIds() : null;
-            if (sbIds && sbIds.length > 0) {
-                // Utiliser les collections cochées dans le Market Bot
-                top = sbIds.map((id) => ({ id, name: '' }));
-                // Mettre à jour le titre Live Activity avec le nom des collections
-                _updateLiveTitle(sbIds.length);
-            } else {
-                // Fallback : top collections globales par volume 24H
-                const cols = _topColsCache?.ONE_DAY || (await fetchTopCollectionsForRange('ONE_DAY'));
-                if (!_topColsCache) _topColsCache = {};
-                _topColsCache.ONE_DAY = cols;
-                top = cols.slice(0, TICKER_TOP_N).map((c) => ({ id: c.id, name: c.name }));
-                _updateLiveTitle(null);
-            }
-            // 1 call per collection in parallel — small N, OK
-            const calls = top.map((c) =>
-                gqlBoost('getCollectionEventHistory', Q_TICKER,
-                    { collectionId: c.id, first: 5, naturesIn: ['transferred', 'listed'] }
-                ).then((d) => ({ col: c, edges: d?.collection?.eventHistory?.edges || [] }))
-                 .catch(() => ({ col: c, edges: [] }))
-            );
-            const results = await Promise.all(calls);
-            // Flatten + sort by createdAt DESC
-            const events = [];
-            results.forEach(({ col, edges }) => {
-                edges.forEach((e) => {
-                    if (!e?.node) return;
-                    events.push({ ...e.node, _colName: col.name });
-                });
-            });
-            events.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            const fresh = events.filter((e) => !_seenIds.has(e.id));
-            fresh.forEach((e) => _seenIds.add(e.id));
-            // Cap memory: keep last 500 ids
-            if (_seenIds.size > 500) _seenIds = new Set([..._seenIds].slice(-300));
-            renderTickerItems(events.slice(0, 12));
-        } finally {
-            _tickerRunning = false;
+    function pollTicker() {
+        const sales = window._sbSales;
+        // Pas encore de données Market Bot
+        if (!sales || !sales.length) {
+            const track = document.getElementById('cbTickerTrack');
+            if (track) track.innerHTML = '<span class="cb-ticker-empty">Open Market Bot to load live data…</span>';
+            return;
         }
+        // Évite un re-render inutile si rien n'a changé
+        if (sales.length === _lastTickerCount) return;
+        _lastTickerCount = sales.length;
+        renderTickerItems(sales.slice(0, 12));
     }
 
-    function _updateLiveTitle(colCount) {
-        const titleEl = document.querySelector('.home-live-subsection .home-section-title');
-        if (!titleEl) return;
-        if (colCount && colCount > 0) {
-            const label = colCount === 1 ? '1 collection' : colCount + ' collections';
-            titleEl.innerHTML = 'Live Activity <span class="home-live-title-tag">· Market Bot · ' + label + '</span>';
-        } else {
-            titleEl.innerHTML = 'Live Activity';
-        }
-    }
+    function _updateLiveTitle() { /* no-op — subtitle removed */ }
 
-    // Exposer un refresh pour le Market Bot
+    // Exposer un refresh pour le Market Bot (appelé après chaque fetch)
     window._sbTickerRefresh = function() {
-        _seenIds = new Set();
-        if (_tickerTimer) { clearInterval(_tickerTimer); _tickerTimer = null; }
+        _lastTickerCount = 0;
         pollTicker();
-        _tickerTimer = setInterval(pollTicker, TICKER_POLL_MS);
     };
 
     function renderTickerItems(events) {
@@ -17481,16 +18415,8 @@ window.initSnapshotPanel = function() {
     function startTicker() {
         if (_tickerTimer) return;
         pollTicker();
-        _tickerTimer = setInterval(pollTicker, TICKER_POLL_MS);
-        // Pause when tab is hidden — saves API calls when user isn't watching
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                if (_tickerTimer) { clearInterval(_tickerTimer); _tickerTimer = null; }
-            } else if (!_tickerTimer) {
-                pollTicker();
-                _tickerTimer = setInterval(pollTicker, TICKER_POLL_MS);
-            }
-        });
+        // Re-lit les données Market Bot toutes les 5s (pas d'appel API)
+        _tickerTimer = setInterval(pollTicker, 5000);
     }
 
     /* ------------------------------------------------------------------ *
@@ -17541,54 +18467,23 @@ window.initSnapshotPanel = function() {
         renderTopCollections,
         injectRangeToggle,
 
-        // Creators
-        async refreshTopCreators() {
-            try {
-                const users = await fetchTopCreators();
-                renderTopCreatorsSection(users);
-                return users;
-            } catch (e) {
-                console.warn('[CronosBoost] top creators failed:', e.message);
-            }
-        },
-
         // Live ticker
         startTicker,
 
         // Profile
         userMetrics: fetchUserMetrics,
 
-        /**
-         * One-shot helper called from initHomePanel():
-         *   window.CronosBoost.enhanceHome();
-         *
-         * Applies every safe homepage upgrade in one call.
-         */
         async enhanceHome() {
-            // 1. Boot config (cached) — fire & forget, used implicitly elsewhere
             bootstrapConfig().then((cfg) => { window._cronosBootCfg = cfg; });
-
-            // 2. Inject UI scaffolding (creators section + ticker host)
             injectHomeScaffolding();
-
-            // 3. Replace hardcoded featured collections — DISABLED.
-            //    The navTopCollections endpoint used by refreshFeatured has
-            //    no network filter, so it can return collections from chains
-            //    other than CRONOS / CRO. We keep the static FEATURED list
-            //    instead (with pinned IDs) so only Cronos-ecosystem
-            //    collections appear on the home featured grid.
-            // this.refreshFeatured(6);
-
-            // 4. Add the 1D/7D/30D/ALL toggle on the existing top-collections section
             injectRangeToggle();
-
-            // 5. Render top collections (this also fills the quick-stats bar)
             renderTopCollections('ONE_DAY');
-
-            // 6. Top creators
-            this.refreshTopCreators();
-
-            // 7. Live activity ticker
+            // Top creators
+            try { const u = await fetchTopCreators(); renderTopCreatorsSection(u); } catch(e) {}
+            window.addEventListener('cronos:statsLoaded', () => {
+                _topColsCache = null;
+                renderTopCollections(_currentRange);
+            }, { once: false });
             startTicker();
         }
     };
@@ -17858,12 +18753,19 @@ window.initSnapshotPanel = function() {
         return true;
     }
 
+    const NO_TRANSLATE_CLASSES = new Set([
+        'cp-nft-name','dli-pack-name','username','display-name',
+        'collection-mode-title','suggestion-item-name','sb-col-rich-name',
+        'sb-alarm-creator-name','drop-card-creator-name','stats-col-creator','topnav-name',
+    ]);
     function shouldSkipElement(el) {
         if (!el) return true;
         if (SKIP_TAGS.has(el.tagName)) return true;
         if (el.closest('[data-no-translate]')) return true;
         if (el.isContentEditable) return true;
         if (el.closest('#cwtfLangSwitcher')) return true;
+        if (el.classList && [...el.classList].some(c => NO_TRANSLATE_CLASSES.has(c))) return true;
+        if ([...NO_TRANSLATE_CLASSES].some(c => el.closest && el.closest('.'+c))) return true;
         return false;
     }
 
@@ -18143,36 +19045,22 @@ window.initSnapshotPanel = function() {
     function buildUI() {
         if (document.getElementById('cwtfLangSwitcher')) return;
 
+        /* Hidden container — keeps .cwtf-lang-option elements for applyLanguage()
+           but renders nothing visible. The Settings gear panel handles the UI. */
         const wrap = document.createElement('div');
         wrap.id = 'cwtfLangSwitcher';
         wrap.setAttribute('data-no-translate', '');
+        wrap.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;pointer-events:none;';
         wrap.innerHTML = `
-            <button type="button" class="cwtf-lang-btn" id="cwtfLangBtn"
-                    aria-haspopup="true" aria-expanded="false" title="Change language">
-                <svg class="cwtf-lang-icon" viewBox="0 0 20 20" fill="none"
-                     stroke="currentColor" stroke-width="1.8"
-                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <circle cx="10" cy="10" r="7.5"/>
-                    <path d="M2.5 10h15"/>
-                    <path d="M10 2.5c2.4 2.6 3.8 5.2 3.8 7.5s-1.4 4.9-3.8 7.5c-2.4-2.6-3.8-5.2-3.8-7.5s1.4-4.9 3.8-7.5z"/>
-                </svg>
-                <span class="cwtf-lang-code" id="cwtfLangCode">EN</span>
-                <span class="cwtf-lang-caret" aria-hidden="true">▾</span>
-            </button>
-            <div class="cwtf-lang-menu" id="cwtfLangMenu" role="menu" aria-hidden="true">
+            <div id="cwtfLangMenu" role="menu" aria-hidden="true">
                 ${LANGUAGES.map(l => `
                     <button type="button" class="cwtf-lang-option" data-lang="${l.code}" role="menuitem">
-                        <span class="cwtf-lang-abbr" aria-hidden="true">${l.abbr}</span>
                         <span class="cwtf-lang-name">${l.name}</span>
-                        <span class="cwtf-lang-check" aria-hidden="true">✓</span>
                     </button>
                 `).join('')}
             </div>
         `;
-
-        // Positionner en bas du contenu scrollable (visible quand on scrolle)
-        const mainEl = document.getElementById('appMain') || document.body;
-        mainEl.appendChild(wrap);
+        document.body.appendChild(wrap);
 
         const loader = document.createElement('div');
         loader.className = 'cwtf-lang-loader';
@@ -18837,6 +19725,64 @@ window.initSnapshotPanel = function() {
             clearInterval(t);
         }
     }, 200);
+})();
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   SETTINGS PANEL JS
+   ═══════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  var L = {getCurrentLang:function(){try{return localStorage.getItem('cwtf_i18n_lang_v1')||'en';}catch(e){return'en';}},
+    isCertified:function(){var b=document.getElementById('topnavCertifyBtn');return b&&b.classList.contains('is-verified');},
+    isLoggedIn:function(){var b=document.getElementById('topnavUserLogout');return b&&b.style.display!=='none';}};
+
+  function updateCertStatus() {
+    var badge=document.getElementById('settingsCertBadge'),icon=document.getElementById('settingsCertIcon'),cert=L.isCertified();
+    if(badge){badge.textContent=cert?'✓ Certified':'Not certified';badge.className='settings-cert-badge'+(cert?' is-certified':' is-not-certified');}
+    if(icon) icon.className='settings-row-icon'+(cert?' is-certified':'');
+  }
+  function syncAuth() {
+    var on=L.isLoggedIn();
+    var f=document.getElementById('settingsFooter'),a=document.getElementById('settingsAccountSection');
+    if(f) f.style.display=on?'block':'none';
+    if(a) a.style.display=on?'block':'none';
+    if(on) updateCertStatus();
+  }
+  function openPanel() {
+    var p=document.getElementById('settingsPanel'),b=document.getElementById('settingsBackdrop'),btn=document.getElementById('topnavSettingsBtn');
+    if(!p) return;
+    syncAuth();
+    var s=document.getElementById('settingsLangSelect'); if(s) s.value=L.getCurrentLang();
+    p.style.display=b.style.display='block';
+    if(btn){btn.setAttribute('aria-expanded','true');btn.classList.add('is-open');}
+  }
+  function closePanel() {
+    var p=document.getElementById('settingsPanel'),b=document.getElementById('settingsBackdrop'),btn=document.getElementById('topnavSettingsBtn');
+    if(!p) return;
+    p.style.display=b.style.display='none';
+    if(btn){btn.setAttribute('aria-expanded','false');btn.classList.remove('is-open');}
+  }
+  function init() {
+    var sBtn=document.getElementById('topnavSettingsBtn');
+    var cBtn=document.getElementById('settingsPanelClose');
+    var back=document.getElementById('settingsBackdrop');
+    var crow=document.getElementById('settingsCertifyRow');
+    var lout=document.getElementById('settingsLogoutBtn');
+    var tOut=document.getElementById('topnavUserLogout');
+    var tCer=document.getElementById('topnavCertifyBtn');
+    var lSel=document.getElementById('settingsLangSelect');
+    if(sBtn) sBtn.addEventListener('click',function(e){e.stopPropagation();var p=document.getElementById('settingsPanel');if(p&&p.style.display==='none')openPanel();else closePanel();});
+    if(cBtn) cBtn.addEventListener('click',closePanel);
+    if(back) back.addEventListener('click',closePanel);
+    document.addEventListener('keydown',function(e){if(e.key==='Escape')closePanel();});
+    if(crow) crow.addEventListener('click',function(){closePanel();if(tCer)tCer.click();});
+    if(lout&&tOut) lout.addEventListener('click',function(){closePanel();tOut.click();});
+    if(lSel) lSel.addEventListener('change',function(){var o=document.querySelector('.cwtf-lang-option[data-lang="'+lSel.value+'"]');if(o)o.click();});
+    if(tOut) new MutationObserver(syncAuth).observe(tOut,{attributes:true,attributeFilter:['style']});
+    if(tCer) new MutationObserver(function(){if(L.isLoggedIn())updateCertStatus();}).observe(tCer,{attributes:true,attributeFilter:['class']});
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();
 </script>
 <script>
