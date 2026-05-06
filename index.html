@@ -12309,32 +12309,109 @@ async function sha256hex(str) {
         });
     };
 
+    // ─────────────────────────────────────────────────────────────────────
+    //   URL ROUTING — chaque onglet possède un slug court et intuitif.
+    //   - cliquer sur un onglet pousse le hash (back/forward marche)
+    //   - le bouton précédent du navigateur restaure l'onglet précédent
+    //   - lien direct (#top, #market, etc.) ouvre la bonne vue au load
+    //   - les usernames continuent de fonctionner (#@username)
+    // ─────────────────────────────────────────────────────────────────────
+    const TAB_SLUGS = {
+        collections: 'home',
+        stats: 'top',
+        salesbot: 'market',
+        drops: 'drops',
+        snapshot: 'snap',
+        support: 'support',
+        myprofil: 'me'
+    };
+    const SLUG_TO_TAB = Object.fromEntries(Object.entries(TAB_SLUGS).map(([t, s]) => [s, t]));
+
+    let _suppressHashChange = false;
+    function pushTabHash(tabName) {
+        const slug = TAB_SLUGS[tabName];
+        if (!slug) return;
+        const newHash = '#' + slug;
+        if (window.location.hash === newHash) return;
+        _suppressHashChange = true;
+        try { history.pushState(null, '', newHash); } catch (e) { window.location.hash = slug; }
+        setTimeout(() => { _suppressHashChange = false; }, 0);
+    }
+
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
             if (tab.classList.contains('topnav-tab--disabled')) return;
             activateTab(tab);
+            pushTabHash(tab.dataset.tab);
         });
     });
 
-    // ── Init : appliquer la vue correspondant à l'onglet actif au chargement ──
-    // Si un username est dans le hash, ouvrir directement le panel profil
-    // (l'onglet "Profils" a été supprimé)
+    // Navigation back/forward → restaure l'onglet correspondant au hash
+    window.addEventListener('popstate', () => { applyHashRoute(); });
+    window.addEventListener('hashchange', () => {
+        if (_suppressHashChange) return;
+        applyHashRoute();
+    });
+
+    function applyHashRoute() {
+        const raw = (window.location.hash || '').replace(/^#/, '').trim();
+        // 1) Slug d'onglet ?
+        if (raw && SLUG_TO_TAB[raw]) {
+            const tabName = SLUG_TO_TAB[raw];
+            const tab = document.querySelector(`.topnav-tab[data-tab="${tabName}"]`);
+            if (tab && !tab.classList.contains('topnav-tab--disabled')) {
+                activateTab(tab);
+                return true;
+            }
+        }
+        // 2) Username en @ (ex: #@unscoop) → ouvre le profil
+        if (raw.startsWith('@')) {
+            const username = raw.slice(1);
+            if (username.length > 0) {
+                window._pfHasProfile = true;
+                window._explorerUsername = username;
+                window._pfHasExplorerProfile = true;
+                window._lastExplorerView = 'profile';
+                if (typeof window.showProfileView === 'function') {
+                    window.showProfileView();
+                    if (typeof fetchProfileAndNFTs === 'function') fetchProfileAndNFTs();
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // ── Init : appliquer la vue correspondant au hash, ou à l'onglet actif ──
     (function initActiveTab() {
-        const hash = window.location.hash || '';
-        const username = hash.replace('#', '').trim();
-        if (username.length > 0) {
+        const raw = (window.location.hash || '').replace(/^#/, '').trim();
+
+        // Slug d'onglet → activer cet onglet
+        if (raw && SLUG_TO_TAB[raw]) {
+            const tabName = SLUG_TO_TAB[raw];
+            const tab = document.querySelector(`.topnav-tab[data-tab="${tabName}"]`);
+            if (tab && !tab.classList.contains('topnav-tab--disabled')) {
+                activateTab(tab);
+                return;
+            }
+        }
+
+        // Username sans @ (compat retro avec les anciens liens) ou avec @
+        const username = raw.startsWith('@') ? raw.slice(1) : raw;
+        const looksLikeUsername = username.length > 0 && !SLUG_TO_TAB[username];
+        if (looksLikeUsername) {
             window._pfHasProfile = true;
             window._explorerUsername = username;
             window._pfHasExplorerProfile = true;
             window._lastExplorerView = 'profile';
-            // Pas d'onglet à activer — on appelle directement showProfileView
             if (typeof window.showProfileView === 'function') {
                 window.showProfileView();
                 if (typeof fetchProfileAndNFTs === 'function') fetchProfileAndNFTs();
                 return;
             }
         }
-        // Sinon appliquer la vue de l'onglet marqué active dans le HTML
+
+        // Sinon : onglet par défaut (celui marqué actif dans le HTML)
         const activeTab = document.querySelector('.topnav-tab--active');
         if (activeTab) activateTab(activeTab);
     })();
@@ -18391,8 +18468,14 @@ window.initSnapshotPanel = function() {
 
         const row = document.createElement('div');
         row.className = 'home-top-row';
+        // Rang sous forme de bulle (or/argent/bronze pour le top 3),
+        // identique au tableau Top Collections du panel stats.
+        const rankCls = i === 0 ? 'stats-rank stats-rank--gold'
+                      : i === 1 ? 'stats-rank stats-rank--silver'
+                      : i === 2 ? 'stats-rank stats-rank--bronze'
+                      : 'stats-rank';
         row.innerHTML = `
-            <span class="home-top-rank">${i + 1}</span>
+            <span class="home-top-rank"><span class="${rankCls}"><span class="stats-rank-num">${i + 1}</span></span></span>
             <img class="home-top-logo" src="${escapeHtml(c.logo?.url || '')}" alt="" loading="lazy"/>
             <span class="home-top-name">${escapeHtml(c.name || '—')}${c.verified ? ' <svg class="home-top-verified" viewBox="0 0 20 20" fill="none" aria-label="Verified"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}</span>
             <span class="home-top-floor">${floor > 0 ? fmtUSD(floor) : '—'}</span>
@@ -20266,8 +20349,11 @@ window.initSnapshotPanel = function() {
             /* Position de la bulle (en pixels relatifs au wrap, sans déborder) */
             var pxX = (p[0] / spark.w) * rect.width;
             var pxY = (p[1] / spark.h) * rect.height;
-            tip.style.left = Math.max(0, Math.min(rect.width - 60, pxX - 30)) + 'px';
-            tip.style.top  = Math.max(0, pxY - 28) + 'px';
+            /* Tooltip pinné en haut du graphique (sur la ligne d'échelle
+               pointillée), il ne suit PAS le prix verticalement. Seule la
+               position X bouge avec le curseur. */
+            tip.style.left = Math.max(2, Math.min(rect.width - 70, pxX - 35)) + 'px';
+            tip.style.top  = '2px';
         }
         function leave() {
             if (line) line.style.display = 'none';
@@ -20332,6 +20418,9 @@ window.initSnapshotPanel = function() {
             '</div>' +
             '<div class="home-crypto-card-chart-wrap">' +
                 '<svg class="home-crypto-card-chart ' + chartCls + '" viewBox="0 0 280 60" preserveAspectRatio="none">' +
+                    /* Ligne pointillée du haut — sert de support visuel pour le
+                       tooltip qui est épinglé sur cette ligne au hover. */
+                    '<line class="grid-line grid-line--top" x1="0" y1="6" x2="280" y2="6" stroke-dasharray="2 3"/>' +
                     (spark.area ? '<path class="area" d="' + spark.area + '"/>' : '') +
                     (spark.line ? '<path class="line" d="' + spark.line + '"/>' : '') +
                     /* Indicateur hover (caché par défaut) */
