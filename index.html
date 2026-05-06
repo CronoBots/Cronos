@@ -18447,16 +18447,27 @@ window.initSnapshotPanel = function() {
     let _lastTickerCount = 0;
 
     function pollTicker() {
-        const sales = window._sbSales;
+        let sales = window._sbSales;
         // Pas encore de données Market Bot
         if (!sales || !sales.length) {
             const track = document.getElementById('cbTickerTrack');
             if (track) track.innerHTML = '<span class="cb-ticker-empty">Open Market Bot to load live data…</span>';
             return;
         }
-        // Évite un re-render inutile si rien n'a changé
-        if (sales.length === _lastTickerCount) return;
-        _lastTickerCount = sales.length;
+        // Reproduit le filtre client du Market Bot pour que le ticker reflète
+        // exactement la vue active (Sales / Listings / Auctions / All).
+        // _sales contient déjà les bons "natures" mais il reste à filtrer
+        // par s.mode pour Listings/Auctions.
+        const mode = window._sbMode;
+        if (mode === 'auction')      sales = sales.filter(s => s && s.mode === 'auction');
+        else if (mode === 'listed')  sales = sales.filter(s => s && s.mode !== 'auction');
+        // Évite un re-render inutile si rien n'a changé. On utilise length +
+        // l'id du premier élément pour détecter aussi un changement d'ordre
+        // (ex: changement de mode qui produit la même longueur mais des
+        // events différents).
+        const fingerprint = sales.length + ':' + (sales[0]?.id || '');
+        if (fingerprint === _lastTickerCount) return;
+        _lastTickerCount = fingerprint;
         renderTickerItems(sales.slice(0, 12));
     }
 
@@ -18488,7 +18499,7 @@ window.initSnapshotPanel = function() {
                     ${img ? `<img class="cb-ticker-img" src="${escapeHtml(img)}" alt="" loading="lazy"/>` : ''}
                     <span class="cb-ticker-verb">${verb}</span>
                     <span class="cb-ticker-asset">${escapeHtml(e.asset?.name || '—')}</span>
-                    <span class="cb-ticker-price">${price > 1 ? fmtUSD(price) : ''}</span>
+                    <span class="cb-ticker-price">${price > 0 ? fmtUSD(price) : ''}</span>
                     <span class="cb-ticker-by">${escapeHtml(isList ? seller : buyer)}</span>
                     <span class="cb-ticker-time">${timeAgo(e.createdAt)}</span>
                 </a>`;
