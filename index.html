@@ -20096,11 +20096,14 @@ window.initSnapshotPanel = function() {
     }
     function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]); }); }
 
-    /* Build a sparkline SVG path from candle closes */
+    /* Build a sparkline SVG path from candle closes. Returns also the
+       point coordinates and original close values so we can hit-test
+       and show a hover tooltip. */
     function buildSparkline(candles, w, h) {
-        if (!candles.length) return { line: '', area: '', up: false };
+        var empty = { line: '', area: '', up: false, pts: [], values: [], min: 0, max: 0, w: w, h: h };
+        if (!candles.length) return empty;
         var closes = candles.map(function (c) { return Number(c.c) || Number(c.close) || 0; }).filter(function (v) { return v > 0; });
-        if (closes.length < 2) return { line: '', area: '', up: false };
+        if (closes.length < 2) return empty;
         var min = Math.min.apply(null, closes);
         var max = Math.max.apply(null, closes);
         var range = (max - min) || 1;
@@ -20112,7 +20115,7 @@ window.initSnapshotPanel = function() {
         var line = 'M ' + pts.map(function (p) { return p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' L ');
         var area = line + ' L ' + pts[pts.length - 1][0].toFixed(1) + ' ' + h + ' L ' + pts[0][0].toFixed(1) + ' ' + h + ' Z';
         var up = closes[closes.length - 1] >= closes[0];
-        return { line: line, area: area, up: up };
+        return { line: line, area: area, up: up, pts: pts, values: closes, min: min, max: max, w: w, h: h };
     }
 
     function pairSymbol(pair) {
@@ -20122,6 +20125,54 @@ window.initSnapshotPanel = function() {
     function pairQuote(pair) {
         var parts = (pair || '').split('_');
         return parts[1] || '';
+    }
+
+    /* Hover tracking on the chart : suit le curseur et affiche le prix
+       du point de la candle le plus proche dans une bulle tooltip. */
+    function bindChartHover(card, spark) {
+        if (!spark || !spark.pts || !spark.pts.length) return;
+        var wrap = card.querySelector('.home-crypto-card-chart-wrap');
+        var svg  = card.querySelector('.home-crypto-card-chart');
+        var line = svg && svg.querySelector('.hover-line');
+        var dot  = svg && svg.querySelector('.hover-dot');
+        var tip  = card.querySelector('.home-crypto-card-chart-tooltip');
+        if (!wrap || !svg || !line || !dot || !tip) return;
+
+        function move(e) {
+            var rect = wrap.getBoundingClientRect();
+            var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            if (clientX == null) return;
+            var ratioX = (clientX - rect.left) / rect.width;
+            if (ratioX < 0) ratioX = 0; else if (ratioX > 1) ratioX = 1;
+            var x = ratioX * spark.w;
+            /* Trouve l'index du point le plus proche en x */
+            var bestI = 0, bestD = Infinity;
+            for (var i = 0; i < spark.pts.length; i++) {
+                var d = Math.abs(spark.pts[i][0] - x);
+                if (d < bestD) { bestD = d; bestI = i; }
+            }
+            var p = spark.pts[bestI];
+            line.setAttribute('x1', p[0]); line.setAttribute('x2', p[0]);
+            line.style.display = '';
+            dot.setAttribute('cx', p[0]); dot.setAttribute('cy', p[1]);
+            dot.style.display = '';
+            tip.textContent = fmtPrice(spark.values[bestI]);
+            tip.style.display = '';
+            /* Position de la bulle (en pixels relatifs au wrap, sans déborder) */
+            var pxX = (p[0] / spark.w) * rect.width;
+            var pxY = (p[1] / spark.h) * rect.height;
+            tip.style.left = Math.max(0, Math.min(rect.width - 60, pxX - 30)) + 'px';
+            tip.style.top  = Math.max(0, pxY - 28) + 'px';
+        }
+        function leave() {
+            if (line) line.style.display = 'none';
+            if (dot) dot.style.display = 'none';
+            if (tip) tip.style.display = 'none';
+        }
+        wrap.addEventListener('mousemove', move);
+        wrap.addEventListener('mouseleave', leave);
+        wrap.addEventListener('touchmove', move, { passive: true });
+        wrap.addEventListener('touchend', leave);
     }
 
     async function loadPairData(pair) {
@@ -20138,18 +20189,27 @@ window.initSnapshotPanel = function() {
         var st = _state[pair] || { tf: '24h' };
         var ticker = st.ticker || {};
         var price = Number(ticker.a) || Number(ticker.last) || Number(ticker.b) || 0;
-        var pct = Number(ticker.c) || 0;  /* 24h change percent */
-        if (Math.abs(pct) > 0 && Math.abs(pct) < 1 && ticker.h && ticker.l) {
-            /* fallback computation if API uses fraction */
-            pct = pct * 100;
-        }
         var spark = buildSparkline(st.candles || [], 280, 60);
+        /* % de variation calculé sur la timeframe active (24h/7d/30d) à
+           partir des candles : (dernier close - premier close) / premier.
+           Plus précis que le ticker.c qui est figé sur 24h. */
+        var pct = 0;
+        if (spark.values.length >= 2) {
+            var first = spark.values[0];
+            var last  = spark.values[spark.values.length - 1];
+            if (first > 0) pct = ((last - first) / first) * 100;
+        } else if (ticker.c) {
+            pct = Number(ticker.c) || 0;
+            if (Math.abs(pct) > 0 && Math.abs(pct) < 1) pct = pct * 100;
+        }
         var changeCls = pct > 0.0001 ? 'home-crypto-card-change--up'
                        : pct < -0.0001 ? 'home-crypto-card-change--down' : 'home-crypto-card-change--zero';
         var chartCls = spark.up ? 'home-crypto-card-chart--up' : 'home-crypto-card-chart--down';
         var canRemove = pair !== 'CRO_USD';
 
         var card = grid.querySelector('[data-pair="' + pair + '"]');
+        var minLabel = spark.min > 0 ? fmtPrice(spark.min) : '';
+        var maxLabel = spark.max > 0 ? fmtPrice(spark.max) : '';
         var html =
             '<div class="home-crypto-card-header">' +
                 '<div>' +
@@ -20160,12 +20220,26 @@ window.initSnapshotPanel = function() {
             '</div>' +
             '<div class="home-crypto-card-price-row">' +
                 '<span class="home-crypto-card-price">' + fmtPrice(price) + '</span>' +
-                '<span class="home-crypto-card-change ' + changeCls + '">' + fmtPct(pct) + '</span>' +
+                '<span class="home-crypto-card-change ' + changeCls + '">' +
+                    fmtPct(pct) + '<span class="home-crypto-card-change-period">' + (st.tf || '24h').toUpperCase() + '</span>' +
+                '</span>' +
             '</div>' +
-            '<svg class="home-crypto-card-chart ' + chartCls + '" viewBox="0 0 280 60" preserveAspectRatio="none">' +
-                (spark.area ? '<path class="area" d="' + spark.area + '"/>' : '') +
-                (spark.line ? '<path class="line" d="' + spark.line + '"/>' : '') +
-            '</svg>' +
+            '<div class="home-crypto-card-chart-wrap">' +
+                '<svg class="home-crypto-card-chart ' + chartCls + '" viewBox="0 0 280 60" preserveAspectRatio="none">' +
+                    /* Échelle horizontale discrète : ligne min + ligne max en pointillé */
+                    (spark.values.length ? '<line class="grid-line" x1="2" y1="4" x2="278" y2="4" stroke-dasharray="2 3"/>' +
+                                           '<line class="grid-line" x1="2" y1="56" x2="278" y2="56" stroke-dasharray="2 3"/>' : '') +
+                    (spark.area ? '<path class="area" d="' + spark.area + '"/>' : '') +
+                    (spark.line ? '<path class="line" d="' + spark.line + '"/>' : '') +
+                    /* Indicateur hover (caché par défaut) */
+                    '<line class="hover-line" x1="-10" y1="0" x2="-10" y2="60" stroke-dasharray="2 2" style="display:none"/>' +
+                    '<circle class="hover-dot" cx="-10" cy="-10" r="3" style="display:none"/>' +
+                '</svg>' +
+                /* Étiquettes min / max aux coins */
+                (maxLabel ? '<span class="home-crypto-card-chart-max">' + maxLabel + '</span>' : '') +
+                (minLabel ? '<span class="home-crypto-card-chart-min">' + minLabel + '</span>' : '') +
+                '<span class="home-crypto-card-chart-tooltip" style="display:none"></span>' +
+            '</div>' +
             '<div class="home-crypto-card-tf">' +
                 ['24h','7d','30d'].map(function (tf) {
                     return '<button class="home-crypto-card-tf-btn' + (tf === st.tf ? ' home-crypto-card-tf-btn--active' : '') + '" data-tf="' + tf + '">' + tf.toUpperCase() + '</button>';
@@ -20179,6 +20253,8 @@ window.initSnapshotPanel = function() {
             grid.appendChild(card);
         }
         card.innerHTML = html;
+        /* Bind hover tracking on the chart */
+        bindChartHover(card, spark);
     }
 
     function renderAll() {
