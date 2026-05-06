@@ -1507,17 +1507,17 @@
       </div>
       <div class="cp-filters-right">
         <!-- Tri -->
+        <!-- Tri : Name par défaut, Price toggle ↑/↓ sur un seul bouton -->
         <div class="stats-timerange cp-sort-group" id="cpSortGroup">
-          <button class="stats-tr-btn stats-tr-btn--active" data-cpsort="price-asc"  type="button">Price ↑</button>
-          <button class="stats-tr-btn" data-cpsort="price-desc" type="button">Price ↓</button>
+          <button class="stats-tr-btn stats-tr-btn--active" data-cpsort="name-asc"   type="button">Name</button>
+          <button class="stats-tr-btn cp-sort-price-btn" data-cpsort="price-asc"  type="button">Price ↑</button>
           <button class="stats-tr-btn" data-cpsort="rank-asc"   type="button">Rarity</button>
-          <button class="stats-tr-btn" data-cpsort="name-asc"   type="button">Name</button>
           <button class="stats-tr-btn" data-cpsort="likes-desc" type="button">Likes</button>
         </div>
-        <!-- Listed : ALL à droite de Listed -->
+        <!-- Listed : "All" à gauche par défaut -->
         <div class="stats-chain-filter cp-listed-group" id="cpListedGroup">
-          <button class="stats-cf-btn" data-cplisted="listed" type="button">Listed</button>
           <button class="stats-cf-btn stats-cf-btn--active" data-cplisted="all"    type="button">All</button>
+          <button class="stats-cf-btn" data-cplisted="listed" type="button">Listed</button>
         </div>
         <!-- Info overlay sur les cards : NONE par défaut, à gauche ; ALL à droite -->
         <div class="stats-chain-filter cp-overlay-group" id="cpOverlayGroup">
@@ -7285,7 +7285,7 @@ document.addEventListener('DOMContentLoaded', initialize);
     let _loaded = false;
     let _fetchCancel = null;
     let _allNfts = [];          // tous les NFTs chargés
-    let _cpSort = 'price-asc';  // tri actif
+    let _cpSort = 'name-asc';  // tri actif (Name par défaut)
     let _cpListed = 'all';      // filtre listed
     let _cpSearch = '';         // recherche texte
 
@@ -7326,7 +7326,9 @@ document.addEventListener('DOMContentLoaded', initialize);
                 return ra - rb;
             }
             if (_cpSort === 'name-asc') {
-                return (a.name || '').localeCompare(b.name || '');
+                /* Tri "naturel" : sépare les chunks numériques pour que
+                   "Loaded Lion #2" passe avant "Loaded Lion #10". */
+                return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' });
             }
             // Tri par nombre de likes — desc par défaut (les NFT les plus
             // populaires en haut). Les assets sans valeur tombent à la fin.
@@ -7583,17 +7585,24 @@ document.addEventListener('DOMContentLoaded', initialize);
         _currentId = id || DEFAULT_COLLECTION_ID;
         if (typeof window._setCpAnalyticsColId === 'function') window._setCpAnalyticsColId(_currentId);
         _loaded = true;
-        _cpSort = 'price-asc';
+        _cpSort = 'name-asc';
         _cpListed = 'all';
         _cpOverlay = 'none';
         _cpSize = 'small';
-        // Reset boutons de filtre
-        document.querySelectorAll('#cpSortGroup [data-cpsort]').forEach(b =>
-            b.classList.toggle('stats-tr-btn--active', b.dataset.cpsort === 'price-asc'));
+        // Reset boutons de filtre — Name actif (premier bouton), All actif, None actif
+        document.querySelectorAll('#cpSortGroup [data-cpsort]').forEach(b => {
+            const isPrice = b.classList.contains('cp-sort-price-btn');
+            if (isPrice) {
+                /* Reset le bouton Price à son état initial (asc + flèche ↑) */
+                b.dataset.cpsort = 'price-asc';
+                b.textContent = 'Price ↑';
+            }
+            b.classList.toggle('stats-tr-btn--active', b.dataset.cpsort === 'name-asc');
+        });
         document.querySelectorAll('#cpListedGroup [data-cplisted]').forEach(b =>
             b.classList.toggle('stats-cf-btn--active', b.dataset.cplisted === 'all'));
         document.querySelectorAll('#cpOverlayGroup [data-cpoverlay]').forEach(b =>
-            b.classList.toggle('stats-cf-btn--active', b.dataset.cpoverlay === 'both'));
+            b.classList.toggle('stats-cf-btn--active', b.dataset.cpoverlay === 'none'));
         document.querySelectorAll('#cpSizeToggle [data-cpsize]').forEach(b =>
             b.classList.toggle('stats-tr-btn--active', b.dataset.cpsize === 'small'));
 
@@ -7674,10 +7683,22 @@ document.addEventListener('DOMContentLoaded', initialize);
     if (!window._cpInitDone) {
         window._cpInitDone = true;
 
-        // ── Tri ──
+        // ── Tri (avec gestion du toggle Price ↑/↓ sur un seul bouton) ──
         document.addEventListener('click', e => {
             const btn = e.target.closest('#cpSortGroup [data-cpsort]');
             if (!btn) return;
+            const isPrice = btn.classList.contains('cp-sort-price-btn');
+            const wasActive = btn.classList.contains('stats-tr-btn--active');
+            if (isPrice && wasActive) {
+                /* Toggle entre asc et desc */
+                if (btn.dataset.cpsort === 'price-asc') {
+                    btn.dataset.cpsort = 'price-desc';
+                    btn.textContent = 'Price ↓';
+                } else {
+                    btn.dataset.cpsort = 'price-asc';
+                    btn.textContent = 'Price ↑';
+                }
+            }
             _cpSort = btn.dataset.cpsort;
             document.querySelectorAll('#cpSortGroup [data-cpsort]').forEach(b =>
                 b.classList.toggle('stats-tr-btn--active', b === btn));
