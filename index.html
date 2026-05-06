@@ -18461,6 +18461,18 @@ window.initSnapshotPanel = function() {
         const mode = window._sbMode;
         if (mode === 'auction')      sales = sales.filter(s => s && s.mode === 'auction');
         else if (mode === 'listed')  sales = sales.filter(s => s && s.mode !== 'auction');
+        else if (mode === 'all') {
+            // En mode "All", l'API renvoie typiquement beaucoup plus de
+            // listings que de ventes (les listings sont publiés en continu).
+            // Pour garantir que l'utilisateur voit *les deux* types dans le
+            // live feed, on prend les 6 plus récents de chaque catégorie
+            // puis on retrie par date — au lieu d'une simple slice(0,12)
+            // qui serait dominée par les listings.
+            const sales_only    = sales.filter(s => s && s.nature === 'transferred').slice(0, 6);
+            const listings_only = sales.filter(s => s && s.nature === 'listed').slice(0, 6);
+            sales = sales_only.concat(listings_only)
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
         // Évite un re-render inutile si rien n'a changé. On utilise length +
         // l'id du premier élément pour détecter aussi un changement d'ordre
         // (ex: changement de mode qui produit la même longueur mais des
@@ -18488,11 +18500,14 @@ window.initSnapshotPanel = function() {
         }
         track.innerHTML = events.map((e) => {
             const price = Number(e.listing?.salePriceDecimalUSD) || Number(e.amountDecimal) || 0;
-            const isList = e.nature === 'listed';
+            const isList    = e.nature === 'listed';
+            const isAuction = e.mode === 'auction';
             const seller = e.user?.displayName || e.user?.username || '—';
             const buyer  = e.toUser?.displayName || e.toUser?.username || '—';
-            const verb   = isList ? 'listed' : 'sold';
-            const cls    = isList ? 'cb-tk-list' : 'cb-tk-sale';
+            // Labels alignés sur le Market Bot : Sale / Listing / Auction
+            // (au lieu de "sold" / "listed" historiques).
+            const verb = isList ? (isAuction ? 'Auction' : 'Listing') : 'Sale';
+            const cls  = isList ? (isAuction ? 'cb-tk-auction' : 'cb-tk-list') : 'cb-tk-sale';
             const img    = e.asset?.cover?.url || '';
             return `
                 <a class="cb-ticker-item ${cls}" href="https://crypto.com/nft/asset/${escapeHtml(e.asset?.id || '')}" target="_blank" rel="noopener">
