@@ -1328,9 +1328,17 @@
 
     <!-- ── Crypto Prices (live from Crypto.com Exchange) ── -->
     <section class="home-section home-crypto-section">
-      <div class="home-section-header">
-        <h2 class="home-section-title">Crypto Prices</h2>
-        <button class="home-section-action" id="cryptoAddBtn" type="button">+ Add token</button>
+      <div class="home-section-header home-crypto-header">
+        <div class="home-crypto-header-left">
+          <h2 class="home-section-title">Crypto Prices</h2>
+          <button class="home-section-action" id="cryptoAddBtn" type="button">+ Add token</button>
+        </div>
+        <!-- Filtre global de période — s'applique à toutes les cartes -->
+        <div class="home-crypto-tf-global" id="cryptoTfGlobal">
+          <button class="home-crypto-tf-btn home-crypto-tf-btn--active" data-tf="24h" type="button">24H</button>
+          <button class="home-crypto-tf-btn" data-tf="7d"  type="button">7D</button>
+          <button class="home-crypto-tf-btn" data-tf="30d" type="button">30D</button>
+        </div>
       </div>
       <div class="home-crypto-grid" id="homeCryptoGrid">
         <div class="home-crypto-loading"><span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span></div>
@@ -20034,7 +20042,8 @@ window.initSnapshotPanel = function() {
     };
 
     var _pairs = loadPairs();
-    var _state = {};      /* pair -> { tf, ticker, candles } */
+    var _state = {};      /* pair -> { ticker, candles } */
+    var _globalTf = '24h';  /* timeframe partagée par toutes les cartes */
     var _instruments = null;  /* cached list of all tradable pairs */
     var _refreshTimer = null;
 
@@ -20185,8 +20194,8 @@ window.initSnapshotPanel = function() {
     }
 
     async function loadPairData(pair) {
-        var st = _state[pair] = _state[pair] || { tf: '24h' };
-        var [ticker, candles] = await Promise.all([fetchTicker(pair), fetchCandles(pair, st.tf)]);
+        var st = _state[pair] = _state[pair] || {};
+        var [ticker, candles] = await Promise.all([fetchTicker(pair), fetchCandles(pair, _globalTf)]);
         st.ticker = ticker;
         st.candles = candles;
         renderCard(pair);
@@ -20195,7 +20204,7 @@ window.initSnapshotPanel = function() {
     function renderCard(pair) {
         var grid = document.getElementById('homeCryptoGrid');
         if (!grid) return;
-        var st = _state[pair] || { tf: '24h' };
+        var st = _state[pair] || {};
         var ticker = st.ticker || {};
         var price = Number(ticker.a) || Number(ticker.last) || Number(ticker.b) || 0;
         var spark = buildSparkline(st.candles || [], 280, 60);
@@ -20226,18 +20235,12 @@ window.initSnapshotPanel = function() {
                 '<div class="home-crypto-card-header-right">' +
                     '<span class="home-crypto-card-price">' + fmtPrice(price) + '</span>' +
                     '<span class="home-crypto-card-change ' + changeCls + '">' +
-                        fmtPct(pct) + '<span class="home-crypto-card-change-period">' + (st.tf || '24h').toUpperCase() + '</span>' +
+                        fmtPct(pct) + '<span class="home-crypto-card-change-period">' + _globalTf.toUpperCase() + '</span>' +
                     '</span>' +
                     (canRemove ? '<button class="home-crypto-card-remove" data-action="remove" title="Remove">×</button>' : '') +
                 '</div>' +
             '</div>' +
             '<div class="home-crypto-card-chart-wrap">' +
-                /* Toggle de timeframe en overlay top-right du graphique */
-                '<div class="home-crypto-card-tf">' +
-                    ['24h','7d','30d'].map(function (tf) {
-                        return '<button class="home-crypto-card-tf-btn' + (tf === st.tf ? ' home-crypto-card-tf-btn--active' : '') + '" data-tf="' + tf + '">' + tf.toUpperCase() + '</button>';
-                    }).join('') +
-                '</div>' +
                 '<svg class="home-crypto-card-chart ' + chartCls + '" viewBox="0 0 280 60" preserveAspectRatio="none">' +
                     (spark.area ? '<path class="area" d="' + spark.area + '"/>' : '') +
                     (spark.line ? '<path class="line" d="' + spark.line + '"/>' : '') +
@@ -20284,14 +20287,21 @@ window.initSnapshotPanel = function() {
             savePairs();
             delete _state[pair];
             card.remove();
-            return;
         }
-        if (btn.dataset.tf) {
-            _state[pair] = _state[pair] || {};
-            _state[pair].tf = btn.dataset.tf;
-            renderCard(pair);
-            loadPairData(pair);
-        }
+    }
+
+    /* Toggle global de timeframe — appliqué à toutes les cartes en même temps */
+    function onGlobalTfClick(e) {
+        var btn = e.target.closest('[data-tf]');
+        if (!btn) return;
+        var tf = btn.dataset.tf;
+        if (!tf || tf === _globalTf) return;
+        _globalTf = tf;
+        document.querySelectorAll('#cryptoTfGlobal [data-tf]').forEach(function (b) {
+            b.classList.toggle('home-crypto-tf-btn--active', b.dataset.tf === tf);
+        });
+        /* Re-fetch des candles pour la nouvelle période + re-render */
+        _pairs.forEach(function (p) { loadPairData(p); });
     }
 
     /* ── Picker (dialog natif) ── */
@@ -20357,6 +20367,8 @@ window.initSnapshotPanel = function() {
         }, REFRESH_MS);
 
         grid.addEventListener('click', onGridClick);
+        var tfGlobal = document.getElementById('cryptoTfGlobal');
+        if (tfGlobal) tfGlobal.addEventListener('click', onGlobalTfClick);
         var addBtn = document.getElementById('cryptoAddBtn');
         if (addBtn) addBtn.addEventListener('click', openPicker);
         var closeBtn = document.getElementById('cryptoPickerClose');
