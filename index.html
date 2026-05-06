@@ -1322,9 +1322,9 @@
       <div class="home-crypto-grid" id="homeCryptoGrid">
         <div class="home-crypto-loading"><span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span></div>
       </div>
-      <!-- Picker (modal-like), hidden by default -->
-      <div class="home-crypto-picker" id="cryptoPickerBackdrop" aria-hidden="true">
-        <div class="home-crypto-picker-card" role="dialog" aria-label="Add a crypto pair">
+      <!-- Picker : <dialog> natif (caché par défaut au niveau navigateur) -->
+      <dialog class="home-crypto-picker-dialog" id="cryptoPickerDialog" aria-label="Add a crypto pair">
+        <div class="home-crypto-picker-card">
           <div class="home-crypto-picker-header">
             <span class="home-crypto-picker-title">Add a token</span>
             <button class="home-crypto-picker-close" id="cryptoPickerClose" type="button" aria-label="Close">×</button>
@@ -1332,7 +1332,7 @@
           <input class="home-crypto-picker-search" id="cryptoPickerSearch" type="text" placeholder="Search BTC, ETH, SOL…" autocomplete="off" spellcheck="false"/>
           <div class="home-crypto-picker-list" id="cryptoPickerList"></div>
         </div>
-      </div>
+      </dialog>
     </section>
 
     <!-- ── Featured Collections ── -->
@@ -20195,19 +20195,23 @@ window.initSnapshotPanel = function() {
         }
     }
 
-    /* ── Picker (modal d'ajout) ── */
+    /* ── Picker (dialog natif) ── */
     function openPicker() {
-        var bd = document.getElementById('cryptoPickerBackdrop');
-        var sb = document.getElementById('cryptoPickerSearch');
-        if (!bd) return;
-        bd.classList.add('is-open');
+        var dlg = document.getElementById('cryptoPickerDialog');
+        var sb  = document.getElementById('cryptoPickerSearch');
+        if (!dlg) return;
+        if (typeof dlg.showModal === 'function' && !dlg.open) {
+            try { dlg.showModal(); } catch (e) { /* already open */ }
+        }
         if (sb) { sb.value = ''; sb.focus(); }
         renderPickerList('');
         fetchInstruments().then(function () { renderPickerList(sb && sb.value || ''); });
     }
     function closePicker() {
-        var bd = document.getElementById('cryptoPickerBackdrop');
-        if (bd) bd.classList.remove('is-open');
+        var dlg = document.getElementById('cryptoPickerDialog');
+        if (dlg && dlg.open && typeof dlg.close === 'function') {
+            try { dlg.close(); } catch (e) {}
+        }
     }
     function renderPickerList(q) {
         var list = document.getElementById('cryptoPickerList');
@@ -20258,8 +20262,13 @@ window.initSnapshotPanel = function() {
         if (addBtn) addBtn.addEventListener('click', openPicker);
         var closeBtn = document.getElementById('cryptoPickerClose');
         if (closeBtn) closeBtn.addEventListener('click', closePicker);
-        var bd = document.getElementById('cryptoPickerBackdrop');
-        if (bd) bd.addEventListener('click', function (e) { if (e.target === bd) closePicker(); });
+        /* Click sur le ::backdrop natif (zone derrière le dialog) ferme aussi */
+        var dlg = document.getElementById('cryptoPickerDialog');
+        if (dlg) dlg.addEventListener('click', function (e) {
+            var rect = dlg.getBoundingClientRect();
+            if (e.clientX < rect.left || e.clientX > rect.right ||
+                e.clientY < rect.top  || e.clientY > rect.bottom) closePicker();
+        });
         var sb = document.getElementById('cryptoPickerSearch');
         if (sb) sb.addEventListener('input', function () { renderPickerList(sb.value); });
         var list = document.getElementById('cryptoPickerList');
