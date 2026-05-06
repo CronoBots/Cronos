@@ -18199,7 +18199,7 @@ window.initSnapshotPanel = function() {
             ) {
                 id name verified
                 logo { url }
-                metrics { items owners }
+                metrics { items owners totalSalesDecimal }
                 stats @include(if: $withStats) {
                     floorPriceDecimal
                     oneDayVolumeDecimal      oneDayVolumeDecimalChange      oneDayBuyerCount
@@ -18238,34 +18238,34 @@ window.initSnapshotPanel = function() {
         results.forEach((arr) => arr.forEach((c) => {
             if (c?.id && !seen.has(c.id)) { seen.add(c.id); merged.push(c); }
         }));
-        // Sort merged result by current-range volume DESC
-        const volKey = {
-            ONE_DAY: 'oneDayVolumeDecimal',
-            SEVEN_DAYS: 'sevenDayVolumeDecimal',
-            THIRTY_DAYS: 'thirtyDayVolumeDecimal',
-            ALL: 'oneDayVolumeDecimal' // fallback for ALL — totalSalesDecimal preferred
-        }[range];
-        merged.sort((a, b) => (Number(b.stats?.[volKey]) || 0) - (Number(a.stats?.[volKey]) || 0));
+        // Sort merged result by current-range volume DESC. Pour ALL on
+        // utilise metrics.totalSalesDecimal (volume cumulé all-time) au lieu
+        // d'oneDayVolumeDecimal — sinon ALL affiche les mêmes chiffres que 24H.
+        const getVol = range === 'ALL'
+            ? (c) => Number(c.metrics?.totalSalesDecimal) || 0
+            : (() => {
+                const k = { ONE_DAY: 'oneDayVolumeDecimal', SEVEN_DAYS: 'sevenDayVolumeDecimal', THIRTY_DAYS: 'thirtyDayVolumeDecimal' }[range];
+                return (c) => Number(c.stats?.[k]) || 0;
+              })();
+        merged.sort((a, b) => getVol(b) - getVol(a));
         return merged;
     }
 
     function renderTopCollectionsRow(c, i, range) {
         const stats = c.stats || {};
-        const volKey = {
-            ONE_DAY: 'oneDayVolumeDecimal',
-            SEVEN_DAYS: 'sevenDayVolumeDecimal',
-            THIRTY_DAYS: 'thirtyDayVolumeDecimal',
-            ALL: 'oneDayVolumeDecimal'
-        }[range];
+        // Pour ALL on affiche le volume all-time depuis metrics.totalSalesDecimal,
+        // pas oneDayVolumeDecimal. Pour les autres ranges on garde la clé période.
+        const vol = range === 'ALL'
+            ? (Number(c.metrics?.totalSalesDecimal) || 0)
+            : (Number(stats[{ ONE_DAY: 'oneDayVolumeDecimal', SEVEN_DAYS: 'sevenDayVolumeDecimal', THIRTY_DAYS: 'thirtyDayVolumeDecimal' }[range]]) || 0);
+        // Pas de "change %" pour le mode ALL (pas de période de comparaison
+        // pertinente côté API).
         const chgKey = {
             ONE_DAY: 'oneDayVolumeDecimalChange',
             SEVEN_DAYS: 'sevenDayVolumeDecimalChange',
-            THIRTY_DAYS: 'thirtyDayVolumeDecimalChange',
-            ALL: 'oneDayVolumeDecimalChange'
+            THIRTY_DAYS: 'thirtyDayVolumeDecimalChange'
         }[range];
-
-        const vol   = Number(stats[volKey]) || 0;
-        const chg   = Number(stats[chgKey]);
+        const chg   = chgKey ? Number(stats[chgKey]) : NaN;
         const floor = Number(stats.floorPriceDecimal) || 0;
         const chgFmt = isNaN(chg) ? { text: '—', cls: '' } : fmtChange(chg);
 
@@ -18298,14 +18298,15 @@ window.initSnapshotPanel = function() {
         // On l'utilise si disponible pour éviter tout appel API supplémentaire.
         const statsRows = window._statsAllRows;
         if (statsRows && statsRows.length > 0 && !_topColsCache?.[range]) {
-            const volKey = {
-                ONE_DAY: 'oneDayVolumeDecimal', SEVEN_DAYS: 'sevenDayVolumeDecimal',
-                THIRTY_DAYS: 'thirtyDayVolumeDecimal', ALL: 'oneDayVolumeDecimal'
-            }[range];
-            // Tri par volume décroissant (même ordre que le tableau stats)
-            const sorted = statsRows.slice().sort((a, b) =>
-                (Number(b.stats?.[volKey]) || 0) - (Number(a.stats?.[volKey]) || 0)
-            );
+            // Pour ALL on trie par volume all-time (metrics.totalSalesDecimal),
+            // sinon par la clé période correspondante.
+            const getVol = range === 'ALL'
+                ? (c) => Number(c.metrics?.totalSalesDecimal) || 0
+                : (() => {
+                    const k = { ONE_DAY: 'oneDayVolumeDecimal', SEVEN_DAYS: 'sevenDayVolumeDecimal', THIRTY_DAYS: 'thirtyDayVolumeDecimal' }[range];
+                    return (c) => Number(c.stats?.[k]) || 0;
+                  })();
+            const sorted = statsRows.slice().sort((a, b) => getVol(b) - getVol(a));
             _topColsCache = _topColsCache || {};
             _topColsCache[range] = sorted;
         }
@@ -18339,22 +18340,23 @@ window.initSnapshotPanel = function() {
         const elV = document.getElementById('hqsVolume');
         const elC = document.getElementById('hqsCollections');
         const elB = document.getElementById('hqsBuyers');
-        const volKey = {
-            ONE_DAY: 'oneDayVolumeDecimal',
-            SEVEN_DAYS: 'sevenDayVolumeDecimal',
-            THIRTY_DAYS: 'thirtyDayVolumeDecimal',
-            ALL: 'oneDayVolumeDecimal'
-        }[range];
+        // Pour ALL on somme les volumes all-time (metrics.totalSalesDecimal)
+        // au lieu d'oneDayVolumeDecimal — sinon la stat est identique à 24H.
+        const getVol = range === 'ALL'
+            ? (c) => Number(c.metrics?.totalSalesDecimal) || 0
+            : (() => {
+                const k = { ONE_DAY: 'oneDayVolumeDecimal', SEVEN_DAYS: 'sevenDayVolumeDecimal', THIRTY_DAYS: 'thirtyDayVolumeDecimal' }[range];
+                return (c) => Number(c.stats?.[k]) || 0;
+              })();
         const buyerKey = {
             ONE_DAY: 'oneDayBuyerCount',
             SEVEN_DAYS: 'sevenDayBuyerCount',
-            THIRTY_DAYS: 'thirtyDayBuyerCount',
-            ALL: 'oneDayBuyerCount'
+            THIRTY_DAYS: 'thirtyDayBuyerCount'
         }[range];
 
-        const totalVol     = cols.reduce((s, c) => s + (Number(c.stats?.[volKey]) || 0), 0);
-        const totalBuyers  = cols.reduce((s, c) => s + (Number(c.stats?.[buyerKey]) || 0), 0);
-        const totalActive  = cols.filter((c) => (Number(c.stats?.[volKey]) || 0) > 0).length;
+        const totalVol     = cols.reduce((s, c) => s + getVol(c), 0);
+        const totalBuyers  = buyerKey ? cols.reduce((s, c) => s + (Number(c.stats?.[buyerKey]) || 0), 0) : 0;
+        const totalActive  = cols.filter((c) => getVol(c) > 0).length;
 
         if (elV) elV.textContent = totalVol > 0 ? fmtUSD(totalVol) : '—';
         if (elB) elB.textContent = totalBuyers > 0 ? fmtNum(totalBuyers) : '—';
