@@ -11467,7 +11467,7 @@ async function sha256hex(str) {
     let _alarmLastTriggered = 0;
     const COOLDOWN = 8000;
 
-    function playAlarm() {
+    function playAlarm(details) {
         const now = Date.now();
         if (now - _alarmLastTriggered < COOLDOWN) return;
         _alarmLastTriggered = now;
@@ -11486,6 +11486,32 @@ async function sha256hex(str) {
             });
             setTimeout(() => ctx.close(), 1000);
         } catch(e) {}
+
+        // Notification système (mobile + desktop) — uniquement quand on a
+        // les détails du déclenchement (pas pour le test sound à l'arming).
+        if (details && 'Notification' in window && Notification.permission === 'granted') {
+            try {
+                const verb  = details.channel === 'sales' ? 'Sale' : 'Listing';
+                const price = details.price.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+                const title = '🔔 ' + (details.colName || 'Alert');
+                const body  = verb + ' at ' + price + ' (≤ your threshold)';
+                const n = new Notification(title, {
+                    body,
+                    icon: 'icon.png',
+                    badge: 'icon.png',
+                    tag: 'cronos-alarm-' + details.colId + '-' + details.channel,
+                    renotify: true,
+                    silent: true   // l'audio ci-dessus suffit, on évite le double-bip
+                });
+                n.onclick = () => { window.focus(); n.close(); };
+            } catch(e) {}
+        }
+    }
+
+    // Récupère le nom d'une collection à partir de son ID via le checkbox du picker.
+    function _getColName(colId) {
+        const cb = document.querySelector('.sb-col-cb[value="' + colId + '"]');
+        return cb?.parentElement?.querySelector('.sb-col-rich-name')?.textContent?.trim() || 'Collection';
     }
 
     // Hook appelé par le pipeline d'événements pour chaque card / row affichée.
@@ -11498,7 +11524,9 @@ async function sha256hex(str) {
                  : nature === 'listed'      ? 'listed' : null;
         if (!ch) return;
         const t = a[ch];
-        if (t !== null && t !== undefined && price <= t) playAlarm();
+        if (t !== null && t !== undefined && price <= t) {
+            playAlarm({ colId, colName: _getColName(colId), channel: ch, price });
+        }
     };
 
     // Met à jour le label du bouton flottant — Alert / nb d'alarmes armées.
@@ -11627,6 +11655,12 @@ async function sha256hex(str) {
             rerenderCell(colId, channel);
             updateAlarmLabel();
             playAlarm(); // test sound à l'arming
+
+            // Demande la permission de notif système au premier armement.
+            // C'est un geste utilisateur (clic), donc le navigateur l'accepte.
+            if ('Notification' in window && Notification.permission === 'default') {
+                try { Notification.requestPermission(); } catch(e) {}
+            }
         }
         if (clearBtn) {
             const colId   = clearBtn.dataset.colId;
