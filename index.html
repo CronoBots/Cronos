@@ -1414,8 +1414,7 @@
         <div class="stats-table-wrap home-top-table-wrap" id="homeTopList">
           <table class="stats-table home-top-table" id="homeTopTable">
             <colgroup>
-              <col style="width:48px">
-              <col style="width:42px">
+              <col style="width:44px">
               <col>
               <col style="width:80px">
               <col style="width:90px">
@@ -1423,12 +1422,11 @@
             </colgroup>
             <thead>
               <tr>
-                <th class="stats-th stats-th--center">#</th>
-                <th class="stats-th"></th>
-                <th class="stats-th">Collection</th>
-                <th class="stats-th stats-th--center">Floor</th>
-                <th class="stats-th stats-th--center">Volume</th>
-                <th class="stats-th stats-th--center">Change</th>
+                <th class="stats-th stats-th--center home-top-th">#</th>
+                <th class="stats-th stats-th--left home-top-th">Collection</th>
+                <th class="stats-th stats-th--center home-top-th">Floor</th>
+                <th class="stats-th stats-th--center home-top-th">VOL.</th>
+                <th class="stats-th stats-th--center home-top-th">VOL. %</th>
               </tr>
             </thead>
             <tbody id="homeTopTableBody">
@@ -8232,8 +8230,8 @@ document.addEventListener('DOMContentLoaded', initialize);
     // ── Featured Creators ─────────────────────────────────────────────────
     const _fcEsc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     const FEATURED_CREATORS = [
-        { username: 'cryptocomnft',        displayName: 'Crypto.com NFT',     role: 'Official Platform',     url: 'https://crypto.com/nft' },
-        { username: 'unscoop',             displayName: 'CRONOS.WTF',         role: 'Platform & Tools',      url: 'https://cronos.wtf' },
+        { username: 'cryptocomnft',        displayName: 'Crypto.com NFT',     role: 'Official Platform',     url: 'https://crypto.com/nft/profile/cryptocomnft?tab=created' },
+        { username: 'unscoop',             displayName: 'CRONOS.WTF',         role: 'Platform & Tools',      url: 'https://crypto.com/nft/profile/unscoop?tab=created' },
         { username: 'cabezaenlasnubes',    displayName: 'cabezaenlasnubes',   role: 'NFT Artist',            url: 'https://crypto.com/nft/profile/cabezaenlasnubes?tab=created' }
     ];
 
@@ -18485,6 +18483,7 @@ window.initSnapshotPanel = function() {
             ) {
                 id name verified
                 logo { url }
+                creator { username displayName verified }
                 metrics { items owners totalSalesDecimal }
                 stats @include(if: $withStats) {
                     floorPriceDecimal
@@ -18558,23 +18557,38 @@ window.initSnapshotPanel = function() {
         // <tr> compatible avec .stats-table : utilise les classes .stats-td
         // pour hériter du même style que le tableau Top Collections du panel.
         const row = document.createElement('tr');
-        row.className = 'stats-tr home-top-tr';
+        row.className = 'stats-tr home-top-tr' + (i % 2 === 1 ? ' home-top-tr--alt' : '');
         const rankCls = i === 0 ? 'stats-rank stats-rank--gold'
                       : i === 1 ? 'stats-rank stats-rank--silver'
                       : i === 2 ? 'stats-rank stats-rank--bronze'
                       : 'stats-rank';
         const verifiedSvg = c.verified
-            ? ' <svg class="home-top-verified" viewBox="0 0 20 20" fill="none" aria-label="Verified"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+            ? '<svg class="stats-verified" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
             : '';
+        const creatorVerifiedSvg = c.creator?.verified
+            ? '<svg class="stats-verified" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+            : '';
+        const isCronos = ((c._network || c.network) || '').toUpperCase() === 'CRONOS';
+        const chainCls  = isCronos ? 'stats-col-chain-inline--cronos' : 'stats-col-chain-inline--pos';
+        const chainText = isCronos ? 'CRONOS' : 'CRONOS POS CHAIN';
+        const chainBadge = '<span class="stats-col-chain-inline ' + chainCls + '">' + chainText + '</span>';
         row.innerHTML =
             '<td class="stats-td stats-td--center stats-td--rank">' +
                 '<span class="' + rankCls + '"><span class="stats-rank-num">' + (i + 1) + '</span></span>' +
             '</td>' +
-            '<td class="stats-td stats-td--center home-top-logo-cell">' +
-                '<img class="home-top-logo" src="' + escapeHtml(c.logo?.url || '') + '" alt="" loading="lazy"/>' +
-            '</td>' +
             '<td class="stats-td home-top-name-cell">' +
-                '<span class="home-top-name">' + escapeHtml(c.name || '—') + verifiedSvg + '</span>' +
+                '<span class="home-top-name-inner">' +
+                    (c.logo?.url ? '<img class="home-top-logo" src="' + escapeHtml(c.logo.url) + '" alt="" loading="lazy"/>' : '<div class="home-top-logo home-top-logo--empty"></div>') +
+                    '<span class="home-top-col-texts">' +
+                        '<span class="home-top-name">' + escapeHtml(c.name || '—') + '</span>' +
+                        '<div class="stats-col-sub-row">' +
+                            (c.creator?.username
+                                ? '<span class="stats-col-creator">' + escapeHtml(c.creator.username.toUpperCase()) + creatorVerifiedSvg + '</span>'
+                                : '') +
+                            chainBadge +
+                        '</div>' +
+                    '</span>' +
+                '</span>' +
             '</td>' +
             '<td class="stats-td stats-td--center home-top-floor-cell">' +
                 (floor > 0 ? fmtUSD(floor) : '—') +
@@ -20699,14 +20713,32 @@ window.initSnapshotPanel = function() {
         url: 'https://crypto.com/nft/collection/2ec243b8746154fd9dc1c892d7f54fe9',
         badge: 'FEATURED',
         badgeCls: '',
-        samples: [
-            'GOLD.WTF.png',
-            'GALAXY.WTF.png',
-            'STEEL.WTF.png',
-            'SMOKE.WTF.png',
-            'DIGITAL_GRID.WTF.png'
-        ]
+        samples: [] // Chargé dynamiquement depuis l'API Crypto.com
     };
+
+    /* Récupère jusqu'à 5 covers d'assets de la collection pour les samples */
+    async function fetchFdSamples(collectionId) {
+        try {
+            var res = await fetch('https://crypto.com/nft-api/graphql', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    operationName: 'GetFDSamples',
+                    variables: { collectionId: collectionId, first: 20, skip: 0 },
+                    query: 'query GetFDSamples($collectionId:ID,$first:Int!,$skip:Int!){public{assets(collectionId:$collectionId,first:$first,skip:$skip){cover{url}}}}'
+                })
+            });
+            var json = await res.json();
+            var assets = (json && json.data && json.data.public && json.data.public.assets) || [];
+            if (!assets.length) return [];
+            var shuffled = assets.slice();
+            for (var i = shuffled.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var tmp = shuffled[i]; shuffled[i] = shuffled[j]; shuffled[j] = tmp;
+            }
+            return shuffled.slice(0, 5).map(function(a) { return a.cover && a.cover.url || ''; }).filter(Boolean);
+        } catch(e) { return []; }
+    }
 
     function badgeForStatus(status) {
         if (status === 'live')     return { text: 'LIVE NOW', cls: 'home-fd-card-badge--live' };
@@ -20824,6 +20856,24 @@ window.initSnapshotPanel = function() {
         } catch (e) { /* ignore — au pire on n'affiche que CRONOS.WTF */ }
         grid.innerHTML = '';
         items.forEach(function (it) { grid.appendChild(buildCard(it)); });
+
+        /* Charge les samples de CRONOS.WTF depuis l'API (les chemins locaux ont été supprimés) */
+        var cronosCard = grid.querySelector('[data-drop-id="' + FEATURED_CRONOS.id + '"]');
+        if (cronosCard) {
+            fetchFdSamples(FEATURED_CRONOS.id).then(function(urls) {
+                if (!urls || !urls.length) return;
+                var infoEl = cronosCard.querySelector('.home-fd-card-info');
+                if (!infoEl) return;
+                var existing = infoEl.querySelector('.home-fd-card-samples');
+                if (existing) existing.remove();
+                var samplesEl = document.createElement('div');
+                samplesEl.className = 'home-fd-card-samples';
+                samplesEl.innerHTML = urls.map(function(url) {
+                    return '<span class="home-fd-card-sample"><img src="' + escHtml(url) + '" alt="" loading="lazy"/></span>';
+                }).join('');
+                infoEl.appendChild(samplesEl);
+            });
+        }
     }
 
     function bindCta() {
