@@ -13820,32 +13820,41 @@ body.is-profile-loading #profileLoadingOverlay * {
     bottom: 6px;
     display: flex;
     align-items: center;
-    gap: 2px;
-    padding: 2px 4px;
-    background: rgba(8, 14, 28, 0.75);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    gap: 3px;
+    padding: 3px 6px;
+    background: rgba(8, 14, 28, 0.85);
+    border: 1px solid rgba(0, 179, 255, 0.25);
     border-radius: 999px;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
     opacity: 0;
     transition: opacity 0.15s;
     white-space: nowrap;
     z-index: 3;
+    /* On garantit que la pill ne se rétrécit pas et reste assez large
+       pour les 3 boutons (Reply + Edit + Delete = ~84px). */
+    flex-shrink: 0;
 }
 .home-chat-msg--community:hover .home-chat-msg-actions { opacity: 1; }
 .home-chat-msg-action {
-    width: 18px; height: 18px;
+    /* Boutons un peu plus grands pour que les 3 icônes (Reply / Edit /
+       Delete) soient toutes bien visibles et cliquables — et que la pill
+       d'actions au coin inférieur-droit soit lisible. */
+    width: 22px; height: 22px;
     background: transparent;
     border: 0;
-    border-radius: 4px;
-    color: rgba(255,255,255,0.4);
+    border-radius: 5px;
+    color: rgba(255,255,255,0.55);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
+    flex-shrink: 0;
     transition: background 0.12s, color 0.12s;
 }
+.home-chat-msg-action svg { width: 13px; height: 13px; }
 .home-chat-msg-edit-btn:hover {
     background: rgba(0,179,255,0.15);
     color: #00B3FF;
@@ -27089,12 +27098,13 @@ body { box-sizing: border-box; }
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Barre emoji flottante (Discord-style) ──
-   Positionnée à GAUCHE de la zone meta du message pour ne pas crowder les
-   boutons modifier/supprimer (qui sont alignés à droite). */
+   Positionnée à DROITE en haut du message — c'est l'emplacement classique
+   des picker emoji (Discord, Slack). Les boutons Reply/Edit/Delete vivent
+   à part en bas-droite, donc plus de conflit visuel. */
 .home-chat-react-bar {
     position: absolute;
     top: -18px;
-    left: 10px;
+    right: 10px;
     display: flex;
     align-items: center;
     gap: 2px;
