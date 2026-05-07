@@ -26295,7 +26295,13 @@ body { box-sizing: border-box; }
    10. STATS TABLE — Indicateur de scroll horizontal sur mobile
    ───────────────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-    #statsTableWrap {
+    /* The mask-image gradient hints at horizontal scroll by fading the
+       left/right edges. It must apply to the *inner scroll container*
+       (#statsTableScroll = .sb-table-wrap) — NOT to #statsTableWrap, which
+       is the cyan halo card (.sb-results-wrap--table). Masking the halo
+       container would clip its box-shadow, killing the cyan glow on
+       narrow viewports. */
+    #statsTableScroll {
         -webkit-mask-image: linear-gradient(
             to right,
             transparent 0px,
@@ -26312,10 +26318,10 @@ body { box-sizing: border-box; }
         );
         cursor: default !important;
     }
-    #statsTableWrap.has-hscroll {
+    #statsTableScroll.has-hscroll {
         cursor: default !important;
     }
-    #statsTableWrap.has-hscroll * {
+    #statsTableScroll.has-hscroll * {
         cursor: inherit !important;
     }
 }
