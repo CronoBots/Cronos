@@ -8482,6 +8482,8 @@ document.addEventListener('DOMContentLoaded', initialize);
         let _presenceRef    = null;   // référence Firebase chat/presence
         let _myPresenceRef  = null;   // référence de la clé de session courante
         let _currentSessKey = null;   // clé de session active (u_username ou s_xxx)
+        let _sessionJoinAnnounced = false;  // évite un 2e push d'annonce dans cette session
+        const JOIN_ANNOUNCE_WINDOW_MS = 10 * 60 * 1000;  // throttle 10 min cross-reload
 
         // ── Intercepteur localStorage — émet cronos:auth sur le même onglet ──
         // Le `storage` event natif ne se déclenche que dans les autres onglets,
@@ -8520,6 +8522,7 @@ document.addEventListener('DOMContentLoaded', initialize);
             if (_currentSessKey && _currentSessKey !== newKey) {
                 _presenceRef.child(_currentSessKey).remove().catch(() => {});
                 if (_myPresenceRef) _myPresenceRef.onDisconnect().cancel().catch(() => {});
+                _sessionJoinAnnounced = false;  // nouveau membre → nouvelle annonce possible
             }
 
             _currentSessKey  = newKey;
@@ -8543,7 +8546,41 @@ document.addEventListener('DOMContentLoaded', initialize);
                     avatar:   user.avatarUrl   || null,
                     lastSeen: firebase.database.ServerValue.TIMESTAMP
                 });
+                announceJoinIfNeeded(user, newKey);
             }
+        }
+
+        /* ------------------------------------------------------------------ *
+         * Annonce "X joined the chat"                                        *
+         * Une fois par session de page (flag _sessionJoinAnnounced) ET       *
+         * seulement si le membre n'a pas déjà été annoncé dans les 10 min   *
+         * précédentes (champ chat/members/{key}/lastJoinAt). Évite le spam  *
+         * sur reload + heartbeat + visibilitychange.                         *
+         * ------------------------------------------------------------------ */
+        function announceJoinIfNeeded(user, key) {
+            if (_sessionJoinAnnounced) return;
+            if (!fbDb || !user || !key) return;
+            _sessionJoinAnnounced = true;  // pose le verrou avant l'I/O pour bloquer toute concurrence
+
+            const lastJoinRef = fbDb.ref(`chat/members/${key}/lastJoinAt`);
+            lastJoinRef.once('value').then(snap => {
+                const last = Number(snap.val()) || 0;
+                const now  = Date.now();
+                if (now - last < JOIN_ANNOUNCE_WINDOW_MS) return;  // déjà annoncé récemment
+
+                fbDb.ref('chat/messages').push({
+                    system:  true,
+                    event:   'join',
+                    user:    user.username,
+                    display: user.displayName || user.username,
+                    avatar:  user.avatarUrl   || null,
+                    t:       firebase.database.ServerValue.TIMESTAMP
+                }).catch(e => console.error('[Community chat] join push failed:', e));
+                lastJoinRef.set(now).catch(() => {});
+            }).catch(e => {
+                console.error('[Community chat] join check failed:', e);
+                _sessionJoinAnnounced = false;  // libère le verrou pour retry
+            });
         }
 
         function refreshAuthState() {
@@ -8762,7 +8799,35 @@ document.addEventListener('DOMContentLoaded', initialize);
             }
         }
 
+        /* ------------------------------------------------------------------ *
+         * Message système (join). Pas d'actions edit/delete, pas de réactions,
+         * pas de badge cert. Layout centré et compact, distinct des messages
+         * communautaires.
+         * ------------------------------------------------------------------ */
+        function renderSystemMessage(msg, key, instant) {
+            const div = document.createElement('div');
+            div.className = 'home-chat-msg home-chat-msg--system home-chat-msg--join';
+            if (key) div.dataset.msgKey = key;
+
+            const display = _fcEsc(msg.display || msg.user || 'Anonymous');
+            const time    = formatDateTime(msg.t);
+            div.innerHTML =
+                '<svg class="home-chat-msg-system-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                    '<path d="M11 4l5 6-5 6"/><path d="M16 10H4"/>' +
+                '</svg>' +
+                '<span class="home-chat-msg-system-user">' + display + '</span>' +
+                '<span class="home-chat-msg-system-text">joined the chat</span>' +
+                '<span class="home-chat-msg-system-time">' + time + '</span>';
+
+            msgs.appendChild(div);
+            _chatScrollToBottom(instant);
+        }
+
         function renderMessage(msg, key, instant) {
+            if (msg.system) {
+                renderSystemMessage(msg, key, instant);
+                return;
+            }
             const me = getCurrentUser();
             const isMine = !!(me && msg.user && msg.user === me.username);
             /* Badge: only shown when msg.certToken matches Firebase /certs/{username}/token.
