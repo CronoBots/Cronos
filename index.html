@@ -9194,6 +9194,25 @@ document.addEventListener('DOMContentLoaded', initialize);
                     <span class="home-chat-msg-quote-text">${_fcEsc(String(msg.replyTo.text || '').slice(0, 140))}</span>
                 </a>` : '';
 
+            // Actions (Reply / Edit / Delete) — placées HORS du meta pour
+            // pouvoir les positionner au coin inférieur-droit du message
+            // (cf. CSS .home-chat-msg-actions). Reply est dispo pour TOUS,
+            // Edit/Delete uniquement pour ses propres messages.
+            const actionsHtml = key ? `
+                <span class="home-chat-msg-actions">
+                    <button class="home-chat-msg-action home-chat-msg-reply-btn" type="button" title="Reply" aria-label="Reply">
+                        <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,15 3,9 9,3"/><path d="M3 9h9a5 5 0 0 1 5 5v3"/></svg>
+                    </button>
+                    ${isMine ? `
+                        <button class="home-chat-msg-action home-chat-msg-edit-btn" type="button" title="Edit message" aria-label="Edit">
+                            <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3.5a2 2 0 0 1 2.83 2.83L7 16.66 3 17.5l.84-4 10.66-10z"/></svg>
+                        </button>
+                        <button class="home-chat-msg-action home-chat-msg-delete-btn" type="button" title="Delete message" aria-label="Delete">
+                            <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h14M8 6V3.5h4V6M5.5 6l1 11h7l1-11"/></svg>
+                        </button>
+                    ` : ''}
+                </span>` : '';
+
             div.innerHTML = `
                 ${reactBarHtml}
                 <div class="home-chat-msg-meta">
@@ -9203,24 +9222,11 @@ document.addEventListener('DOMContentLoaded', initialize);
                     <span class="home-chat-msg-meta-right">
                         <span class="home-chat-msg-time">${formatDateTime(msg.t)}</span>
                         ${msg.edited ? '<span class="home-chat-msg-edited">(edited)</span>' : ''}
-                        ${key ? `
-                            <span class="home-chat-msg-actions">
-                                <button class="home-chat-msg-action home-chat-msg-reply-btn" type="button" title="Reply" aria-label="Reply">
-                                    <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,15 3,9 9,3"/><path d="M3 9h9a5 5 0 0 1 5 5v3"/></svg>
-                                </button>
-                                ${isMine ? `
-                                    <button class="home-chat-msg-action home-chat-msg-edit-btn" type="button" title="Edit message" aria-label="Edit">
-                                        <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3.5a2 2 0 0 1 2.83 2.83L7 16.66 3 17.5l.84-4 10.66-10z"/></svg>
-                                    </button>
-                                    <button class="home-chat-msg-action home-chat-msg-delete-btn" type="button" title="Delete message" aria-label="Delete">
-                                        <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h14M8 6V3.5h4V6M5.5 6l1 11h7l1-11"/></svg>
-                                    </button>
-                                ` : ''}
-                            </span>` : ''}
                     </span>
                 </div>
                 ${quoteHtml}
                 <div class="home-chat-msg-body">${formatChatBody(msg.text || '', me?.username)}</div>
+                ${actionsHtml}
                 <div class="home-chat-reactions" style="display:none;"></div>
             `;
 
@@ -9415,8 +9421,10 @@ document.addEventListener('DOMContentLoaded', initialize);
                         const lower = matched.toLowerCase();
                         // Affichage : on veut TOUJOURS le display name si on
                         // l'a (le @snipe13 tapé devient "@THE PHOTOGRAPH"
-                        // dans la pill).
-                        const display = _chatNameCache.get(lower) || matched;
+                        // dans la pill). Forcé en MAJUSCULES côté JS en plus
+                        // du text-transform CSS — pour les rares cas où la
+                        // CSS n'a pas chargé / a été override.
+                        const display = (_chatNameCache.get(lower) || matched).toUpperCase();
                         const isMe = meAliases.has(lower) || meAliases.has(display.toLowerCase());
                         const cls = 'home-chat-mention' + (isMe ? ' home-chat-mention--me' : '');
                         out.push('<span class="' + cls + '">@' + _fcEsc(display) + '</span>');

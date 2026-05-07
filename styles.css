@@ -13810,19 +13810,29 @@ body.is-profile-loading #profileLoadingOverlay * {
     color: rgba(255,255,255,0.25);
     font-style: italic;
 }
+/* Actions (reply / edit / delete) : groupées au COIN INFÉRIEUR-DROIT du
+   message, alignées avec la dernière ligne du body. Visibles au hover de
+   n'importe quel message community (pas juste les nôtres) — Reply est
+   disponible pour tout le monde. */
 .home-chat-msg-actions {
     position: absolute;
-    right: calc(100% + 2px); /* à gauche du timestamp, ne décale pas l'heure */
-    top: 50%;
-    transform: translateY(-50%);
+    right: 8px;
+    bottom: 6px;
     display: flex;
     align-items: center;
     gap: 2px;
+    padding: 2px 4px;
+    background: rgba(8, 14, 28, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     opacity: 0;
     transition: opacity 0.15s;
     white-space: nowrap;
+    z-index: 3;
 }
-.home-chat-msg--mine:hover .home-chat-msg-actions { opacity: 1; }
+.home-chat-msg--community:hover .home-chat-msg-actions { opacity: 1; }
 .home-chat-msg-action {
     width: 18px; height: 18px;
     background: transparent;
@@ -13848,10 +13858,8 @@ body.is-profile-loading #profileLoadingOverlay * {
     background: rgba(0,179,255,0.15);
     color: #00B3FF;
 }
-/* Le bouton reply est rendu pour TOUS les messages, pas juste les
-   nôtres — il faut donc révéler la barre actions au hover de TOUT message
-   community (pas juste --mine). */
-.home-chat-msg--community:hover .home-chat-msg-actions { opacity: 1; }
+/* (La règle hover qui révèle .home-chat-msg-actions vit avec la définition
+   du wrapper plus haut — elle s'applique à tous les messages community.) */
 /* Édition inline : textarea + Save / Cancel — apparaît sous le meta-header
    et masque temporairement le body original. Stylisé pour rester compact. */
 .home-chat-msg-editor {
@@ -24471,10 +24479,13 @@ a.snap-holder-username:hover {
  * info structurée. */
 .home-fc-spotlight .home-feat-v3 {
     /* Override du flex column — passage en stacking explicite (banner
-       background + glass panel en absolute). */
+       background + glass panel en absolute). La card adopte le même ratio
+       que les bannières source de Crypto.com NFT (1500×500 = 3:1) — donc
+       avec un cover, la bannière entière est visible sans recadrage. */
     display: block;
     position: relative;
-    min-height: 280px;
+    aspect-ratio: 3 / 1;
+    min-height: 0;
     overflow: hidden;
 }
 .home-fc-spotlight .home-feat-v3-hero {
@@ -24502,49 +24513,55 @@ a.snap-holder-username:hover {
     background-size: cover;
     background-position: center;
 }
-/* Body devient la GLASS PANEL : couvre la moitié basse, frosted blur,
-   bordure top cyan discrète. */
+/* Body devient la GLASS PANEL : strip fin en bas du cadre, frosted
+   blur, juste assez haut pour porter l'identité (logo + nom + artiste)
+   d'un côté, les stats inline + 3 vignettes NFT de l'autre. La bannière
+   reste visible derrière sur la TOTALITÉ de sa hauteur. */
 .home-fc-spotlight .home-feat-v3-body {
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
     z-index: 2;
-    padding: 14px 18px 16px;
+    padding: 10px 18px 12px;
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: row;        /* identité ↔ stats côte à côte */
+    align-items: center;
+    gap: 18px;
     background: rgba(8, 14, 28, 0.55);
     backdrop-filter: blur(18px) saturate(140%);
     -webkit-backdrop-filter: blur(18px) saturate(140%);
     border-top: 1px solid rgba(0, 179, 255, 0.25);
 }
-/* Identity dans la glass panel : logo carré à gauche + nom (CAPS) +
-   ligne "by ARTIST ✓" en dessous. */
+/* Identity dans la glass panel : logo plus petit (la glass est mince) +
+   nom de collection (CAPS) + ligne "BY ARTIST ✓" en dessous. */
 .home-fc-spotlight .home-feat-v3-logo {
-    width: 52px;
-    height: 52px;
-    border-radius: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
 }
 .home-fc-spotlight .home-feat-v3-identity {
-    gap: 14px;
+    gap: 10px;
     margin-top: 0;
     align-items: center;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 45%;
 }
 .home-fc-spotlight .home-feat-v3-id-text {
     padding-top: 0;
-    gap: 2px;
-    flex: 1;
+    gap: 1px;
     min-width: 0;
 }
 .home-fc-spotlight .home-feat-v3-name {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 22px;
+    font-size: 16px;
     font-weight: 800;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #fff;
-    line-height: 1.05;
+    line-height: 1.1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -24555,9 +24572,9 @@ a.snap-holder-username:hover {
     align-items: center;
     gap: 5px;
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 11px;
+    font-size: 9.5px;
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.55);
     white-space: nowrap;
@@ -24579,34 +24596,36 @@ a.snap-holder-username:hover {
     width: 13px;
     height: 13px;
 }
-/* Ligne "stats + 3 NFT thumbs" — stats inline à gauche style cp-stats-row
-   de la vue Collection (séparateurs verticaux discrets), 3 vignettes
-   compactes à droite. */
+/* Ligne "stats + 3 NFT thumbs" — stats inline EXACTEMENT comme la
+   .cp-stats-row de la vue Collection : value au-dessus, label en
+   dessous, centrés, séparés par une fine barre verticale. */
 .home-fc-spotlight .home-feat-v3-stats-row {
     display: flex;
     align-items: center;
     gap: 14px;
-    min-width: 0;
+    margin-left: auto;
 }
 .home-fc-spotlight .home-feat-v3-stats {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 0;
     padding: 0;
     background: transparent;
     border: none;
     backdrop-filter: none;
-    flex: 1;
-    min-width: 0;
 }
 .home-fc-spotlight .home-feat-v3-stat {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    /* column-reverse : la value (.home-feat-v3-stat-val) est rendue en
+       PREMIER visuellement, le label en dessous — comme dans la
+       cp-stats-row de la vue Collection. Le markup HTML a label-puis-val
+       pour des raisons historiques, on inverse via CSS. */
+    flex-direction: column-reverse;
+    align-items: center;
     gap: 2px;
-    padding: 0 14px 0 0;
+    padding: 2px 14px 2px 0;
     margin-right: 14px;
-    border-right: 1px solid rgba(255, 255, 255, 0.12);
+    border-right: 1px solid rgba(255, 255, 255, 0.10);
     background: transparent;
     border-radius: 0;
 }
@@ -24618,39 +24637,40 @@ a.snap-holder-username:hover {
 .home-fc-spotlight .home-feat-v3-stat-sep { display: none; }
 .home-fc-spotlight .home-feat-v3-stat-label {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 9px;
+    font-size: 8.5px;
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.45);
+    line-height: 1;
 }
 .home-fc-spotlight .home-feat-v3-stat-val {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 800;
     letter-spacing: 0.01em;
     color: #fff;
-    line-height: 1.1;
+    line-height: 1;
     font-variant-numeric: tabular-nums;
 }
 
-/* 3 vignettes NFT compactes en bas-droite. La grille de base était à
-   6 colonnes — on override en 3 + max-width 42px. */
+/* 3 vignettes NFT compactes en bas-droite, taille adaptée à la
+   hauteur réduite de la glass panel. */
 .home-fc-spotlight .home-feat-v3-nfts {
     display: grid;
-    grid-template-columns: repeat(3, 42px);
-    gap: 4px;
+    grid-template-columns: repeat(3, 36px);
+    gap: 3px;
     flex-shrink: 0;
     width: auto;
 }
 .home-fc-spotlight .home-feat-v3-nft {
-    border-radius: 6px;
+    border-radius: 5px;
     border: 1px solid rgba(255, 255, 255, 0.14);
-    max-width: 42px;
+    max-width: 36px;
 }
 .home-fc-spotlight .home-feat-v3-nfts-loading {
     grid-column: 1 / -1;
-    height: 42px;
+    height: 36px;
     align-items: center;
     justify-content: center;
 }
@@ -24660,8 +24680,16 @@ a.snap-holder-username:hover {
 .home-fc-spotlight .home-feat-v3-cta { display: none; }
 
 @media (max-width: 720px) {
-    /* Sur mobile la bannière est encore plus courte pour gagner de la place. */
-    .home-fc-spotlight .home-feat-v3-hero { height: 80px; }
+    /* Mobile : glass panel encore un peu plus compacte + on cache les
+       vignettes NFT (la place manque). La bannière garde son ratio 3:1
+       hérité de .home-fc-spotlight .home-feat-v3 (full banner visible). */
+    .home-fc-spotlight .home-feat-v3-body { padding: 8px 12px 10px; gap: 12px; }
+    .home-fc-spotlight .home-feat-v3-logo { width: 36px; height: 36px; }
+    .home-fc-spotlight .home-feat-v3-name { font-size: 14px; }
+    .home-fc-spotlight .home-feat-v3-creator { font-size: 9px; }
+    .home-fc-spotlight .home-feat-v3-stat-val { font-size: 12px; }
+    .home-fc-spotlight .home-feat-v3-stat-label { font-size: 8px; }
+    .home-fc-spotlight .home-feat-v3-nfts { display: none; }
     .home-fc-controls { margin-top: 10px; gap: 10px; }
 }
 
