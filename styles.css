@@ -27746,10 +27746,12 @@ body { box-sizing: border-box; }
     flex-wrap: wrap;
     gap: 10px;
 }
-.home-crypto-header-left {
+/* Bloc droit du header : filtre période + bouton Add Token côte à côte. */
+.home-crypto-header-right {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
+    margin-left: auto;
 }
 .home-crypto-tf-global {
     display: inline-flex;
@@ -27758,7 +27760,6 @@ body { box-sizing: border-box; }
     border-radius: 8px;
     padding: 3px;
     gap: 1px;
-    margin-left: auto;  /* pousse à droite quand le header est en flex */
 }
 .home-crypto-tf-btn {
     background: transparent;
@@ -27924,28 +27925,40 @@ body { box-sizing: border-box; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   HOME — Halo cyan au hover sur toutes les cartes (sans zoom/translation).
-   Aligné sur l'intensité du halo de "Featured Artist" (.home-fa-spotlight)
-   pour une cohérence visuelle entre toutes les cartes du home.
+   HOME — Halo cyan UNIFORME sur toutes les cartes (sans hover variation).
+   Toutes les cartes du home utilisent l'intensité du halo de la table
+   Top Collections : pas de version renforcée au survol — un seul niveau
+   visuel cohérent partout.
    ═══════════════════════════════════════════════════════════════════════════ */
 .home-spotlight,
 .home-community-card,
 .home-live-card,
 .home-top-list,
-.home-feat-card {
-    transition: box-shadow 0.25s ease, border-color 0.25s ease;
+.home-feat-card,
+.home-crypto-card,
+.home-fa-spotlight {
+    box-shadow:
+        0 0 0 1px rgba(0,179,255,0.4),
+        0 0 30px rgba(0,179,255,0.18),
+        0 0 60px rgba(0,179,255,0.08) !important;
+    border-color: rgba(0, 179, 255, 0.45) !important;
+    transition: none !important;
 }
 .home-spotlight:hover,
 .home-community-card:hover,
 .home-live-card:hover,
 .home-top-list:hover,
-.home-feat-card:hover {
-    border-color: rgba(0, 179, 255, 0.65) !important;
+.home-feat-card:hover,
+.home-crypto-card:hover,
+.home-fa-spotlight:hover {
+    /* Pas de halo plus fort au hover — l'intensité reste celle du halo
+       de base de la table Top Collections. */
     box-shadow:
-        0 0 0 1px rgba(0, 179, 255, 0.45),
-        0 0 55px rgba(0, 179, 255, 0.35),
-        0 0 100px rgba(0, 179, 255, 0.18),
-        0 16px 50px rgba(0, 0, 0, 0.6);
+        0 0 0 1px rgba(0,179,255,0.4),
+        0 0 30px rgba(0,179,255,0.18),
+        0 0 60px rgba(0,179,255,0.08) !important;
+    border-color: rgba(0, 179, 255, 0.45) !important;
+    transform: none !important;
 }
 
 /* ── Live Feed : Item = image + nom dans la même cellule grid ──
@@ -28154,4 +28167,72 @@ body { box-sizing: border-box; }
     display: none !important;
     visibility: hidden !important;
     pointer-events: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FILTRES UNIFIÉS — tous les boutons de filtre/toggle adoptent le style
+   du filtre 24H/7D/30D du home (pill compacte avec fond cyan léger sur
+   l'actif, sans séparateurs internes). S'applique à :
+   - stats-timerange / stats-tr-btn (Top Collections, sort, etc.)
+   - stats-chain-filter / stats-cf-btn (chain filter, mode Market Bot)
+   - stats-verified-filter / stats-vf-btn (verified filter)
+   - cb-range-toggle / cb-range-btn (Top Collections home, déjà proche)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.stats-timerange,
+.stats-chain-filter,
+.stats-verified-filter,
+.cb-range-toggle {
+    display: inline-flex !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 8px !important;
+    padding: 3px !important;
+    gap: 1px !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+.stats-tr-btn,
+.stats-cf-btn,
+.stats-vf-btn,
+.cb-range-btn {
+    background: transparent !important;
+    border: 0 !important;
+    color: rgba(255, 255, 255, 0.55) !important;
+    font-family: 'Geomanist-Bold', sans-serif !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase;
+    padding: 5px 11px !important;
+    border-radius: 5px !important;
+    cursor: pointer;
+    transition: all 0.12s ease !important;
+    height: auto !important;
+    border-right: 0 !important;
+}
+
+.stats-tr-btn:hover,
+.stats-cf-btn:hover,
+.stats-vf-btn:hover,
+.cb-range-btn:hover {
+    color: rgba(255, 255, 255, 0.9) !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+}
+
+.stats-tr-btn--active,
+.stats-cf-btn--active,
+.stats-vf-btn--active,
+.cb-range-btn.cb-range-active {
+    background: rgba(0, 179, 255, 0.18) !important;
+    color: #00B3FF !important;
+}
+
+/* Boutons désactivés (ex: Rarity sur une collection sans rang) */
+.stats-tr-btn:disabled,
+.stats-cf-btn:disabled,
+.stats-vf-btn:disabled,
+.cb-range-btn:disabled {
+    opacity: 0.35 !important;
+    cursor: not-allowed !important;
 }
