@@ -28937,3 +28937,133 @@ body { box-sizing: border-box; }
 .home-top-table .home-top-name-cell {
     padding-left: 14px !important; /* garde l'alignement Collection */
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   FIX : Home Top Collections — séparateurs verticaux dans la ligne TITRE
+   La <thead> de .stats-table est en position:sticky ; combinée avec
+   border-collapse:collapse sur .home-top-table, certaines plateformes
+   (Safari iOS, Chrome desktop) ne rendent plus les border-left des <th>,
+   d'où les séparateurs absents dans la ligne de titre du tableau.
+   On force la <thead> en static (la table ne défile pas, donc inutile)
+   et on duplique explicitement le border-left sur chaque th de la ligne
+   titre pour garantir le rendu.
+   ══════════════════════════════════════════════════════════════════════════ */
+.home-top-table thead {
+    position: static !important;
+}
+.home-top-table thead tr > th + th,
+.home-top-table thead tr > .home-top-th + .home-top-th {
+    border-left: 1px solid rgba(255,255,255,0.18) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   FIX : Home Top Collections — adaptation smartphone du tableau
+   Les anciennes media queries (≤640px / ≤380px ligne 27244+) ciblent
+   l'ancien layout grid (.home-top-list-header / .home-top-row) qui n'existe
+   plus depuis le passage à une vraie <table>. Résultat : aucune règle
+   responsive ne s'appliquait, le tableau débordait du cadre sur mobile.
+   On rejoue ici les mêmes intentions sur la nouvelle structure :
+     · colonne "VOL %" masquée (pas la place sur smartphone)
+     · largeurs de colonnes resserrées
+     · paddings + tailles de police réduits
+     · logo collection plus petit
+     · table-layout fixe pour respecter les largeurs et tronquer proprement
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+    .home-top-table {
+        table-layout: fixed !important;
+    }
+    /* Largeurs de colgroup : # / Collection / Floor / VOL / VOL% (caché) */
+    .home-top-table colgroup col:nth-child(1) { width: 32px !important; }
+    .home-top-table colgroup col:nth-child(3) { width: 64px !important; }
+    .home-top-table colgroup col:nth-child(4) { width: 72px !important; }
+    .home-top-table colgroup col:nth-child(5) { width: 0 !important; }
+
+    /* Masque la colonne VOL % (header + cellules + colspan loader) */
+    .home-top-table thead th:nth-child(5),
+    .home-top-table tbody td.home-top-chg-cell,
+    .home-top-table tbody tr > td:nth-child(5):not(.home-top-loading-cell) {
+        display: none !important;
+    }
+
+    /* Padding + typo réduits dans toutes les cellules */
+    .home-top-table .home-top-th,
+    .home-top-table th.stats-th {
+        padding: 9px 6px !important;
+        font-size: 10.5px !important;
+        letter-spacing: 0.05em !important;
+    }
+    .home-top-table .stats-th--left,
+    .home-top-table th.stats-th.stats-th--left {
+        padding: 9px 6px 9px 10px !important;
+    }
+    .home-top-table td.stats-td {
+        padding: 10px 6px !important;
+        font-size: 12px !important;
+        overflow: hidden;
+    }
+    .home-top-table .home-top-name-cell {
+        padding-left: 10px !important;
+        padding-right: 6px !important;
+    }
+
+    /* Logo collection plus compact */
+    .home-top-name-inner .home-top-logo,
+    .home-top-logo--empty {
+        width: 28px !important;
+        height: 28px !important;
+        border-radius: 5px !important;
+    }
+    .home-top-name-inner { gap: 6px !important; }
+
+    /* Nom collection : ellipsis ferme dans la cellule */
+    .home-top-table .home-top-name {
+        font-size: 12px !important;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .home-top-col-texts { min-width: 0 !important; }
+
+    /* Sub-row creator + chain badge : tout en compact, ellipsis OK */
+    .home-top-table .stats-col-sub-row {
+        gap: 4px !important;
+        min-width: 0;
+    }
+    .home-top-table .stats-col-creator {
+        font-size: 9.5px !important;
+        min-width: 0;
+    }
+    .home-top-table .stats-col-chain-inline {
+        font-size: 8px !important;
+        padding: 1px 4px !important;
+        letter-spacing: 0.05em !important;
+    }
+
+    /* Bulle de rang + chiffres centrés */
+    .home-top-table .stats-rank,
+    .home-top-table .stats-rank-num {
+        font-size: 11px !important;
+    }
+
+    /* Floor / volume : police homogène avec le nom */
+    .home-top-table .home-top-floor-cell,
+    .home-top-table .home-top-vol-cell {
+        font-size: 11.5px !important;
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+@media (max-width: 380px) {
+    /* Très petits écrans : on supprime le badge de chaîne (redondant
+       avec la nav globale) pour libérer de la place au nom + creator. */
+    .home-top-table .stats-col-chain-inline { display: none !important; }
+    .home-top-table colgroup col:nth-child(1) { width: 28px !important; }
+    .home-top-table colgroup col:nth-child(3) { width: 58px !important; }
+    .home-top-table colgroup col:nth-child(4) { width: 64px !important; }
+    .home-top-table .home-top-th,
+    .home-top-table th.stats-th { padding: 8px 4px !important; }
+    .home-top-table td.stats-td { padding: 9px 4px !important; }
+    .home-top-table .home-top-name-cell { padding-left: 8px !important; }
+}
