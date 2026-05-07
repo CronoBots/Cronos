@@ -28611,3 +28611,329 @@ body { box-sizing: border-box; }
     letter-spacing: 0.08em;
     font-weight: 700;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   FIX : Home Live Feed — Layout colonnes + séparateurs visibles
+   Problème : .cb-ticker-track { display:flex } écrase le display:table-row-group
+   du <tbody>, ce qui colle toutes les valeurs dans la colonne Event.
+   Solution : re-forcer le layout table avec une spécificité supérieure,
+   et rendre les séparateurs visibles comme dans la vue table du Market Bot.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* 1. tbody → table-row-group (annule le flex hérité de .cb-ticker-track) */
+#cbTicker.home-live-card .home-live-table tbody,
+#cbTicker.home-live-card .home-live-table tbody.cb-ticker-track {
+    display: table-row-group !important;
+    flex-direction: initial !important;
+    flex: initial !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    animation: none !important;
+    transform: none !important;
+    white-space: normal !important;
+    align-items: initial !important;
+    align-content: initial !important;
+    scrollbar-width: initial !important;
+}
+
+/* 2. <tr> → table-row (annule grid hérité de .cb-ticker-item) */
+#cbTicker.home-live-card .home-live-table tr.cb-ticker-item,
+#cbTicker.home-live-card .home-live-table tr.sb-tr {
+    display: table-row !important;
+    grid-template-columns: none !important;
+    column-gap: 0 !important;
+    padding: 0 !important;
+    background: transparent;
+}
+
+/* 3. <td> → table-cell explicite */
+#cbTicker.home-live-card .home-live-table td.sb-td {
+    display: table-cell !important;
+}
+
+/* 4. Séparateurs horizontaux (entre chaque ligne) — bord à bord */
+.home-live-table .sb-tr {
+    border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+}
+.home-live-table .sb-tr:last-child {
+    border-bottom: none !important;
+}
+
+/* 5. Séparateurs verticaux (entre chaque colonne) — bord à bord */
+.home-live-table .sb-th + .sb-th,
+.home-live-table .sb-td + .sb-td {
+    border-left: 1px solid rgba(255,255,255,0.12) !important;
+    border-right: none !important;
+}
+
+/* 6. Zebra striping sur les lignes paires */
+.home-live-table tbody tr.cb-ticker-item:nth-child(even) {
+    background: rgba(255,255,255,0.02) !important;
+}
+.home-live-table tbody tr.cb-ticker-item:hover {
+    background: rgba(0,179,255,0.06) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   FIX : Séparateurs horizontaux visibles — Top Collections (onglet stats)
+   Augmente l'opacité de 0.04 → 0.12 pour matcher le rendu Market Bot.
+   ══════════════════════════════════════════════════════════════════════════ */
+.stats-table .stats-tr {
+    border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+}
+.stats-table .stats-tr:last-child {
+    border-bottom: none !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   FIX : Home Top Collections — adopte le style du tableau Live Feed
+   Séparateurs verticaux entre colonnes + horizontaux entre lignes identiques.
+   ══════════════════════════════════════════════════════════════════════════ */
+/* Séparateurs horizontaux */
+.home-top-table .stats-tr {
+    border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+}
+.home-top-table .stats-tr:last-child {
+    border-bottom: none !important;
+}
+/* Séparateurs verticaux entre colonnes (bord à bord) */
+.home-top-table .stats-th + .stats-th,
+.home-top-table .stats-td + .stats-td {
+    border-left: 1px solid rgba(255,255,255,0.12) !important;
+}
+/* Header identique au Live Feed */
+.home-top-table .stats-th {
+    background: #0d1829 !important;
+    border-bottom: 1px solid rgba(255,255,255,0.15) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   FIX : Featured Drops — bannière pleine largeur + layout colonne
+   La bannière passe en haut et s'étend sur toute la largeur disponible.
+   Les samples + infos descendent en dessous.
+   ══════════════════════════════════════════════════════════════════════════ */
+.home-fd-card {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: unset !important;
+    min-height: unset !important;
+}
+.home-fd-card-banner {
+    width: 100% !important;
+    height: auto !important;
+    min-height: unset !important;
+    aspect-ratio: 21 / 7;
+    flex-shrink: 0;
+}
+.home-fd-card-info {
+    padding: 16px 20px !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+}
+.home-fd-card-samples {
+    margin-top: 0 !important;
+    grid-template-columns: repeat(5, 48px) !important;
+    gap: 6px !important;
+    flex-shrink: 0;
+}
+/* Mobile — déjà colonne, on ajuste juste les samples */
+@media (max-width: 720px) {
+    .home-fd-card-banner {
+        aspect-ratio: 16 / 7 !important;
+    }
+    .home-fd-card-info {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Home Top Collections — zebra, titres bleus, logo+nom fusionnés, centrage
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Titres en bleu cyan */
+.home-top-table .home-top-th {
+    color: #00B3FF !important;
+}
+
+/* Zebra : rangées paires légèrement plus sombres */
+.home-top-table .home-top-tr--alt {
+    background: rgba(255,255,255,0.025) !important;
+}
+
+/* Colonnes numériques centrées horizontalement */
+.home-top-table .home-top-floor-cell,
+.home-top-table .home-top-vol-cell,
+.home-top-table .home-top-chg-cell {
+    text-align: center !important;
+}
+
+/* Logo + nom sur la même ligne */
+.home-top-name-inner {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    max-width: 100%;
+}
+.home-top-name-inner .home-top-logo {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: rgba(255,255,255,0.06);
+    display: inline-block;
+    vertical-align: middle;
+}
+.home-top-logo--empty {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.06);
+    flex-shrink: 0;
+}
+.home-top-name-inner .home-top-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Home Top Collections — ajustements header
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* "Collection" alignée à gauche */
+.home-top-table .stats-th--left {
+    text-align: left !important;
+}
+
+/* Header row : fond distinctif par rapport au zebra.
+   Bleu très sombre qui contraste avec le dark-navy des lignes
+   et qui met en valeur la police cyan. */
+.home-top-table thead tr {
+    background: #060e1e !important;
+}
+.home-top-table .home-top-th {
+    background: #060e1e !important;  /* écrase le #0d1829 hérité */
+    color: #00B3FF !important;
+    border-bottom: 1px solid rgba(0,179,255,0.3) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Home Top Collections — révision header + creator
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Titres blancs (annule le bleu précédent) */
+.home-top-table .home-top-th {
+    color: #ffffff !important;
+    background: #060e1e !important;
+    border-bottom: 1px solid rgba(0,179,255,0.25) !important;
+}
+
+/* Padding interne du th Collection pour ne pas coller au bord */
+.home-top-table .stats-th--left {
+    text-align: left !important;
+    padding-left: 14px !important;
+}
+
+/* Cellule Collection : texte aussi aligné à gauche avec padding cohérent */
+.home-top-table .home-top-name-cell {
+    padding-left: 14px !important;
+}
+
+/* Wrapper textes : colonne flex (nom + creator empilés) */
+.home-top-col-texts {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.home-top-col-texts .home-top-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Creator name — même style que .stats-col-creator du tableau Top Collections */
+.home-top-creator {
+    font-size: 10px;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 0.05em;
+    font-family: 'Geomanist-Bold', sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   FIX : Suppression du halo sur l'emoji de certification vert du chat
+   ══════════════════════════════════════════════════════════════════════════ */
+.chat-verified-badge {
+    box-shadow: none !important;
+}
+.chat-verified-badge:hover {
+    box-shadow: none !important;
+}
+
+/* Ajustement : badge vérifié inline dans home-top-creator */
+.home-top-creator .home-top-verified {
+    width: 11px;
+    height: 11px;
+    vertical-align: middle;
+    margin-left: 3px;
+    flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Home Top Collections — nettoyage styles creator obsolètes
+   Les classes stats-col-creator / stats-col-sub-row / stats-col-chain-inline
+   / stats-verified sont directement réutilisées depuis le tableau Top Collections
+   (déjà définies globalement) — pas de redéfinition nécessaire.
+   On supprime juste les surcharges locales devenues inutiles.
+   ══════════════════════════════════════════════════════════════════════════ */
+.home-top-creator { display: none !important; } /* remplacé par stats-col-creator */
+.home-top-verified { display: none !important; } /* remplacé par stats-verified    */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Home Top Collections — logo 40×40 identique à l'onglet + hover correct
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Logo : même taille que .stats-col-logo (40px, radius 8px) */
+.home-top-name-inner .home-top-logo,
+.home-top-logo--empty {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 8px !important;
+}
+
+/* Hover : spécificité (0,2,1) > zebra (0,2,0) → le cyan l'emporte toujours */
+.home-top-table .stats-tr:hover {
+    background: rgba(0,179,255,0.06) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Home Top Collections — hauteurs de lignes identiques à l'onglet Top Collections
+   Problème : .home-top-th { padding: 4px 0 } (ancien layout flex) écrasait
+   le padding 12px 10px de .stats-th sur les <th> du nouveau tableau.
+   On force les valeurs exactes de l'onglet Top Collections.
+   ══════════════════════════════════════════════════════════════════════════ */
+.home-top-table .home-top-th,
+.home-top-table th.stats-th {
+    padding: 12px 10px !important;
+}
+.home-top-table .stats-th--left,
+.home-top-table th.stats-th.stats-th--left {
+    padding: 12px 10px 12px 14px !important; /* garde le padding-left Collection */
+}
+.home-top-table td.stats-td {
+    padding: 13px 12px !important;
+}
+.home-top-table .home-top-name-cell {
+    padding-left: 14px !important; /* garde l'alignement Collection */
+}
