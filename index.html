@@ -1472,11 +1472,27 @@
         </div>
 
         <div class="pulse-content" id="pulseContent" style="display:none;">
-          <div class="pulse-kpis">
-            <div class="pulse-kpi"><span class="pulse-kpi-label">Total sessions</span><span class="pulse-kpi-value" id="pulseKpiTotal">—</span></div>
-            <div class="pulse-kpi"><span class="pulse-kpi-label">Avg / day</span><span class="pulse-kpi-value" id="pulseKpiAvg">—</span></div>
-            <div class="pulse-kpi"><span class="pulse-kpi-label">Today</span><span class="pulse-kpi-value" id="pulseKpiToday">—</span></div>
-            <div class="pulse-kpi"><span class="pulse-kpi-label">Signed-in share</span><span class="pulse-kpi-value" id="pulseKpiSigned">—</span></div>
+
+          <!-- KPI row 1 — traffic -->
+          <div class="pulse-kpis-group">
+            <span class="pulse-kpis-group-label">Traffic</span>
+            <div class="pulse-kpis">
+              <div class="pulse-kpi"><span class="pulse-kpi-label">Total sessions</span><span class="pulse-kpi-value" id="pulseKpiTotal">—</span></div>
+              <div class="pulse-kpi"><span class="pulse-kpi-label">Today</span><span class="pulse-kpi-value" id="pulseKpiToday">—</span></div>
+              <div class="pulse-kpi"><span class="pulse-kpi-label">Avg / day</span><span class="pulse-kpi-value" id="pulseKpiAvg">—</span></div>
+              <div class="pulse-kpi"><span class="pulse-kpi-label">Returning</span><span class="pulse-kpi-value" id="pulseKpiReturning">—</span></div>
+            </div>
+          </div>
+
+          <!-- KPI row 2 — community -->
+          <div class="pulse-kpis-group">
+            <span class="pulse-kpis-group-label">Community</span>
+            <div class="pulse-kpis">
+              <div class="pulse-kpi"><span class="pulse-kpi-label">Registered members</span><span class="pulse-kpi-value" id="pulseKpiMembers">—</span></div>
+              <div class="pulse-kpi"><span class="pulse-kpi-label">Online now</span><span class="pulse-kpi-value pulse-kpi-value--live" id="pulseKpiOnline">—</span></div>
+              <div class="pulse-kpi"><span class="pulse-kpi-label">Messages (30d)</span><span class="pulse-kpi-value" id="pulseKpiMessages">—</span></div>
+              <div class="pulse-kpi"><span class="pulse-kpi-label">Signed-in share</span><span class="pulse-kpi-value" id="pulseKpiSigned">—</span></div>
+            </div>
           </div>
 
           <div class="pulse-grid">
@@ -1488,13 +1504,33 @@
               <h3 class="pulse-card-title">By hour of day</h3>
               <div class="pulse-card-body"><canvas id="pulseChartHourly"></canvas></div>
             </div>
+            <div class="pulse-card pulse-card--wide">
+              <h3 class="pulse-card-title">Activity heatmap (day of week × hour)</h3>
+              <div class="pulse-card-body"><div class="pulse-heatmap" id="pulseHeatmap"></div></div>
+            </div>
+            <div class="pulse-card">
+              <h3 class="pulse-card-title">Device</h3>
+              <div class="pulse-card-body"><canvas id="pulseChartDevice"></canvas></div>
+            </div>
+            <div class="pulse-card">
+              <h3 class="pulse-card-title">New vs returning</h3>
+              <div class="pulse-card-body"><canvas id="pulseChartReturning"></canvas></div>
+            </div>
             <div class="pulse-card">
               <h3 class="pulse-card-title">Signed-in vs anonymous</h3>
               <div class="pulse-card-body"><canvas id="pulseChartAuth"></canvas></div>
             </div>
             <div class="pulse-card pulse-card--wide">
-              <h3 class="pulse-card-title">Activity heatmap (day of week × hour)</h3>
-              <div class="pulse-card-body"><div class="pulse-heatmap" id="pulseHeatmap"></div></div>
+              <h3 class="pulse-card-title">Chat activity</h3>
+              <div class="pulse-card-body"><canvas id="pulseChartChat"></canvas></div>
+            </div>
+            <div class="pulse-card">
+              <h3 class="pulse-card-title">New members per week</h3>
+              <div class="pulse-card-body"><canvas id="pulseChartGrowth"></canvas></div>
+            </div>
+            <div class="pulse-card">
+              <h3 class="pulse-card-title">Top contributors</h3>
+              <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopContributors"></ol></div>
             </div>
             <div class="pulse-card">
               <h3 class="pulse-card-title">Top tabs visited</h3>
@@ -8633,7 +8669,8 @@ document.addEventListener('DOMContentLoaded', initialize);
             if (!fbDb || !user || !key) return;
             _sessionJoinAnnounced = true;  // pose le verrou avant l'I/O pour bloquer toute concurrence
 
-            const lastJoinRef = fbDb.ref(`chat/members/${key}/lastJoinAt`);
+            const lastJoinRef  = fbDb.ref(`chat/members/${key}/lastJoinAt`);
+            const firstJoinRef = fbDb.ref(`chat/members/${key}/firstJoinAt`);
             lastJoinRef.once('value').then(snap => {
                 const last = Number(snap.val()) || 0;
                 const now  = Date.now();
@@ -8654,6 +8691,12 @@ document.addEventListener('DOMContentLoaded', initialize);
                     t:       firebase.database.ServerValue.TIMESTAMP
                 }).catch(e => console.error('[Community chat] join push failed:', e));
                 lastJoinRef.set(now).catch(() => {});
+
+                // 1re annonce ever pour ce membre → on enregistre aussi firstJoinAt
+                // (utilisé par Pulse pour le chart "member growth").
+                if (last === 0) {
+                    firstJoinRef.set(now).catch(() => {});
+                }
             }).catch(e => {
                 console.error('[Community chat] join check failed:', e);
                 _sessionJoinAnnounced = false;  // libère le verrou pour retry
@@ -9084,14 +9127,25 @@ document.addEventListener('DOMContentLoaded', initialize);
                 const initial  = (location.hash || '').replace(/^#/, '').split('?')[0].slice(0, 30) || 'home';
                 const ref      = (document.referrer || '').slice(0, 200) || null;
                 const lang     = (navigator.language || '').slice(0, 10) || null;
+                const ua       = navigator.userAgent || '';
+                let   device   = 'desktop';
+                if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua))    device = 'tablet';
+                else if (/Mobile|Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) device = 'mobile';
+                const firstVisitFlag = localStorage.getItem('cronos-first-visit-ts');
+                const firstVisit = !firstVisitFlag;
+                if (firstVisit) {
+                    try { localStorage.setItem('cronos-first-visit-ts', String(now.getTime())); } catch (_) {}
+                }
                 fbDb.ref(`analytics/sessions/${today}/${sid}`).set({
-                    hour:     now.getHours(),
-                    dow:      now.getDay(),
-                    ts:       firebase.database.ServerValue.TIMESTAMP,
-                    signedIn: !!user,
-                    page:     initial,
-                    referrer: ref,
-                    lang:     lang
+                    hour:       now.getHours(),
+                    dow:        now.getDay(),
+                    ts:         firebase.database.ServerValue.TIMESTAMP,
+                    signedIn:   !!user,
+                    page:       initial,
+                    referrer:   ref,
+                    lang:       lang,
+                    device:     device,
+                    firstVisit: firstVisit
                 }).catch(() => {});
                 sessionStorage.setItem('cronos-tracked', '1');
             } catch (_) { /* tracking ne doit jamais casser le site */ }
@@ -12563,10 +12617,12 @@ async function sha256hex(str) {
                         String(d.getDate()).padStart(2, '0');
             dates.push(ymd);
         }
+        const cutoffMs = today.getTime() - days * 86400000;
 
+        // ── Sessions analytics (1 fetch par jour) ──────────────────────────
         const allSessions = [];
-        const dayCounts = {};
-        await Promise.all(dates.map(async date => {
+        const dayCounts   = {};
+        const sessionFetches = Promise.all(dates.map(async date => {
             try {
                 const snap = await window.fbDb.ref(`analytics/sessions/${date}`).once('value');
                 let count = 0;
@@ -12579,10 +12635,41 @@ async function sha256hex(str) {
                 dayCounts[date] = 0;
             }
         }));
-        return { dates, dayCounts, sessions: allSessions };
+
+        // ── Membres + présence + messages (3 fetches en parallèle) ────────
+        const sideFetches = Promise.all([
+            window.fbDb.ref('chat/members').once('value').catch(() => null),
+            window.fbDb.ref('chat/presence').once('value').catch(() => null),
+            window.fbDb.ref('chat/messages').limitToLast(2000).once('value').catch(() => null)
+        ]);
+
+        await sessionFetches;
+        const [membersSnap, presenceSnap, messagesSnap] = await sideFetches;
+
+        const members = [];
+        if (membersSnap) membersSnap.forEach(c => members.push(Object.assign({ _key: c.key }, c.val())));
+        const presence = [];
+        if (presenceSnap) presenceSnap.forEach(c => presence.push(Object.assign({ _key: c.key }, c.val())));
+        const messages = [];
+        if (messagesSnap) {
+            messagesSnap.forEach(c => {
+                const m = c.val() || {};
+                if (m.system) return;                          // ignore system join announces
+                if (typeof m.t !== 'number') return;
+                if (m.t < cutoffMs) return;                    // hors fenêtre 30j
+                messages.push(m);
+            });
+        }
+
+        return { dates, dayCounts, sessions: allSessions, members, presence, messages, cutoffMs };
     }
 
-    function renderPulseCharts({ dates, dayCounts, sessions }) {
+    function renderPulseCharts({ dates, dayCounts, sessions, members, presence, messages, cutoffMs }) {
+        // Défensifs : si les fetches "side" ont échoué, on traite comme vide.
+        members  = members  || [];
+        presence = presence || [];
+        messages = messages || [];
+
         // Détruit les charts existants pour éviter les doublons sur re-render
         Object.values(_pulseCharts).forEach(c => { try { c.destroy(); } catch (_) {} });
         _pulseCharts = {};
@@ -12595,12 +12682,28 @@ async function sha256hex(str) {
         const avgPerDay  = total ? (total / dates.length).toFixed(1) : '0';
         const signedPct  = total ? Math.round(signedIn / total * 100) : 0;
 
+        // ── Returning / new visitors (basé sur firstVisit dans le record) ──
+        const returningSessions = sessions.filter(s => s.firstVisit === false).length;
+        const newSessions       = sessions.filter(s => s.firstVisit === true).length;
+        const returningRate     = (returningSessions + newSessions) > 0
+            ? Math.round(returningSessions / (returningSessions + newSessions) * 100)
+            : 0;
+
+        // ── Community KPIs ──
+        const memberCount   = members.length;
+        const onlineNow     = presence.filter(p => !p.anon).length;
+        const messagesCount = messages.length;
+
         const fmt = n => n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n);
         const setKpi = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-        setKpi('pulseKpiTotal',  fmt(total));
-        setKpi('pulseKpiAvg',    avgPerDay);
-        setKpi('pulseKpiToday',  fmt(todayCount));
-        setKpi('pulseKpiSigned', signedPct + '%');
+        setKpi('pulseKpiTotal',     fmt(total));
+        setKpi('pulseKpiAvg',       avgPerDay);
+        setKpi('pulseKpiToday',     fmt(todayCount));
+        setKpi('pulseKpiReturning', returningRate + '%');
+        setKpi('pulseKpiMembers',   fmt(memberCount));
+        setKpi('pulseKpiOnline',    fmt(onlineNow));
+        setKpi('pulseKpiMessages',  fmt(messagesCount));
+        setKpi('pulseKpiSigned',    signedPct + '%');
 
         const baseColor   = '#00B3FF';
         const baseColorBg = 'rgba(0, 179, 255, 0.18)';
@@ -12738,6 +12841,135 @@ async function sha256hex(str) {
             try { return new URL(v).hostname.replace(/^www\./, ''); } catch (_) { return v; }
         });
         renderList('pulseTopLangs',     tally('lang'));
+
+        // ── Chart : Device split (donut mobile / tablet / desktop) ──────
+        const deviceCounts = { mobile: 0, tablet: 0, desktop: 0 };
+        sessions.forEach(s => {
+            if (s.device && deviceCounts.hasOwnProperty(s.device)) deviceCounts[s.device]++;
+        });
+        const deviceCanvas = document.getElementById('pulseChartDevice');
+        if (deviceCanvas) {
+            _pulseCharts.device = new window.Chart(deviceCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Mobile', 'Tablet', 'Desktop'],
+                    datasets: [{
+                        data: [deviceCounts.mobile, deviceCounts.tablet, deviceCounts.desktop],
+                        backgroundColor: ['#00B3FF', '#7dde9a', 'rgba(255,255,255,0.18)'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '65%',
+                    plugins: { legend: { position: 'bottom', labels: { color: tickColor, font: { family: fontFamily, size: 11 }, boxWidth: 10, padding: 14 } } }
+                }
+            });
+        }
+
+        // ── Chart : New vs returning (donut) ─────────────────────────────
+        const returningCanvas = document.getElementById('pulseChartReturning');
+        if (returningCanvas) {
+            _pulseCharts.returning = new window.Chart(returningCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Returning', 'New'],
+                    datasets: [{
+                        data: [returningSessions, newSessions],
+                        backgroundColor: ['#00B3FF', 'rgba(125,222,154,0.7)'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '65%',
+                    plugins: { legend: { position: 'bottom', labels: { color: tickColor, font: { family: fontFamily, size: 11 }, boxWidth: 10, padding: 14 } } }
+                }
+            });
+        }
+
+        // ── Chart : Chat activity (line, messages par jour) ──────────────
+        const chatPerDay = {};
+        dates.forEach(d => { chatPerDay[d] = 0; });
+        messages.forEach(m => {
+            if (typeof m.t !== 'number') return;
+            const d = new Date(m.t);
+            const ymd = d.getFullYear() + '-' +
+                        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                        String(d.getDate()).padStart(2, '0');
+            if (chatPerDay[ymd] !== undefined) chatPerDay[ymd]++;
+        });
+        const chatCanvas = document.getElementById('pulseChartChat');
+        if (chatCanvas) {
+            _pulseCharts.chat = new window.Chart(chatCanvas, {
+                type: 'line',
+                data: {
+                    labels: dates.map(d => d.slice(5)),
+                    datasets: [{
+                        data: dates.map(d => chatPerDay[d] || 0),
+                        borderColor: '#7dde9a',
+                        backgroundColor: 'rgba(125,222,154,0.18)',
+                        fill: true, tension: 0.35,
+                        pointRadius: 2, pointHoverRadius: 5,
+                        pointBackgroundColor: '#7dde9a'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: commonScales }
+            });
+        }
+
+        // ── Chart : New members per week (bar, 8 dernières semaines) ─────
+        const weeksBack = 8;
+        const weekCounts = new Array(weeksBack).fill(0);
+        const weekLabels = new Array(weeksBack);
+        const today2 = new Date();
+        today2.setHours(0, 0, 0, 0);
+        // Lundi de cette semaine
+        const monday = new Date(today2);
+        const dayIdx = monday.getDay();
+        monday.setDate(monday.getDate() - (dayIdx === 0 ? 6 : dayIdx - 1));
+        for (let w = 0; w < weeksBack; w++) {
+            const start = new Date(monday);
+            start.setDate(start.getDate() - (weeksBack - 1 - w) * 7);
+            const end = new Date(start);
+            end.setDate(end.getDate() + 7);
+            const startMs = start.getTime();
+            const endMs   = end.getTime();
+            members.forEach(m => {
+                const f = Number(m.firstJoinAt) || 0;
+                if (f >= startMs && f < endMs) weekCounts[w]++;
+            });
+            weekLabels[w] = (start.getMonth() + 1) + '/' + start.getDate();
+        }
+        const growthCanvas = document.getElementById('pulseChartGrowth');
+        if (growthCanvas) {
+            _pulseCharts.growth = new window.Chart(growthCanvas, {
+                type: 'bar',
+                data: {
+                    labels: weekLabels,
+                    datasets: [{
+                        data: weekCounts,
+                        backgroundColor: '#00B3FF',
+                        borderRadius: 3,
+                        maxBarThickness: 22
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: commonScales }
+            });
+        }
+
+        // ── Liste : Top contributors (top 8 par nb de messages 30j) ──────
+        const userMsgCount = new Map();
+        const userMsgDisplay = new Map();
+        messages.forEach(m => {
+            const u = m.user;
+            if (!u) return;
+            userMsgCount.set(u, (userMsgCount.get(u) || 0) + 1);
+            if (!userMsgDisplay.has(u)) userMsgDisplay.set(u, m.display || u);
+        });
+        const topContrib = Array.from(userMsgCount.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 8)
+            .map(([u, n]) => [userMsgDisplay.get(u) || u, n]);
+        renderList('pulseTopContributors', topContrib);
     }
 
     function escapeHtml(s) {
