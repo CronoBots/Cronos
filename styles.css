@@ -29067,3 +29067,43 @@ body { box-sizing: border-box; }
     .home-top-table td.stats-td { padding: 9px 4px !important; }
     .home-top-table .home-top-name-cell { padding-left: 8px !important; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   FIX (suite) : la grid .home-two-col--bottom utilise des pistes 1fr ;
+   chaque cellule a un min-width:auto par défaut → il prend la
+   min-content de son enfant. Comme la <table> contient des cellules
+   white-space:nowrap, sa min-content est énorme et la piste 1fr
+   s'étire au-delà du viewport, faisant déborder le bloc Top Collections
+   à droite de l'écran sur smartphone. On bascule en minmax(0,1fr)
+   et on force min-width:0 sur les éléments imbriqués pour que la table
+   se contraigne enfin à la largeur du wrapper.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 860px) {
+    .home-two-col--bottom {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+    .home-two-col--bottom > .home-section,
+    .home-two-col--bottom .home-top-table-wrap,
+    .home-two-col--bottom .home-top-table {
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+    .home-top-table-wrap {
+        overflow: hidden !important;
+        box-sizing: border-box;
+    }
+    /* Tronque proprement le contenu des cellules qui auraient encore
+       white-space:nowrap (nom de collection, badges, montants).
+       max-width:0 + width fixe via colgroup = ellipsis fiable en table. */
+    .home-top-table th,
+    .home-top-table td {
+        max-width: 0 !important;
+        overflow: hidden !important;
+    }
+    /* Re-autorise le contenu visible des cellules numériques
+       (montants USD nowrap : on ne veut pas d'ellipsis sur ces 8 caractères). */
+    .home-top-table .home-top-floor-cell,
+    .home-top-table .home-top-vol-cell {
+        text-overflow: clip !important;
+    }
+}
