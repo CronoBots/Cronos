@@ -1310,6 +1310,12 @@
             </div>
             <div class="home-chat-members-list" id="homeChatModalAvatarsOffline"></div>
           </div>
+          <!-- Footer total members — visible sur mobile pour donner une
+               vue d'ensemble immédiate de la taille de la communauté. -->
+          <div class="home-chat-modal-total" id="homeChatModalTotalRow">
+            <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="7" r="3"/><path d="M1 17c0-2.8 2.7-5 6-5"/><circle cx="14" cy="8" r="2.5"/><path d="M11 17c0-2.4 2-4 3-4s3 1.6 3 4"/></svg>
+            <span><strong id="homeChatModalTotal">0</strong> total members</span>
+          </div>
         </div>
       </div>
 
@@ -8901,6 +8907,11 @@ document.addEventListener('DOMContentLoaded', initialize);
         let _chatLastTap = { ts: 0, target: null };
         let _chatTouchMoved = false;
         let _chatTouchStart = { x: 0, y: 0 };
+        // Timestamp du moment où on a ouvert .is-react-open sur un message
+        // (via double-tap). Le click "synthétique" qui suit le 2e touchend
+        // arrive ~50ms plus tard et passerait par le handler de close-on-
+        // outside ; on l'ignore tant que < ~400ms.
+        let _chatOpenAt = 0;
         function setReplyTo(info) {
             _replyingTo = info && info.user ? info : null;
             const banner    = document.getElementById('homeChatReplyBanner');
@@ -9448,6 +9459,7 @@ document.addEventListener('DOMContentLoaded', initialize);
                             msgs.querySelectorAll('.home-chat-msg--community.is-react-open').forEach(o => o.classList.remove('is-react-open'));
                             if (!wasOpen) {
                                 div.classList.add('is-react-open');
+                                _chatOpenAt = now;
                                 if (navigator.vibrate) navigator.vibrate(20);
                             }
                             _chatLastTap = { ts: 0, target: null };
@@ -9467,14 +9479,22 @@ document.addEventListener('DOMContentLoaded', initialize);
             _chatScrollToBottom(instant);
         }
 
-        // Re-render d'un message existant suite à un child_changed (édition).
-        // On garde la position et juste on remplace le contenu pour éviter
+        // Re-render d'un message existant suite à un child_changed (édition,
+        // ajout d'un timestamp serveur, etc.). On garde la position du
+        // message dans la liste et on remplace juste le contenu pour éviter
         // un saut visuel ou une perte de scroll.
+        // IMPORTANT : on doit utiliser formatChatBody() (et pas escapeHtml())
+        // pour préserver les pills de @mentions — sinon Firebase fire un
+        // child_changed dès qu'il pose le timestamp serveur, et la pill
+        // qu'on venait de rendre dans renderMessage est écrasée par du
+        // texte plat. Bug visible côté envoi sur PC : la mention venait
+        // styled puis se "déstylait" toute seule jusqu'au refresh.
         function updateMessageInPlace(key, msg) {
             const el = msgs.querySelector(`[data-msg-key="${key}"]`);
             if (!el) return;
+            const me  = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
             const body = el.querySelector('.home-chat-msg-body');
-            if (body) body.innerHTML = escapeHtml(msg.text || '');
+            if (body) body.innerHTML = formatChatBody(msg.text || '', me?.username);
             const meta = el.querySelector('.home-chat-msg-meta');
             if (meta && msg.edited && !meta.querySelector('.home-chat-msg-edited')) {
                 const time = meta.querySelector('.home-chat-msg-time');
@@ -9630,17 +9650,25 @@ document.addEventListener('DOMContentLoaded', initialize);
                     const uname = m.username || '';
                     const dname = m.display || m.username || '?';
                     _cacheName(uname, dname);
+                    // Badge "verified" : on l'ajoute à côté du pseudo si le
+                    // membre figure dans _certsCache (= il a fait la
+                    // procédure de certification du compte). Même check que
+                    // pour les messages eux-mêmes — cohérence visuelle.
+                    const isCertified = !!_certsCache[String(uname).toLowerCase()];
+                    const verifiedHtml = isCertified
+                        ? '<svg class="home-chat-member-verified" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-label="Account certified"><polyline points="2,6 5,9 10,3"/></svg>'
+                        : '';
                     // data-mention-display = ce qu'on insère dans le chat
                     // quand on clique (ex. "THE PHOTOGRAPH"). data-mention-
                     // username = identifiant technique pour la résolution
                     // côté render (matchera @THE PHOTOGRAPH ou @snipe13).
                     return `
-                    <div class="home-chat-member${offCls}" data-mention-username="${_fcEsc(uname)}" data-mention-display="${_fcEsc(dname)}" role="button" tabindex="0" title="Mention @${_fcEsc(dname)} in chat">
+                    <div class="home-chat-member${offCls}${isCertified ? ' home-chat-member--certified' : ''}" data-mention-username="${_fcEsc(uname)}" data-mention-display="${_fcEsc(dname)}" role="button" tabindex="0" title="Mention @${_fcEsc(dname)} in chat">
                         ${m.avatar
                             ? `<img class="home-chat-member-avatar" src="${_fcEsc(m.avatar)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><span class="home-chat-member-initial" style="display:none">${_fcEsc(dname[0].toUpperCase())}</span>`
                             : `<span class="home-chat-member-initial">${_fcEsc(dname[0].toUpperCase())}</span>`
                         }
-                        <span class="home-chat-member-name">${_fcEsc(dname)}</span>
+                        <span class="home-chat-member-name">${_fcEsc(dname)}</span>${verifiedHtml}
                     </div>`;
                 }).join('') +
                 (extra > 0 ? `<div class="home-chat-member home-chat-member--more">+${extra} more</div>` : '');
@@ -9769,6 +9797,24 @@ document.addEventListener('DOMContentLoaded', initialize);
                             el.removeAttribute('data-cert-pending');
                             const badge = el.querySelector('.chat-verified-badge');
                             if (badge) badge.style.display = 'inline-flex';
+                        }
+                    });
+                    /* Patch les membres déjà rendus dans la sidebar/modal :
+                       quand /certs charge en retard ou quand quelqu'un se
+                       certifie en cours de session, on ajoute/retire le
+                       badge sans avoir à attendre le prochain refresh
+                       de la liste membres. */
+                    document.querySelectorAll('.home-chat-member[data-mention-username]').forEach(el => {
+                        const uname = el.dataset.mentionUsername || '';
+                        const isCertified = !!_certsCache[uname.toLowerCase()];
+                        el.classList.toggle('home-chat-member--certified', isCertified);
+                        const existing = el.querySelector('.home-chat-member-verified');
+                        if (isCertified && !existing) {
+                            const span = document.createElement('span');
+                            span.innerHTML = '<svg class="home-chat-member-verified" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-label="Account certified"><polyline points="2,6 5,9 10,3"/></svg>';
+                            el.appendChild(span.firstChild);
+                        } else if (!isCertified && existing) {
+                            existing.remove();
                         }
                     });
                 });
@@ -9903,14 +9949,22 @@ document.addEventListener('DOMContentLoaded', initialize);
                         if (modalOffline) modalOffline.style.display = offlineCount > 0 ? 'flex' : 'none';
                         renderAvatarStack(modalAvatars,    namedOnline,  20, false);
                         renderAvatarStack(modalAvatarsOff, namedOffline, 20, true);
+                        // Total membres (online + offline) — affiché dans
+                        // le footer du modal mobile.
+                        const modalTotal = document.getElementById('homeChatModalTotal');
+                        if (modalTotal) modalTotal.textContent = String(onlineCount + offlineCount);
 
-                        // ── Badge "members" en header — désactivé ──
-                        // Le bouton qui ouvrait un modal au clic est supprimé
-                        // de l'UX : sur PC les membres sont visibles dans la
-                        // sidebar de droite, sur mobile ils apparaissent
-                        // inline en haut du chat.
+                        // ── Badge "members" en header (mobile) ──
+                        // Visible sur mobile (CSS @media), affiche le compte
+                        // online et ouvre le modal au clic. On retire l'inline
+                        // display:none qu'avait le markup HTML pour laisser le
+                        // CSS @media (max-width: 700px) décider.
                         const mobileBtn = document.getElementById('homeChatMembersBtn');
-                        if (mobileBtn) mobileBtn.style.display = 'none';
+                        if (mobileBtn) {
+                            mobileBtn.style.display = '';   // libère l'inline
+                            const c = document.getElementById('homeMobileMemberCount');
+                            if (c) c.textContent = onlineCount;
+                        }
 
                         // ── Séparateur + compteur members ───────────────────
                         const statSep3      = document.getElementById('homeChatStatSep3');
@@ -10018,12 +10072,27 @@ document.addEventListener('DOMContentLoaded', initialize);
         });
         document.getElementById('homeChatReplyCancel')?.addEventListener('click', () => setReplyTo(null));
 
-        // Fermer la barre emoji si on clique en dehors d'un message (mobile)
-        msgs?.addEventListener('click', e => {
+        // Mobile : fermer la barre emoji + pill actions si on tap n'importe
+        // où SAUF sur la barre emoji ou la pill (cliquer sur le message
+        // body lui-même referme aussi — l'utilisateur le voulait).
+        // Gardé sur document pour capter les taps en dehors du chat panel
+        // (titre, autre section, etc.). Le _chatOpenAt évite le close
+        // immédiat dû au "click synthétique" qui suit le 2e touchend du
+        // double-tap (~50ms après).
+        document.addEventListener('click', e => {
             if (!window.matchMedia('(hover: none)').matches) return;
-            if (!e.target.closest('.home-chat-msg--community')) {
-                msgs.querySelectorAll('.is-react-open').forEach(el => el.classList.remove('is-react-open'));
-            }
+            const open = msgs?.querySelector('.home-chat-msg--community.is-react-open');
+            if (!open) return;
+            // Click trop proche du moment d'ouverture → c'est le click
+            // synthétique du double-tap, on l'ignore.
+            if (Date.now() - _chatOpenAt < 400) return;
+            // Tap dans la barre emoji ou la pill actions du message ouvert →
+            // on garde ouvert (l'utilisateur est en train d'interagir).
+            if (e.target.closest('.home-chat-react-bar')) return;
+            if (e.target.closest('.home-chat-msg-actions')) return;
+            // Sinon : tap ailleurs (autre message, body du message ouvert,
+            // hors chat) → on ferme.
+            open.classList.remove('is-react-open');
         });
 
         // Chat inline — toujours visible, init immédiat
