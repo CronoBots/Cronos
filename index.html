@@ -1444,6 +1444,61 @@
 
     </div>
 
+    <!-- ── PULSE — site activity stats (full width, bottom of home) ── -->
+    <section class="home-section home-pulse-section">
+      <div class="home-section-header">
+        <h2 class="home-section-title">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;vertical-align:-3px;margin-right:6px;color:#00B3FF;"><path d="M2 11h3l2-5 3 9 2-6 2 4h4"/></svg>
+          Pulse
+        </h2>
+        <span class="home-section-badge">Last 30 days</span>
+      </div>
+
+      <div class="pulse-loading" id="pulseLoading">
+        <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
+      </div>
+
+      <div class="pulse-content" id="pulseContent" style="display:none;">
+        <div class="pulse-kpis">
+          <div class="pulse-kpi"><span class="pulse-kpi-label">Total sessions</span><span class="pulse-kpi-value" id="pulseKpiTotal">—</span></div>
+          <div class="pulse-kpi"><span class="pulse-kpi-label">Avg / day</span><span class="pulse-kpi-value" id="pulseKpiAvg">—</span></div>
+          <div class="pulse-kpi"><span class="pulse-kpi-label">Today</span><span class="pulse-kpi-value" id="pulseKpiToday">—</span></div>
+          <div class="pulse-kpi"><span class="pulse-kpi-label">Signed-in share</span><span class="pulse-kpi-value" id="pulseKpiSigned">—</span></div>
+        </div>
+
+        <div class="pulse-grid">
+          <div class="pulse-card pulse-card--wide">
+            <h3 class="pulse-card-title">Sessions per day</h3>
+            <div class="pulse-card-body"><canvas id="pulseChartDaily"></canvas></div>
+          </div>
+          <div class="pulse-card">
+            <h3 class="pulse-card-title">By hour of day</h3>
+            <div class="pulse-card-body"><canvas id="pulseChartHourly"></canvas></div>
+          </div>
+          <div class="pulse-card">
+            <h3 class="pulse-card-title">Signed-in vs anonymous</h3>
+            <div class="pulse-card-body"><canvas id="pulseChartAuth"></canvas></div>
+          </div>
+          <div class="pulse-card pulse-card--wide">
+            <h3 class="pulse-card-title">Activity heatmap (day of week × hour)</h3>
+            <div class="pulse-card-body"><div class="pulse-heatmap" id="pulseHeatmap"></div></div>
+          </div>
+          <div class="pulse-card">
+            <h3 class="pulse-card-title">Top tabs visited</h3>
+            <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopPages"></ol></div>
+          </div>
+          <div class="pulse-card">
+            <h3 class="pulse-card-title">Top referrers</h3>
+            <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopReferrers"></ol></div>
+          </div>
+          <div class="pulse-card">
+            <h3 class="pulse-card-title">Top languages</h3>
+            <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopLangs"></ol></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </div>
 
 </div>
@@ -8995,6 +9050,39 @@ document.addEventListener('DOMContentLoaded', initialize);
                 (extra > 0 ? `<div class="home-chat-member home-chat-member--more">+${extra} more</div>` : '');
         }
 
+        /* ------------------------------------------------------------------ *
+         * Site analytics — tracking minimal de session                       *
+         * Push 1 record dans analytics/sessions/{YYYY-MM-DD}/{id} avec       *
+         * heure, jour de la semaine, signed-in, page initiale, referrer et   *
+         * langue navigateur. Pas d'IP, pas de fingerprint, pas de cookies.   *
+         * Une session = un onglet (déduplication via sessionStorage).        *
+         * ------------------------------------------------------------------ */
+        function trackSiteVisit() {
+            try {
+                if (sessionStorage.getItem('cronos-tracked')) return;
+                if (!fbDb) return;
+                const now      = new Date();
+                const today    = now.getFullYear() + '-' +
+                                 String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                                 String(now.getDate()).padStart(2, '0');
+                const sid      = now.getTime().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+                const user     = getCurrentUser();
+                const initial  = (location.hash || '').replace(/^#/, '').split('?')[0].slice(0, 30) || 'home';
+                const ref      = (document.referrer || '').slice(0, 200) || null;
+                const lang     = (navigator.language || '').slice(0, 10) || null;
+                fbDb.ref(`analytics/sessions/${today}/${sid}`).set({
+                    hour:     now.getHours(),
+                    dow:      now.getDay(),
+                    ts:       firebase.database.ServerValue.TIMESTAMP,
+                    signedIn: !!user,
+                    page:     initial,
+                    referrer: ref,
+                    lang:     lang
+                }).catch(() => {});
+                sessionStorage.setItem('cronos-tracked', '1');
+            } catch (_) { /* tracking ne doit jamais casser le site */ }
+        }
+
         async function ensureInit() {
             if (fbInitialized) return;
             fbInitialized = true;
@@ -9009,6 +9097,11 @@ document.addEventListener('DOMContentLoaded', initialize);
                 firebase.initializeApp(FB_CONFIG);
                 fbDb = firebase.database();
                 window.fbDb = fbDb; /* expose for certify module */
+
+                /* Site analytics — push une session par browser tab.
+                   sessionStorage évite la duplication sur SPA-like navigation
+                   (chaque ouverture d'onglet = 1 session). */
+                trackSiteVisit();
 
                 /* Subscribe to /certs — builds local cache of verified tokens.
                    Badge is only shown when msg.certToken matches this cache. */
@@ -12161,6 +12254,8 @@ async function sha256hex(str) {
             const ls = document.getElementById('leftSidebar');
             if (ls) ls.style.display = 'none';
             if (typeof initHomePanel === 'function') initHomePanel();
+            // Pulse stats : init au 1er affichage de la home, puis cache 60s
+            if (typeof initPulse === 'function') initPulse();
         });
     }
 
@@ -12304,6 +12399,252 @@ async function sha256hex(str) {
         _showFullscreenPanel(document.getElementById('snapshotPanel'), () => {
             if (typeof window.initSnapshotPanel === 'function') window.initSnapshotPanel();
         });
+    }
+
+    /* ── PULSE — site activity stats (intégré au bas de la home) ─────────── *
+     * Chart.js + agrégation Firebase 30 derniers jours.
+     * Lazy-load : on ne fetch et ne charge la lib qu'à la 1re activation
+     * de la home, et on cache le résultat 60s pour éviter de re-fetch
+     * sur les allers-retours d'onglets.
+     * --------------------------------------------------------------------- */
+    let _pulseCache = null;       // { ts, data }
+    let _pulseChartJs = null;     // Promise du loader
+    let _pulseCharts  = {};       // Chart instances pour destroy()
+    let _pulseInited  = false;    // 1re activation = fetch + render
+
+    function loadChartJs() {
+        if (window.Chart) return Promise.resolve();
+        if (_pulseChartJs) return _pulseChartJs;
+        _pulseChartJs = new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
+            s.onload = resolve;
+            s.onerror = reject;
+            document.head.appendChild(s);
+        });
+        return _pulseChartJs;
+    }
+
+    async function initPulse() {
+        const loading = document.getElementById('pulseLoading');
+        const content = document.getElementById('pulseContent');
+        if (!loading || !content) return;
+
+        // Cache valide 60s — un retour onglet n'est pas un re-fetch.
+        if (_pulseCache && Date.now() - _pulseCache.ts < 60_000) {
+            loading.style.display = 'none';
+            content.style.display = 'block';
+            renderPulseCharts(_pulseCache.data);
+            return;
+        }
+
+        loading.style.display = 'flex';
+        content.style.display = 'none';
+
+        try {
+            await loadChartJs();
+            const data = await fetchPulseData(30);
+            _pulseCache = { ts: Date.now(), data };
+            loading.style.display = 'none';
+            content.style.display = 'block';
+            renderPulseCharts(data);
+        } catch (e) {
+            console.error('[Pulse] init failed:', e);
+            loading.innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:13px;">Failed to load activity data.</div>';
+        }
+    }
+
+    async function fetchPulseData(days) {
+        if (!window.fbDb) throw new Error('Firebase not ready');
+        const today = new Date();
+        const dates = [];
+        for (let i = days - 1; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            const ymd = d.getFullYear() + '-' +
+                        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                        String(d.getDate()).padStart(2, '0');
+            dates.push(ymd);
+        }
+
+        const allSessions = [];
+        const dayCounts = {};
+        await Promise.all(dates.map(async date => {
+            try {
+                const snap = await window.fbDb.ref(`analytics/sessions/${date}`).once('value');
+                let count = 0;
+                snap.forEach(child => {
+                    count++;
+                    allSessions.push(Object.assign({ _date: date }, child.val()));
+                });
+                dayCounts[date] = count;
+            } catch (e) {
+                dayCounts[date] = 0;
+            }
+        }));
+        return { dates, dayCounts, sessions: allSessions };
+    }
+
+    function renderPulseCharts({ dates, dayCounts, sessions }) {
+        // Détruit les charts existants pour éviter les doublons sur re-render
+        Object.values(_pulseCharts).forEach(c => { try { c.destroy(); } catch (_) {} });
+        _pulseCharts = {};
+
+        const total      = sessions.length;
+        const todayKey   = dates[dates.length - 1];
+        const todayCount = dayCounts[todayKey] || 0;
+        const signedIn   = sessions.filter(s => s.signedIn).length;
+        const anon       = total - signedIn;
+        const avgPerDay  = total ? (total / dates.length).toFixed(1) : '0';
+        const signedPct  = total ? Math.round(signedIn / total * 100) : 0;
+
+        const fmt = n => n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n);
+        const setKpi = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+        setKpi('pulseKpiTotal',  fmt(total));
+        setKpi('pulseKpiAvg',    avgPerDay);
+        setKpi('pulseKpiToday',  fmt(todayCount));
+        setKpi('pulseKpiSigned', signedPct + '%');
+
+        const baseColor   = '#00B3FF';
+        const baseColorBg = 'rgba(0, 179, 255, 0.18)';
+        const gridColor   = 'rgba(255, 255, 255, 0.06)';
+        const tickColor   = 'rgba(255, 255, 255, 0.5)';
+        const fontFamily  = "'Geomanist-Bold', sans-serif";
+
+        const commonScales = {
+            x: { ticks: { color: tickColor, font: { family: fontFamily, size: 10 } }, grid: { color: gridColor, drawBorder: false } },
+            y: { ticks: { color: tickColor, font: { family: fontFamily, size: 10 }, precision: 0 }, grid: { color: gridColor, drawBorder: false }, beginAtZero: true }
+        };
+
+        // ── Chart 1 : Sessions per day (line)
+        const dailyCanvas = document.getElementById('pulseChartDaily');
+        if (dailyCanvas) {
+            _pulseCharts.daily = new window.Chart(dailyCanvas, {
+                type: 'line',
+                data: {
+                    labels: dates.map(d => d.slice(5)),  // MM-DD
+                    datasets: [{
+                        data: dates.map(d => dayCounts[d] || 0),
+                        borderColor: baseColor,
+                        backgroundColor: baseColorBg,
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 2,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: baseColor
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: commonScales }
+            });
+        }
+
+        // ── Chart 2 : By hour (bar 0-23)
+        const hourly = new Array(24).fill(0);
+        sessions.forEach(s => { if (typeof s.hour === 'number' && s.hour >= 0 && s.hour < 24) hourly[s.hour]++; });
+        const hourlyCanvas = document.getElementById('pulseChartHourly');
+        if (hourlyCanvas) {
+            _pulseCharts.hourly = new window.Chart(hourlyCanvas, {
+                type: 'bar',
+                data: {
+                    labels: hourly.map((_, h) => String(h).padStart(2, '0') + 'h'),
+                    datasets: [{
+                        data: hourly,
+                        backgroundColor: baseColor,
+                        borderRadius: 3,
+                        maxBarThickness: 20
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: commonScales }
+            });
+        }
+
+        // ── Chart 3 : Signed-in vs anon (donut)
+        const authCanvas = document.getElementById('pulseChartAuth');
+        if (authCanvas) {
+            _pulseCharts.auth = new window.Chart(authCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Signed-in', 'Anonymous'],
+                    datasets: [{
+                        data: [signedIn, anon],
+                        backgroundColor: ['#00B3FF', 'rgba(255,255,255,0.18)'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: tickColor, font: { family: fontFamily, size: 11 }, boxWidth: 10, padding: 14 }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ── Heatmap : 7 lignes (DOW) × 24 colonnes (heure) — grille HTML
+        const heatmap = document.getElementById('pulseHeatmap');
+        if (heatmap) {
+            const cells = Array.from({ length: 7 }, () => new Array(24).fill(0));
+            sessions.forEach(s => {
+                if (typeof s.dow === 'number' && typeof s.hour === 'number'
+                    && s.dow >= 0 && s.dow < 7 && s.hour >= 0 && s.hour < 24) {
+                    cells[s.dow][s.hour]++;
+                }
+            });
+            const max = cells.flat().reduce((m, n) => n > m ? n : m, 0);
+            const dows = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const hourLabels = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0'));
+            heatmap.innerHTML =
+                '<div class="pulse-heatmap-grid">' +
+                    '<div class="pulse-hm-cell pulse-hm-cell--corner"></div>' +
+                    hourLabels.map(h => '<div class="pulse-hm-label pulse-hm-label--hour">' + h + '</div>').join('') +
+                    cells.map((row, i) =>
+                        '<div class="pulse-hm-label pulse-hm-label--dow">' + dows[i] + '</div>' +
+                        row.map(v => {
+                            const intensity = max ? v / max : 0;
+                            const bg = 'rgba(0, 179, 255, ' + (intensity * 0.85 + (v ? 0.05 : 0)).toFixed(3) + ')';
+                            return '<div class="pulse-hm-cell" style="background:' + bg + ';" title="' + v + ' session' + (v === 1 ? '' : 's') + '"></div>';
+                        }).join('')
+                    ).join('') +
+                '</div>';
+        }
+
+        // ── Top lists (pages, referrers, langs) ─────────────────────────
+        const tally = (key, max) => {
+            const m = new Map();
+            sessions.forEach(s => {
+                const v = s[key];
+                if (!v) return;
+                m.set(v, (m.get(v) || 0) + 1);
+            });
+            return Array.from(m.entries()).sort((a, b) => b[1] - a[1]).slice(0, max || 8);
+        };
+        const renderList = (id, rows, label) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (!rows.length) { el.innerHTML = '<li class="pulse-list-empty">No data</li>'; return; }
+            const top = rows[0][1] || 1;
+            el.innerHTML = rows.map(([k, n]) =>
+                '<li class="pulse-list-item">' +
+                    '<span class="pulse-list-label" title="' + escapeHtml(String(k)) + '">' + escapeHtml(String(label ? label(k) : k)) + '</span>' +
+                    '<span class="pulse-list-bar"><span class="pulse-list-bar-fill" style="width:' + Math.round(n / top * 100) + '%;"></span></span>' +
+                    '<span class="pulse-list-count">' + n + '</span>' +
+                '</li>'
+            ).join('');
+        };
+        renderList('pulseTopPages',     tally('page'));
+        renderList('pulseTopReferrers', tally('referrer'), v => {
+            try { return new URL(v).hostname.replace(/^www\./, ''); } catch (_) { return v; }
+        });
+        renderList('pulseTopLangs',     tally('lang'));
+    }
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
 
 
