@@ -1234,6 +1234,18 @@
               <span>Sign in to chat</span>
             </div>
             <div class="home-chat-error" id="homeChatError" style="display:none;"></div>
+            <!-- Reply banner : visible quand l'utilisateur clique le bouton
+                 "reply" d'un message. Affiche un aperçu du message cité +
+                 un × pour annuler. Le message envoyé inclura un objet
+                 replyTo (cf. sendMessage). -->
+            <div class="home-chat-reply-banner" id="homeChatReplyBanner" style="display:none;" aria-live="polite">
+              <svg class="home-chat-reply-banner-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9,15 3,9 9,3"/><path d="M3 9h9a5 5 0 0 1 5 5v3"/></svg>
+              <div class="home-chat-reply-banner-text">
+                <span class="home-chat-reply-banner-label">Replying to <strong id="homeChatReplyAuthor"></strong></span>
+                <span class="home-chat-reply-banner-quote" id="homeChatReplyText"></span>
+              </div>
+              <button class="home-chat-reply-banner-cancel" id="homeChatReplyCancel" type="button" aria-label="Cancel reply">×</button>
+            </div>
             <div class="home-chat-input-row" id="homeChatInputRow">
               <input class="home-chat-input" id="homeChatInput" type="text" placeholder="Message community…" autocomplete="off" spellcheck="false" maxlength="500"/>
               <button class="home-chat-send" id="homeChatSend" type="button">
@@ -8740,6 +8752,35 @@ document.addEventListener('DOMContentLoaded', initialize);
         let fbInitialized = false;
         let lastSendAt    = 0;
 
+        /* Reply state — when set, the next message sent will include a
+         * replyTo block referring to this. Cleared by cancel button, Esc
+         * key, or after a successful send. */
+        let _replyingTo = null;
+        function setReplyTo(info) {
+            _replyingTo = info && info.user ? info : null;
+            const banner    = document.getElementById('homeChatReplyBanner');
+            const authorEl  = document.getElementById('homeChatReplyAuthor');
+            const textEl    = document.getElementById('homeChatReplyText');
+            if (!banner) return;
+            if (_replyingTo) {
+                if (authorEl) authorEl.textContent = _replyingTo.display || _replyingTo.user || '?';
+                if (textEl)   textEl.textContent   = String(_replyingTo.text || '').slice(0, 140);
+                banner.style.display = 'flex';
+                document.getElementById('homeChatInput')?.focus();
+            } else {
+                banner.style.display = 'none';
+                if (authorEl) authorEl.textContent = '';
+                if (textEl)   textEl.textContent   = '';
+            }
+        }
+        function scrollToMessage(key) {
+            const el = document.querySelector('.home-chat-msg[data-msg-key="' + CSS.escape(key) + '"]');
+            if (!el) return;
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('home-chat-msg--flash');
+            setTimeout(() => el.classList.remove('home-chat-msg--flash'), 1400);
+        }
+
         // ── Variables de présence hoistées — accessibles depuis refreshAuthState ──
         let _presenceRef    = null;   // référence Firebase chat/presence
         let _myPresenceRef  = null;   // référence de la clé de session courante
@@ -9145,6 +9186,14 @@ document.addEventListener('DOMContentLoaded', initialize);
                     ${QUICK_EMOJIS.map((e, i) => `<button class="home-chat-react-btn" type="button" data-emoji-idx="${i}" title="${e}">${e}</button>`).join('')}
                 </div>` : '';
 
+            // Bloc "quote" si le message répond à un autre — affiché en
+            // tête du body avec auteur + extrait du message cité.
+            const quoteHtml = msg.replyTo && (msg.replyTo.text || msg.replyTo.user) ? `
+                <a class="home-chat-msg-quote" data-reply-key="${_fcEsc(msg.replyTo.key || '')}" href="#" tabindex="0">
+                    <span class="home-chat-msg-quote-author">${_fcEsc(msg.replyTo.display || msg.replyTo.user || '?')}</span>
+                    <span class="home-chat-msg-quote-text">${_fcEsc(String(msg.replyTo.text || '').slice(0, 140))}</span>
+                </a>` : '';
+
             div.innerHTML = `
                 ${reactBarHtml}
                 <div class="home-chat-msg-meta">
@@ -9154,17 +9203,23 @@ document.addEventListener('DOMContentLoaded', initialize);
                     <span class="home-chat-msg-meta-right">
                         <span class="home-chat-msg-time">${formatDateTime(msg.t)}</span>
                         ${msg.edited ? '<span class="home-chat-msg-edited">(edited)</span>' : ''}
-                        ${isMine && key ? `
+                        ${key ? `
                             <span class="home-chat-msg-actions">
-                                <button class="home-chat-msg-action home-chat-msg-edit-btn" type="button" title="Edit message" aria-label="Edit">
-                                    <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3.5a2 2 0 0 1 2.83 2.83L7 16.66 3 17.5l.84-4 10.66-10z"/></svg>
+                                <button class="home-chat-msg-action home-chat-msg-reply-btn" type="button" title="Reply" aria-label="Reply">
+                                    <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,15 3,9 9,3"/><path d="M3 9h9a5 5 0 0 1 5 5v3"/></svg>
                                 </button>
-                                <button class="home-chat-msg-action home-chat-msg-delete-btn" type="button" title="Delete message" aria-label="Delete">
-                                    <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h14M8 6V3.5h4V6M5.5 6l1 11h7l1-11"/></svg>
-                                </button>
+                                ${isMine ? `
+                                    <button class="home-chat-msg-action home-chat-msg-edit-btn" type="button" title="Edit message" aria-label="Edit">
+                                        <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3.5a2 2 0 0 1 2.83 2.83L7 16.66 3 17.5l.84-4 10.66-10z"/></svg>
+                                    </button>
+                                    <button class="home-chat-msg-action home-chat-msg-delete-btn" type="button" title="Delete message" aria-label="Delete">
+                                        <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h14M8 6V3.5h4V6M5.5 6l1 11h7l1-11"/></svg>
+                                    </button>
+                                ` : ''}
                             </span>` : ''}
                     </span>
                 </div>
+                ${quoteHtml}
                 <div class="home-chat-msg-body">${formatChatBody(msg.text || '', me?.username)}</div>
                 <div class="home-chat-reactions" style="display:none;"></div>
             `;
@@ -9172,6 +9227,27 @@ document.addEventListener('DOMContentLoaded', initialize);
             if (isMine && key) {
                 div.querySelector('.home-chat-msg-edit-btn')?.addEventListener('click', () => startEdit(div, key, msg.text || ''));
                 div.querySelector('.home-chat-msg-delete-btn')?.addEventListener('click', () => deleteMsg(key));
+            }
+            // Reply button : disponible pour TOUS les messages (pas juste
+            // les siens). Memorise le contexte dans _replyingTo et affiche
+            // la banner au-dessus de l'input.
+            if (key) {
+                div.querySelector('.home-chat-msg-reply-btn')?.addEventListener('click', e => {
+                    e.stopPropagation();
+                    setReplyTo({
+                        key,
+                        user:    msg.user || '',
+                        display: msg.display || msg.user || '',
+                        text:    msg.text || ''
+                    });
+                });
+                // Click sur le quote → scroll vers le message original
+                // (msgKey est déjà posé en dataset plus haut).
+                div.querySelector('.home-chat-msg-quote')?.addEventListener('click', e => {
+                    e.preventDefault();
+                    const k = e.currentTarget.dataset.replyKey;
+                    if (k) scrollToMessage(k);
+                });
             }
 
             // Boutons de la barre emoji — index numérique (évite les problèmes d'encodage Unicode)
@@ -9282,23 +9358,76 @@ document.addEventListener('DOMContentLoaded', initialize);
             // Sinon : on garde l'entrée existante (meilleure que le fallback).
         }
 
-        /* Échappe le HTML puis transforme les @username en pills colorées.
-         * - Le username technique (a-z 0-9 _ -, 2-30 chars) est ce qui est
-         *   réellement écrit dans le message ; la pill rendue affiche le
-         *   *display name* du membre via _chatNameCache si on le connaît.
-         * - Les mentions visant l'utilisateur courant (--me) sont affichées
-         *   plus saturées (ping visuel immédiat). */
+        /* Transforme les @mentions en pills colorées en respectant les
+         * display names AVEC ESPACES (ex. "@THE PHOTOGRAPH"). Stratégie :
+         *  1) On collecte tous les display names + usernames connus du
+         *     _chatNameCache, triés du plus long au plus court.
+         *  2) À chaque '@' rencontré, on essaie de matcher le candidat
+         *     le plus long (case-insensitive) — ça gère "@THE PHOTOGRAPH"
+         *     proprement même si "THE" est aussi un username.
+         *  3) Fallback sur la regex /@[A-Za-z0-9_-]+/ pour les @ qui ne
+         *     correspondent à personne en cache (typage libre).
+         *  4) Le contenu de la pill est toujours le *display name* trouvé
+         *     dans le cache (inversion username→display si nécessaire). */
         function formatChatBody(text, myUsername) {
             if (!text) return '';
-            const escaped = _fcEsc(text);
-            const meLow = (myUsername || '').toLowerCase();
-            return escaped.replace(/@([A-Za-z0-9_-]{2,30})\b/g, (full, uname) => {
-                const low   = uname.toLowerCase();
-                const isMe  = meLow && low === meLow;
-                const label = _chatNameCache.get(low) || uname;
-                const cls   = 'home-chat-mention' + (isMe ? ' home-chat-mention--me' : '');
-                return '<span class="' + cls + '">@' + _fcEsc(label) + '</span>';
+
+            // Cibles de matching = display names + usernames connus.
+            const targets = new Set();
+            _chatNameCache.forEach((display, username) => {
+                if (display) targets.add(String(display));
+                if (username) targets.add(String(username));
             });
+            const sorted = Array.from(targets)
+                .filter(n => n && n.length >= 2)
+                .sort((a, b) => b.length - a.length);
+
+            // Aliases qui désignent "moi" (username + son display name).
+            const meLow = (myUsername || '').toLowerCase();
+            const meAliases = new Set();
+            if (meLow) {
+                meAliases.add(meLow);
+                const myDisplay = _chatNameCache.get(meLow);
+                if (myDisplay) meAliases.add(myDisplay.toLowerCase());
+            }
+
+            const out = [];
+            let i = 0;
+            while (i < text.length) {
+                if (text[i] === '@') {
+                    let matched = null;
+                    // 1) Greedy match contre les noms connus (avec espaces).
+                    for (const t of sorted) {
+                        if (text.substr(i + 1, t.length).toLowerCase() === t.toLowerCase()) {
+                            // On préserve la casse exacte tapée par
+                            // l'utilisateur — pas grave car la pill applique
+                            // text-transform: uppercase au render.
+                            matched = text.substr(i + 1, t.length);
+                            break;
+                        }
+                    }
+                    // 2) Fallback regex pour @<technical-username> non caché.
+                    if (!matched) {
+                        const m = /^@([A-Za-z0-9_-]{2,30})/.exec(text.substr(i));
+                        if (m) matched = m[1];
+                    }
+                    if (matched) {
+                        const lower = matched.toLowerCase();
+                        // Affichage : on veut TOUJOURS le display name si on
+                        // l'a (le @snipe13 tapé devient "@THE PHOTOGRAPH"
+                        // dans la pill).
+                        const display = _chatNameCache.get(lower) || matched;
+                        const isMe = meAliases.has(lower) || meAliases.has(display.toLowerCase());
+                        const cls = 'home-chat-mention' + (isMe ? ' home-chat-mention--me' : '');
+                        out.push('<span class="' + cls + '">@' + _fcEsc(display) + '</span>');
+                        i += 1 + matched.length;
+                        continue;
+                    }
+                }
+                out.push(_fcEsc(text[i]));
+                i++;
+            }
+            return out.join('');
         }
 
         // Génère un stack d'avatars chevauchants dans un conteneur donné.
@@ -9322,8 +9451,12 @@ document.addEventListener('DOMContentLoaded', initialize);
                     const uname = m.username || '';
                     const dname = m.display || m.username || '?';
                     _cacheName(uname, dname);
+                    // data-mention-display = ce qu'on insère dans le chat
+                    // quand on clique (ex. "THE PHOTOGRAPH"). data-mention-
+                    // username = identifiant technique pour la résolution
+                    // côté render (matchera @THE PHOTOGRAPH ou @snipe13).
                     return `
-                    <div class="home-chat-member${offCls}" data-mention-username="${_fcEsc(uname)}" role="button" tabindex="0" title="Mention @${_fcEsc(uname)} in chat">
+                    <div class="home-chat-member${offCls}" data-mention-username="${_fcEsc(uname)}" data-mention-display="${_fcEsc(dname)}" role="button" tabindex="0" title="Mention @${_fcEsc(dname)} in chat">
                         ${m.avatar
                             ? `<img class="home-chat-member-avatar" src="${_fcEsc(m.avatar)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><span class="home-chat-member-initial" style="display:none">${_fcEsc(dname[0].toUpperCase())}</span>`
                             : `<span class="home-chat-member-initial">${_fcEsc(dname[0].toUpperCase())}</span>`
@@ -9673,24 +9806,38 @@ document.addEventListener('DOMContentLoaded', initialize);
             if (now - lastSendAt < 500) return;
             lastSendAt = now;
             input.value = '';
+            // Snapshot le contexte de reply puis on clear l'état tout de
+            // suite — l'utilisateur peut taper le suivant librement.
+            const replyTo = _replyingTo ? {
+                key:     _replyingTo.key || null,
+                user:    _replyingTo.user || null,
+                display: _replyingTo.display || _replyingTo.user || null,
+                text:    String(_replyingTo.text || '').slice(0, 200)
+            } : null;
+            setReplyTo(null);
             try {
-                await fbDb.ref('chat/messages').push({
+                const payload = {
                     user:      user.username,
                     display:   user.displayName || user.username,
                     text:      text,
                     certToken: user.certToken || null,
                     t:         firebase.database.ServerValue.TIMESTAMP
-                });
+                };
+                if (replyTo) payload.replyTo = replyTo;
+                await fbDb.ref('chat/messages').push(payload);
             } catch(e) {
                 console.error('[Community chat] send failed:', e);
                 input.value = text; // restore on failure
+                if (replyTo) setReplyTo(replyTo); // restore reply context too
             }
         }
 
         send?.addEventListener('click', sendMessage);
         input?.addEventListener('keydown', e => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+            else if (e.key === 'Escape' && _replyingTo) { e.preventDefault(); setReplyTo(null); }
         });
+        document.getElementById('homeChatReplyCancel')?.addEventListener('click', () => setReplyTo(null));
 
         // Fermer la barre emoji si on clique en dehors d'un message (mobile)
         msgs?.addEventListener('click', e => {
@@ -9719,16 +9866,21 @@ document.addEventListener('DOMContentLoaded', initialize);
          * par renderAvatarStack / renderMessage. */
         const card = document.querySelector('.home-community-card');
         const modal = document.getElementById('homeChatMembersModal');
-        function mentionUser(uname) {
+        function mentionUser(uname, dname) {
             if (!input || !uname) return;
             const me = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
             // Don't self-mention.
             if (me && me.username && me.username.toLowerCase() === uname.toLowerCase()) return;
             // Don't insert if input is locked (not signed in).
             if (locked && locked.style.display !== 'none') return;
-            const at = '@' + uname + ' ';
+            // On insère le DISPLAY NAME (ce que l'utilisateur a vu et cliqué),
+            // pas le username technique. Ex: clic sur "THE PHOTOGRAPH" insère
+            // "@THE PHOTOGRAPH " et non "@snipe13". Le rendu côté formatChatBody
+            // gère le matching sur les display names connus (incluant les
+            // espaces) via le _chatNameCache.
+            const label = (dname && String(dname).trim()) || uname;
+            const at = '@' + label + ' ';
             const cur = input.value || '';
-            // Avoid duplicating the mention if it's already at the end.
             if (!cur.endsWith(at)) {
                 const sep = (cur && !cur.endsWith(' ')) ? ' ' : '';
                 input.value = cur + sep + at;
@@ -9743,19 +9895,21 @@ document.addEventListener('DOMContentLoaded', initialize);
         function onMentionClick(e) {
             // Don't hijack clicks on existing buttons (edit / delete / react).
             if (e.target.closest('button')) return;
-            // 1) Member row in sidebar / modal — data-mention-username.
+            // 1) Member row in sidebar / modal.
             const memberRow = e.target.closest('[data-mention-username]');
             if (memberRow) {
                 const u = memberRow.getAttribute('data-mention-username');
-                if (u) { e.preventDefault(); mentionUser(u); return; }
+                const d = memberRow.getAttribute('data-mention-display');
+                if (u) { e.preventDefault(); mentionUser(u, d); return; }
             }
-            // 2) Author name inside a message — .home-chat-msg-user span,
-            //    we read the username from the message wrapper's dataset.
+            // 2) Author name inside a message — read from the message
+            //    wrapper's dataset (.home-chat-msg-user is the visible label).
             const userEl = e.target.closest('.home-chat-msg-user');
             if (userEl) {
                 const msgEl = userEl.closest('.home-chat-msg[data-msg-user]');
                 const u = msgEl?.dataset.msgUser;
-                if (u) { e.preventDefault(); mentionUser(u); }
+                const d = userEl.textContent || '';
+                if (u) { e.preventDefault(); mentionUser(u, d); }
             }
         }
         card?.addEventListener('click', onMentionClick);

@@ -13047,9 +13047,13 @@ body.is-profile-loading #profileLoadingOverlay * {
     font-size: 10px; font-weight: 800; color: #00B3FF;
 }
 .home-chat-member-name {
-    font-size: 11.5px; color: rgba(255,255,255,0.75);
+    font-size: 11px; color: rgba(255,255,255,0.78);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    font-family: sans-serif;
+    font-family: 'Geomanist-Bold', sans-serif;
+    /* Pseudo en MAJUSCULES — cohérent avec les noms d'auteurs des
+       messages (.home-chat-msg-user) et avec les autres labels du chat. */
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
 /* ── Header droit du chat ── */
@@ -13599,6 +13603,119 @@ body.is-profile-loading #profileLoadingOverlay * {
     text-shadow: 0 0 8px rgba(0, 179, 255, 0.55);
 }
 
+/* ── Reply : banner au-dessus de l'input + bloc quote dans le message ── */
+.home-chat-reply-banner {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    margin: 0 12px 6px;
+    background: rgba(0, 179, 255, 0.10);
+    border: 1px solid rgba(0, 179, 255, 0.35);
+    border-left: 3px solid #00B3FF;
+    border-radius: 8px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.78);
+}
+.home-chat-reply-banner-icon {
+    width: 14px;
+    height: 14px;
+    color: #00B3FF;
+    flex-shrink: 0;
+}
+.home-chat-reply-banner-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+.home-chat-reply-banner-label {
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(0, 179, 255, 0.85);
+}
+.home-chat-reply-banner-label strong {
+    color: #fff;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.home-chat-reply-banner-quote {
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: sans-serif;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-style: italic;
+}
+.home-chat-reply-banner-cancel {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+}
+.home-chat-reply-banner-cancel:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Bloc "quote" dans un message qui répond à un autre — petit aperçu cliquable
+   posé en tête du body (auteur + extrait du message cité). */
+.home-chat-msg-quote {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 10px;
+    margin: 4px 0 2px;
+    background: rgba(0, 179, 255, 0.06);
+    border-left: 2px solid rgba(0, 179, 255, 0.55);
+    border-radius: 4px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    max-width: 100%;
+    overflow: hidden;
+}
+.home-chat-msg-quote:hover {
+    background: rgba(0, 179, 255, 0.12);
+    border-left-color: #00B3FF;
+}
+.home-chat-msg-quote-author {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    color: #00B3FF;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.home-chat-msg-quote-text {
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.65);
+    font-style: italic;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Flash bref quand on scroll vers un message via le quote — aide à
+   localiser visuellement le message cible. */
+.home-chat-msg--flash {
+    animation: homeChatMsgFlash 1.4s ease-out;
+}
+@keyframes homeChatMsgFlash {
+    0%, 30%   { background: rgba(0, 179, 255, 0.18); border-radius: 6px; }
+    100%      { background: transparent; }
+}
+
 /* @mentions inside a message body — pill cyan TRÈS visible (avant elles
    passaient inaperçues, cf. retour utilisateur). Police plus grasse + bg
    plus saturé + bordure cyan. La variante --me (mention de l'utilisateur
@@ -13727,6 +13844,14 @@ body.is-profile-loading #profileLoadingOverlay * {
     background: rgba(239,68,68,0.15);
     color: #ef4444;
 }
+.home-chat-msg-reply-btn:hover {
+    background: rgba(0,179,255,0.15);
+    color: #00B3FF;
+}
+/* Le bouton reply est rendu pour TOUS les messages, pas juste les
+   nôtres — il faut donc révéler la barre actions au hover de TOUT message
+   community (pas juste --mine). */
+.home-chat-msg--community:hover .home-chat-msg-actions { opacity: 1; }
 /* Édition inline : textarea + Save / Cancel — apparaît sous le meta-header
    et masque temporairement le body original. Stylisé pour rester compact. */
 .home-chat-msg-editor {
@@ -13930,8 +14055,11 @@ body.is-profile-loading #profileLoadingOverlay * {
     color: #00B3FF;
     font-family: 'Geomanist-Bold', sans-serif;
     font-weight: 700;
-    letter-spacing: 0.02em;
-    max-width: 160px;
+    letter-spacing: 0.06em;
+    /* Le pseudo de la personne qui se connecte est aussi rendu en
+       MAJUSCULES, comme les autres références au pseudo dans le chat. */
+    text-transform: uppercase;
+    max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -26932,11 +27060,13 @@ body { box-sizing: border-box; }
    EMOJI REACTIONS — Style Discord
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── Barre flottante au survol (Discord-style) ── */
+/* ── Barre emoji flottante (Discord-style) ──
+   Positionnée à GAUCHE de la zone meta du message pour ne pas crowder les
+   boutons modifier/supprimer (qui sont alignés à droite). */
 .home-chat-react-bar {
     position: absolute;
     top: -18px;
-    right: 10px;
+    left: 10px;
     display: flex;
     align-items: center;
     gap: 2px;
