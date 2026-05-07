@@ -24272,47 +24272,98 @@ a.snap-holder-username:hover {
 .home-fc-spotlight .home-feat-v3 {
     min-height: 380px;
 }
+/* Spotlight context : even in vertical mode the card is the only one
+   visible, so it gets a touch bigger name + artist text than the legacy
+   4-up grid. */
+.home-fc-spotlight .home-feat-v3-name { font-size: 19px; }
+.home-fc-spotlight .home-feat-v3-creator { font-size: 13px; }
+
+/* "Sample NFTs" mini-label above the NFT thumbnail strip — only in spotlight
+   context, so it doesn't affect any other place .home-feat-v3-nfts might be
+   used. The strip is a CSS grid, so the ::before spans the whole row via
+   grid-column: 1/-1. The CTA card uses a different body (no .home-feat-v3-nfts
+   element), so the label only appears on real collection cards. */
+.home-fc-spotlight .home-feat-v3:not(.home-feat-v3--cta) .home-feat-v3-nfts::before {
+    content: 'Sample NFTs';
+    grid-column: 1 / -1;
+    display: block;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(0, 179, 255, 0.7);
+    margin-bottom: 2px;
+}
+
 @media (min-width: 900px) {
+    /* HORIZONTAL layout — the spotlight's signature look. Banner on the left
+       (50 % width) gets to be the visual focal point ; body on the right
+       presents identity, stats, sample NFTs and the CTA in clear sections. */
     .home-fc-spotlight .home-feat-v3 {
         flex-direction: row;
-        min-height: 420px;
+        min-height: 460px;
     }
     .home-fc-spotlight .home-feat-v3-hero {
         aspect-ratio: auto;
-        flex: 0 0 46%;
+        flex: 0 0 50%;
         align-self: stretch;
     }
     .home-fc-spotlight .home-feat-v3-body {
         flex: 1;
-        padding: 28px 32px 28px;
-        gap: 18px;
+        padding: 30px 34px 28px;
+        gap: 20px;
     }
     /* In horizontal layout the logo no longer overlaps the hero/body
        boundary — that hack made sense in vertical mode, here it just
        leaves a chunk of empty space at the top. Reset the negative margin
        and the alignment padding so identity sits where you'd expect. */
-    .home-fc-spotlight .home-feat-v3-identity { margin-top: 0; }
-    .home-fc-spotlight .home-feat-v3-id-text { padding-top: 0; }
-    .home-fc-spotlight .home-feat-v3-logo {
-        width: 72px;
-        height: 72px;
-        border: 2px solid rgba(0, 179, 255, 0.25);
+    .home-fc-spotlight .home-feat-v3-identity {
+        margin-top: 0;
+        gap: 16px;
+        align-items: center;
     }
-    .home-fc-spotlight .home-feat-v3-name {
-        font-size: 22px;
-        white-space: normal;
-        line-height: 1.2;
-    }
-    .home-fc-spotlight .home-feat-v3-creator { font-size: 13px; }
-    /* Bigger stat values — this is a spotlight, not a thumbnail */
-    .home-fc-spotlight .home-feat-v3-stats {
-        padding: 14px 12px;
+    .home-fc-spotlight .home-feat-v3-id-text {
+        padding-top: 0;
         gap: 6px;
     }
-    .home-fc-spotlight .home-feat-v3-stat-val { font-size: 18px; }
+    .home-fc-spotlight .home-feat-v3-logo {
+        width: 88px;
+        height: 88px;
+        border-radius: 18px;
+        border: 2px solid rgba(0, 179, 255, 0.35);
+    }
+    .home-fc-spotlight .home-feat-v3-name {
+        font-size: 26px;
+        white-space: normal;
+        line-height: 1.15;
+    }
+    /* Artist line is now a real piece of information, not a footnote.
+       Bigger size + brighter color so the user immediately sees who's
+       behind the collection. */
+    .home-fc-spotlight .home-feat-v3-creator {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.65);
+        white-space: normal;
+    }
+    .home-fc-spotlight .home-feat-v3-creator strong {
+        color: #fff;
+        font-weight: 800;
+    }
+    /* Stats panel : bigger numbers + label spacing — three KPIs that read
+       at a glance instead of feeling like a tiny status bar. */
+    .home-fc-spotlight .home-feat-v3-stats {
+        padding: 16px 12px;
+        gap: 6px;
+    }
+    .home-fc-spotlight .home-feat-v3-stat { gap: 5px; }
+    .home-fc-spotlight .home-feat-v3-stat-val { font-size: 20px; }
     .home-fc-spotlight .home-feat-v3-stat-label { font-size: 10px; }
-    /* NFT preview strip stretches to the full body width with bigger thumbs */
-    .home-fc-spotlight .home-feat-v3-nfts { gap: 8px; }
+    /* NFT preview strip : explicit "Sample NFTs" label + bigger square
+       thumbnails so they read clearly as collection examples. */
+    .home-fc-spotlight .home-feat-v3-nfts {
+        gap: 8px;
+        grid-template-columns: repeat(6, 1fr);
+    }
     .home-fc-spotlight .home-feat-v3-cta {
         padding: 14px 22px;
         font-size: 13px;
@@ -24345,28 +24396,24 @@ a.snap-holder-username:hover {
     overflow: hidden;
     border-radius: 16px;
     background: rgba(11, 20, 38, 0.85);
-    border: 1.5px solid rgba(0, 179, 255, 0.22);
+    /* Permanent cyan halo — same recipe as .sb-results-wrap (Top Collections,
+       Updates, Market Bot) so the Featured spotlight matches the rest of the
+       home. The card itself never moves : no translate on hover, no scale.
+       Hover only emphasizes the border slightly. */
+    border: 1.5px solid rgba(0, 179, 255, 0.5);
+    box-shadow:
+        0 0 0  1px rgba(0,179,255,0.55),
+        0 0 40px rgba(0,179,255,0.35),
+        0 0 80px rgba(0,179,255,0.18);
     cursor: pointer;
     min-height: 320px;
     display: flex;
     flex-direction: column;
     isolation: isolate;
-    transition:
-        transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1),
-        border-color 0.25s ease,
-        box-shadow 0.32s ease;
+    transition: border-color 0.25s ease;
 }
 .home-feat-v3:hover {
-    transform: translateY(-6px);
-    border-color: rgba(0, 179, 255, 0.6);
-    /* Halo glow inspired by .home-genesis-card — triple shadow for depth:
-       (1) thin cyan inner ring, (2) wide cyan outer halo, (3) deep dark
-       drop shadow. Same visual language as the CRONOS.WTF mint cards in
-       the Drops banner so the page feels coherent. */
-    box-shadow:
-        0 0 0 1px  rgba(0, 179, 255, 0.40),
-        0 0 60px   rgba(0, 179, 255, 0.35),
-        0 22px 50px rgba(0,   0,   0, 0.60);
+    border-color: #00B3FF;
 }
 
 /* ── HERO — top portion, image dominante ── */
@@ -24424,10 +24471,8 @@ a.snap-holder-username:hover {
        L'effet hover passe par le backdrop blurred (zoom subtil) et le
        halo cyan box-shadow autour de la carte. */
 }
-.home-feat-v3:hover .home-feat-v3-hero-bg {
-    transform: scale(1.5);
-    opacity: 0.85;
-}
+/* Card stays still on hover : no transform on the hero backdrop either,
+   so the whole frame feels fixed (matches Top Collections / Pulse / Updates). */
 
 /* Tint subtil + dégradé bas pour la transition vers le body */
 .home-feat-v3-hero-tint {
@@ -24506,10 +24551,10 @@ a.snap-holder-username:hover {
     transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 .home-feat-v3:hover .home-feat-v3-logo {
+    /* No translate — the card is fixed. Just brighten the cyan rim. */
     box-shadow:
-        0 10px 24px rgba(0, 0, 0, 0.7),
-        0 0 0 4px rgba(0, 179, 255, 0.18);
-    transform: translateY(-2px);
+        0 8px 20px rgba(0, 0, 0, 0.6),
+        0 0 0 3px rgba(0, 179, 255, 0.25);
 }
 .home-feat-v3-id-text {
     display: flex;
@@ -24693,11 +24738,7 @@ a.snap-holder-username:hover {
     border: 1.5px dashed rgba(0, 179, 255, 0.35);
 }
 .home-feat-v3--cta:hover {
-    transform: translateY(-3px);
     border-color: rgba(0, 179, 255, 0.55);
-    box-shadow:
-        0 18px 44px rgba(0, 179, 255, 0.10),
-        0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
 .home-feat-v3-cta-hero {
