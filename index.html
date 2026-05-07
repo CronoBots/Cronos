@@ -1471,6 +1471,33 @@
       <ol class="home-updates-list" id="homeUpdatesList"></ol>
     </section>
 
+    <!-- ── X (Twitter) timeline embed — @Cronos_WTF ──
+         Embed officiel via widgets.js (chargé à la demande dans
+         initHomeXTimeline). On ne peut afficher QUE le timeline du compte —
+         les mentions et le hashtag #CronosWTF nécessitent l'API X v2 payante.
+         Le bouton "Mention us" en haut-droit ouvre la recherche X dans un
+         nouvel onglet pour donner une porte d'entrée vers le hashtag. -->
+    <section class="home-section home-x-section">
+      <div class="home-section-header">
+        <h2 class="home-section-title">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" style="width:15px;height:15px;vertical-align:-2px;margin-right:8px;color:#fff;"><path d="M15.751 2.5h2.892l-6.318 7.219L19.75 17.5h-5.819l-4.557-5.96-5.213 5.96H1.27l6.756-7.722L1 2.5h5.965l4.119 5.447L15.751 2.5zm-1.013 13.405h1.602L5.337 4.014H3.62l11.118 11.891z"/></svg>
+          Latest from X
+        </h2>
+        <a class="home-section-action" href="https://twitter.com/search?q=%23CronosWTF%20OR%20%40Cronos_WTF&amp;f=live" target="_blank" rel="noopener">Mentions &amp; #CronosWTF →</a>
+      </div>
+      <div class="home-x-card" id="homeXCard">
+        <div class="home-x-loading" id="homeXLoading">
+          <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
+        </div>
+        <a class="twitter-timeline"
+           data-theme="dark"
+           data-tweet-limit="4"
+           data-chrome="noheader nofooter noborders transparent"
+           data-dnt="true"
+           href="https://twitter.com/Cronos_WTF">Tweets by Cronos_WTF</a>
+      </div>
+    </section>
+
     <!-- ── PULSE — site activity stats (full width, bottom of home) ── -->
     <section class="home-section home-pulse-section">
       <div class="home-section-header">
@@ -9672,7 +9699,54 @@ document.addEventListener('DOMContentLoaded', initialize);
         initChat();
         initNavButtons();
         initSpotlight();
+        initHomeXTimeline();
     };
+
+    /* ── X timeline embed — @Cronos_WTF ──
+     * Chargement à la demande de widgets.js (uniquement quand la home s'active,
+     * pour ne pas pénaliser les autres onglets ni le 1er paint). Le widget
+     * Twitter remplace le <a class="twitter-timeline"> par un <iframe> dès qu'il
+     * a fini son rendu — on observe son apparition pour cacher les loading dots
+     * et révéler le contenu sans flash blanc. */
+    function initHomeXTimeline() {
+        const card    = document.getElementById('homeXCard');
+        const loading = document.getElementById('homeXLoading');
+        if (!card || card.dataset.cwtfX === '1') return;
+        card.dataset.cwtfX = '1';
+
+        const onIframe = () => {
+            if (!card.querySelector('iframe')) return false;
+            card.classList.add('home-x-card--ready');
+            if (loading) loading.style.display = 'none';
+            return true;
+        };
+
+        // widgets.js global may already be loaded (e.g. on a back-nav). If the
+        // <iframe> is already present we're done.
+        if (onIframe()) return;
+
+        // Inject the script once. Twitter's widgets.js auto-discovers any
+        // <a class="twitter-timeline"> already in the DOM and rewrites them.
+        if (!window._cwtfXScriptInjected) {
+            window._cwtfXScriptInjected = true;
+            const s = document.createElement('script');
+            s.src = 'https://platform.twitter.com/widgets.js';
+            s.async = true;
+            s.charset = 'utf-8';
+            document.body.appendChild(s);
+        } else if (window.twttr && window.twttr.widgets && typeof window.twttr.widgets.load === 'function') {
+            // Script already there but the timeline element was added after :
+            // re-scan so it gets rendered.
+            window.twttr.widgets.load(card);
+        }
+
+        // Poll for the rendered <iframe> ; bail out after 30s (network down).
+        let tries = 0;
+        const t = setInterval(() => {
+            tries++;
+            if (onIframe() || tries > 150) clearInterval(t);
+        }, 200);
+    }
 
     // One-shot cleanup : drop the obsolete persisted layout from the
     // earlier "customize home" experiment so it doesn't sit forever in

@@ -29174,6 +29174,52 @@ body { box-sizing: border-box; }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
+   X (Twitter) timeline — @Cronos_WTF
+   widgets.js officiel Twitter, chargé à la demande par initHomeXTimeline().
+   On ne peut pas montrer mentions + hashtag sans l'API payante de X — voir
+   commentaire dans index.html.
+   ══════════════════════════════════════════════════════════════════════════ */
+.home-x-section { margin-top: 24px; }
+.home-x-card {
+    position: relative;
+    /* Halo unifié home (variables --home-halo-*). */
+    border: 1px solid var(--home-halo-border);
+    border-radius: 14px;
+    background: rgba(11, 20, 38, 0.4);
+    box-shadow: var(--home-halo-shadow);
+    padding: 14px;
+    min-height: 360px;
+    overflow: hidden;
+}
+/* Loading dots centrés tant que le widget n'est pas peint */
+.home-x-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    pointer-events: none;
+}
+/* L'iframe injecté par widgets.js : on le force à se centrer + width 100%
+   pour qu'il respecte la carte halo'd au lieu de la déborder. Twitter set
+   parfois max-width:550px sur l'iframe — on l'autorise mais on centre. */
+.home-x-card iframe {
+    margin: 0 auto !important;
+    max-width: 100% !important;
+}
+/* Fade-in du contenu une fois le widget prêt */
+.home-x-card .twitter-timeline,
+.home-x-card iframe {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.home-x-card--ready .twitter-timeline,
+.home-x-card--ready iframe {
+    opacity: 1;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
    UPDATES — changelog statique sur la home
    Style sobre & "release notes" : carte sombre, séparateurs fins,
    typographie hiérarchisée, badges de catégorie discrets.
