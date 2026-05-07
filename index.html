@@ -1477,10 +1477,10 @@
           <div class="pulse-kpis-group">
             <span class="pulse-kpis-group-label">Traffic</span>
             <div class="pulse-kpis">
-              <div class="pulse-kpi"><span class="pulse-kpi-label">Total sessions</span><span class="pulse-kpi-value" id="pulseKpiTotal">—</span></div>
-              <div class="pulse-kpi"><span class="pulse-kpi-label">Today</span><span class="pulse-kpi-value" id="pulseKpiToday">—</span></div>
-              <div class="pulse-kpi"><span class="pulse-kpi-label">Avg / day</span><span class="pulse-kpi-value" id="pulseKpiAvg">—</span></div>
-              <div class="pulse-kpi"><span class="pulse-kpi-label">Returning</span><span class="pulse-kpi-value" id="pulseKpiReturning">—</span></div>
+              <div class="pulse-kpi" title="Total page-load sessions across the last 30 days. One session = one browser tab opening cronos.wtf."><span class="pulse-kpi-label">Total sessions</span><span class="pulse-kpi-value" id="pulseKpiTotal">—</span></div>
+              <div class="pulse-kpi" title="Sessions recorded today (UTC)."><span class="pulse-kpi-label">Today</span><span class="pulse-kpi-value" id="pulseKpiToday">—</span></div>
+              <div class="pulse-kpi" title="Average sessions per day over the 30-day window."><span class="pulse-kpi-label">Avg / day</span><span class="pulse-kpi-value" id="pulseKpiAvg">—</span></div>
+              <div class="pulse-kpi" title="Share of sessions from visitors who had already opened the site at least once before. New visitors are not counted here."><span class="pulse-kpi-label">Returning</span><span class="pulse-kpi-value" id="pulseKpiReturning">—</span></div>
             </div>
           </div>
 
@@ -1488,10 +1488,10 @@
           <div class="pulse-kpis-group">
             <span class="pulse-kpis-group-label">Community</span>
             <div class="pulse-kpis">
-              <div class="pulse-kpi"><span class="pulse-kpi-label">Registered members</span><span class="pulse-kpi-value" id="pulseKpiMembers">—</span></div>
-              <div class="pulse-kpi"><span class="pulse-kpi-label">Online now</span><span class="pulse-kpi-value pulse-kpi-value--live" id="pulseKpiOnline">—</span></div>
-              <div class="pulse-kpi"><span class="pulse-kpi-label">Messages (30d)</span><span class="pulse-kpi-value" id="pulseKpiMessages">—</span></div>
-              <div class="pulse-kpi"><span class="pulse-kpi-label">Signed-in share</span><span class="pulse-kpi-value" id="pulseKpiSigned">—</span></div>
+              <div class="pulse-kpi" title="Total members who have signed in to the community chat at least once."><span class="pulse-kpi-label">Registered members</span><span class="pulse-kpi-value" id="pulseKpiMembers">—</span></div>
+              <div class="pulse-kpi" title="Members currently signed in and connected to the chat right now (live, refreshes automatically)."><span class="pulse-kpi-label">Online now</span><span class="pulse-kpi-value pulse-kpi-value--live" id="pulseKpiOnline">—</span></div>
+              <div class="pulse-kpi" title="Chat messages sent over the last 30 days (system join announces excluded)."><span class="pulse-kpi-label">Messages (30d)</span><span class="pulse-kpi-value" id="pulseKpiMessages">—</span></div>
+              <div class="pulse-kpi" title="Share of sessions from visitors who were signed in to a Crypto.com NFT account."><span class="pulse-kpi-label">Signed-in share</span><span class="pulse-kpi-value" id="pulseKpiSigned">—</span></div>
             </div>
           </div>
 
@@ -13089,6 +13089,26 @@ async function sha256hex(str) {
         renderList('pulseTopSnapshots',   eventTally('snapshot_run'));
         renderList('pulseTopMarketBot',   eventTally('marketbot_add'));
         renderList('pulseTopCryptos',     eventTally('crypto_track'));
+
+        // ── Live "Online now" — listener Firebase pour mise à jour temps
+        // réel. Sans ça, le KPI peut être stale 60s à cause du cache pulse,
+        // notamment quand on s'authentifie après le 1er rendu (le user est
+        // online dans chat/presence mais Pulse continue d'afficher l'ancien
+        // count tant que le cache n'expire pas).
+        attachPulseLivePresence();
+    }
+
+    let _pulseLivePresenceBound = false;
+    function attachPulseLivePresence() {
+        if (_pulseLivePresenceBound) return;
+        if (!window.fbDb) return;
+        _pulseLivePresenceBound = true;
+        window.fbDb.ref('chat/presence').on('value', snap => {
+            let count = 0;
+            snap.forEach(c => { const v = c.val(); if (v && !v.anon) count++; });
+            const el = document.getElementById('pulseKpiOnline');
+            if (el) el.textContent = count >= 1000 ? (count / 1000).toFixed(1) + 'k' : String(count);
+        });
     }
 
     function escapeHtml(s) {
