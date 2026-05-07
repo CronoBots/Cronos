@@ -24153,11 +24153,183 @@ a.snap-holder-username:hover {
 /* Grille — cartes plus larges pour plus d'impact, 3 par ligne sur écrans
    classiques (1280px+). Grid s'adapte naturellement (4 sur très large,
    2 sur ~768px, 1 sur mobile). */
+/* ── Featured Collections : SPOTLIGHT mode ──
+ * The grid is now a stacking container — every card occupies the same
+ * cell (via CSS grid template area), and only the .is-active card is
+ * visible. The wrapping <div class="home-fc-spotlight"> provides the
+ * relative positioning context for arrows + the controls bar. */
+.home-fc-spotlight {
+    position: relative;
+    padding: 0 56px;             /* room for prev/next arrows on the sides */
+    isolation: isolate;
+}
 .home-featured-grid {
     display: grid;
-    /* Toutes les cartes sur 1 ligne, largeur égale */
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 14px;
+    grid-template-columns: 1fr;
+    grid-template-rows:    1fr;
+    /* Every child sits in the same cell : we get a clean stack without
+       absolute positioning, so the container auto-sizes to the tallest
+       slide and we keep regular flex inside each card. */
+}
+.home-featured-grid > * {
+    grid-area: 1 / 1;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px) scale(0.992);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.home-featured-grid > .is-active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+    z-index: 2;
+}
+
+/* Spotlight nav arrows : floating buttons on the sides of the card */
+.home-fc-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(11, 20, 38, 0.85);
+    border: 1px solid rgba(0, 179, 255, 0.4);
+    color: #00B3FF;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: background 0.18s, border-color 0.18s, transform 0.18s, box-shadow 0.18s;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+.home-fc-arrow svg { width: 18px; height: 18px; }
+.home-fc-arrow--prev { left: 4px; }
+.home-fc-arrow--next { right: 4px; }
+.home-fc-arrow:hover {
+    background: rgba(0, 179, 255, 0.18);
+    border-color: #00B3FF;
+    color: #fff;
+    box-shadow: 0 8px 22px rgba(0, 179, 255, 0.28);
+}
+.home-fc-arrow:active { transform: translateY(-50%) scale(0.94); }
+
+/* Controls bar : progress fill on the left, dots on the right */
+.home-fc-controls {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.home-fc-progress {
+    flex: 1;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.home-fc-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, rgba(0,179,255,0.5), #00B3FF);
+    border-radius: 2px;
+    transition: width 0.12s linear;
+}
+.home-fc-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.home-fc-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: background 0.18s, transform 0.18s, width 0.22s;
+}
+.home-fc-dot:hover { background: rgba(0, 179, 255, 0.5); }
+.home-fc-dot.is-active {
+    background: #00B3FF;
+    width: 22px;
+    border-radius: 4px;
+}
+
+/* Section badge tweak : the "Spotlight · auto-rotates" pill uses the
+   existing .home-section-badge style ; the modifier just leaves room. */
+.home-section-badge--rotate { letter-spacing: 0.08em; }
+
+/* SPOTLIGHT card sizing : the active card is wider and taller than the
+   old grid version. On desktop (≥900px) we switch to a horizontal layout
+   so the bigger frame is used efficiently — hero on the left, content on
+   the right. On narrower viewports it falls back to the existing vertical
+   layout. */
+.home-fc-spotlight .home-feat-v3 {
+    min-height: 380px;
+}
+@media (min-width: 900px) {
+    .home-fc-spotlight .home-feat-v3 {
+        flex-direction: row;
+        min-height: 420px;
+    }
+    .home-fc-spotlight .home-feat-v3-hero {
+        aspect-ratio: auto;
+        flex: 0 0 46%;
+        align-self: stretch;
+    }
+    .home-fc-spotlight .home-feat-v3-body {
+        flex: 1;
+        padding: 28px 32px 28px;
+        gap: 18px;
+    }
+    /* In horizontal layout the logo no longer overlaps the hero/body
+       boundary — that hack made sense in vertical mode, here it just
+       leaves a chunk of empty space at the top. Reset the negative margin
+       and the alignment padding so identity sits where you'd expect. */
+    .home-fc-spotlight .home-feat-v3-identity { margin-top: 0; }
+    .home-fc-spotlight .home-feat-v3-id-text { padding-top: 0; }
+    .home-fc-spotlight .home-feat-v3-logo {
+        width: 72px;
+        height: 72px;
+        border: 2px solid rgba(0, 179, 255, 0.25);
+    }
+    .home-fc-spotlight .home-feat-v3-name {
+        font-size: 22px;
+        white-space: normal;
+        line-height: 1.2;
+    }
+    .home-fc-spotlight .home-feat-v3-creator { font-size: 13px; }
+    /* Bigger stat values — this is a spotlight, not a thumbnail */
+    .home-fc-spotlight .home-feat-v3-stats {
+        padding: 14px 12px;
+        gap: 6px;
+    }
+    .home-fc-spotlight .home-feat-v3-stat-val { font-size: 18px; }
+    .home-fc-spotlight .home-feat-v3-stat-label { font-size: 10px; }
+    /* NFT preview strip stretches to the full body width with bigger thumbs */
+    .home-fc-spotlight .home-feat-v3-nfts { gap: 8px; }
+    .home-fc-spotlight .home-feat-v3-cta {
+        padding: 14px 22px;
+        font-size: 13px;
+    }
+}
+
+/* Mobile : keep a single-column stack but give the card more breathing room
+   and tuck the arrows inside the card so they don't push the layout out. */
+@media (max-width: 720px) {
+    .home-fc-spotlight { padding: 0; }
+    .home-fc-arrow {
+        width: 36px; height: 36px;
+        background: rgba(11, 20, 38, 0.85);
+    }
+    .home-fc-arrow--prev { left: 8px; }
+    .home-fc-arrow--next { right: 8px; }
+    .home-fc-controls { margin-top: 12px; gap: 12px; }
 }
 
 /* Featured Artists — pas de soulignement */
@@ -28998,7 +29170,7 @@ body { box-sizing: border-box; }
 .home-updates-list {
     list-style: none;
     margin: 0;
-    padding: 0;
+    padding: 14px;
     /* Cadre halo'd identique à Top Collections (.stats-table-wrap) */
     background: rgba(11, 20, 38, 0.4);
     border: 1px solid rgba(0, 179, 255, 0.5);
@@ -29013,6 +29185,17 @@ body { box-sizing: border-box; }
         0 0 80px rgba(0,179,255,0.18);
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 179, 255, 0.35) transparent;
+    /* 2-up grid on desktop : we have lots of horizontal room and
+       descriptions are now short, so packing two cards per row makes the
+       changelog feel scannable without scrolling. Mobile (<720px) falls
+       back to a single column via the override below. */
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    align-content: start;
+}
+@media (max-width: 720px) {
+    .home-updates-list { grid-template-columns: 1fr; }
 }
 .home-updates-list::-webkit-scrollbar { width: 6px; }
 .home-updates-list::-webkit-scrollbar-track { background: transparent; }
@@ -29025,39 +29208,40 @@ body { box-sizing: border-box; }
     .home-updates-list { max-height: 320px; }
 }
 .home-update-item {
-    padding: 16px 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 12px 14px 13px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.018);
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     position: relative;
+    transition: background 0.18s, border-color 0.18s, transform 0.18s;
 }
-.home-update-item:last-child { border-bottom: none; }
-/* Barre verticale colorée à gauche selon le type — discrète, juste 2px */
-.home-update-item::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 18px;
-    bottom: 18px;
-    width: 2px;
-    border-radius: 2px;
-    background: rgba(255,255,255,0.15);
+.home-update-item:hover {
+    background: rgba(0, 179, 255, 0.05);
+    border-color: rgba(0, 179, 255, 0.25);
 }
-.home-update-item--feature::before    { background: #00B3FF; }
-.home-update-item--fix::before        { background: #4ade80; }
-.home-update-item--improvement::before { background: rgba(255,255,255,0.45); }
+/* Type stripe : a 3-px coloured rail on the left edge — replaces the
+   ::before hairline of the old design, more visible on the new card. */
+.home-update-item {
+    border-left-width: 3px;
+}
+.home-update-item--feature     { border-left-color: rgba(0, 179, 255, 0.85); }
+.home-update-item--fix         { border-left-color: rgba(74, 222, 128, 0.85); }
+.home-update-item--improvement { border-left-color: rgba(255, 255, 255, 0.55); }
 
 .home-update-meta {
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: space-between;
+    gap: 10px;
     flex-wrap: wrap;
 }
 .home-update-date {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 11px;
-    color: rgba(255,255,255,0.55);
+    font-size: 10.5px;
+    color: rgba(255,255,255,0.45);
     letter-spacing: 0.05em;
     font-variant-numeric: tabular-nums;
     text-transform: uppercase;
@@ -29065,35 +29249,39 @@ body { box-sizing: border-box; }
 .home-update-badge {
     display: inline-flex;
     align-items: center;
+    gap: 5px;
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 9px;
+    font-size: 9.5px;
     font-weight: 800;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    padding: 3px 8px;
-    border-radius: 4px;
+    padding: 3px 9px 3px 7px;
+    border-radius: 999px;
     border: 1px solid;
 }
+.home-update-badge-ico { display: inline-flex; }
+.home-update-badge-ico svg { width: 11px; height: 11px; display: block; }
+.home-update-badge-label { line-height: 1; }
 .home-update-badge--feature {
     color: #00B3FF;
     border-color: rgba(0,179,255,0.4);
-    background: rgba(0,179,255,0.1);
+    background: rgba(0,179,255,0.12);
 }
 .home-update-badge--fix {
     color: #4ade80;
     border-color: rgba(74,222,128,0.4);
-    background: rgba(74,222,128,0.1);
+    background: rgba(74,222,128,0.12);
 }
 .home-update-badge--improvement {
-    color: rgba(255,255,255,0.7);
-    border-color: rgba(255,255,255,0.18);
-    background: rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.78);
+    border-color: rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.05);
 }
 
 .home-update-title {
-    margin: 0;
+    margin: 2px 0 0;
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 800;
     color: #fff;
     letter-spacing: 0.01em;
@@ -29101,18 +29289,17 @@ body { box-sizing: border-box; }
 }
 .home-update-text {
     margin: 0;
-    font-size: 13px;
-    line-height: 1.55;
-    color: rgba(255,255,255,0.7);
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.68);
 }
 
 @media (max-width: 560px) {
-    .home-update-item { padding: 14px 16px 14px 18px; gap: 6px; }
-    .home-update-item::before { left: 0; top: 16px; bottom: 16px; }
-    .home-update-title { font-size: 14px; }
-    .home-update-text { font-size: 12.5px; }
+    .home-update-item { padding: 11px 12px 12px; gap: 5px; }
+    .home-update-title { font-size: 13.5px; }
+    .home-update-text { font-size: 12px; }
     .home-update-date { font-size: 10px; }
-    .home-update-badge { font-size: 8.5px; padding: 2px 6px; }
+    .home-update-badge { font-size: 9px; padding: 2px 7px 2px 6px; }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════

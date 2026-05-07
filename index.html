@@ -1362,13 +1362,28 @@
       </dialog>
     </section>
 
-    <!-- ── Featured Collections ── -->
+    <!-- ── Featured Collections — single-card spotlight (auto-rotates every
+         FC_CYCLE_MS, paused on hover, manual nav via dots / arrows). The
+         cards are still rendered into #homeFeaturedGrid by buildFeatured() —
+         the spotlight effect is achieved by stacking them and toggling
+         .is-active on one at a time. ── -->
     <section class="home-section home-section--featured">
       <div class="home-section-header">
         <h2 class="home-section-title">Featured Collections</h2>
+        <span class="home-section-badge home-section-badge--rotate">Spotlight · auto-rotates</span>
       </div>
-      <div class="home-featured-grid" id="homeFeaturedGrid">
-        <!-- Injecté par JS -->
+      <div class="home-fc-spotlight" id="homeFeaturedSpotlight" data-active="0">
+        <button class="home-fc-arrow home-fc-arrow--prev" id="homeFeaturedPrev" type="button" aria-label="Previous collection">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="12,4 6,10 12,16"/></svg>
+        </button>
+        <div class="home-featured-grid" id="homeFeaturedGrid"><!-- cards injected by JS --></div>
+        <button class="home-fc-arrow home-fc-arrow--next" id="homeFeaturedNext" type="button" aria-label="Next collection">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="8,4 14,10 8,16"/></svg>
+        </button>
+        <div class="home-fc-controls">
+          <div class="home-fc-progress"><div class="home-fc-progress-fill" id="homeFeaturedProgress"></div></div>
+          <div class="home-fc-dots" id="homeFeaturedDots"><!-- dots injected by JS --></div>
+        </div>
       </div>
     </section>
 
@@ -8389,6 +8404,11 @@ document.addEventListener('DOMContentLoaded', initialize);
         if (!grid || grid.children.length) return;
         FEATURED.forEach(col => grid.appendChild(buildFeaturedCard(col)));
         grid.appendChild(buildContactCard());
+        // Spotlight rotation : one card visible at a time, auto-cycle, hover
+        // pauses, prev/next/dots navigate manually. Wired up *after* the cards
+        // are in the DOM but before the API stats arrive — the rotation
+        // doesn't depend on the data.
+        initFeaturedSpotlight();
         // Décalage de 200ms entre chaque requête pour éviter le rate limit API
         FEATURED.forEach(async (col, i) => {
             await new Promise(r => setTimeout(r, i * 200));
@@ -8405,6 +8425,74 @@ document.addEventListener('DOMContentLoaded', initialize);
                 if (nfts) updateNFTStrip(card, nfts);
             }
         });
+    }
+
+    /* ── Featured Collections spotlight rotation ──
+     * Same behavioural pattern as initSpotlight() at the top of the home :
+     * cycle every FC_CYCLE_MS, fill a progress bar during the cycle, pause on
+     * hover, manual nav resets the cycle. The cards themselves keep their
+     * existing JS click-to-open (loadCollectionById), the rotation only
+     * toggles `.is-active` on whichever card is current.
+     */
+    function initFeaturedSpotlight() {
+        const root = document.getElementById('homeFeaturedSpotlight');
+        const grid = document.getElementById('homeFeaturedGrid');
+        if (!root || !grid || root.dataset.cwtfFc === '1') return;
+        const slides = Array.from(grid.children);
+        if (!slides.length) return;
+        root.dataset.cwtfFc = '1';
+
+        const prev     = document.getElementById('homeFeaturedPrev');
+        const next     = document.getElementById('homeFeaturedNext');
+        const fill     = document.getElementById('homeFeaturedProgress');
+        const dotsHost = document.getElementById('homeFeaturedDots');
+
+        // Build dots ; one per slide.
+        if (dotsHost) {
+            dotsHost.innerHTML = slides.map((_, i) =>
+                `<button class="home-fc-dot${i === 0 ? ' is-active' : ''}" type="button" data-idx="${i}" aria-label="Slide ${i + 1}"></button>`
+            ).join('');
+        }
+        const dots = dotsHost ? Array.from(dotsHost.children) : [];
+
+        const FC_CYCLE_MS = 7000;
+        let active = 0;
+        let paused = false;
+        let cycleStart = performance.now();
+
+        function show(idx) {
+            idx = (idx + slides.length) % slides.length;
+            slides.forEach((s, i) => s.classList.toggle('is-active', i === idx));
+            dots.forEach((d, i)   => d.classList.toggle('is-active', i === idx));
+            active = idx;
+            root.dataset.active = String(idx);
+            cycleStart = performance.now();
+        }
+
+        function tick(now) {
+            const elapsed = now - cycleStart;
+            const pct = Math.min(100, (elapsed / FC_CYCLE_MS) * 100);
+            if (fill && !paused) fill.style.width = pct + '%';
+            if (!paused && elapsed >= FC_CYCLE_MS) show(active + 1);
+            requestAnimationFrame(tick);
+        }
+
+        // Initial state : first slide active.
+        slides.forEach((s, i) => s.classList.toggle('is-active', i === 0));
+
+        // Hover pauses the cycle ; resume keeps the elapsed progress so
+        // we don't reset the bar when the cursor briefly enters/exits.
+        root.addEventListener('mouseenter', () => { paused = true; });
+        root.addEventListener('mouseleave', () => {
+            paused = false;
+            cycleStart = performance.now() - (parseFloat(fill?.style.width || '0') / 100) * FC_CYCLE_MS;
+        });
+
+        prev?.addEventListener('click', (e) => { e.stopPropagation(); show(active - 1); });
+        next?.addEventListener('click', (e) => { e.stopPropagation(); show(active + 1); });
+        dots.forEach((d, i) => d.addEventListener('click', (e) => { e.stopPropagation(); show(i); }));
+
+        requestAnimationFrame(tick);
     }
 
     // ── Featured Creators ─────────────────────────────────────────────────
@@ -12591,51 +12679,73 @@ async function sha256hex(str) {
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
         {
+            date:  '2026-05-07T22:00:00Z',
+            type:  'improvement',
+            title: 'Featured Collections spotlight',
+            text:  'One collection at a time, larger card, auto-rotates every few seconds — hover to pause.'
+        },
+        {
+            date:  '2026-05-07T22:00:00Z',
+            type:  'fix',
+            title: 'Top Collections halo on narrow screens',
+            text:  'The cyan glow around the Top Collections card now stays visible on smaller windows and on mobile.'
+        },
+        {
             date:  '2026-05-07T16:55:00Z',
             type:  'fix',
-            title: 'Top Collections card — full frame on mobile',
-            text:  'On smartphones the Top Collections card on the dedicated stats tab had its left and right edges clipped because the wrap doubled as the horizontal scroll container, and its min-content (a wide nowrap table) overflowed the panel. min-width:0 on the wrap lets it respect the panel width while preserving inner horizontal scroll, so the cyan halo is now visible on every side.'
+            title: 'Top Collections — mobile frame fix',
+            text:  'Card edges no longer get clipped on small screens; the cyan halo is back on every side.'
         },
         {
             date:  '2026-05-07T13:30:00Z',
             type:  'feature',
-            title: 'Site activity dashboard — Pulse',
-            text:  'Anonymous 30-day stats panel at the bottom of the home: traffic KPIs (sessions, today, average, returning rate), community KPIs (registered members, online now, messages, signed-in share), plus charts for daily sessions, hourly distribution, activity heatmap, device split, new vs returning, signed-in vs anonymous, daily chat volume, weekly member growth, and top contributors / tabs / referrers / languages. Engagement tracking now also surfaces top collections viewed, top profiles visited, snapshots run, Market Bot collections added, and cryptos tracked. Direct visits are credited under "Direct" in the referrers list instead of being silently dropped.'
+            title: 'Pulse — site activity dashboard',
+            text:  '30 days of traffic, community and feature stats at the bottom of the home, grouped into 5 clear sub-sections.'
         },
         {
             date:  '2026-05-07T13:30:00Z',
             type:  'improvement',
-            title: 'Latest Updates section on home',
-            text:  'Compact changelog above Pulse showing the most recent product changes with date, time, category badge and a one-line description. Frame styled to match Top Collections (cyan halo). Pinned to a fixed height with smooth scroll inside the card so older entries remain reachable without ever stretching the page.'
+            title: 'Latest Updates above Pulse',
+            text:  'Quick changelog so you can see what’s new at a glance, without digging through the site.'
         },
         {
             date:  '2026-05-07T04:47:00Z',
             type:  'feature',
-            title: 'Member join announcements in chat',
-            text:  'When a signed-in member joins, a discreet system message announces their arrival in the community chat. Throttled to once every 10 minutes per member to avoid noise on reloads, and the announcing member can dismiss their own announcement with a one-click delete.'
+            title: 'Welcome message in chat',
+            text:  'When you sign in, the chat shows a small welcome — throttled to once every 10 minutes, dismissible.'
         },
         {
             date:  '2026-05-07T04:36:00Z',
             type:  'fix',
-            title: 'Top Collections table — mobile fit',
-            text:  'The Top Collections table on the home was overflowing the card width on smartphones. Layout reworked to fit edge-to-edge with proper column separators and ellipsis truncation on long collection names.'
+            title: 'Top Collections table fits on mobile',
+            text:  'Long names truncate cleanly and the table now sits edge-to-edge inside its card.'
         }
     ];
 
     function renderHomeUpdates() {
         const list = document.getElementById('homeUpdatesList');
         if (!list || list.dataset.rendered === '1') return;
+        // Per-type label + small inline icon. The icons are intentionally
+        // simple so they read at 12px without extra weight.
+        const TYPE_META = {
+            feature:     { label: 'New',     icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3v2M10 15v2M3 10h2M15 10h2M5.6 5.6l1.4 1.4M13 13l1.4 1.4M5.6 14.4l1.4-1.4M13 7l1.4-1.4"/><circle cx="10" cy="10" r="3"/></svg>' },
+            fix:         { label: 'Fix',     icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3l3 3-7 7-3 1 1-3 7-7z"/><path d="M2 18l4-4"/></svg>' },
+            improvement: { label: 'Update',  icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3,12 8,7 11,10 17,4"/><polyline points="13,4 17,4 17,8"/></svg>' }
+        };
         const sorted = HOME_UPDATES.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
         list.innerHTML = sorted.map(u => {
             const d = new Date(u.date);
-            const datePart = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            const datePart = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
             const timePart = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
-            const typeLabel = ({ feature: 'Feature', fix: 'Fix', improvement: 'Improvement' })[u.type] || 'Update';
+            const meta = TYPE_META[u.type] || TYPE_META.improvement;
             return (
                 '<li class="home-update-item home-update-item--' + u.type + '">' +
                     '<div class="home-update-meta">' +
+                        '<span class="home-update-badge home-update-badge--' + u.type + '">' +
+                            '<span class="home-update-badge-ico">' + meta.icon + '</span>' +
+                            '<span class="home-update-badge-label">' + meta.label + '</span>' +
+                        '</span>' +
                         '<time class="home-update-date" datetime="' + u.date + '">' + datePart + ' · ' + timePart + ' UTC</time>' +
-                        '<span class="home-update-badge home-update-badge--' + u.type + '">' + typeLabel + '</span>' +
                     '</div>' +
                     '<h3 class="home-update-title">' + escapeHtml(u.title) + '</h3>' +
                     '<p class="home-update-text">' + escapeHtml(u.text) + '</p>' +
