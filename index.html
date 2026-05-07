@@ -12488,6 +12488,22 @@ async function sha256hex(str) {
         return _pulseChartJs;
     }
 
+    function _pulseSetMessage(html) {
+        const loading = document.getElementById('pulseLoading');
+        if (loading) loading.innerHTML = html;
+    }
+
+    function _waitForFirebase(timeoutMs = 6000) {
+        if (window.fbDb) return Promise.resolve(true);
+        return new Promise(resolve => {
+            const start = Date.now();
+            const t = setInterval(() => {
+                if (window.fbDb) { clearInterval(t); resolve(true); }
+                else if (Date.now() - start > timeoutMs) { clearInterval(t); resolve(false); }
+            }, 150);
+        });
+    }
+
     async function initPulse() {
         const loading = document.getElementById('pulseLoading');
         const content = document.getElementById('pulseContent');
@@ -12502,18 +12518,34 @@ async function sha256hex(str) {
         }
 
         loading.style.display = 'flex';
+        loading.innerHTML = '<span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>';
         content.style.display = 'none';
 
         try {
+            const fbReady = await _waitForFirebase();
+            if (!fbReady) {
+                _pulseSetMessage('<div class="pulse-empty">Live activity data is still warming up — check back in a moment.</div>');
+                return;
+            }
             await loadChartJs();
             const data = await fetchPulseData(30);
             _pulseCache = { ts: Date.now(), data };
+
+            // Aucune session sur 30 jours = pas de panique, juste un état vide.
+            if (!data.sessions.length) {
+                _pulseSetMessage('<div class="pulse-empty">No activity recorded yet. Pulse will populate as visitors arrive.</div>');
+                return;
+            }
+
             loading.style.display = 'none';
             content.style.display = 'block';
             renderPulseCharts(data);
         } catch (e) {
             console.error('[Pulse] init failed:', e);
-            loading.innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:13px;">Failed to load activity data.</div>';
+            const msg = (e && (e.code === 'PERMISSION_DENIED' || /permission/i.test(String(e.message || ''))))
+                ? 'Activity data is offline — analytics rules need to be enabled in Firebase.'
+                : 'Activity data unavailable right now.';
+            _pulseSetMessage('<div class="pulse-empty">' + msg + '</div>');
         }
     }
 
