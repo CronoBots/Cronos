@@ -8756,6 +8756,20 @@ document.addEventListener('DOMContentLoaded', initialize);
          * replyTo block referring to this. Cleared by cancel button, Esc
          * key, or after a successful send. */
         let _replyingTo = null;
+
+        /* État partagé pour la détection de double-tap mobile (cf. la
+         * gestion touch dans renderMessage). État au niveau initChat
+         * — donc unique pour tous les messages — pour comparer le tap
+         * courant avec le PRÉCÉDENT, peu importe sur quel message.
+         *
+         * Pourquoi double-tap et pas long-press ? Le long-press se
+         * déclenchait pendant un scroll ralenti (doigt posé puis
+         * mouvement très court), ouvrant la barre par accident. Un
+         * double-tap nécessite deux pressions distinctes ⇒ aucun
+         * conflit avec le scroll. */
+        let _chatLastTap = { ts: 0, target: null };
+        let _chatTouchMoved = false;
+        let _chatTouchStart = { x: 0, y: 0 };
         function setReplyTo(info) {
             _replyingTo = info && info.user ? info : null;
             const banner    = document.getElementById('homeChatReplyBanner');
@@ -9266,39 +9280,55 @@ document.addEventListener('DOMContentLoaded', initialize);
                     });
                 });
 
-                // Mobile : long press (500ms) pour afficher la barre emoji
-                // ET les boutons d'action (reply/edit/delete) — ils sont
-                // tous gated par la même classe .is-react-open en CSS.
-                // Évite le conflit avec le scroll (un mouvement annule le
-                // long-press) et garantit qu'UNE SEULE barre est visible
-                // à la fois (les autres sont closes dès le touchstart, pas
-                // seulement quand le timer fire).
+                // Mobile : DOUBLE-TAP sur un message → toggle l'état
+                // .is-react-open (barre emoji + boutons reply/edit/delete).
+                // Le simple tap ne fait rien (laisse passer le scroll), un
+                // mouvement >8px annule la séquence (même chose). Du coup
+                // le scroll ne déclenche jamais l'ouverture par accident.
                 if (key) {
-                    let _lpTimer = null;
-                    let _lpMoved  = false;
-
                     div.addEventListener('touchstart', e => {
-                        if (e.target.closest('button')) return;
-                        _lpMoved = false;
-                        // Ferme TOUTES les autres barres ouvertes IMMÉDIATEMENT
-                        // (pas seulement quand le timer fire). Ça empêche le bug
-                        // "plusieurs barres actives sur des messages différents"
-                        // qu'on avait quand l'utilisateur tapait B sans long-press
-                        // alors que A était encore ouvert.
-                        msgs.querySelectorAll('.home-chat-msg--community.is-react-open').forEach(other => {
-                            if (other !== div) other.classList.remove('is-react-open');
-                        });
-                        _lpTimer = setTimeout(() => {
-                            if (_lpMoved) return;
-                            div.classList.add('is-react-open');
-                            // Vibration légère si disponible (haptic feedback).
-                            if (navigator.vibrate) navigator.vibrate(30);
-                        }, 500);
+                        if (e.touches.length > 1) return;
+                        _chatTouchMoved = false;
+                        _chatTouchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
                     }, { passive: true });
 
-                    div.addEventListener('touchmove',  () => { _lpMoved = true; clearTimeout(_lpTimer); }, { passive: true });
-                    div.addEventListener('touchend',   () => clearTimeout(_lpTimer), { passive: true });
-                    div.addEventListener('touchcancel',() => clearTimeout(_lpTimer), { passive: true });
+                    div.addEventListener('touchmove', e => {
+                        if (!e.touches[0]) return;
+                        const dx = Math.abs(e.touches[0].clientX - _chatTouchStart.x);
+                        const dy = Math.abs(e.touches[0].clientY - _chatTouchStart.y);
+                        // 8px de tolérance — au-delà on considère que c'est
+                        // un scroll et on annule la séquence de double-tap
+                        // en cours.
+                        if (dx > 8 || dy > 8) {
+                            _chatTouchMoved = true;
+                            _chatLastTap = { ts: 0, target: null };
+                        }
+                    }, { passive: true });
+
+                    div.addEventListener('touchend', e => {
+                        if (_chatTouchMoved) return;                  // c'était un scroll
+                        if (e.target.closest('button')) return;        // tap d'un bouton (emoji/reply…)
+                        const now = Date.now();
+                        const isDouble = (_chatLastTap.target === div && now - _chatLastTap.ts < 350);
+                        if (isDouble) {
+                            const wasOpen = div.classList.contains('is-react-open');
+                            // Ferme tout, puis ré-ouvre seulement le bon
+                            // message (toggle si déjà ouvert).
+                            msgs.querySelectorAll('.home-chat-msg--community.is-react-open').forEach(o => o.classList.remove('is-react-open'));
+                            if (!wasOpen) {
+                                div.classList.add('is-react-open');
+                                if (navigator.vibrate) navigator.vibrate(20);
+                            }
+                            _chatLastTap = { ts: 0, target: null };
+                        } else {
+                            _chatLastTap = { ts: now, target: div };
+                        }
+                    }, { passive: true });
+
+                    div.addEventListener('touchcancel', () => {
+                        _chatTouchMoved = true;
+                        _chatLastTap = { ts: 0, target: null };
+                    }, { passive: true });
                 }
             }
 
