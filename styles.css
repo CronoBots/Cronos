@@ -13599,20 +13599,40 @@ body.is-profile-loading #profileLoadingOverlay * {
     text-shadow: 0 0 8px rgba(0, 179, 255, 0.55);
 }
 
-/* @mentions inside a message body — discreet cyan highlight, brighter
-   when the mention targets the current user (you-pinged-me cue). */
+/* @mentions inside a message body — pill cyan TRÈS visible (avant elles
+   passaient inaperçues, cf. retour utilisateur). Police plus grasse + bg
+   plus saturé + bordure cyan. La variante --me (mention de l'utilisateur
+   courant) est encore plus prominente : fond plein cyan, texte sombre,
+   ring lumineux ⇒ le ping est impossible à manquer. */
 .home-chat-mention {
-    display: inline;
+    display: inline-block;
     color: #00B3FF;
-    font-weight: 700;
-    background: rgba(0, 179, 255, 0.10);
-    border-radius: 4px;
-    padding: 0 4px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-weight: 800;
+    background: rgba(0, 179, 255, 0.20);
+    border: 1px solid rgba(0, 179, 255, 0.55);
+    border-radius: 6px;
+    padding: 1px 7px 2px;
+    line-height: 1.2;
+    text-decoration: none;
+    /* whiten on hover even though the pill is not currently a link —
+       reads as "interactive label" rather than text. */
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.home-chat-mention:hover {
+    background: rgba(0, 179, 255, 0.32);
+    color: #fff;
+    box-shadow: 0 0 0 1px rgba(0, 179, 255, 0.85);
 }
 .home-chat-mention--me {
-    color: #fff;
-    background: rgba(0, 179, 255, 0.32);
-    box-shadow: 0 0 0 1px rgba(0, 179, 255, 0.55);
+    color: #0c1a2c;
+    background: #00B3FF;
+    border-color: #00B3FF;
+    box-shadow: 0 0 0 2px rgba(0, 179, 255, 0.35), 0 0 14px rgba(0, 179, 255, 0.45);
+}
+.home-chat-mention--me:hover {
+    color: #0c1a2c;
+    background: #38c3ff;
 }
 /* Wrapper : pseudo + badge collés ensemble, côté gauche du flex */
 .home-chat-msg-user-wrap {
@@ -24232,35 +24252,31 @@ a.snap-holder-username:hover {
     z-index: 2;
 }
 
-/* Spotlight nav arrows : pilules flottantes positionnées en absolute sur
-   les côtés de la BANNIÈRE (pas du card) pour ne pas pousser sa largeur. */
+/* Spotlight nav arrows : intégrées DANS la barre de contrôles sous la
+   card, plus en overlay sur la bannière. Comme ça la card garde
+   strictement la même largeur que les autres frames du home, et toutes
+   les commandes (prev / progress / dots / next) sont regroupées au
+   même endroit. */
 .home-fc-arrow {
-    position: absolute;
-    top: 60px;                 /* centre vertical de la bannière (h ≈ 120px) */
-    width: 36px;
-    height: 36px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    background: rgba(11, 20, 38, 0.7);
-    border: 1px solid rgba(0, 179, 255, 0.4);
+    background: rgba(0, 179, 255, 0.10);
+    border: 1px solid rgba(0, 179, 255, 0.35);
     color: #00B3FF;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    z-index: 5;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    transition: background 0.18s, border-color 0.18s, color 0.18s, box-shadow 0.18s;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+    flex-shrink: 0;
+    padding: 0;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
-.home-fc-arrow svg { width: 16px; height: 16px; }
-.home-fc-arrow--prev { left: 12px; }
-.home-fc-arrow--next { right: 12px; }
+.home-fc-arrow svg { width: 13px; height: 13px; }
 .home-fc-arrow:hover {
-    background: rgba(0, 179, 255, 0.22);
+    background: rgba(0, 179, 255, 0.25);
     border-color: #00B3FF;
     color: #fff;
-    box-shadow: 0 8px 22px rgba(0, 179, 255, 0.32);
 }
 
 /* Controls bar : progress fill on the left, dots on the right */
@@ -24331,7 +24347,7 @@ a.snap-holder-username:hover {
 }
 .home-fc-spotlight .home-feat-v3-hero {
     aspect-ratio: auto;
-    height: 120px;            /* bannière courte, recadrage vertical OK */
+    height: 90px;             /* bannière encore plus courte, recadrage cover */
 }
 /* Body : compact mais aéré — la card est volontairement plus petite que
    la version précédente pour ne pas dominer la home. */
@@ -24339,43 +24355,103 @@ a.snap-holder-username:hover {
     padding: 16px 22px 18px;
     gap: 12px;
 }
-/* Logo (l'image de collection) + nom + artiste — tailles compactes mais
-   lisibles. Logo chevauche le bord de la bannière (négatif modéré pour
-   que la relation bannière ↔ collection reste évidente). */
+/* Logo (l'image de collection) + nom + artiste — tailles compactes.
+   Logo chevauche le bord de la bannière. */
 .home-fc-spotlight .home-feat-v3-logo {
-    width: 64px;
-    height: 64px;
-    border-radius: 14px;
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
 }
 .home-fc-spotlight .home-feat-v3-identity {
     gap: 12px;
-    margin-top: -28px;
+    margin-top: -22px;
+    align-items: flex-end;
 }
 .home-fc-spotlight .home-feat-v3-id-text {
-    padding-top: 22px; /* aligne le texte avec le bas du logo qui dépasse */
-    gap: 2px;
+    padding-top: 0;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
 }
 .home-fc-spotlight .home-feat-v3-name {
-    font-size: 19px;
+    font-size: 18px;
     white-space: normal;
     line-height: 1.2;
 }
+/* Artist line : nom du créateur en MAJUSCULES, mêmes lettrespacing
+   que les badges de la home. Verified badge (TwitterBlue) inline
+   à côté du nom de l'artiste. */
 .home-fc-spotlight .home-feat-v3-creator {
-    font-size: 12.5px;
-    color: rgba(255, 255, 255, 0.65);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7);
     white-space: normal;
+}
+.home-fc-spotlight .home-feat-v3-creator-text { display: inline; }
+.home-fc-spotlight .home-feat-v3-creator strong {
+    color: #fff;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+}
+.home-fc-spotlight .home-feat-v3-verified-slot {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+.home-fc-spotlight .home-feat-v3-verified {
+    width: 13px;
+    height: 13px;
 }
 .home-fc-spotlight .home-feat-v3-creator strong {
     color: #fff;
     font-weight: 800;
 }
-/* Stats panel : compact mais lisible. */
+/* Stats : 3 mini-cards séparées plutôt qu'un panneau unique avec
+   séparateurs verticaux. Chaque KPI a son propre fond / bordure légère
+   ⇒ lecture plus immédiate, hierarchie plus claire. */
 .home-fc-spotlight .home-feat-v3-stats {
-    padding: 10px 10px;
-    gap: 4px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    backdrop-filter: none;
 }
-.home-fc-spotlight .home-feat-v3-stat-val { font-size: 16px; }
-.home-fc-spotlight .home-feat-v3-stat-label { font-size: 9.5px; }
+.home-fc-spotlight .home-feat-v3-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.32);
+    border: 1px solid rgba(0, 179, 255, 0.18);
+    border-radius: 10px;
+}
+.home-fc-spotlight .home-feat-v3-stat-sep { display: none; }
+.home-fc-spotlight .home-feat-v3-stat-label {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(0, 179, 255, 0.7);
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-weight: 700;
+}
+.home-fc-spotlight .home-feat-v3-stat-val {
+    font-size: 18px;
+    color: #fff;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
 
 /* "Sample NFTs" mini-label above the NFT thumbnail strip — only in spotlight
    context, so it doesn't affect any other place .home-feat-v3-nfts might be
@@ -24393,22 +24469,24 @@ a.snap-holder-username:hover {
     color: rgba(0, 179, 255, 0.7);
     margin-bottom: 2px;
 }
+/* Vignettes NFT : plus petites + plus nombreuses (8 au lieu de 6).
+   La grille de base (.home-feat-v3-nfts) est en repeat(6, 1fr) — on
+   override en 8 colonnes en spotlight pour des thumbs plus discrètes. */
 .home-fc-spotlight .home-feat-v3-nfts {
-    gap: 6px;
+    gap: 4px;
+    grid-template-columns: repeat(8, 1fr);
 }
+/* On limite la taille max des vignettes pour qu'elles ne s'étirent pas
+   sur les très grandes largeurs (au-dessus de ~1100px de body). */
+.home-fc-spotlight .home-feat-v3-nft { max-width: 60px; }
 .home-fc-spotlight .home-feat-v3-cta {
     padding: 11px 18px;
     font-size: 12px;
 }
 
 @media (max-width: 720px) {
-    /* Sur mobile la bannière est encore plus courte pour gagner de la place,
-       et les flèches sont un peu plus petites pour ne pas dominer la card. */
-    .home-fc-spotlight .home-feat-v3-hero { height: 90px; }
-    .home-fc-arrow { width: 32px; height: 32px; top: 45px; }
-    .home-fc-arrow svg { width: 14px; height: 14px; }
-    .home-fc-arrow--prev { left: 8px; }
-    .home-fc-arrow--next { right: 8px; }
+    /* Sur mobile la bannière est encore plus courte pour gagner de la place. */
+    .home-fc-spotlight .home-feat-v3-hero { height: 80px; }
     .home-fc-controls { margin-top: 10px; gap: 10px; }
 }
 
