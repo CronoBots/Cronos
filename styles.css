@@ -11584,14 +11584,13 @@ body.is-profile-loading #profileLoadingOverlay * {
 
 /* Table wrapper — NO vertical scroll, page scroll only */
 .stats-table-wrap {
-    overflow-x: auto;
-    overflow-y: clip;
-    /* Sans min-width:0, dans un parent flex (.stats-panel column flex,
-       .home-section, etc.) le min-content de la table interne (cells
-       white-space:nowrap) gonfle la wrap au-delà du padding du panel
-       et la bordure + halo se font tronquer à droite/gauche.
-       min-width:0 force la wrap à respecter la largeur de son parent ;
-       l'overflow-x:auto en interne préserve le scroll horizontal. */
+    /* Le wrap est un cadre halo'd PUR — il ne porte plus le scroll
+       horizontal, c'est .stats-table-scroll qui s'en charge à l'intérieur.
+       Pattern aligné sur .sb-results-wrap > .sb-table-wrap pour éviter
+       l'artefact iOS Safari où overflow-x:auto + border-radius peint
+       le contenu au-dessus de la bordure (le bord cyan disparaissait
+       sur les côtés, sauf au top). */
+    overflow: hidden;
     min-width: 0;
     /* height set dynamically by JS */
     border-radius: 14px;
@@ -11606,19 +11605,28 @@ body.is-profile-loading #profileLoadingOverlay * {
     /* Gap filtres → tableau : 20px. Compromis entre le 16px (encore un poil
        trop serré) et le 24px (un peu trop aéré au goût du user). */
     margin-top: 20px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.4) rgba(255,255,255,0.06);
     box-sizing: border-box;
 }
-.stats-table-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
-.stats-table-wrap::-webkit-scrollbar-track { background: rgba(255,255,255,0.06); border-radius: 0 0 10px 10px; }
-.stats-table-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.35); border-radius: 4px; }
-.stats-table-wrap::-webkit-scrollbar-thumb:hover { background: rgba(0,179,255,0.6); }
-.stats-table-wrap::-webkit-scrollbar-corner { background: rgba(255,255,255,0.06); border-radius: 0 0 10px 10px; }
-.stats-table-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
-.stats-table-wrap::-webkit-scrollbar-track { background: transparent; }
-.stats-table-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
-.stats-table-wrap::-webkit-scrollbar-corner { background: transparent; }
+/* Inner scroll container — porte overflow-x:auto et toute la mécanique
+   de scrollbar. Sépare le rôle "halo'd card" (sur .stats-table-wrap)
+   du rôle "scroll horizontal" (ici), comme Market Bot. */
+.stats-table-scroll {
+    overflow-x: auto;
+    overflow-y: clip;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.4) rgba(255,255,255,0.06);
+    width: 100%;
+    box-sizing: border-box;
+    /* Coins arrondis hérités du parent — sinon le scroll laisse voir des
+       coins carrés sous le radius:14px de .stats-table-wrap. */
+    border-radius: inherit;
+}
+.stats-table-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.stats-table-scroll::-webkit-scrollbar-track { background: transparent; }
+.stats-table-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); border-radius: 3px; }
+.stats-table-scroll::-webkit-scrollbar-thumb:hover { background: rgba(0,179,255,0.6); }
+.stats-table-scroll::-webkit-scrollbar-corner { background: transparent; }
 
 /* Table */
 .stats-table {
@@ -27304,23 +27312,6 @@ body { box-sizing: border-box; }
     .stats-logo-btn {
         width: 36px !important;
         height: 36px !important;
-    }
-
-    /* Cadre Top Collections / Market Bot sur mobile : on bascule du halo
-       extérieur diffus (40-80px) vers une bordure renforcée + glow interne.
-       Raison : le halo extérieur extends past app-main (overflow-x:clip),
-       se fait clipper sur les côtés mais s'étend vers le haut → la portion
-       visible "courbe" autour des coins haut et fait paraître le cadre
-       incomplet. La nouvelle approche est rendue à l'intérieur du cadre,
-       donc impossible à clipper, et donne un frame parfaitement uniforme
-       sur les 4 côtés. Rendu identique entre les deux panels. */
-    .stats-table-wrap,
-    .sb-results-wrap {
-        border: 1px solid rgba(0, 179, 255, 0.7) !important;
-        box-shadow:
-            inset 0 0 0 1px rgba(0, 179, 255, 0.25),
-            inset 0 0 24px rgba(0, 179, 255, 0.08),
-            0 0 0 1px rgba(0, 179, 255, 0.4) !important;
     }
 }
 
