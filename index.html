@@ -8199,61 +8199,55 @@ document.addEventListener('DOMContentLoaded', initialize);
         //    is visible — no more cropping. Banners use `cover` since
         //    they're designed for full-bleed.
         card.innerHTML = `
-            <div class="home-feat-v3-hero">
-                <div class="home-feat-v3-hero-bg"  style="background-image:url('${safeLogo}');"></div>
-                <div class="home-feat-v3-hero-img" style="background-image:url('${safeLogo}');"></div>
-                <div class="home-feat-v3-hero-tint"></div>
-                <span class="home-feat-v3-change" style="display:none;"></span>
-            </div>
-            <div class="home-feat-v3-body">
-                <div class="home-feat-v3-identity">
-                    <img class="home-feat-v3-logo" src="${safeLogo}" alt="" loading="lazy" onerror="this.style.opacity='0.25';this.style.background='rgba(255,255,255,0.05)';"/>
-                    <div class="home-feat-v3-id-text">
-                        <!-- Le badge "verified" appartient à l'artiste, pas
-                             à la collection : il est rendu sur la ligne
-                             creator (cf. updateFeaturedCardStats). -->
-                        <span class="home-feat-v3-name-row">
-                            <span class="home-feat-v3-name">${col.name || '—'}</span>
-                        </span>
-                        <span class="home-feat-v3-creator home-feat-v3-creator--loading">
-                            <span class="home-feat-v3-creator-text">Loading…</span>
-                            <span class="home-feat-v3-verified-slot"></span>
-                        </span>
-                    </div>
+            <!-- Spotlight v2 : carte split en 2 colonnes.
+                 GAUCHE : bannière (3:1, 1500×500) + identité + stats.
+                 DROITE : showcase NFT (samples aléatoires + 4 highlights
+                 best sale / top rank / floor / most liked). -->
+            <div class="home-feat-v3-left">
+                <div class="home-feat-v3-hero">
+                    <div class="home-feat-v3-hero-bg"  style="background-image:url('${safeLogo}');"></div>
+                    <div class="home-feat-v3-hero-img" style="background-image:url('${safeLogo}');"></div>
+                    <div class="home-feat-v3-hero-tint"></div>
+                    <span class="home-feat-v3-change" style="display:none;"></span>
                 </div>
-                <!-- Stats inline (style "vue Collection") + 3 vignettes
-                     NFT à droite, sur la même ligne. Le wrapper sert de
-                     ligne flex en spotlight ; au design plus ancien il
-                     n'avait pas d'effet (les 2 enfants étaient déjà
-                     stackés en column). -->
-                <div class="home-feat-v3-stats-row">
+                <div class="home-feat-v3-info">
+                    <div class="home-feat-v3-identity">
+                        <img class="home-feat-v3-logo" src="${safeLogo}" alt="" loading="lazy" onerror="this.style.opacity='0.25';this.style.background='rgba(255,255,255,0.05)';"/>
+                        <div class="home-feat-v3-id-text">
+                            <!-- Badge verified rendu côté CRÉATEUR par
+                                 updateFeaturedCardStats (cf. plus bas). -->
+                            <span class="home-feat-v3-name-row">
+                                <span class="home-feat-v3-name">${col.name || '—'}</span>
+                            </span>
+                            <span class="home-feat-v3-creator home-feat-v3-creator--loading">
+                                <span class="home-feat-v3-creator-text">Loading…</span>
+                                <span class="home-feat-v3-verified-slot"></span>
+                            </span>
+                        </div>
+                    </div>
+                    <!-- Stats inline (style "vue Collection") -->
                     <div class="home-feat-v3-stats">
                         <div class="home-feat-v3-stat">
                             <span class="home-feat-v3-stat-label">Floor</span>
                             <span class="home-feat-v3-stat-val" data-stat="floor">—</span>
                         </div>
-                        <div class="home-feat-v3-stat-sep"></div>
                         <div class="home-feat-v3-stat">
                             <span class="home-feat-v3-stat-label">Owners</span>
                             <span class="home-feat-v3-stat-val" data-stat="owners">—</span>
                         </div>
-                        <div class="home-feat-v3-stat-sep"></div>
                         <div class="home-feat-v3-stat">
                             <span class="home-feat-v3-stat-label" data-label="vol">Volume</span>
                             <span class="home-feat-v3-stat-val" data-stat="vol">—</span>
                         </div>
                     </div>
-                    <div class="home-feat-v3-nfts" data-nfts-strip>
-                        <div class="home-feat-v3-nfts-loading">
-                            <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
-                        </div>
-                    </div>
                 </div>
-                <button class="home-feat-v3-cta" type="button">
-                    <span>Explore collection</span>
-                    <span class="home-feat-v3-cta-arrow">→</span>
-                </button>
-            </div>`;
+            </div>
+            <div class="home-feat-v3-right" data-showcase>
+                <div class="home-feat-showcase-loading">
+                    <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
+                </div>
+            </div>
+        `;
         card.addEventListener('click', () => {
             if (typeof window.loadCollectionById === 'function') {
                 window.loadCollectionById(col.id);
@@ -8415,51 +8409,183 @@ document.addEventListener('DOMContentLoaded', initialize);
         }
     }
 
-    // ── NFT sample strip — 2-3 NFTs aléatoires de chaque collection ────────
-    async function fetchCollectionNFTs(id) {
+    /* ── Showcase de la collection (côté droit du spotlight) ──────────────
+     * Récupère ~50 NFTs avec rang, prix, likes, image, puis un peu
+     * d'historique de ventes (transferred) pour identifier le "top sale".
+     * Renvoie un objet avec :
+     *   - samples : 3 NFTs random pris dans le pool (des exemples)
+     *   - bestRank : NFT avec le defaultRarityRank le plus bas (rarest)
+     *   - floor    : NFT listé au prix le plus bas (+ son prix)
+     *   - mostLiked: NFT avec le plus grand nombre de likes
+     *   - bestSale : meilleure vente historique récente (+ prix USD)
+     * Tout est best-effort : si l'API est down ou qu'un champ n'existe
+     * pas, l'item est simplement absent du résultat. */
+    async function fetchCollectionShowcase(id) {
         try {
-            const res = await fetch(graphqlEndpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    operationName: 'GetFeatNFTs',
-                    variables: { collectionId: id, first: 20, skip: 0 },
-                    query: `query GetFeatNFTs($collectionId:ID,$first:Int!,$skip:Int!){public{assets(collectionId:$collectionId,first:$first,skip:$skip){id name main{url} cover{url} defaultRarityRank defaultListingV2{priceDecimal currency}}}}`
-                })
-            });
-            const json = await res.json();
-            const assets = json?.data?.public?.assets || [];
-            if (!assets.length) return [];
-            // Mélange Fisher-Yates → 3 aléatoires
+            const [assetsJson, salesJson] = await Promise.all([
+                fetch(graphqlEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        operationName: 'GetFeatShowcase',
+                        variables: { collectionId: id, first: 50, skip: 0 },
+                        query: `query GetFeatShowcase($collectionId:ID,$first:Int!,$skip:Int!){public{assets(collectionId:$collectionId,first:$first,skip:$skip){id name main{url} cover{url} defaultRarityRank likes defaultListingV2{priceDecimal currency}}}}`
+                    })
+                }).then(r => r.json()).catch(() => null),
+                fetch(graphqlEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        operationName: 'GetFeatTopSale',
+                        variables: { collectionId: id, first: 50, naturesIn: ['transferred'] },
+                        query: `query GetFeatTopSale($collectionId:ID!,$first:Int!,$naturesIn:[String!]){public{collection(id:$collectionId){eventHistory(first:$first,naturesIn:$naturesIn){edges{node{asset{id name cover{url} main{url}} listing{salePriceDecimalUSD currency} amountDecimal}}}}}}`
+                    })
+                }).then(r => r.json()).catch(() => null)
+            ]);
+
+            const assets = assetsJson?.data?.public?.assets || [];
+            if (!assets.length) return null;
+
+            // Pool aléatoire pour les samples (Fisher-Yates).
             const shuffled = assets.slice();
             for (let i = shuffled.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
             }
-            // 3 vignettes NFT en spotlight (placées en bas-droite de la
-            // glass panel). Les usages historiques de la grille pouvaient
-            // en montrer 6 ; on en renvoie maintenant juste 3 puisque le
-            // spotlight est désormais le seul consommateur.
-            return shuffled.slice(0, 3);
-        } catch(e) { return []; }
+
+            // Helpers : retourne null si pas de candidat.
+            const sortedByRank = assets
+                .filter(a => Number.isFinite(Number(a.defaultRarityRank)) && Number(a.defaultRarityRank) > 0)
+                .slice()
+                .sort((a, b) => Number(a.defaultRarityRank) - Number(b.defaultRarityRank));
+            const sortedByPrice = assets
+                .filter(a => Number(a.defaultListingV2?.priceDecimal) > 0)
+                .slice()
+                .sort((a, b) => Number(a.defaultListingV2.priceDecimal) - Number(b.defaultListingV2.priceDecimal));
+            const sortedByLikes = assets
+                .filter(a => Number(a.likes) > 0)
+                .slice()
+                .sort((a, b) => Number(b.likes) - Number(a.likes));
+
+            const bestRank = sortedByRank[0]
+                ? { ...sortedByRank[0], rank: Number(sortedByRank[0].defaultRarityRank) }
+                : null;
+            const floor = sortedByPrice[0]
+                ? {
+                    ...sortedByPrice[0],
+                    price: Number(sortedByPrice[0].defaultListingV2.priceDecimal),
+                    currency: sortedByPrice[0].defaultListingV2.currency || ''
+                }
+                : null;
+            const mostLiked = sortedByLikes[0]
+                ? { ...sortedByLikes[0], likes: Number(sortedByLikes[0].likes) }
+                : null;
+
+            // Top sale : on parcourt l'historique transferred et on retient
+            // celui avec le salePriceDecimalUSD max (l'API peut renvoyer
+            // null/undefined sur des transferts hors marché).
+            let bestSale = null;
+            const edges = salesJson?.data?.public?.collection?.eventHistory?.edges || [];
+            for (const edge of edges) {
+                const node = edge?.node;
+                if (!node?.asset) continue;
+                const usd = Number(node.listing?.salePriceDecimalUSD) || 0;
+                if (usd <= 0) continue;
+                if (!bestSale || usd > bestSale.priceUSD) {
+                    bestSale = {
+                        id:        node.asset.id,
+                        name:      node.asset.name,
+                        cover:     node.asset.cover,
+                        main:      node.asset.main,
+                        priceUSD:  usd,
+                        amount:    Number(node.amountDecimal) || 0,
+                        currency:  node.listing?.currency || ''
+                    };
+                }
+            }
+
+            return {
+                samples: shuffled.slice(0, 3),
+                bestRank,
+                floor,
+                mostLiked,
+                bestSale
+            };
+        } catch(e) {
+            console.warn('[Featured showcase] fetch failed:', e);
+            return null;
+        }
     }
 
-    function updateNFTStrip(card, nfts) {
-        const strip = card.querySelector('[data-nfts-strip]');
-        if (!strip) return;
-        if (!nfts || !nfts.length) {
-            strip.style.display = 'none';
-            return;
-        }
-        strip.innerHTML = nfts.map(nft => {
-            const img  = nft.cover?.url || nft.main?.url || '';
-            const name = nft.name || '';
-            return `<div class="home-feat-v3-nft" title="${name}">
-                <div class="home-feat-v3-nft-img-wrap">
-                    <img src="${img}" alt="${name}" loading="lazy" onerror="this.style.opacity='0.2'"/>
+    /* Rend le côté droit du spotlight : ligne de samples (3 thumbs) +
+     * grille 2×2 de tuiles highlight (top sale, top rank, floor, most
+     * liked). Si aucune donnée, on cache simplement la zone — le côté
+     * gauche reste lisible tout seul. */
+    function updateShowcase(card, data) {
+        const wrap = card?.querySelector('[data-showcase]');
+        if (!wrap) return;
+        if (!data) { wrap.style.display = 'none'; return; }
+        wrap.style.display = '';
+
+        const fmtMoney = (n) => {
+            const v = Number(n);
+            if (!v || v <= 0) return '—';
+            if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
+            if (v >= 1e3) return '$' + (v / 1e3).toFixed(1) + 'K';
+            return '$' + v.toFixed(v < 10 ? 2 : 0);
+        };
+        const fmtNum = (n) => {
+            const v = Number(n);
+            if (!v || v <= 0) return '0';
+            if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
+            if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+            return String(v);
+        };
+        const fmtPrice = (price, currency) => {
+            // Default listing price est en token natif (CRO/ETH...) — pas en
+            // USD. On affiche le montant + ticker quand on l'a.
+            const v = Number(price);
+            if (!v || v <= 0) return '—';
+            const sym = (currency || '').toUpperCase();
+            const num = v >= 1000 ? (v / 1000).toFixed(1) + 'k' : (v < 10 ? v.toFixed(2) : v.toFixed(0));
+            return num + (sym ? ' ' + sym : '');
+        };
+
+        const thumb = (a) => {
+            const img = a?.cover?.url || a?.main?.url || '';
+            return `<img src="${_fcEsc(img)}" alt="${_fcEsc(a?.name || '')}" loading="lazy" onerror="this.style.opacity='0.2'"/>`;
+        };
+
+        const samples = (data.samples || []).slice(0, 3);
+        const samplesHtml = samples.length ? `
+            <div class="home-feat-showcase-samples">
+                <span class="home-feat-showcase-strip-label">Sample NFTs</span>
+                <div class="home-feat-showcase-samples-row">
+                    ${samples.map(a => `<div class="home-feat-showcase-sample" title="${_fcEsc(a.name || '')}">${thumb(a)}</div>`).join('')}
                 </div>
+            </div>` : '';
+
+        const tile = (label, value, asset, modifier) => {
+            if (!asset) return '';
+            return `
+                <div class="home-feat-showcase-tile home-feat-showcase-tile--${modifier}" title="${_fcEsc(asset.name || '')}">
+                    <div class="home-feat-showcase-tile-thumb">${thumb(asset)}</div>
+                    <div class="home-feat-showcase-tile-text">
+                        <span class="home-feat-showcase-tile-label">${label}</span>
+                        <span class="home-feat-showcase-tile-val">${value}</span>
+                    </div>
+                </div>`;
+        };
+
+        const tilesHtml = `
+            <div class="home-feat-showcase-grid">
+                ${tile('Top sale',   fmtMoney(data.bestSale?.priceUSD),                            data.bestSale,  'sale')}
+                ${tile('Top rank',   data.bestRank ? '#' + data.bestRank.rank                : '', data.bestRank,  'rank')}
+                ${tile('Floor',      data.floor    ? fmtPrice(data.floor.price, data.floor.currency) : '', data.floor,     'floor')}
+                ${tile('Most liked', data.mostLiked ? '❤ ' + fmtNum(data.mostLiked.likes)        : '', data.mostLiked, 'liked')}
             </div>`;
-        }).join('');
+
+        wrap.innerHTML = samplesHtml + tilesHtml;
     }
 
     async function buildFeatured() {
@@ -8472,20 +8598,25 @@ document.addEventListener('DOMContentLoaded', initialize);
         // are in the DOM but before the API stats arrive — the rotation
         // doesn't depend on the data.
         initFeaturedSpotlight();
-        // Décalage de 200ms entre chaque requête pour éviter le rate limit API
+        // Décalage de 200ms entre chaque requête pour éviter le rate limit API.
+        // staticImages : si la collection définit des images statiques (no API),
+        // on peuple juste les samples du showcase, le reste reste vide.
         FEATURED.forEach(async (col, i) => {
             await new Promise(r => setTimeout(r, i * 200));
             const card = grid.querySelector(`[data-col-id="${col.id}"]`);
             if (col.staticImages && col.staticImages.length) {
-                updateNFTStrip(card, col.staticImages.map(url => ({ main: { url } })));
+                updateShowcase(card, {
+                    samples: col.staticImages.slice(0, 3).map(url => ({ main: { url } })),
+                    bestRank: null, floor: null, mostLiked: null, bestSale: null
+                });
             }
-            const [data, nfts] = await Promise.all([
+            const [data, showcase] = await Promise.all([
                 fetchFeaturedStats(col.id),
-                col.staticImages ? Promise.resolve(null) : fetchCollectionNFTs(col.id)
+                col.staticImages ? Promise.resolve(null) : fetchCollectionShowcase(col.id)
             ]);
             if (card) {
                 updateFeaturedCardStats(card, data);
-                if (nfts) updateNFTStrip(card, nfts);
+                if (showcase) updateShowcase(card, showcase);
             }
         });
     }

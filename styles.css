@@ -24488,92 +24488,92 @@ a.snap-holder-username:hover {
    so the bigger frame is used efficiently — hero on the left, content on
    the right. On narrower viewports it falls back to the existing vertical
    layout. */
-/* ───────── SPOTLIGHT — design "vue Collection" ─────────
- * La carte est UNE bannière plein-cadre (cover, recadrée si besoin).
- * Une glass panel translucide + blur recouvre toute la moitié basse
- * et porte l'identité, les stats inline (style cp-stats-row), 3
- * vignettes NFT en bas-droite. Banner = focal visuel, glass panel =
- * info structurée. */
+/* ───────── SPOTLIGHT v2 — split en 2 colonnes ─────────
+ * GAUCHE : bannière 1500×500 (ratio 3:1) en haut + identité (logo + nom
+ *          + artiste) + stats inline en dessous.
+ * DROITE : showcase NFT — strip de 3 samples aléatoires en haut, puis
+ *          grille 2×2 de tuiles "highlights" (Top sale, Top rank,
+ *          Floor, Most liked).
+ * Sur mobile (≤720px) la card empile les 2 colonnes en vertical. */
 .home-fc-spotlight .home-feat-v3 {
-    /* Override du flex column — passage en stacking explicite (banner
-       background + glass panel en absolute). La card adopte le même ratio
-       que les bannières source de Crypto.com NFT (1500×500 = 3:1) — donc
-       avec un cover, la bannière entière est visible sans recadrage. */
-    display: block;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    aspect-ratio: auto;
+    min-height: 320px;
+    overflow: hidden;
+    position: relative;
+}
+.home-fc-spotlight .home-feat-v3-left {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid rgba(0, 179, 255, 0.18);
+    min-width: 0;
+}
+.home-fc-spotlight .home-feat-v3-right {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+    background: rgba(11, 20, 38, 0.35);
+    min-width: 0;
+}
+/* Bannière : ratio 3:1 = 1500/500, l'image source remplit exactement
+   le rectangle via cover, sans recadrage vertical. */
+.home-fc-spotlight .home-feat-v3-hero {
     position: relative;
     aspect-ratio: 3 / 1;
-    min-height: 0;
+    width: 100%;
+    flex-shrink: 0;
     overflow: hidden;
 }
-.home-fc-spotlight .home-feat-v3-hero {
-    /* Hero zone occupe TOUTE la card (background plein-cadre). */
-    position: absolute;
-    inset: 0;
-    aspect-ratio: auto;
-    height: auto;
-    width: 100%;
-    z-index: 0;
-}
-.home-fc-spotlight .home-feat-v3-hero-tint {
-    /* Tint léger + dégradé bas pour aider la lisibilité du glass panel. */
-    background: linear-gradient(
-        180deg,
-        rgba(8, 14, 28, 0.05) 0%,
-        rgba(8, 14, 28, 0.15) 50%,
-        rgba(8, 14, 28, 0.50) 100%);
-}
-/* En spotlight on veut TOUJOURS un cover plein-cadre, même quand l'image
-   source n'est pas une vraie bannière (logo carré). Dans ce cas, le
-   backdrop blurred (.home-feat-v3-hero-bg) reste actif derrière et fait
-   le wallpaper. */
 .home-fc-spotlight .home-feat-v3-hero-img {
     background-size: cover;
     background-position: center;
 }
-/* Body devient la GLASS PANEL : strip fin en bas du cadre, frosted
-   blur, juste assez haut pour porter l'identité (logo + nom + artiste)
-   d'un côté, les stats inline + 3 vignettes NFT de l'autre. La bannière
-   reste visible derrière sur la TOTALITÉ de sa hauteur. */
-.home-fc-spotlight .home-feat-v3-body {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 2;
-    padding: 10px 18px 12px;
+.home-fc-spotlight .home-feat-v3-hero-tint {
+    background: linear-gradient(
+        180deg,
+        rgba(8, 14, 28, 0.05) 0%,
+        rgba(8, 14, 28, 0.20) 100%);
+}
+/* Info zone (logo+nom+artiste+stats) sous la bannière. */
+.home-fc-spotlight .home-feat-v3-info {
+    flex: 1;
+    padding: 14px 18px 14px;
     display: flex;
-    flex-direction: row;        /* identité ↔ stats côte à côte */
-    align-items: center;
-    gap: 18px;
-    background: rgba(8, 14, 28, 0.55);
-    backdrop-filter: blur(18px) saturate(140%);
-    -webkit-backdrop-filter: blur(18px) saturate(140%);
-    border-top: 1px solid rgba(0, 179, 255, 0.25);
-}
-/* Identity dans la glass panel : logo plus petit (la glass est mince) +
-   nom de collection (CAPS) + ligne "BY ARTIST ✓" en dessous. */
-.home-fc-spotlight .home-feat-v3-logo {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-}
-.home-fc-spotlight .home-feat-v3-identity {
-    gap: 10px;
-    margin-top: 0;
-    align-items: center;
-    flex: 0 1 auto;
+    flex-direction: column;
+    gap: 14px;
     min-width: 0;
-    max-width: 45%;
+    background: rgba(11, 20, 38, 0.4);
+}
+/* Identity — logo (overlap discret au-dessus de la frontière banner/info)
+   + nom + ligne BY ARTIST ✓. */
+.home-fc-spotlight .home-feat-v3-identity {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    margin-top: -28px;             /* logo qui dépasse sur la bannière */
+    min-width: 0;
+}
+.home-fc-spotlight .home-feat-v3-logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    border: 2px solid rgba(11, 20, 38, 0.95);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.5);
 }
 .home-fc-spotlight .home-feat-v3-id-text {
-    padding-top: 0;
-    gap: 1px;
+    flex: 1;
     min-width: 0;
+    padding-bottom: 4px;            /* aligne le texte avec le bas du logo */
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 .home-fc-spotlight .home-feat-v3-name {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 800;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -24583,15 +24583,14 @@ a.snap-holder-username:hover {
     overflow: hidden;
     text-overflow: ellipsis;
 }
-/* Artist line : MAJUSCULES, lettrespacing étendu, badge verified inline. */
 .home-fc-spotlight .home-feat-v3-creator {
     display: inline-flex;
     align-items: center;
     gap: 5px;
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 9.5px;
+    font-size: 10px;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.55);
     white-space: nowrap;
@@ -24602,7 +24601,6 @@ a.snap-holder-username:hover {
 .home-fc-spotlight .home-feat-v3-creator strong {
     color: #fff;
     font-weight: 800;
-    letter-spacing: 0.1em;
 }
 .home-fc-spotlight .home-feat-v3-verified-slot {
     display: inline-flex;
@@ -24613,15 +24611,7 @@ a.snap-holder-username:hover {
     width: 13px;
     height: 13px;
 }
-/* Ligne "stats + 3 NFT thumbs" — stats inline EXACTEMENT comme la
-   .cp-stats-row de la vue Collection : value au-dessus, label en
-   dessous, centrés, séparés par une fine barre verticale. */
-.home-fc-spotlight .home-feat-v3-stats-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-left: auto;
-}
+/* Stats inline style cp-stats-row (vue Collection). */
 .home-fc-spotlight .home-feat-v3-stats {
     display: flex;
     flex-wrap: nowrap;
@@ -24630,21 +24620,19 @@ a.snap-holder-username:hover {
     background: transparent;
     border: none;
     backdrop-filter: none;
+    margin-top: auto;               /* pousse les stats vers le bas de l'info */
 }
 .home-fc-spotlight .home-feat-v3-stat {
     display: flex;
-    /* column-reverse : la value (.home-feat-v3-stat-val) est rendue en
-       PREMIER visuellement, le label en dessous — comme dans la
-       cp-stats-row de la vue Collection. Le markup HTML a label-puis-val
-       pour des raisons historiques, on inverse via CSS. */
-    flex-direction: column-reverse;
+    flex-direction: column-reverse;  /* value au-dessus, label en dessous */
     align-items: center;
     gap: 2px;
-    padding: 2px 14px 2px 0;
+    padding: 0 14px 0 0;
     margin-right: 14px;
-    border-right: 1px solid rgba(255, 255, 255, 0.10);
+    border-right: 1px solid rgba(255, 255, 255, 0.12);
     background: transparent;
     border-radius: 0;
+    min-width: 0;
 }
 .home-fc-spotlight .home-feat-v3-stat:last-child {
     border-right: none;
@@ -24663,7 +24651,7 @@ a.snap-holder-username:hover {
 }
 .home-fc-spotlight .home-feat-v3-stat-val {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 800;
     letter-spacing: 0.01em;
     color: #fff;
@@ -24671,42 +24659,149 @@ a.snap-holder-username:hover {
     font-variant-numeric: tabular-nums;
 }
 
-/* 3 vignettes NFT compactes en bas-droite, taille adaptée à la
-   hauteur réduite de la glass panel. */
-.home-fc-spotlight .home-feat-v3-nfts {
-    display: grid;
-    grid-template-columns: repeat(3, 36px);
-    gap: 3px;
-    flex-shrink: 0;
-    width: auto;
-}
-.home-fc-spotlight .home-feat-v3-nft {
-    border-radius: 5px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    max-width: 36px;
-}
-.home-fc-spotlight .home-feat-v3-nfts-loading {
-    grid-column: 1 / -1;
-    height: 36px;
+/* ═══════ Showcase (côté droit) ═══════ */
+.home-feat-showcase-loading {
+    flex: 1;
+    display: flex;
     align-items: center;
     justify-content: center;
+    gap: 6px;
+    opacity: 0.4;
 }
+/* Strip "Sample NFTs" en haut : 3 vignettes alignées sur une ligne. */
+.home-feat-showcase-samples {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.home-feat-showcase-strip-label {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(0, 179, 255, 0.7);
+    padding-left: 2px;
+}
+.home-feat-showcase-samples-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+.home-feat-showcase-sample {
+    aspect-ratio: 1 / 1;
+    border-radius: 6px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+}
+.home-feat-showcase-sample img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+/* Grille 2×2 : Top sale, Top rank, Floor, Most liked. */
+.home-feat-showcase-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 6px;
+    flex: 1;
+    min-height: 0;
+}
+.home-feat-showcase-tile {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    background: rgba(0, 0, 0, 0.32);
+    border: 1px solid rgba(0, 179, 255, 0.18);
+    border-radius: 8px;
+    min-width: 0;
+    overflow: hidden;
+    transition: border-color 0.15s, background 0.15s;
+}
+.home-fc-spotlight .home-feat-v3:hover .home-feat-showcase-tile {
+    border-color: rgba(0, 179, 255, 0.32);
+}
+.home-feat-showcase-tile-thumb {
+    width: 36px;
+    height: 36px;
+    border-radius: 5px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.home-feat-showcase-tile-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.home-feat-showcase-tile-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+.home-feat-showcase-tile-label {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(0, 179, 255, 0.7);
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.home-feat-showcase-tile-val {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* Couleurs spécifiques par type — petit accent visuel. */
+.home-feat-showcase-tile--sale  .home-feat-showcase-tile-label { color: #4ade80; }
+.home-feat-showcase-tile--rank  .home-feat-showcase-tile-label { color: #fbbf24; }
+.home-feat-showcase-tile--floor .home-feat-showcase-tile-label { color: #00B3FF; }
+.home-feat-showcase-tile--liked .home-feat-showcase-tile-label { color: #f87171; }
 
-/* CTA caché en spotlight — toute la card est cliquable (cf. handler dans
-   buildFeaturedCard) et le visuel est déjà fort sans bouton plein-largeur. */
+/* CTA caché en spotlight — toute la card est cliquable. */
 .home-fc-spotlight .home-feat-v3-cta { display: none; }
 
 @media (max-width: 720px) {
-    /* Mobile : glass panel encore un peu plus compacte + on cache les
-       vignettes NFT (la place manque). La bannière garde son ratio 3:1
-       hérité de .home-fc-spotlight .home-feat-v3 (full banner visible). */
-    .home-fc-spotlight .home-feat-v3-body { padding: 8px 12px 10px; gap: 12px; }
-    .home-fc-spotlight .home-feat-v3-logo { width: 36px; height: 36px; }
-    .home-fc-spotlight .home-feat-v3-name { font-size: 14px; }
-    .home-fc-spotlight .home-feat-v3-creator { font-size: 9px; }
-    .home-fc-spotlight .home-feat-v3-stat-val { font-size: 12px; }
-    .home-fc-spotlight .home-feat-v3-stat-label { font-size: 8px; }
-    .home-fc-spotlight .home-feat-v3-nfts { display: none; }
+    /* Mobile : empilage vertical (gauche au-dessus, droite en dessous). */
+    .home-fc-spotlight .home-feat-v3 {
+        grid-template-columns: 1fr;
+        min-height: 0;
+    }
+    .home-fc-spotlight .home-feat-v3-left {
+        border-right: none;
+        border-bottom: 1px solid rgba(0, 179, 255, 0.18);
+    }
+    .home-fc-spotlight .home-feat-v3-info {
+        padding: 12px 14px;
+        gap: 12px;
+    }
+    .home-fc-spotlight .home-feat-v3-identity {
+        margin-top: -22px;
+    }
+    .home-fc-spotlight .home-feat-v3-logo { width: 48px; height: 48px; }
+    .home-fc-spotlight .home-feat-v3-name { font-size: 15px; }
+    .home-fc-spotlight .home-feat-v3-creator { font-size: 9.5px; }
+    .home-fc-spotlight .home-feat-v3-stat-val { font-size: 13px; }
+    .home-fc-spotlight .home-feat-v3-right { padding: 10px 12px; }
+    .home-feat-showcase-tile-thumb { width: 32px; height: 32px; }
+    .home-feat-showcase-tile-val { font-size: 11.5px; }
     .home-fc-controls { margin-top: 10px; gap: 10px; }
 }
 
