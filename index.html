@@ -1444,6 +1444,18 @@
 
     </div>
 
+    <!-- ── UPDATES — changelog (full width, above Pulse) ── -->
+    <section class="home-section home-updates-section">
+      <div class="home-section-header">
+        <h2 class="home-section-title">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;vertical-align:-3px;margin-right:6px;color:#00B3FF;"><path d="M3 4h14M3 10h14M3 16h9"/><circle cx="16" cy="16" r="2"/></svg>
+          Latest Updates
+        </h2>
+        <span class="home-section-badge">Changelog</span>
+      </div>
+      <ol class="home-updates-list" id="homeUpdatesList"></ol>
+    </section>
+
     <!-- ── PULSE — site activity stats (full width, bottom of home) ── -->
     <section class="home-section home-pulse-section">
       <div class="home-section-header">
@@ -12254,6 +12266,8 @@ async function sha256hex(str) {
             const ls = document.getElementById('leftSidebar');
             if (ls) ls.style.display = 'none';
             if (typeof initHomePanel === 'function') initHomePanel();
+            // Updates changelog (rendu une seule fois)
+            renderHomeUpdates();
             // Pulse stats : init au 1er affichage de la home, puis cache 60s
             if (typeof initPulse === 'function') initPulse();
         });
@@ -12399,6 +12413,55 @@ async function sha256hex(str) {
         _showFullscreenPanel(document.getElementById('snapshotPanel'), () => {
             if (typeof window.initSnapshotPanel === 'function') window.initSnapshotPanel();
         });
+    }
+
+    /* ── UPDATES — changelog statique de la home ─────────────────────────── *
+     * Liste maintenue à la main : à chaque modif live sur le site, on ajoute
+     * une entrée en tête. Tri d'affichage = ordre décroissant de date.
+     * Type : 'feature' (nouveau), 'fix' (bug), 'improvement' (polish).
+     * --------------------------------------------------------------------- */
+    const HOME_UPDATES = [
+        {
+            date:  '2026-05-07T05:01:00Z',
+            type:  'feature',
+            title: 'Site activity dashboard',
+            text:  'New Pulse section at the bottom of the home with anonymous traffic stats from the last 30 days — sessions per day, hourly distribution, signed-in share, activity heatmap, and top tabs / referrers / languages.'
+        },
+        {
+            date:  '2026-05-07T04:47:00Z',
+            type:  'feature',
+            title: 'Member join announcements in chat',
+            text:  'When a signed-in member joins, a discreet system message announces their arrival in the community chat. Throttled to once every 10 minutes per member to avoid noise on reloads.'
+        },
+        {
+            date:  '2026-05-07T04:36:00Z',
+            type:  'fix',
+            title: 'Top Collections table — mobile fit',
+            text:  'The Top Collections table on the home was overflowing the card width on smartphones. Layout reworked to fit edge-to-edge with proper column separators and ellipsis truncation on long collection names.'
+        }
+    ];
+
+    function renderHomeUpdates() {
+        const list = document.getElementById('homeUpdatesList');
+        if (!list || list.dataset.rendered === '1') return;
+        const sorted = HOME_UPDATES.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+        list.innerHTML = sorted.map(u => {
+            const d = new Date(u.date);
+            const datePart = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            const timePart = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
+            const typeLabel = ({ feature: 'Feature', fix: 'Fix', improvement: 'Improvement' })[u.type] || 'Update';
+            return (
+                '<li class="home-update-item home-update-item--' + u.type + '">' +
+                    '<div class="home-update-meta">' +
+                        '<time class="home-update-date" datetime="' + u.date + '">' + datePart + ' · ' + timePart + ' UTC</time>' +
+                        '<span class="home-update-badge home-update-badge--' + u.type + '">' + typeLabel + '</span>' +
+                    '</div>' +
+                    '<h3 class="home-update-title">' + escapeHtml(u.title) + '</h3>' +
+                    '<p class="home-update-text">' + escapeHtml(u.text) + '</p>' +
+                '</li>'
+            );
+        }).join('');
+        list.dataset.rendered = '1';
     }
 
     /* ── PULSE — site activity stats (intégré au bas de la home) ─────────── *
