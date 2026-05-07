@@ -1,11 +1,20 @@
 :root {
 
-    
-    
+
+
     --collage-red: #ff6b6b;
 --navbar-height: 60px;
     --footer-height: 95px;
 --color1: #00B3FF;
+    /* Halo cyan unifié pour TOUTES les frames du home (chat, live feed,
+       crypto, featured, artists, drops, top collections, updates, et
+       le top spotlight lui-même qui est la référence). Changer ici =
+       changer partout sur la home en une seule édition. */
+    --home-halo-border: rgba(0, 179, 255, 0.45);
+    --home-halo-shadow:
+        0 0 0   1px rgba(0, 179, 255, 0.5),
+        0 0 50px    rgba(0, 179, 255, 0.28),
+        0 0 100px   rgba(0, 179, 255, 0.12);
     --download-green: #90EE90;
     --color2: #2C2C2C;
     --text-dark: #fff;
@@ -12953,13 +12962,14 @@ body.is-profile-loading #profileLoadingOverlay * {
 .home-community-card {
     display: flex;
     flex-direction: row;     /* messages + sidebar côte à côte */
-    border: 1px solid rgba(0,179,255,0.5);
+    /* Halo : recette du top spotlight (.home-spotlight) — toutes les
+       frames du home utilisent désormais le MÊME halo pour un rendu
+       homogène. Si tu veux changer le halo des frames du home, change
+       les variables --home-halo-* déclarées sur :root. */
+    border: 1px solid var(--home-halo-border);
     border-radius: 18px;
     overflow: hidden;
-    box-shadow:
-        0 0 0 1px rgba(0,179,255,0.55),
-        0 0 40px rgba(0,179,255,0.35),
-        0 0 80px rgba(0,179,255,0.18);
+    box-shadow: var(--home-halo-shadow);
     background: rgba(11,20,38,0.85);
     max-height: 420px;
 }
@@ -13311,12 +13321,11 @@ body.is-profile-loading #profileLoadingOverlay * {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 0;
-    border: 1px solid rgba(0,179,255,0.3);
+    /* Halo unifié home (variables --home-halo-*). */
+    border: 1px solid var(--home-halo-border);
     border-radius: 14px;
     overflow: hidden;
-    box-shadow:
-        0 0 0 1px rgba(0,179,255,0.25),
-        0 0 30px rgba(0,179,255,0.10);
+    box-shadow: var(--home-halo-shadow);
     background: rgba(11,20,38,0.6);
 }
 .home-creator-card {
@@ -24269,14 +24278,68 @@ a.snap-holder-username:hover {
    so the bigger frame is used efficiently — hero on the left, content on
    the right. On narrower viewports it falls back to the existing vertical
    layout. */
+/* Spotlight card : VERTICAL layout at every width.
+ *
+ * Top    : banner (whole image, slimmer than the legacy 3:1 ratio so it
+ *          doesn't dominate the card) — uses background-size:cover for real
+ *          banners, so the banner is shown in full ; non-banner artworks
+ *          fall back to the existing blurred-backdrop + contained logo.
+ * Below  : identity row — collection logo overlapping the banner edge +
+ *          collection name (bigger, prominent) + "by <artist>" line.
+ * Then   : 3 important stats in a panel.
+ * Then   : "Sample NFTs" label + 6 thumbnails of real assets.
+ * Bottom : CTA. */
 .home-fc-spotlight .home-feat-v3 {
-    min-height: 380px;
+    min-height: 420px;
 }
-/* Spotlight context : even in vertical mode the card is the only one
-   visible, so it gets a touch bigger name + artist text than the legacy
-   4-up grid. */
-.home-fc-spotlight .home-feat-v3-name { font-size: 19px; }
-.home-fc-spotlight .home-feat-v3-creator { font-size: 13px; }
+/* Slimmer banner so the whole card fits without scrolling : 4:1 instead
+   of the default 3:1, which gives ~25% more room to the body below. */
+.home-fc-spotlight .home-feat-v3-hero {
+    aspect-ratio: 4 / 1;
+}
+/* Body : more breathing room than the legacy 4-up grid — this is the
+   only card visible at a time so the spacing should feel generous. */
+.home-fc-spotlight .home-feat-v3-body {
+    padding: 18px 22px 20px;
+    gap: 16px;
+}
+/* Bigger logo (the "image de collection") + bigger name + bigger artist
+   line so each piece of info is clear. Logo still overlaps the banner
+   edge so the visual relationship banner ↔ collection stays obvious. */
+.home-fc-spotlight .home-feat-v3-logo {
+    width: 76px;
+    height: 76px;
+    border-radius: 16px;
+}
+.home-fc-spotlight .home-feat-v3-identity {
+    gap: 14px;
+    margin-top: -38px;
+}
+.home-fc-spotlight .home-feat-v3-id-text {
+    padding-top: 30px; /* aligne le texte avec le bas du logo qui dépasse */
+}
+.home-fc-spotlight .home-feat-v3-name {
+    font-size: 22px;
+    white-space: normal;
+    line-height: 1.2;
+}
+.home-fc-spotlight .home-feat-v3-creator {
+    font-size: 13.5px;
+    color: rgba(255, 255, 255, 0.65);
+    white-space: normal;
+}
+.home-fc-spotlight .home-feat-v3-creator strong {
+    color: #fff;
+    font-weight: 800;
+}
+/* Stats panel : bigger numbers + label spacing — three KPIs that read
+   at a glance instead of feeling like a tiny status bar. */
+.home-fc-spotlight .home-feat-v3-stats {
+    padding: 14px 12px;
+    gap: 6px;
+}
+.home-fc-spotlight .home-feat-v3-stat-val { font-size: 18px; }
+.home-fc-spotlight .home-feat-v3-stat-label { font-size: 10px; }
 
 /* "Sample NFTs" mini-label above the NFT thumbnail strip — only in spotlight
    context, so it doesn't affect any other place .home-feat-v3-nfts might be
@@ -24294,80 +24357,12 @@ a.snap-holder-username:hover {
     color: rgba(0, 179, 255, 0.7);
     margin-bottom: 2px;
 }
-
-@media (min-width: 900px) {
-    /* HORIZONTAL layout — the spotlight's signature look. Banner on the left
-       (50 % width) gets to be the visual focal point ; body on the right
-       presents identity, stats, sample NFTs and the CTA in clear sections. */
-    .home-fc-spotlight .home-feat-v3 {
-        flex-direction: row;
-        min-height: 460px;
-    }
-    .home-fc-spotlight .home-feat-v3-hero {
-        aspect-ratio: auto;
-        flex: 0 0 50%;
-        align-self: stretch;
-    }
-    .home-fc-spotlight .home-feat-v3-body {
-        flex: 1;
-        padding: 30px 34px 28px;
-        gap: 20px;
-    }
-    /* In horizontal layout the logo no longer overlaps the hero/body
-       boundary — that hack made sense in vertical mode, here it just
-       leaves a chunk of empty space at the top. Reset the negative margin
-       and the alignment padding so identity sits where you'd expect. */
-    .home-fc-spotlight .home-feat-v3-identity {
-        margin-top: 0;
-        gap: 16px;
-        align-items: center;
-    }
-    .home-fc-spotlight .home-feat-v3-id-text {
-        padding-top: 0;
-        gap: 6px;
-    }
-    .home-fc-spotlight .home-feat-v3-logo {
-        width: 88px;
-        height: 88px;
-        border-radius: 18px;
-        border: 2px solid rgba(0, 179, 255, 0.35);
-    }
-    .home-fc-spotlight .home-feat-v3-name {
-        font-size: 26px;
-        white-space: normal;
-        line-height: 1.15;
-    }
-    /* Artist line is now a real piece of information, not a footnote.
-       Bigger size + brighter color so the user immediately sees who's
-       behind the collection. */
-    .home-fc-spotlight .home-feat-v3-creator {
-        font-size: 14px;
-        color: rgba(255, 255, 255, 0.65);
-        white-space: normal;
-    }
-    .home-fc-spotlight .home-feat-v3-creator strong {
-        color: #fff;
-        font-weight: 800;
-    }
-    /* Stats panel : bigger numbers + label spacing — three KPIs that read
-       at a glance instead of feeling like a tiny status bar. */
-    .home-fc-spotlight .home-feat-v3-stats {
-        padding: 16px 12px;
-        gap: 6px;
-    }
-    .home-fc-spotlight .home-feat-v3-stat { gap: 5px; }
-    .home-fc-spotlight .home-feat-v3-stat-val { font-size: 20px; }
-    .home-fc-spotlight .home-feat-v3-stat-label { font-size: 10px; }
-    /* NFT preview strip : explicit "Sample NFTs" label + bigger square
-       thumbnails so they read clearly as collection examples. */
-    .home-fc-spotlight .home-feat-v3-nfts {
-        gap: 8px;
-        grid-template-columns: repeat(6, 1fr);
-    }
-    .home-fc-spotlight .home-feat-v3-cta {
-        padding: 14px 22px;
-        font-size: 13px;
-    }
+.home-fc-spotlight .home-feat-v3-nfts {
+    gap: 8px;
+}
+.home-fc-spotlight .home-feat-v3-cta {
+    padding: 14px 22px;
+    font-size: 13px;
 }
 
 /* Mobile : keep a single-column stack but give the card more breathing room
@@ -24396,24 +24391,16 @@ a.snap-holder-username:hover {
     overflow: hidden;
     border-radius: 16px;
     background: rgba(11, 20, 38, 0.85);
-    /* Permanent cyan halo — same recipe as .sb-results-wrap (Top Collections,
-       Updates, Market Bot) so the Featured spotlight matches the rest of the
-       home. The card itself never moves : no translate on hover, no scale.
-       Hover only emphasizes the border slightly. */
-    border: 1.5px solid rgba(0, 179, 255, 0.5);
-    box-shadow:
-        0 0 0  1px rgba(0,179,255,0.55),
-        0 0 40px rgba(0,179,255,0.35),
-        0 0 80px rgba(0,179,255,0.18);
+    /* Halo unifié home (variables --home-halo-*). Card stays still : no
+       transform, no border-color change on hover — same behaviour as the
+       chat / Top Collections / Updates frames. */
+    border: 1px solid var(--home-halo-border);
+    box-shadow: var(--home-halo-shadow);
     cursor: pointer;
     min-height: 320px;
     display: flex;
     flex-direction: column;
     isolation: isolate;
-    transition: border-color 0.25s ease;
-}
-.home-feat-v3:hover {
-    border-color: #00B3FF;
 }
 
 /* ── HERO — top portion, image dominante ── */
@@ -24961,14 +24948,13 @@ a.snap-holder-username:hover {
     height: 340px;
     background:
         linear-gradient(120deg, rgba(0,179,255,0.08) 0%, rgba(0,179,255,0.02) 45%, rgba(11,20,38,0.55) 100%);
-    border: 1px solid rgba(0, 179, 255, 0.45);
+    /* Halo : recette de référence pour toutes les frames du home,
+       exposée via les variables --home-halo-* dans :root. */
+    border: 1px solid var(--home-halo-border);
     border-radius: 24px;
     overflow: hidden;
     isolation: isolate;
-    box-shadow:
-        0 0 0 1px rgba(0,179,255,0.5),
-        0 0 50px rgba(0,179,255,0.28),
-        0 0 100px rgba(0,179,255,0.12);
+    box-shadow: var(--home-halo-shadow);
     cursor: pointer;
 }
 
@@ -25399,13 +25385,11 @@ body { box-sizing: border-box; }
     display: flex;
     flex-direction: column;
     background: rgba(11, 20, 38, 0.85);
-    border: 1px solid rgba(0, 179, 255, 0.5);
+    /* Halo unifié home (variables --home-halo-*). */
+    border: 1px solid var(--home-halo-border);
     border-radius: 18px;
     overflow: hidden;
-    box-shadow:
-        0 0 0  1px rgba(0, 179, 255, 0.55),
-        0 0 40px rgba(0, 179, 255, 0.35),
-        0 0 80px rgba(0, 179, 255, 0.18);
+    box-shadow: var(--home-halo-shadow);
 }
 .home-live-feed {
     flex: 1;
@@ -27676,22 +27660,15 @@ body { box-sizing: border-box; }
 .home-crypto-card {
     position: relative;
     background: rgba(11, 20, 38, 0.7);
-    border: 1px solid rgba(0, 179, 255, 0.45);
+    /* Halo unifié home (variables --home-halo-*). */
+    border: 1px solid var(--home-halo-border);
     border-radius: 14px;
     padding: 14px 16px 12px;
-    box-shadow:
-        0 0 0 1px rgba(0,179,255,0.4),
-        0 0 30px rgba(0,179,255,0.18),
-        0 0 60px rgba(0,179,255,0.08);
-    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+    box-shadow: var(--home-halo-shadow);
 }
 .home-crypto-card:hover {
-    /* Renforce le halo au hover, sans translation/zoom */
-    border-color: rgba(0,179,255,0.6);
-    box-shadow:
-        0 0 0 1px rgba(0,179,255,0.55),
-        0 0 40px rgba(0,179,255,0.25),
-        0 0 80px rgba(0,179,255,0.12);
+    /* Card stays still : no halo change on hover, identical to the rest of
+       the home frames (chat, Top Collections, Updates, …). */
 }
 
 .home-crypto-card-header {
@@ -28400,14 +28377,12 @@ body { box-sizing: border-box; }
 .home-fd-card {
     position: relative;
     background: rgba(11, 20, 38, 0.7);
-    border: 1px solid rgba(0, 179, 255, 0.45);
+    /* Halo unifié home (variables --home-halo-*). */
+    border: 1px solid var(--home-halo-border);
     border-radius: 14px;
     padding: 0;
     cursor: pointer;
-    box-shadow:
-        0 0 0 1px rgba(0,179,255,0.4),
-        0 0 30px rgba(0,179,255,0.18),
-        0 0 60px rgba(0,179,255,0.08);
+    box-shadow: var(--home-halo-shadow);
     overflow: hidden;
     text-decoration: none;
     display: grid;
@@ -28623,13 +28598,11 @@ body { box-sizing: border-box; }
 .home-live-table-wrap,
 .home-top-table-wrap {
     background: rgba(11, 20, 38, 0.85);
-    border: 1px solid rgba(0, 179, 255, 0.5);
+    /* Halo unifié home (variables --home-halo-*). */
+    border: 1px solid var(--home-halo-border);
     border-radius: 14px;
     overflow: hidden;
-    box-shadow:
-        0 0 0  1px rgba(0,179,255,0.55),
-        0 0 40px rgba(0,179,255,0.35),
-        0 0 80px rgba(0,179,255,0.18);
+    box-shadow: var(--home-halo-shadow);
     box-sizing: border-box;
     position: relative;
 }
@@ -29212,18 +29185,15 @@ body { box-sizing: border-box; }
     list-style: none;
     margin: 0;
     padding: 14px;
-    /* Cadre halo'd identique à Top Collections (.stats-table-wrap) */
+    /* Halo unifié home (variables --home-halo-*). */
     background: rgba(11, 20, 38, 0.4);
-    border: 1px solid rgba(0, 179, 255, 0.5);
+    border: 1px solid var(--home-halo-border);
     border-radius: 14px;
     overflow-y: auto;
     overflow-x: hidden;
     /* Hauteur fixe : ~3-4 entrées visibles sans scroll, le reste scrolle */
     max-height: 360px;
-    box-shadow:
-        0 0 0  1px rgba(0,179,255,0.55),
-        0 0 40px rgba(0,179,255,0.35),
-        0 0 80px rgba(0,179,255,0.18);
+    box-shadow: var(--home-halo-shadow);
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 179, 255, 0.35) transparent;
     /* 2-up grid on desktop : we have lots of horizontal room and
