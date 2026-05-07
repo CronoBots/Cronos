@@ -28274,10 +28274,11 @@ body { box-sizing: border-box; }
    FEATURED DROPS — section home avec drops en cours + ta collection
    CRONOS.WTF mise en avant + CTA pour se faire featurer.
    ═══════════════════════════════════════════════════════════════════════════ */
+/* Spotlight full-width — 1 carte par rangée, bannière à gauche, infos+samples à droite */
 .home-fd-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
     margin-bottom: 14px;
 }
 .home-fd-card {
@@ -28285,27 +28286,29 @@ body { box-sizing: border-box; }
     background: rgba(11, 20, 38, 0.7);
     border: 1px solid rgba(0, 179, 255, 0.45);
     border-radius: 14px;
-    padding: 14px;
+    padding: 0;
     cursor: pointer;
     box-shadow:
         0 0 0 1px rgba(0,179,255,0.4),
         0 0 30px rgba(0,179,255,0.18),
         0 0 60px rgba(0,179,255,0.08);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    overflow: hidden;
+    text-decoration: none;
+    display: grid;
+    grid-template-columns: minmax(280px, 1.3fr) minmax(0, 2fr);
+    gap: 0;
+    min-height: 220px;
 }
 .home-fd-card--featured {
-    /* Carte CRONOS.WTF : un peu plus marquée, badge "FEATURED" */
     border-color: rgba(0, 179, 255, 0.7);
 }
 .home-fd-card-banner {
     width: 100%;
-    aspect-ratio: 16 / 9;
-    border-radius: 10px;
+    height: 100%;
     overflow: hidden;
     background: linear-gradient(135deg, #060e1e 0%, #0a1a3a 60%, #071020 100%);
     position: relative;
+    min-height: 220px;
 }
 .home-fd-card-banner img {
     width: 100%;
@@ -28343,11 +28346,14 @@ body { box-sizing: border-box; }
 .home-fd-card-info {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
+    padding: 18px 20px;
+    min-width: 0;
+    justify-content: space-between;
 }
 .home-fd-card-name {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 14px;
+    font-size: 22px;
     font-weight: 800;
     color: #fff;
     letter-spacing: 0.04em;
@@ -28356,11 +28362,43 @@ body { box-sizing: border-box; }
     white-space: nowrap;
 }
 .home-fd-card-sub {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.55);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+/* Mini-thumbnails samples du drop */
+.home-fd-card-samples {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-top: 8px;
+}
+.home-fd-card-sample {
+    aspect-ratio: 1 / 1;
+    border-radius: 6px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.04);
+}
+.home-fd-card-sample img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+/* Mobile : la carte se remet en colonne */
+@media (max-width: 720px) {
+    .home-fd-card {
+        grid-template-columns: 1fr;
+        min-height: auto;
+    }
+    .home-fd-card-banner {
+        aspect-ratio: 16 / 9;
+        min-height: auto;
+    }
+    .home-fd-card-name { font-size: 18px; }
+    .home-fd-card-samples { grid-template-columns: repeat(4, 1fr); }
 }
 .home-fd-card-stats {
     display: flex;
@@ -28426,4 +28464,150 @@ body { box-sizing: border-box; }
 .home-fd-cta-btn:hover {
     background: rgba(0, 179, 255, 0.25);
     color: #fff;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HOME TABLES (Top Collections + Live Feed) — refonte en <table>
+   Les anciens conteneurs en div+grid ont été remplacés par de vraies
+   tables HTML qui héritent des classes .stats-table / .sb-table.
+   On neutralise ici toutes les anciennes règles qui forçaient du grid
+   sur cb-ticker-track / cb-ticker-item / cb-ticker-header (qui sont
+   maintenant respectivement tbody / tr / thead-tr).
+   ═══════════════════════════════════════════════════════════════════════════ */
+#cbTicker.home-live-card .cb-ticker-track,
+#cbTicker.home-live-card tbody.cb-ticker-track {
+    display: table-row-group !important;
+    flex-direction: initial !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    overflow: visible !important;
+}
+#cbTicker.home-live-card .cb-ticker-item,
+#cbTicker.home-live-card tr.cb-ticker-item {
+    display: table-row !important;
+    grid-template-columns: initial !important;
+    column-gap: 0 !important;
+    padding: 0 !important;
+    border-bottom: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+}
+/* Le tableau lui-même : prend la largeur de son wrapper, hérite des
+   séparateurs/zebra de .sb-table définis ailleurs. */
+.home-live-table,
+.home-top-table {
+    width: 100% !important;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+/* Wrappers : conservent le halo/bordure cyan de la carte d'origine */
+.home-live-table-wrap,
+.home-top-table-wrap {
+    background: rgba(11, 20, 38, 0.85);
+    border: 1px solid rgba(0, 179, 255, 0.5);
+    border-radius: 14px;
+    overflow: hidden;
+}
+/* Cellule loader : centre le spinner */
+.home-top-loading-cell {
+    text-align: center !important;
+    padding: 30px 0 !important;
+}
+.home-top-loading-cell .stats-dot {
+    display: inline-block;
+    margin: 0 3px;
+}
+
+/* Cellule logo dans Top Collections home — image carrée */
+.home-top-table .home-top-logo {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: #0b1426;
+    display: inline-block;
+    vertical-align: middle;
+}
+.home-top-table .home-top-name {
+    color: #fff;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.home-top-table .home-top-up    { color: #4ade80; font-weight: 700; }
+.home-top-table .home-top-down  { color: #f87171; font-weight: 700; }
+/* Hover ligne entière (équivalent .stats-tr:hover) */
+.home-top-table tbody .stats-tr,
+.home-live-table tbody .sb-tr {
+    cursor: pointer;
+}
+
+/* Live feed cell-specific */
+.home-live-table .cb-ticker-item-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+.home-live-table .cb-ticker-img {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.home-live-table .cb-ticker-asset {
+    color: #fff;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.home-live-table .cb-ticker-verb {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border-radius: 4px;
+    border: 1px solid;
+}
+.home-live-table .cb-tk-sale .cb-ticker-verb    { background: rgba(74,222,128,0.16);  color: #4ade80; border-color: rgba(74,222,128,0.4); }
+.home-live-table .cb-tk-list .cb-ticker-verb    { background: rgba(96,165,250,0.16);  color: #60a5fa; border-color: rgba(96,165,250,0.4); }
+.home-live-table .cb-tk-auction .cb-ticker-verb { background: rgba(251,191,36,0.16);  color: #fbbf24; border-color: rgba(251,191,36,0.4); }
+.home-live-table .cb-ticker-price { color: #fff; font-weight: 700; font-family: 'Geomanist-Bold', sans-serif; }
+.home-live-table .cb-ticker-time  { color: rgba(255,255,255,0.4); font-size: 11px; }
+
+/* ── Featured Artists : stats agrégées sous la bio ── */
+.home-fa-identity .home-fa-stats {
+    display: flex;
+    gap: 14px;
+    margin: 10px 0 4px;
+    flex-wrap: wrap;
+}
+.home-fa-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.home-fa-stat-val {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    color: #fff;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+.home-fa-stat-label {
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
 }

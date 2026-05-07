@@ -1309,17 +1309,23 @@
           </div>
           <span class="home-live-badge">LIVE</span>
         </div>
-        <div id="cbTicker" class="home-live-card">
-          <!-- Header colonnes — Event / Item (image+nom fusionnés) / Price / Time -->
-          <div class="cb-ticker-header">
-            <span class="cb-ticker-th">Event</span>
-            <span class="cb-ticker-th">Item</span>
-            <span class="cb-ticker-th cb-ticker-th--r">Price</span>
-            <span class="cb-ticker-th cb-ticker-th--r">Time</span>
-          </div>
-          <div class="cb-ticker-track" id="cbTickerTrack">
-            <span class="cb-ticker-empty">Loading live activity…</span>
-          </div>
+        <!-- Vraie <table> identique à .sb-table (Market Bot) — mêmes classes
+             .sb-th / .sb-td / .sb-tr donc même style hérité (séparateurs,
+             zebra, alignement, hover). -->
+        <div id="cbTicker" class="home-live-card sb-table-wrap home-live-table-wrap">
+          <table class="sb-table home-live-table">
+            <thead>
+              <tr>
+                <th class="sb-th sb-th--center">Event</th>
+                <th class="sb-th">Item</th>
+                <th class="sb-th sb-th--center">Price</th>
+                <th class="sb-th sb-th--center">Time</th>
+              </tr>
+            </thead>
+            <tbody class="cb-ticker-track" id="cbTickerTrack">
+              <tr><td colspan="4" class="cb-ticker-empty">Loading live activity…</td></tr>
+            </tbody>
+          </table>
         </div>
       </section>
 
@@ -1403,16 +1409,34 @@
         <div class="home-section-header">
           <h2 class="home-section-title">Top Collections</h2>
         </div>
-        <div class="home-top-list" id="homeTopList">
-          <div class="home-top-list-header">
-            <span class="home-top-th">#</span>
-            <span class="home-top-th"></span>
-            <span class="home-top-th">Collection</span>
-            <span class="home-top-th home-top-th--r">Floor</span>
-            <span class="home-top-th home-top-th--r">Volume</span>
-            <span class="home-top-th home-top-th--r">Change</span>
-          </div>
-          <div class="home-top-loading"><span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span></div>
+        <!-- Vraie <table> identique à .stats-table (Top Collections panel) :
+             même classes .stats-th / .stats-td, même séparateurs, même zebra. -->
+        <div class="stats-table-wrap home-top-table-wrap" id="homeTopList">
+          <table class="stats-table home-top-table" id="homeTopTable">
+            <colgroup>
+              <col style="width:48px">
+              <col style="width:42px">
+              <col>
+              <col style="width:80px">
+              <col style="width:90px">
+              <col style="width:70px">
+            </colgroup>
+            <thead>
+              <tr>
+                <th class="stats-th stats-th--center">#</th>
+                <th class="stats-th"></th>
+                <th class="stats-th">Collection</th>
+                <th class="stats-th stats-th--center">Floor</th>
+                <th class="stats-th stats-th--center">Volume</th>
+                <th class="stats-th stats-th--center">Change</th>
+              </tr>
+            </thead>
+            <tbody id="homeTopTableBody">
+              <tr><td colspan="6" class="home-top-loading-cell">
+                <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
+              </td></tr>
+            </tbody>
+          </table>
         </div>
       </section>
 
@@ -8250,13 +8274,19 @@ document.addEventListener('DOMContentLoaded', initialize);
         const slide = document.createElement('div');
         slide.className = 'home-fa-slide';
         const avatar = data?.avatar?.url || '';
-        const banner = data?.cover?.url  || '';
         const name   = data?.displayName || cfg.displayName || cfg.username;
         const bio    = data?.bio || '';
         const verified = data?.verified || false;
         const profileUrl = cfg.url || `https://crypto.com/nft/profile/${cfg.username}?tab=created`;
         const fmt = n => { const v=Number(n)||0; if(!v) return '—'; return v>=1000?'$'+(v/1000).toFixed(1)+'K':'$'+v.toFixed(0); };
-        const colsHtml = collections.slice(0,3).map(c => `
+        const fmtNum = n => { const v=Number(n)||0; return v.toLocaleString('en-US'); };
+
+        /* Stats agrégées sur les collections de l'artiste */
+        const totalVol    = collections.reduce((s,c)=>s+(Number(c.stats?.totalVolumeDecimal)||0),0);
+        const totalItems  = collections.reduce((s,c)=>s+(Number(c.metrics?.items)||0),0);
+        const totalCols   = collections.length;
+
+        const colsHtml = collections.slice(0,4).map(c => `
             <a class="home-fa-col" href="https://crypto.com/nft/collection/${c.id}" target="_blank" rel="noopener">
                 ${c.logo?.url?`<img class="home-fa-col-logo" src="${_fcEsc(c.logo.url)}" alt="" loading="lazy"/>`:`<div class="home-fa-col-logo--empty"></div>`}
                 <div class="home-fa-col-info">
@@ -8266,10 +8296,13 @@ document.addEventListener('DOMContentLoaded', initialize);
                         <span class="home-fa-col-floor">${fmt(c.stats?.oneDayFloorPriceDecimal)} floor</span>
                     </div>
                 </div>
-                <span class="home-fa-col-items">${(c.metrics?.items||0).toLocaleString()} items</span>
+                <span class="home-fa-col-items">${fmtNum(c.metrics?.items||0)} items</span>
             </a>`).join('') || `<span class="home-fa-no-cols">No public collections yet</span>`;
+        /* Plus de bannière de fond — seul un dégradé cyan léger.
+           Le contenu met en avant l'identité + les stats agrégées + les
+           collections de l'artiste. */
         slide.innerHTML = `
-            ${banner?`<div class="home-fa-bg" style="background-image:url('${_fcEsc(banner)}')"></div>`:`<div class="home-fa-bg" style="background:linear-gradient(135deg,rgba(0,179,255,0.07),rgba(7,14,28,0.95))"></div>`}
+            <div class="home-fa-bg" style="background:linear-gradient(135deg,rgba(0,179,255,0.07),rgba(7,14,28,0.95))"></div>
             <div class="home-fa-content">
                 <div class="home-fa-identity">
                     ${avatar?`<img class="home-fa-avatar" src="${_fcEsc(avatar)}" alt="${_fcEsc(name)}" loading="lazy"/>`:`<div class="home-fa-avatar--fallback">${_fcEsc(name[0]?.toUpperCase()||'?')}</div>`}
@@ -8278,12 +8311,18 @@ document.addEventListener('DOMContentLoaded', initialize);
                         ${verified?'<svg class="home-fa-verified" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
                     </div>
                     <span class="home-fa-role">${_fcEsc(cfg.role)}</span>
-                    ${bio?`<p class="home-fa-bio">${_fcEsc(bio.slice(0,160))}${bio.length>160?'…':''}</p>`:''}
+                    ${bio?`<p class="home-fa-bio">${_fcEsc(bio.slice(0,180))}${bio.length>180?'…':''}</p>`:''}
+                    <!-- Stats agrégées : nb collections, items totaux, volume total -->
+                    <div class="home-fa-stats">
+                        <span class="home-fa-stat"><span class="home-fa-stat-val">${totalCols}</span><span class="home-fa-stat-label">collections</span></span>
+                        <span class="home-fa-stat"><span class="home-fa-stat-val">${fmtNum(totalItems)}</span><span class="home-fa-stat-label">NFTs</span></span>
+                        <span class="home-fa-stat"><span class="home-fa-stat-val">${fmt(totalVol)}</span><span class="home-fa-stat-label">all-time vol</span></span>
+                    </div>
                     <a class="home-fa-cta" href="${_fcEsc(profileUrl)}" target="_blank" rel="noopener">View Profile →</a>
                 </div>
                 <div class="home-fa-divider"></div>
                 <div class="home-fa-cols-wrap">
-                    <span class="home-fa-cols-label">Top Collections · by volume</span>
+                    <span class="home-fa-cols-label">Collections · by volume</span>
                     <div class="home-fa-cols">${colsHtml}</div>
                 </div>
             </div>`;
@@ -9231,7 +9270,8 @@ document.addEventListener('DOMContentLoaded', initialize);
         _homeInit = true;
         buildFeatured();
         buildFeaturedCreators();
-        loadTopCollections();
+        /* loadTopCollections() désactivé : remplacé par renderTopCollections()
+           du module home-boost qui rend dans le <table#homeTopTable> proprement. */
         initChat();
         initNavButtons();
         initSpotlight();
@@ -18515,21 +18555,37 @@ window.initSnapshotPanel = function() {
         const floor = Number(stats.floorPriceDecimal) || 0;
         const chgFmt = isNaN(chg) ? { text: '—', cls: '' } : fmtChange(chg);
 
-        const row = document.createElement('div');
-        row.className = 'home-top-row';
-        // Rang sous forme de bulle (or/argent/bronze pour le top 3),
-        // identique au tableau Top Collections du panel stats.
+        // <tr> compatible avec .stats-table : utilise les classes .stats-td
+        // pour hériter du même style que le tableau Top Collections du panel.
+        const row = document.createElement('tr');
+        row.className = 'stats-tr home-top-tr';
         const rankCls = i === 0 ? 'stats-rank stats-rank--gold'
                       : i === 1 ? 'stats-rank stats-rank--silver'
                       : i === 2 ? 'stats-rank stats-rank--bronze'
                       : 'stats-rank';
-        row.innerHTML = `
-            <span class="home-top-rank"><span class="${rankCls}"><span class="stats-rank-num">${i + 1}</span></span></span>
-            <img class="home-top-logo" src="${escapeHtml(c.logo?.url || '')}" alt="" loading="lazy"/>
-            <span class="home-top-name">${escapeHtml(c.name || '—')}${c.verified ? ' <svg class="home-top-verified" viewBox="0 0 20 20" fill="none" aria-label="Verified"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}</span>
-            <span class="home-top-floor">${floor > 0 ? fmtUSD(floor) : '—'}</span>
-            <span class="home-top-vol">${vol > 0 ? fmtUSD(vol) : '—'}</span>
-            <span class="home-top-chg ${chgFmt.cls === 'cb-up' ? 'home-top-up' : chgFmt.cls === 'cb-down' ? 'home-top-down' : ''}">${chgFmt.text}</span>`;
+        const verifiedSvg = c.verified
+            ? ' <svg class="home-top-verified" viewBox="0 0 20 20" fill="none" aria-label="Verified"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+            : '';
+        row.innerHTML =
+            '<td class="stats-td stats-td--center stats-td--rank">' +
+                '<span class="' + rankCls + '"><span class="stats-rank-num">' + (i + 1) + '</span></span>' +
+            '</td>' +
+            '<td class="stats-td stats-td--center home-top-logo-cell">' +
+                '<img class="home-top-logo" src="' + escapeHtml(c.logo?.url || '') + '" alt="" loading="lazy"/>' +
+            '</td>' +
+            '<td class="stats-td home-top-name-cell">' +
+                '<span class="home-top-name">' + escapeHtml(c.name || '—') + verifiedSvg + '</span>' +
+            '</td>' +
+            '<td class="stats-td stats-td--center home-top-floor-cell">' +
+                (floor > 0 ? fmtUSD(floor) : '—') +
+            '</td>' +
+            '<td class="stats-td stats-td--center home-top-vol-cell">' +
+                (vol > 0 ? fmtUSD(vol) : '—') +
+            '</td>' +
+            '<td class="stats-td stats-td--center home-top-chg-cell ' +
+                (chgFmt.cls === 'cb-up' ? 'home-top-up' : chgFmt.cls === 'cb-down' ? 'home-top-down' : '') + '">' +
+                chgFmt.text +
+            '</td>';
         row.addEventListener('click', () => {
             document.querySelector('.topnav-tab[data-tab="stats"]')?.click();
         });
@@ -18541,17 +18597,12 @@ window.initSnapshotPanel = function() {
 
     async function renderTopCollections(range = _currentRange) {
         _currentRange = range;
-        const list = document.getElementById('homeTopList');
-        if (!list) return;
-        const header = list.querySelector('.home-top-list-header');
+        const tbody = document.getElementById('homeTopTableBody');
+        if (!tbody) return;
 
         // ── Priorité : données déjà chargées dans l'onglet Top Collections ──
-        // _statsAllRows est trié par volume et expose le même format que FEATURED.
-        // On l'utilise si disponible pour éviter tout appel API supplémentaire.
         const statsRows = window._statsAllRows;
         if (statsRows && statsRows.length > 0 && !_topColsCache?.[range]) {
-            // Pour ALL on trie par volume all-time (metrics.totalSalesDecimal),
-            // sinon par la clé période correspondante.
             const getVol = range === 'ALL'
                 ? (c) => Number(c.metrics?.totalSalesDecimal) || 0
                 : (() => {
@@ -18565,20 +18616,15 @@ window.initSnapshotPanel = function() {
 
         let cols = _topColsCache?.[range];
         if (!cols) {
-            if (header) Array.from(list.children).forEach(c => { if (c !== header) c.remove(); });
-            else list.innerHTML = '';
-            const loader = document.createElement('div');
-            loader.className = 'home-top-loading';
-            loader.innerHTML = '<span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>';
-            list.appendChild(loader);
+            tbody.innerHTML = '<tr><td colspan="6" class="home-top-loading-cell">' +
+                '<span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>' +
+                '</td></tr>';
             cols = await fetchTopCollectionsForRange(range);
             _topColsCache = _topColsCache || {};
             _topColsCache[range] = cols;
         }
-        // Vider sauf header
-        if (header) Array.from(list.children).forEach(c => { if (c !== header) c.remove(); });
-        else list.innerHTML = '';
-        cols.slice(0, 5).forEach((c, i) => list.appendChild(renderTopCollectionsRow(c, i, range)));
+        tbody.innerHTML = '';
+        cols.slice(0, 5).forEach((c, i) => tbody.appendChild(renderTopCollectionsRow(c, i, range)));
         document.querySelectorAll('[data-cb-range]').forEach((btn) => {
             btn.classList.toggle('cb-range-active', btn.dataset.cbRange === range);
         });
@@ -18701,32 +18747,46 @@ window.initSnapshotPanel = function() {
         const track = document.getElementById('cbTickerTrack');
         if (!track) return;
         if (!events.length) {
-            track.innerHTML = '<span class="cb-ticker-empty">Waiting for activity…</span>';
+            track.innerHTML = '<tr><td colspan="4" class="cb-ticker-empty">Waiting for activity…</td></tr>';
             return;
         }
+        /* Rendu en <tr>/<td> dans le tbody — réutilise les classes
+           .sb-tr / .sb-td pour hériter du style du tableau Market Bot
+           (séparateurs, zebra, hover) sans duplication. Les classes
+           historiques (.cb-ticker-*, .cb-tk-*) sont conservées pour
+           qu'on garde les badges colorés de l'event. */
         track.innerHTML = events.map((e) => {
             const price = Number(e.listing?.salePriceDecimalUSD) || Number(e.amountDecimal) || 0;
             const isList    = e.nature === 'listed';
             const isAuction = e.mode === 'auction';
-            const seller = e.user?.displayName || e.user?.username || '—';
-            const buyer  = e.toUser?.displayName || e.toUser?.username || '—';
-            // Labels alignés sur le Market Bot : Sale / Listing / Auction
-            // (au lieu de "sold" / "listed" historiques).
             const verb = isList ? (isAuction ? 'Auction' : 'Listing') : 'Sale';
             const cls  = isList ? (isAuction ? 'cb-tk-auction' : 'cb-tk-list') : 'cb-tk-sale';
             const img    = e.asset?.cover?.url || '';
-            return `
-                <a class="cb-ticker-item ${cls}" href="https://crypto.com/nft/asset/${escapeHtml(e.asset?.id || '')}" target="_blank" rel="noopener">
-                    <span class="cb-ticker-verb">${verb}</span>
-                    <span class="cb-ticker-item-info">
-                        ${img ? `<img class="cb-ticker-img" src="${escapeHtml(img)}" alt="" loading="lazy"/>` : ''}
-                        <span class="cb-ticker-asset">${escapeHtml(e.asset?.name || '—')}</span>
-                    </span>
-                    <span class="cb-ticker-by">${escapeHtml(isList ? seller : buyer)}</span>
-                    <span class="cb-ticker-price">${price > 0 ? fmtUSD(price) : ''}</span>
-                    <span class="cb-ticker-time">${timeAgo(e.createdAt)}</span>
-                </a>`;
+            const assetUrl = 'https://crypto.com/nft/asset/' + escapeHtml(e.asset?.id || '');
+            return (
+                '<tr class="sb-tr cb-ticker-item ' + cls + '" data-href="' + assetUrl + '">' +
+                    '<td class="sb-td sb-td--center cb-ticker-event-cell">' +
+                        '<span class="cb-ticker-verb">' + verb + '</span>' +
+                    '</td>' +
+                    '<td class="sb-td cb-ticker-item-cell">' +
+                        '<span class="cb-ticker-item-info">' +
+                            (img ? '<img class="cb-ticker-img" src="' + escapeHtml(img) + '" alt="" loading="lazy"/>' : '') +
+                            '<span class="cb-ticker-asset">' + escapeHtml(e.asset?.name || '—') + '</span>' +
+                        '</span>' +
+                    '</td>' +
+                    '<td class="sb-td sb-td--center cb-ticker-price-cell">' +
+                        '<span class="cb-ticker-price">' + (price > 0 ? fmtUSD(price) : '') + '</span>' +
+                    '</td>' +
+                    '<td class="sb-td sb-td--center cb-ticker-time-cell">' +
+                        '<span class="cb-ticker-time">' + timeAgo(e.createdAt) + '</span>' +
+                    '</td>' +
+                '</tr>'
+            );
         }).join('');
+        /* Click sur la ligne → ouvre l'asset (les <tr> ne supportent pas href) */
+        track.querySelectorAll('tr[data-href]').forEach((tr) => {
+            tr.addEventListener('click', () => window.open(tr.dataset.href, '_blank', 'noopener'));
+        });
     }
 
     function startTicker() {
@@ -20629,7 +20689,8 @@ window.initSnapshotPanel = function() {
 (function() {
     'use strict';
 
-    /* Carte épinglée : ta collection CRONOS.WTF (toujours en tête) */
+    /* Carte épinglée : ta collection CRONOS.WTF (toujours en tête).
+       Samples = images de quelques packs représentatifs de la collection. */
     var FEATURED_CRONOS = {
         id: '2ec243b8746154fd9dc1c892d7f54fe9',
         name: 'CRONOS.WTF',
@@ -20637,7 +20698,14 @@ window.initSnapshotPanel = function() {
         cover: 'https://media.nft.crypto.com/4c841153-3bd2-48f3-b655-37a9ed48309e/original.png',
         url: 'https://crypto.com/nft/collection/2ec243b8746154fd9dc1c892d7f54fe9',
         badge: 'FEATURED',
-        badgeCls: ''
+        badgeCls: '',
+        samples: [
+            'GOLD.WTF.png',
+            'GALAXY.WTF.png',
+            'STEEL.WTF.png',
+            'SMOKE.WTF.png',
+            'DIGITAL_GRID.WTF.png'
+        ]
     };
 
     function badgeForStatus(status) {
@@ -20656,21 +20724,55 @@ window.initSnapshotPanel = function() {
     function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]); }); }
 
     function buildCard(item) {
-        var card = document.createElement('a');
+        /* On utilise un <div> au lieu d'<a> pour pouvoir intercepter le click
+           et faire scroll vers la card du drop dans l'onglet Drops, plutôt
+           que d'ouvrir un nouvel onglet vers Crypto.com. */
+        var card = document.createElement('div');
         card.className = 'home-fd-card' + (item.badge === 'FEATURED' ? ' home-fd-card--featured' : '');
-        card.href = item.url;
-        card.target = '_blank';
-        card.rel = 'noopener';
+        card.dataset.dropId = item.id || '';
+        card.dataset.url = item.url || '';
         var b = item.badge ? { text: item.badge, cls: item.badgeCls || '' } : badgeForStatus(item.status);
+        var samples = (item.samples || []).slice(0, 5);
+        var samplesHtml = samples.length
+            ? '<div class="home-fd-card-samples">' +
+                  samples.map(function (s) {
+                      return '<span class="home-fd-card-sample"><img src="' + escHtml(s) + '" alt="" loading="lazy"/></span>';
+                  }).join('') +
+              '</div>'
+            : '';
         card.innerHTML =
             '<div class="home-fd-card-banner">' +
                 (item.cover ? '<img src="' + escHtml(item.cover) + '" alt="" loading="lazy"/>' : '') +
                 (b.text ? '<span class="home-fd-card-badge ' + b.cls + '">' + escHtml(b.text) + '</span>' : '') +
             '</div>' +
             '<div class="home-fd-card-info">' +
-                '<span class="home-fd-card-name">' + escHtml(item.name || '—') + '</span>' +
-                (item.sub ? '<span class="home-fd-card-sub">' + escHtml(item.sub) + '</span>' : '') +
+                '<div>' +
+                    '<div class="home-fd-card-name">' + escHtml(item.name || '—') + '</div>' +
+                    (item.sub ? '<div class="home-fd-card-sub">' + escHtml(item.sub) + '</div>' : '') +
+                '</div>' +
+                samplesHtml +
             '</div>';
+        /* Click → switch sur l'onglet Drops puis scroll vers la card du drop */
+        card.addEventListener('click', function () {
+            var id = card.dataset.dropId;
+            var dropsTab = document.querySelector('.topnav-tab[data-tab="drops"]');
+            if (dropsTab) dropsTab.click();
+            /* Petit délai pour laisser le panel Drops monter, puis scroll */
+            if (id) {
+                var tries = 0;
+                var i = setInterval(function () {
+                    var target = document.querySelector('.drop-card[data-drop-id="' + id + '"]');
+                    if (target) {
+                        clearInterval(i);
+                        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        target.classList.add('drop-card--flash');
+                        setTimeout(function () { target.classList.remove('drop-card--flash'); }, 1600);
+                    } else if (++tries > 30) {
+                        clearInterval(i);
+                    }
+                }, 200);
+            }
+        });
         return card;
     }
 
@@ -20693,27 +20795,30 @@ window.initSnapshotPanel = function() {
         try {
             var data = await getDropsData();
             if (data) {
+                /* Helper : extrait jusqu'à 5 covers de packs pour les samples */
+                var pickSamples = function (d) {
+                    var packs = (d.packs || d.collectibles || []);
+                    return packs.map(function (p) { return p.cover || p.image || (p.media && p.media.url) || ''; })
+                                .filter(Boolean)
+                                .slice(0, 5);
+                };
+                var mapDrop = function (d, status) {
+                    return {
+                        id: d.id,
+                        name: d.name,
+                        sub: (d.creator && (d.creator.displayName || d.creator.username))
+                             ? ('by ' + (d.creator.displayName || d.creator.username))
+                             : '',
+                        cover: d.cover,
+                        url: dropUrl({ id: d.id, status: status }),
+                        status: status,
+                        samples: pickSamples(d)
+                    };
+                };
                 /* On prend en priorité les drops LIVE, puis SOON si la place le permet */
-                var live = (data.live || []).slice(0, 4).map(function (d) {
-                    return {
-                        id: d.id,
-                        name: d.name,
-                        sub: (d.creator && (d.creator.displayName || d.creator.username)) ? ('by ' + (d.creator.displayName || d.creator.username)) : '',
-                        cover: d.cover,
-                        url: dropUrl({ id: d.id, status: 'live' }),
-                        status: 'live'
-                    };
-                });
-                var soon = (data.upcoming || []).slice(0, Math.max(0, 4 - live.length)).map(function (d) {
-                    return {
-                        id: d.id,
-                        name: d.name,
-                        sub: (d.creator && (d.creator.displayName || d.creator.username)) ? ('by ' + (d.creator.displayName || d.creator.username)) : '',
-                        cover: d.cover,
-                        url: dropUrl({ id: d.id, status: 'upcoming' }),
-                        status: 'upcoming'
-                    };
-                });
+                var live = (data.live || []).slice(0, 4).map(function (d) { return mapDrop(d, 'live'); });
+                var soon = (data.upcoming || []).slice(0, Math.max(0, 4 - live.length))
+                                                .map(function (d) { return mapDrop(d, 'upcoming'); });
                 items = items.concat(live, soon);
             }
         } catch (e) { /* ignore — au pire on n'affiche que CRONOS.WTF */ }
