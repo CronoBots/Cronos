@@ -1411,7 +1411,7 @@
         </div>
         <!-- Vraie <table> identique à .stats-table (Top Collections panel) :
              même classes .stats-th / .stats-td, même séparateurs, même zebra. -->
-        <div class="stats-table-wrap home-top-table-wrap" id="homeTopList">
+        <div class="home-top-table-wrap" id="homeTopList">
           <table class="stats-table home-top-table" id="homeTopTable">
             <colgroup>
               <col style="width:44px">
@@ -1982,17 +1982,19 @@
     </div>
   </div>
 
-  <div class="stats-table-wrap" id="statsTableWrap">
+  <!-- Cadre du tableau Top Collections — réutilise littéralement les
+       classes du panel Market Bot (.sb-results-wrap + .sb-results-wrap--table)
+       pour partager EXACTEMENT le même CSS (halo, bordure, padding, overflow).
+       Pas de duplication, pas de divergence possible.
+       L'ID #statsTableWrap est conservé pour la compatibilité JS existante. -->
+  <div class="sb-results-wrap sb-results-wrap--table" id="statsTableWrap">
     <!-- Skeleton loader -->
     <div class="stats-loading" id="statsLoading">
       <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
     </div>
     <div class="stats-error" id="statsError" style="display:none;"></div>
-    <!-- Inner scroll container : porte overflow-x:auto pour permettre le scroll
-         horizontal du tableau sans que ses cellules débordent et masquent la
-         bordure du cadre halo'd parent (problème iOS Safari avec overflow + radius
-         sur le même élément). Pattern aligné sur .sb-results-wrap > .sb-table-wrap. -->
-    <div class="stats-table-scroll" id="statsTableScroll">
+    <!-- Inner scroll container, classe Market Bot. -->
+    <div class="sb-table-wrap" id="statsTableScroll">
     <table class="stats-table" id="statsTable" style="display:none;">
       <colgroup>
         <col class="scol-rank">
@@ -2034,7 +2036,7 @@
       </thead>
       <tbody id="statsTableBody"></tbody>
     </table>
-    </div><!-- /.stats-table-scroll -->
+    </div><!-- /.sb-table-wrap (inner scroll) -->
   </div>
   <div class="sb-loadmore-wrap" id="statsLoadMoreWrap" style="display:none;">
     <button class="sb-loadmore-btn" id="statsLoadMoreBtn" type="button">Load more stats</button>
@@ -20941,58 +20943,61 @@ window.initSnapshotPanel = function() {
 })();
 </script>
 <script>
-/* ── Drag-to-scroll sur le tableau Top Collections ── */
+/* ── Drag-to-scroll sur le tableau Top Collections ──
+   Le scroll horizontal vit dans .sb-table-wrap (#statsTableScroll), pas
+   sur la wrap halo'd (.sb-results-wrap--table) qui est overflow:hidden.
+   Le curseur grab/grabbing est posé sur le scroller. */
 (function () {
     const style = document.createElement('style');
     style.textContent = `
-        #statsTableWrap.has-hscroll { cursor: grab; }
-        #statsTableWrap.has-hscroll * { cursor: inherit !important; }
-        #statsTableWrap.is-dragging,
-        #statsTableWrap.is-dragging * { cursor: grabbing !important; }
+        #statsTableScroll.has-hscroll { cursor: grab; }
+        #statsTableScroll.has-hscroll * { cursor: inherit !important; }
+        #statsTableScroll.is-dragging,
+        #statsTableScroll.is-dragging * { cursor: grabbing !important; }
     `;
     document.head.appendChild(style);
 
-    function updateGrabCursor(wrap) {
-        const hasScroll = wrap.scrollWidth > wrap.clientWidth;
-        wrap.classList.toggle('has-hscroll', hasScroll);
+    function updateGrabCursor(scroller) {
+        const hasScroll = scroller.scrollWidth > scroller.clientWidth;
+        scroller.classList.toggle('has-hscroll', hasScroll);
     }
 
     function initDragScroll() {
-        const wrap = document.getElementById('statsTableWrap');
-        if (!wrap || wrap._dragWired) return;
-        wrap._dragWired = true;
+        const scroller = document.getElementById('statsTableScroll');
+        if (!scroller || scroller._dragWired) return;
+        scroller._dragWired = true;
 
         let isDragging = false, startX = 0, scrollLeft = 0;
 
-        updateGrabCursor(wrap);
-        new ResizeObserver(() => updateGrabCursor(wrap)).observe(wrap);
+        updateGrabCursor(scroller);
+        new ResizeObserver(() => updateGrabCursor(scroller)).observe(scroller);
 
-        wrap.addEventListener('mousedown', e => {
-            if (e.button !== 0 || !wrap.classList.contains('has-hscroll')) return;
+        scroller.addEventListener('mousedown', e => {
+            if (e.button !== 0 || !scroller.classList.contains('has-hscroll')) return;
             isDragging = true;
-            startX = e.pageX - wrap.offsetLeft;
-            scrollLeft = wrap.scrollLeft;
-            wrap.classList.add('is-dragging');
-            wrap.style.userSelect = 'none';
+            startX = e.pageX - scroller.offsetLeft;
+            scrollLeft = scroller.scrollLeft;
+            scroller.classList.add('is-dragging');
+            scroller.style.userSelect = 'none';
             e.preventDefault();
         });
 
         document.addEventListener('mousemove', e => {
             if (!isDragging) return;
-            const x = e.pageX - wrap.offsetLeft;
-            wrap.scrollLeft = scrollLeft - (x - startX);
+            const x = e.pageX - scroller.offsetLeft;
+            scroller.scrollLeft = scrollLeft - (x - startX);
         });
 
         document.addEventListener('mouseup', () => {
             if (!isDragging) return;
             isDragging = false;
-            wrap.classList.remove('is-dragging');
-            wrap.style.userSelect = '';
+            scroller.classList.remove('is-dragging');
+            scroller.style.userSelect = '';
         });
     }
 
     const t = setInterval(() => {
-        if (document.getElementById('statsTableWrap')) {
+        if (document.getElementById('statsTableScroll')) {
             initDragScroll();
             clearInterval(t);
         }
@@ -21100,20 +21105,21 @@ window.initSnapshotPanel = function() {
     }
 
     /* ──────────────────────────────────────────────────────────────────────
-       2. TOUCH SUPPORT pour le drag-to-scroll de #statsTableWrap
-          Le script existant ne couvre que les événements souris (mouse).
+       2. TOUCH SUPPORT pour le drag-to-scroll de #statsTableScroll
+          Le scroll horizontal vit dans le conteneur interne (sb-table-wrap),
+          pas sur la wrap halo'd qui est overflow:hidden.
        ─────────────────────────────────────────────────────────────────── */
     function patchDragScrollWithTouch() {
-        var wrap = document.getElementById('statsTableWrap');
-        if (!wrap || wrap._touchDragWired) return;
-        wrap._touchDragWired = true;
+        var scroller = document.getElementById('statsTableScroll');
+        if (!scroller || scroller._touchDragWired) return;
+        scroller._touchDragWired = true;
         var startX = 0, scrollLeft = 0;
-        wrap.addEventListener('touchstart', function (e) {
+        scroller.addEventListener('touchstart', function (e) {
             startX = e.touches[0].pageX;
-            scrollLeft = wrap.scrollLeft;
+            scrollLeft = scroller.scrollLeft;
         }, { passive: true });
-        wrap.addEventListener('touchmove', function (e) {
-            wrap.scrollLeft = scrollLeft - (e.touches[0].pageX - startX);
+        scroller.addEventListener('touchmove', function (e) {
+            scroller.scrollLeft = scrollLeft - (e.touches[0].pageX - startX);
         }, { passive: true });
     }
 

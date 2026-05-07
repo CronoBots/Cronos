@@ -11582,50 +11582,16 @@ body.is-profile-loading #profileLoadingOverlay * {
     letter-spacing: 0.05em;
 }
 
-/* Table wrapper — NO vertical scroll, page scroll only */
-.stats-table-wrap {
-    /* Le wrap est un cadre halo'd PUR — il ne porte plus le scroll
-       horizontal, c'est .stats-table-scroll qui s'en charge à l'intérieur.
-       Pattern aligné sur .sb-results-wrap > .sb-table-wrap pour éviter
-       l'artefact iOS Safari où overflow-x:auto + border-radius peint
-       le contenu au-dessus de la bordure (le bord cyan disparaissait
-       sur les côtés, sauf au top). */
-    overflow: hidden;
-    min-width: 0;
-    /* height set dynamically by JS */
-    border-radius: 14px;
-    border: 1px solid rgba(0,179,255,0.5);
-    /* Halo bleu cyan — même intensité que .drop-card--live et .sb-results-wrap
-       pour mettre en évidence le bloc principal de l'onglet Top Collections. */
-    box-shadow:
-        0 0 0  1px rgba(0,179,255,0.55),
-        0 0 40px rgba(0,179,255,0.35),
-        0 0 80px rgba(0,179,255,0.18);
-    background: rgba(11,20,38,0.4);
-    /* Aligné sur .sb-results-wrap (Market Bot vue table) : même margin-top (8px),
-       même position:relative pour ancrer un éventuel loader overlay, même
-       overflow:hidden, même halo. Rendu pixel-perfect identique. */
-    margin-top: 8px;
-    position: relative;
-    box-sizing: border-box;
-}
-/* Inner scroll container — porte overflow-x:auto et toute la mécanique
-   de scrollbar. Sépare le rôle "halo'd card" (sur .stats-table-wrap)
-   du rôle "scroll horizontal" (ici), comme Market Bot. */
-.stats-table-scroll {
-    overflow-x: auto;
-    overflow-y: clip;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.4) rgba(255,255,255,0.06);
-    width: 100%;
-    box-sizing: border-box;
-}
-.stats-table-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-.stats-table-scroll::-webkit-scrollbar-track { background: transparent; }
-.stats-table-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); border-radius: 3px; }
-.stats-table-scroll::-webkit-scrollbar-thumb:hover { background: rgba(0,179,255,0.6); }
-.stats-table-scroll::-webkit-scrollbar-corner { background: transparent; }
+/* ──────────────────────────────────────────────────────────────────────
+   Le tableau Top Collections (.stats-table) est désormais hébergé dans
+   un conteneur Market Bot : .sb-results-wrap.sb-results-wrap--table
+   (cadre halo'd) > .sb-table-wrap (scroll horizontal interne).
+   Plus aucune règle .stats-table-wrap / .stats-table-scroll dédiée :
+   on hérite directement du CSS de Market Bot, donc aucune divergence
+   visuelle possible entre les deux panels.
+   Voir #statsTableWrap dans index.html — l'ID est conservé pour la
+   compatibilité JS (drag-to-scroll, refresh, etc.).
+   ─────────────────────────────────────────────────────────────────── */
 
 /* Table */
 .stats-table {
@@ -26948,12 +26914,9 @@ body { box-sizing: border-box; }
         padding-left: 16px !important;
         padding-right: 16px !important;
     }
-    /* Le scroll horizontal vit dans .stats-table-scroll (pattern Market Bot)
-       — la wrap reste overflow:hidden pour que la bordure halo'd ne soit
-       pas peinte sous le contenu scrollé sur iOS Safari. */
-    .stats-table-scroll {
-        -webkit-overflow-scrolling: touch;
-    }
+    /* Top Collections utilise désormais .sb-table-wrap pour le scroll
+       horizontal (même classe que Market Bot vue table) — règle déjà
+       gérée par les styles Market Bot, rien à ajouter ici. */
     /* Filtres : chaque groupe sur sa propre ligne, boutons en largeur égale.
        Avant : tout flottait à droite et débordait sur 3-4 lignes désordonnées. */
     .stats-panel-title-row {
@@ -27239,10 +27202,9 @@ body { box-sizing: border-box; }
         max-height: 140px !important;
     }
 
-    /* Stats / Snapshot / Market Bot : scroll tactile renforcé sur les tables.
-       NB : .stats-table-wrap n'est plus le scroll container (Market Bot pattern),
-       on cible désormais .stats-table-scroll. */
-    .stats-table-scroll,
+    /* Stats (Top Collections) + Snapshot + Market Bot : scroll tactile
+       renforcé sur les containers de scroll horizontal des tables.
+       Stats et Market Bot partagent désormais la classe .sb-table-wrap. */
     .snapshot-table-wrap,
     .sb-table-wrap {
         overflow-x: auto !important;
@@ -28421,13 +28383,22 @@ body { box-sizing: border-box; }
     border-collapse: collapse;
     table-layout: auto;
 }
-/* Wrappers : conservent le halo/bordure cyan de la carte d'origine */
+/* Wrappers : halo + bordure cyan identiques à Top Collections (panel onglet)
+   et Market Bot — auparavant cette config était héritée de .stats-table-wrap,
+   désormais on la déclare explicitement ici (classes Market Bot reprises sur
+   le panel onglet). */
 .home-live-table-wrap,
 .home-top-table-wrap {
     background: rgba(11, 20, 38, 0.85);
     border: 1px solid rgba(0, 179, 255, 0.5);
     border-radius: 14px;
     overflow: hidden;
+    box-shadow:
+        0 0 0  1px rgba(0,179,255,0.55),
+        0 0 40px rgba(0,179,255,0.35),
+        0 0 80px rgba(0,179,255,0.18);
+    box-sizing: border-box;
+    position: relative;
 }
 /* Cellule loader : centre le spinner */
 .home-top-loading-cell {
