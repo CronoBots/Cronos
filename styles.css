@@ -12971,7 +12971,10 @@ body.is-profile-loading #profileLoadingOverlay * {
     overflow: hidden;
     box-shadow: var(--home-halo-shadow);
     background: rgba(11,20,38,0.85);
-    max-height: 420px;
+    /* Hauteur dictée par le flex dans .home-two-col--chat-live (chat et
+       live feed sont stretchés à la même hauteur). Le min-height là-bas
+       a été remonté à 480px pour laisser plus de place à la communauté. */
+    max-height: 540px;
 }
 
 /* Zone principale chat */
@@ -13014,9 +13017,17 @@ body.is-profile-loading #profileLoadingOverlay * {
 .home-chat-member {
     display: flex; align-items: center; gap: 7px;
     padding: 4px 6px; border-radius: 6px;
-    cursor: default; transition: background 0.12s;
+    cursor: pointer; transition: background 0.12s, color 0.12s;
 }
-.home-chat-member:hover { background: rgba(255,255,255,0.05); }
+/* Hover state : tint cyan + name turns to bright color so users
+   discover the click-to-mention affordance. */
+.home-chat-member:hover {
+    background: rgba(0, 179, 255, 0.10);
+}
+.home-chat-member:hover .home-chat-member-name { color: #fff; }
+/* The "+N more" pill is not clickable (no username to mention). */
+.home-chat-member--more { cursor: default; }
+.home-chat-member--more:hover { background: rgba(255,255,255,0.05); }
 .home-chat-member--offline { opacity: 0.4; }
 .home-chat-member--more {
     font-size: 10px; color: rgba(255,255,255,0.3);
@@ -13578,6 +13589,30 @@ body.is-profile-loading #profileLoadingOverlay * {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    /* Cliquable : un clic sur le pseudo d'un message le mentionne dans
+       l'input chat (cf. onMentionClick dans initChat). */
+    cursor: pointer;
+    transition: color 0.12s, text-shadow 0.12s;
+}
+.home-chat-msg-user:hover {
+    color: #fff;
+    text-shadow: 0 0 8px rgba(0, 179, 255, 0.55);
+}
+
+/* @mentions inside a message body — discreet cyan highlight, brighter
+   when the mention targets the current user (you-pinged-me cue). */
+.home-chat-mention {
+    display: inline;
+    color: #00B3FF;
+    font-weight: 700;
+    background: rgba(0, 179, 255, 0.10);
+    border-radius: 4px;
+    padding: 0 4px;
+}
+.home-chat-mention--me {
+    color: #fff;
+    background: rgba(0, 179, 255, 0.32);
+    box-shadow: 0 0 0 1px rgba(0, 179, 255, 0.55);
 }
 /* Wrapper : pseudo + badge collés ensemble, côté gauche du flex */
 .home-chat-msg-user-wrap {
@@ -24169,8 +24204,11 @@ a.snap-holder-username:hover {
  * relative positioning context for arrows + the controls bar. */
 .home-fc-spotlight {
     position: relative;
-    padding: 0 56px;             /* room for prev/next arrows on the sides */
     isolation: isolate;
+    /* Pas de padding latéral : la carte spotlight prend la même largeur que
+       les autres frames du home (Top Collections, Updates, Pulse...) pour
+       un rendu uniforme. Les flèches prev/next sont positionnées en
+       absolute *par-dessus* la bannière, en haut. */
 }
 .home-featured-grid {
     display: grid;
@@ -24194,15 +24232,15 @@ a.snap-holder-username:hover {
     z-index: 2;
 }
 
-/* Spotlight nav arrows : floating buttons on the sides of the card */
+/* Spotlight nav arrows : pilules flottantes positionnées en absolute sur
+   les côtés de la BANNIÈRE (pas du card) pour ne pas pousser sa largeur. */
 .home-fc-arrow {
     position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 42px;
-    height: 42px;
+    top: 60px;                 /* centre vertical de la bannière (h ≈ 120px) */
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    background: rgba(11, 20, 38, 0.85);
+    background: rgba(11, 20, 38, 0.7);
     border: 1px solid rgba(0, 179, 255, 0.4);
     color: #00B3FF;
     cursor: pointer;
@@ -24210,21 +24248,20 @@ a.snap-holder-username:hover {
     align-items: center;
     justify-content: center;
     z-index: 5;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    transition: background 0.18s, border-color 0.18s, transform 0.18s, box-shadow 0.18s;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: background 0.18s, border-color 0.18s, color 0.18s, box-shadow 0.18s;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
 }
-.home-fc-arrow svg { width: 18px; height: 18px; }
-.home-fc-arrow--prev { left: 4px; }
-.home-fc-arrow--next { right: 4px; }
+.home-fc-arrow svg { width: 16px; height: 16px; }
+.home-fc-arrow--prev { left: 12px; }
+.home-fc-arrow--next { right: 12px; }
 .home-fc-arrow:hover {
-    background: rgba(0, 179, 255, 0.18);
+    background: rgba(0, 179, 255, 0.22);
     border-color: #00B3FF;
     color: #fff;
-    box-shadow: 0 8px 22px rgba(0, 179, 255, 0.28);
+    box-shadow: 0 8px 22px rgba(0, 179, 255, 0.32);
 }
-.home-fc-arrow:active { transform: translateY(-50%) scale(0.94); }
 
 /* Controls bar : progress fill on the left, dots on the right */
 .home-fc-controls {
@@ -24280,51 +24317,51 @@ a.snap-holder-username:hover {
    layout. */
 /* Spotlight card : VERTICAL layout at every width.
  *
- * Top    : banner (whole image, slimmer than the legacy 3:1 ratio so it
- *          doesn't dominate the card) — uses background-size:cover for real
- *          banners, so the banner is shown in full ; non-banner artworks
- *          fall back to the existing blurred-backdrop + contained logo.
- * Below  : identity row — collection logo overlapping the banner edge +
- *          collection name (bigger, prominent) + "by <artist>" line.
- * Then   : 3 important stats in a panel.
- * Then   : "Sample NFTs" label + 6 thumbnails of real assets.
+ * Top    : banner courte (height fixe 120px) — la bannière source remplit
+ *          la zone via `cover`, donc elle peut être recadrée verticalement
+ *          (acceptable, les bannières Crypto.com NFT 1500×500 cropent
+ *          juste un peu sur le haut/bas). Ça garde la card compacte.
+ * Below  : identity row — collection logo qui chevauche le bord de la
+ *          bannière + collection name + "by <artist>".
+ * Then   : 3 stats clés.
+ * Then   : "Sample NFTs" label + 6 vignettes.
  * Bottom : CTA. */
 .home-fc-spotlight .home-feat-v3 {
-    min-height: 420px;
+    min-height: 0;            /* on laisse le contenu dicter la hauteur */
 }
-/* Slimmer banner so the whole card fits without scrolling : 4:1 instead
-   of the default 3:1, which gives ~25% more room to the body below. */
 .home-fc-spotlight .home-feat-v3-hero {
-    aspect-ratio: 4 / 1;
+    aspect-ratio: auto;
+    height: 120px;            /* bannière courte, recadrage vertical OK */
 }
-/* Body : more breathing room than the legacy 4-up grid — this is the
-   only card visible at a time so the spacing should feel generous. */
+/* Body : compact mais aéré — la card est volontairement plus petite que
+   la version précédente pour ne pas dominer la home. */
 .home-fc-spotlight .home-feat-v3-body {
-    padding: 18px 22px 20px;
-    gap: 16px;
+    padding: 16px 22px 18px;
+    gap: 12px;
 }
-/* Bigger logo (the "image de collection") + bigger name + bigger artist
-   line so each piece of info is clear. Logo still overlaps the banner
-   edge so the visual relationship banner ↔ collection stays obvious. */
+/* Logo (l'image de collection) + nom + artiste — tailles compactes mais
+   lisibles. Logo chevauche le bord de la bannière (négatif modéré pour
+   que la relation bannière ↔ collection reste évidente). */
 .home-fc-spotlight .home-feat-v3-logo {
-    width: 76px;
-    height: 76px;
-    border-radius: 16px;
+    width: 64px;
+    height: 64px;
+    border-radius: 14px;
 }
 .home-fc-spotlight .home-feat-v3-identity {
-    gap: 14px;
-    margin-top: -38px;
+    gap: 12px;
+    margin-top: -28px;
 }
 .home-fc-spotlight .home-feat-v3-id-text {
-    padding-top: 30px; /* aligne le texte avec le bas du logo qui dépasse */
+    padding-top: 22px; /* aligne le texte avec le bas du logo qui dépasse */
+    gap: 2px;
 }
 .home-fc-spotlight .home-feat-v3-name {
-    font-size: 22px;
+    font-size: 19px;
     white-space: normal;
     line-height: 1.2;
 }
 .home-fc-spotlight .home-feat-v3-creator {
-    font-size: 13.5px;
+    font-size: 12.5px;
     color: rgba(255, 255, 255, 0.65);
     white-space: normal;
 }
@@ -24332,14 +24369,13 @@ a.snap-holder-username:hover {
     color: #fff;
     font-weight: 800;
 }
-/* Stats panel : bigger numbers + label spacing — three KPIs that read
-   at a glance instead of feeling like a tiny status bar. */
+/* Stats panel : compact mais lisible. */
 .home-fc-spotlight .home-feat-v3-stats {
-    padding: 14px 12px;
-    gap: 6px;
+    padding: 10px 10px;
+    gap: 4px;
 }
-.home-fc-spotlight .home-feat-v3-stat-val { font-size: 18px; }
-.home-fc-spotlight .home-feat-v3-stat-label { font-size: 10px; }
+.home-fc-spotlight .home-feat-v3-stat-val { font-size: 16px; }
+.home-fc-spotlight .home-feat-v3-stat-label { font-size: 9.5px; }
 
 /* "Sample NFTs" mini-label above the NFT thumbnail strip — only in spotlight
    context, so it doesn't affect any other place .home-feat-v3-nfts might be
@@ -24358,24 +24394,22 @@ a.snap-holder-username:hover {
     margin-bottom: 2px;
 }
 .home-fc-spotlight .home-feat-v3-nfts {
-    gap: 8px;
+    gap: 6px;
 }
 .home-fc-spotlight .home-feat-v3-cta {
-    padding: 14px 22px;
-    font-size: 13px;
+    padding: 11px 18px;
+    font-size: 12px;
 }
 
-/* Mobile : keep a single-column stack but give the card more breathing room
-   and tuck the arrows inside the card so they don't push the layout out. */
 @media (max-width: 720px) {
-    .home-fc-spotlight { padding: 0; }
-    .home-fc-arrow {
-        width: 36px; height: 36px;
-        background: rgba(11, 20, 38, 0.85);
-    }
+    /* Sur mobile la bannière est encore plus courte pour gagner de la place,
+       et les flèches sont un peu plus petites pour ne pas dominer la card. */
+    .home-fc-spotlight .home-feat-v3-hero { height: 90px; }
+    .home-fc-arrow { width: 32px; height: 32px; top: 45px; }
+    .home-fc-arrow svg { width: 14px; height: 14px; }
     .home-fc-arrow--prev { left: 8px; }
     .home-fc-arrow--next { right: 8px; }
-    .home-fc-controls { margin-top: 12px; gap: 12px; }
+    .home-fc-controls { margin-top: 10px; gap: 10px; }
 }
 
 /* Featured Artists — pas de soulignement */
@@ -25225,7 +25259,10 @@ a.snap-holder-username:hover {
 .home-two-col--chat-live .home-live-card {
     flex: 1 1 0;
     height: auto;
-    min-height: 340px;
+    /* Plus de place pour la communauté : 480px au lieu de 340px. Suffisant
+       pour voir ~6-8 messages d'un coup, la sidebar membres au complet et
+       l'input — sans trop dominer la home. */
+    min-height: 480px;
     min-width: 0;
 }
 @media (max-width: 860px) {

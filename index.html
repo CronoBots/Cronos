@@ -9138,7 +9138,7 @@ document.addEventListener('DOMContentLoaded', initialize);
                             </span>` : ''}
                     </span>
                 </div>
-                <div class="home-chat-msg-body">${_fcEsc(msg.text || '')}</div>
+                <div class="home-chat-msg-body">${formatChatBody(msg.text || '', me?.username)}</div>
                 <div class="home-chat-reactions" style="display:none;"></div>
             `;
 
@@ -9228,8 +9228,26 @@ document.addEventListener('DOMContentLoaded', initialize);
             });
         }
 
+        /* Échappe le HTML puis highlight les @mentions (a-z 0-9 _ -, 2-30
+         * chars). Les mentions de l'utilisateur courant ont une classe
+         * spéciale pour ressortir davantage (badge rose/cyan brillant).
+         * Utilisé par renderMessage pour le body des messages. */
+        function formatChatBody(text, myUsername) {
+            if (!text) return '';
+            const escaped = _fcEsc(text);
+            const meLow = (myUsername || '').toLowerCase();
+            return escaped.replace(/@([A-Za-z0-9_-]{2,30})\b/g, (full, uname) => {
+                const isMe = meLow && uname.toLowerCase() === meLow;
+                const cls  = 'home-chat-mention' + (isMe ? ' home-chat-mention--me' : '');
+                return '<span class="' + cls + '">@' + uname + '</span>';
+            });
+        }
+
         // Génère un stack d'avatars chevauchants dans un conteneur donné.
         // isOffline=true → style grisé + opacité réduite.
+        // Chaque ligne porte data-mention-username + role="button" → clic =
+        // mentionne le membre dans l'input chat (cf. event delegation plus
+        // bas dans initChat).
         function renderAvatarStack(container, members, max, isOffline) {
             if (!container) return;
             if (!members || members.length === 0) {
@@ -9242,14 +9260,18 @@ document.addEventListener('DOMContentLoaded', initialize);
             const extra = members.length - max;
             const offCls = isOffline ? ' home-chat-member--offline' : '';
             container.innerHTML =
-                shown.map(m => `
-                    <div class="home-chat-member${offCls}">
+                shown.map(m => {
+                    const uname = m.username || '';
+                    const dname = m.display || m.username || '?';
+                    return `
+                    <div class="home-chat-member${offCls}" data-mention-username="${_fcEsc(uname)}" role="button" tabindex="0" title="Mention @${_fcEsc(uname)} in chat">
                         ${m.avatar
-                            ? `<img class="home-chat-member-avatar" src="${_fcEsc(m.avatar)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><span class="home-chat-member-initial" style="display:none">${_fcEsc((m.display||m.username||'?')[0].toUpperCase())}</span>`
-                            : `<span class="home-chat-member-initial">${_fcEsc((m.display||m.username||'?')[0].toUpperCase())}</span>`
+                            ? `<img class="home-chat-member-avatar" src="${_fcEsc(m.avatar)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><span class="home-chat-member-initial" style="display:none">${_fcEsc(dname[0].toUpperCase())}</span>`
+                            : `<span class="home-chat-member-initial">${_fcEsc(dname[0].toUpperCase())}</span>`
                         }
-                        <span class="home-chat-member-name">${_fcEsc(m.display || m.username || '?')}</span>
-                    </div>`).join('') +
+                        <span class="home-chat-member-name">${_fcEsc(dname)}</span>
+                    </div>`;
+                }).join('') +
                 (extra > 0 ? `<div class="home-chat-member home-chat-member--more">+${extra} more</div>` : '');
         }
 
@@ -9629,6 +9651,56 @@ document.addEventListener('DOMContentLoaded', initialize);
         window.addEventListener('storage', e => {
             if (e.key === 'cronos_logged_user') refreshAuthState();
         });
+
+        /* ── Click-to-mention ──
+         * Un clic sur n'importe quel membre dans la sidebar (ou la modal
+         * mobile) OU sur le nom d'un auteur de message ajoute "@username "
+         * dans l'input chat et focus l'input. Event delegation sur la card
+         * entière pour capter aussi les éléments réinjectés dynamiquement
+         * par renderAvatarStack / renderMessage. */
+        const card = document.querySelector('.home-community-card');
+        const modal = document.getElementById('homeChatMembersModal');
+        function mentionUser(uname) {
+            if (!input || !uname) return;
+            const me = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+            // Don't self-mention.
+            if (me && me.username && me.username.toLowerCase() === uname.toLowerCase()) return;
+            // Don't insert if input is locked (not signed in).
+            if (locked && locked.style.display !== 'none') return;
+            const at = '@' + uname + ' ';
+            const cur = input.value || '';
+            // Avoid duplicating the mention if it's already at the end.
+            if (!cur.endsWith(at)) {
+                const sep = (cur && !cur.endsWith(' ')) ? ' ' : '';
+                input.value = cur + sep + at;
+            }
+            input.focus();
+            // Close the mobile modal so the user goes back to the input.
+            if (modal && modal.classList.contains('is-open')) {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+            }
+        }
+        function onMentionClick(e) {
+            // Don't hijack clicks on existing buttons (edit / delete / react).
+            if (e.target.closest('button')) return;
+            // 1) Member row in sidebar / modal — data-mention-username.
+            const memberRow = e.target.closest('[data-mention-username]');
+            if (memberRow) {
+                const u = memberRow.getAttribute('data-mention-username');
+                if (u) { e.preventDefault(); mentionUser(u); return; }
+            }
+            // 2) Author name inside a message — .home-chat-msg-user span,
+            //    we read the username from the message wrapper's dataset.
+            const userEl = e.target.closest('.home-chat-msg-user');
+            if (userEl) {
+                const msgEl = userEl.closest('.home-chat-msg[data-msg-user]');
+                const u = msgEl?.dataset.msgUser;
+                if (u) { e.preventDefault(); mentionUser(u); }
+            }
+        }
+        card?.addEventListener('click', onMentionClick);
+        modal?.addEventListener('click', onMentionClick);
     }
 
     // ── Boutons nav ───────────────────────────────────────────────────────
