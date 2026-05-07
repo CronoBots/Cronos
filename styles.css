@@ -11593,6 +11593,20 @@ body.is-profile-loading #profileLoadingOverlay * {
    compatibilité JS (drag-to-scroll, refresh, etc.).
    ─────────────────────────────────────────────────────────────────── */
 
+/* min-width:0 sur la wrap quand elle est utilisée dans le panel Stats.
+   .stats-panel est un flex column → un flex item a min-width:auto par
+   défaut, qui prend la min-content de son contenu. La <table> avec ses
+   11 colonnes white-space:nowrap a une min-content énorme, ce qui
+   gonfle la wrap au-delà du padding latéral du panel sur viewport
+   étroit, et fait rogner la bordure + halo cyan par overflow-x:clip
+   du parent .app-main. Market Bot ne déclenche pas ce cas car ses
+   cartes courtes / table 7 colonnes restent sous la min-content du
+   panel. Cette règle est ciblée sur l'ID pour ne pas affecter Market
+   Bot où la wrap est utilisée nativement avec son comportement par défaut. */
+#statsTableWrap {
+    min-width: 0;
+}
+
 /* Table */
 .stats-table {
     width: max-content;
