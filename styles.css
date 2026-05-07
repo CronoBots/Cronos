@@ -28977,9 +28977,16 @@ body { box-sizing: border-box; }
     .home-top-table colgroup col:nth-child(1) { width: 32px !important; }
     .home-top-table colgroup col:nth-child(3) { width: 64px !important; }
     .home-top-table colgroup col:nth-child(4) { width: 72px !important; }
-    .home-top-table colgroup col:nth-child(5) { width: 0 !important; }
+    .home-top-table colgroup col:nth-child(5) {
+        width: 0 !important;
+        /* visibility:collapse est LA propriété qui efface vraiment une
+           colonne de table — width:0 seul laisse encore une piste réservée
+           sur certains moteurs (Safari iOS notamment). */
+        visibility: collapse !important;
+    }
 
-    /* Masque la colonne VOL % (header + cellules + colspan loader) */
+    /* Masque aussi le header + cellules au cas où collapse n'est pas
+       respecté, et pour garder un DOM propre. */
     .home-top-table thead th:nth-child(5),
     .home-top-table tbody td.home-top-chg-cell,
     .home-top-table tbody tr > td:nth-child(5):not(.home-top-loading-cell) {
