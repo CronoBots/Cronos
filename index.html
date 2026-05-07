@@ -9267,7 +9267,12 @@ document.addEventListener('DOMContentLoaded', initialize);
                 });
 
                 // Mobile : long press (500ms) pour afficher la barre emoji
-                // → évite le conflit avec le scroll (tap rapide)
+                // ET les boutons d'action (reply/edit/delete) — ils sont
+                // tous gated par la même classe .is-react-open en CSS.
+                // Évite le conflit avec le scroll (un mouvement annule le
+                // long-press) et garantit qu'UNE SEULE barre est visible
+                // à la fois (les autres sont closes dès le touchstart, pas
+                // seulement quand le timer fire).
                 if (key) {
                     let _lpTimer = null;
                     let _lpMoved  = false;
@@ -9275,13 +9280,18 @@ document.addEventListener('DOMContentLoaded', initialize);
                     div.addEventListener('touchstart', e => {
                         if (e.target.closest('button')) return;
                         _lpMoved = false;
+                        // Ferme TOUTES les autres barres ouvertes IMMÉDIATEMENT
+                        // (pas seulement quand le timer fire). Ça empêche le bug
+                        // "plusieurs barres actives sur des messages différents"
+                        // qu'on avait quand l'utilisateur tapait B sans long-press
+                        // alors que A était encore ouvert.
+                        msgs.querySelectorAll('.home-chat-msg--community.is-react-open').forEach(other => {
+                            if (other !== div) other.classList.remove('is-react-open');
+                        });
                         _lpTimer = setTimeout(() => {
                             if (_lpMoved) return;
                             div.classList.add('is-react-open');
-                            msgs.querySelectorAll('.home-chat-msg--community.is-react-open').forEach(other => {
-                                if (other !== div) other.classList.remove('is-react-open');
-                            });
-                            // Vibration légère si disponible
+                            // Vibration légère si disponible (haptic feedback).
                             if (navigator.vibrate) navigator.vibrate(30);
                         }, 500);
                     }, { passive: true });

@@ -13836,7 +13836,15 @@ body.is-profile-loading #profileLoadingOverlay * {
        pour les 3 boutons (Reply + Edit + Delete = ~84px). */
     flex-shrink: 0;
 }
-.home-chat-msg--community:hover .home-chat-msg-actions { opacity: 1; }
+/* Desktop : reveal au hover du message. Gated comme la react-bar pour
+   éviter le sticky-hover sur tactile. */
+@media (hover: hover) {
+    .home-chat-msg--community:hover .home-chat-msg-actions { opacity: 1; }
+}
+/* Mobile / universel : la pill apparaît aussi quand le message est
+   "ouvert" (.is-react-open) — donc le long-press révèle À LA FOIS la
+   barre emoji et les boutons reply/edit/delete. */
+.home-chat-msg--community.is-react-open .home-chat-msg-actions { opacity: 1; }
 .home-chat-msg-action {
     /* Boutons un peu plus grands pour que les 3 icônes (Reply / Edit /
        Delete) soient toutes bien visibles et cliquables — et que la pill
@@ -27098,9 +27106,12 @@ body { box-sizing: border-box; }
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Barre emoji flottante (Discord-style) ──
-   Positionnée à DROITE en haut du message — c'est l'emplacement classique
-   des picker emoji (Discord, Slack). Les boutons Reply/Edit/Delete vivent
-   à part en bas-droite, donc plus de conflit visuel. */
+   Positionnée en TOP-RIGHT du message. Cachée par défaut, révélée :
+   - sur DESKTOP (hover: hover) au survol du message
+   - sur TACTILE (hover: none) via la classe .is-react-open posée par
+     un long-press JS (cf. renderMessage). Le :hover n'est PAS appliqué
+     sur tactile pour éviter le sticky-hover qui laisse des barres
+     ouvertes sur plusieurs messages en parallèle. */
 .home-chat-react-bar {
     position: absolute;
     top: -18px;
@@ -27123,23 +27134,24 @@ body { box-sizing: border-box; }
 .home-chat-msg--community {
     position: relative;
 }
-/* Afficher la barre au survol du message */
-.home-chat-msg--community:hover .home-chat-react-bar {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0);
-}
-/* Sur mobile : cachée par défaut, révélée via .is-react-open (tap JS) */
-@media (hover: none) {
-    .home-chat-react-bar {
-        opacity: 0;
-        pointer-events: none;
-    }
-    .home-chat-msg--community.is-react-open .home-chat-react-bar {
+/* Desktop : hover du message → reveal de la barre. Gated par
+   @media (hover: hover) pour ne pas s'activer sur tactile (où :hover
+   peut rester "sticky" après un tap, causant des barres qui s'ouvrent
+   sur plusieurs messages à la fois). */
+@media (hover: hover) {
+    .home-chat-msg--community:hover .home-chat-react-bar {
         opacity: 1;
         pointer-events: auto;
         transform: translateY(0);
     }
+}
+/* Universel : la classe .is-react-open (posée par le long-press JS sur
+   mobile, ou par un toggle programmatique) révèle la barre — fonctionne
+   à la fois sur desktop et sur tactile. */
+.home-chat-msg--community.is-react-open .home-chat-react-bar {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
 }
 
 /* ── Boutons emoji dans la barre ── */
