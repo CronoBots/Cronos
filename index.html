@@ -8209,25 +8209,32 @@ document.addEventListener('DOMContentLoaded', initialize);
                         </span>
                     </div>
                 </div>
-                <div class="home-feat-v3-stats">
-                    <div class="home-feat-v3-stat">
-                        <span class="home-feat-v3-stat-label">Floor</span>
-                        <span class="home-feat-v3-stat-val" data-stat="floor">—</span>
+                <!-- Stats inline (style "vue Collection") + 3 vignettes
+                     NFT à droite, sur la même ligne. Le wrapper sert de
+                     ligne flex en spotlight ; au design plus ancien il
+                     n'avait pas d'effet (les 2 enfants étaient déjà
+                     stackés en column). -->
+                <div class="home-feat-v3-stats-row">
+                    <div class="home-feat-v3-stats">
+                        <div class="home-feat-v3-stat">
+                            <span class="home-feat-v3-stat-label">Floor</span>
+                            <span class="home-feat-v3-stat-val" data-stat="floor">—</span>
+                        </div>
+                        <div class="home-feat-v3-stat-sep"></div>
+                        <div class="home-feat-v3-stat">
+                            <span class="home-feat-v3-stat-label">Owners</span>
+                            <span class="home-feat-v3-stat-val" data-stat="owners">—</span>
+                        </div>
+                        <div class="home-feat-v3-stat-sep"></div>
+                        <div class="home-feat-v3-stat">
+                            <span class="home-feat-v3-stat-label" data-label="vol">Volume</span>
+                            <span class="home-feat-v3-stat-val" data-stat="vol">—</span>
+                        </div>
                     </div>
-                    <div class="home-feat-v3-stat-sep"></div>
-                    <div class="home-feat-v3-stat">
-                        <span class="home-feat-v3-stat-label">Owners</span>
-                        <span class="home-feat-v3-stat-val" data-stat="owners">—</span>
-                    </div>
-                    <div class="home-feat-v3-stat-sep"></div>
-                    <div class="home-feat-v3-stat">
-                        <span class="home-feat-v3-stat-label" data-label="vol">Volume</span>
-                        <span class="home-feat-v3-stat-val" data-stat="vol">—</span>
-                    </div>
-                </div>
-                <div class="home-feat-v3-nfts" data-nfts-strip>
-                    <div class="home-feat-v3-nfts-loading">
-                        <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
+                    <div class="home-feat-v3-nfts" data-nfts-strip>
+                        <div class="home-feat-v3-nfts-loading">
+                            <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
+                        </div>
                     </div>
                 </div>
                 <button class="home-feat-v3-cta" type="button">
@@ -8417,10 +8424,11 @@ document.addEventListener('DOMContentLoaded', initialize);
                 const j = Math.floor(Math.random() * (i + 1));
                 [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
             }
-            // 8 vignettes NFT pour le spotlight (la grille en spotlight est
-            // en 8 colonnes ; les autres usages prennent les 6 premières via
-            // CSS qui n'affichera que ce qui rentre).
-            return shuffled.slice(0, 8);
+            // 3 vignettes NFT en spotlight (placées en bas-droite de la
+            // glass panel). Les usages historiques de la grille pouvaient
+            // en montrer 6 ; on en renvoie maintenant juste 3 puisque le
+            // spotlight est désormais le seul consommateur.
+            return shuffled.slice(0, 3);
         } catch(e) { return []; }
     }
 
@@ -9251,13 +9259,27 @@ document.addEventListener('DOMContentLoaded', initialize);
          * renderAvatarStack et renderMessage à mesure que des membres /
          * messages traversent l'UI. Sert à formatChatBody pour afficher
          * @<DisplayName> dans la pill de mention au lieu du username
-         * technique — typiquement plus reconnaissable par les autres. */
+         * technique — typiquement plus reconnaissable par les autres.
+         *
+         * IMPORTANT : on ne remplace JAMAIS un display name déjà connu par
+         * un fallback technique (anciens messages sans msg.display, etc).
+         * Sinon on perdrait le bon nom dès qu'un message ancien re-traverse
+         * l'UI (ce qui causait sur PC un mismatch entre le pseudo affiché
+         * dans le chat et celui injecté par les mentions). */
         const _chatNameCache = new Map();
         function _cacheName(username, display) {
             if (!username) return;
             const k = String(username).toLowerCase();
-            const v = String(display || username);
-            if (v) _chatNameCache.set(k, v);
+            const d = display ? String(display).trim() : '';
+            if (d && d.toLowerCase() !== k) {
+                // Vrai display name (différent du username) — toujours cache.
+                _chatNameCache.set(k, d);
+            } else if (!_chatNameCache.has(k)) {
+                // Pas de display name fourni et rien en cache — fallback au
+                // username technique pour que la pill ne soit pas vide.
+                _chatNameCache.set(k, String(username));
+            }
+            // Sinon : on garde l'entrée existante (meilleure que le fallback).
         }
 
         /* Échappe le HTML puis transforme les @username en pills colorées.
