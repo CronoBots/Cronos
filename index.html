@@ -1050,10 +1050,27 @@
     <div class="home-title-block">
       <h1 class="home-title-h1">CRONOS.WTF</h1>
       <p class="home-title-sub">Browse smarter. Collect better.</p>
+      <!-- Customize toolbar : enter edit mode to drag & hide home sections.
+           Layout is persisted per browser in localStorage. -->
+      <div class="home-customize-bar">
+        <button class="home-customize-btn" id="homeCustomizeBtn" type="button" aria-pressed="false">
+          <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="6" cy="6" r="1.4"/><circle cx="14" cy="6" r="1.4"/>
+            <circle cx="6" cy="10" r="1.4"/><circle cx="14" cy="10" r="1.4"/>
+            <circle cx="6" cy="14" r="1.4"/><circle cx="14" cy="14" r="1.4"/>
+          </svg>
+          <span class="home-customize-btn-label">Customize layout</span>
+        </button>
+        <div class="home-customize-hint" id="homeCustomizeHint" aria-hidden="true">
+          <span>Drag <strong>⋮⋮</strong> to reorder · click <strong>👁</strong> to hide</span>
+          <button class="home-customize-reset" id="homeCustomizeReset" type="button">Reset layout</button>
+          <button class="home-customize-done" id="homeCustomizeDone" type="button">Done</button>
+        </div>
+      </div>
     </div>
 
     <!-- ══ SPOTLIGHT — pleine largeur ══ -->
-    <section class="home-section home-spotlight-section">
+    <section class="home-section home-spotlight-section" data-home-id="spotlight">
       <div class="home-section-header">
         <h2 class="home-section-title">Spotlight</h2>
       </div>
@@ -1207,7 +1224,7 @@
     </section>
 
     <!-- ══ 2 COLONNES : Community Chat (gauche) | Live Activity (droite) ══ -->
-    <div class="home-two-col home-two-col--chat-live">
+    <div class="home-two-col home-two-col--chat-live" data-home-id="chat-live">
 
       <!-- COMMUNITY CHAT — colonne gauche -->
       <section class="home-section home-community-section">
@@ -1332,7 +1349,7 @@
     </div><!-- fin home-two-col--chat-live -->
 
     <!-- ── Crypto Prices (live from Crypto.com Exchange) ── -->
-    <section class="home-section home-crypto-section">
+    <section class="home-section home-crypto-section" data-home-id="crypto">
       <div class="home-section-header home-crypto-header">
         <h2 class="home-section-title">Crypto Prices</h2>
         <!-- Bloc droit : filtre période (aligné sur le bord droit des cartes)
@@ -1363,7 +1380,7 @@
     </section>
 
     <!-- ── Featured Collections ── -->
-    <section class="home-section home-section--featured">
+    <section class="home-section home-section--featured" data-home-id="featured-collections">
       <div class="home-section-header">
         <h2 class="home-section-title">Featured Collections</h2>
       </div>
@@ -1373,7 +1390,7 @@
     </section>
 
     <!-- ── Featured Artists — juste après Featured Collections ── -->
-    <section class="home-section">
+    <section class="home-section" data-home-id="featured-artists">
       <div class="home-section-header">
         <h2 class="home-section-title">Featured Artists</h2>
       </div>
@@ -1383,7 +1400,7 @@
     </section>
 
     <!-- ── Featured Drops — collections en cours mises en avant + ta CRONOS.WTF ── -->
-    <section class="home-section home-fd-section">
+    <section class="home-section home-fd-section" data-home-id="featured-drops">
       <div class="home-section-header">
         <h2 class="home-section-title">Featured Drops</h2>
         <button class="home-section-action" id="homeGoDropsFromFD" type="button">See all drops →</button>
@@ -1403,7 +1420,7 @@
     </section>
 
     <!-- ── Top Collections 24H ── -->
-    <div class="home-two-col home-two-col--bottom">
+    <div class="home-two-col home-two-col--bottom" data-home-id="top-collections">
 
       <section class="home-section">
         <div class="home-section-header">
@@ -1445,7 +1462,7 @@
     </div>
 
     <!-- ── UPDATES — changelog (full width, above Pulse) ── -->
-    <section class="home-section home-updates-section">
+    <section class="home-section home-updates-section" data-home-id="updates">
       <div class="home-section-header">
         <h2 class="home-section-title">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;vertical-align:-3px;margin-right:6px;color:#00B3FF;"><path d="M3 4h14M3 10h14M3 16h9"/><circle cx="16" cy="16" r="2"/></svg>
@@ -1457,7 +1474,7 @@
     </section>
 
     <!-- ── PULSE — site activity stats (full width, bottom of home) ── -->
-    <section class="home-section home-pulse-section">
+    <section class="home-section home-pulse-section" data-home-id="pulse">
       <div class="home-section-header">
         <h2 class="home-section-title">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;vertical-align:-3px;margin-right:6px;color:#00B3FF;"><path d="M2 11h3l2-5 3 9 2-6 2 4h4"/></svg>
@@ -1495,76 +1512,106 @@
             </div>
           </div>
 
-          <div class="pulse-grid">
-            <div class="pulse-card pulse-card--wide">
-              <h3 class="pulse-card-title">Sessions per day</h3>
-              <div class="pulse-card-body"><canvas id="pulseChartDaily"></canvas></div>
+          <!-- ── Sub-section 1 : Traffic over time ── -->
+          <div class="pulse-subsection">
+            <span class="pulse-subsection-label">Traffic over time</span>
+            <div class="pulse-grid">
+              <div class="pulse-card pulse-card--wide">
+                <h3 class="pulse-card-title">Sessions per day</h3>
+                <div class="pulse-card-body"><canvas id="pulseChartDaily"></canvas></div>
+              </div>
+              <div class="pulse-card">
+                <h3 class="pulse-card-title">By hour of day</h3>
+                <div class="pulse-card-body"><canvas id="pulseChartHourly"></canvas></div>
+              </div>
+              <div class="pulse-card pulse-card--full">
+                <h3 class="pulse-card-title">Activity heatmap (day of week × hour)</h3>
+                <div class="pulse-card-body"><div class="pulse-heatmap" id="pulseHeatmap"></div></div>
+              </div>
             </div>
-            <div class="pulse-card">
-              <h3 class="pulse-card-title">By hour of day</h3>
-              <div class="pulse-card-body"><canvas id="pulseChartHourly"></canvas></div>
-            </div>
-            <div class="pulse-card pulse-card--wide">
-              <h3 class="pulse-card-title">Activity heatmap (day of week × hour)</h3>
-              <div class="pulse-card-body"><div class="pulse-heatmap" id="pulseHeatmap"></div></div>
-            </div>
-            <div class="pulse-card">
-              <h3 class="pulse-card-title">Device</h3>
-              <div class="pulse-card-body"><canvas id="pulseChartDevice"></canvas></div>
-            </div>
-            <div class="pulse-card">
-              <h3 class="pulse-card-title">New vs returning</h3>
-              <div class="pulse-card-body"><canvas id="pulseChartReturning"></canvas></div>
-            </div>
-            <div class="pulse-card">
-              <h3 class="pulse-card-title">Signed-in vs anonymous</h3>
-              <div class="pulse-card-body"><canvas id="pulseChartAuth"></canvas></div>
-            </div>
-            <div class="pulse-card pulse-card--wide">
-              <h3 class="pulse-card-title">Chat activity</h3>
-              <div class="pulse-card-body"><canvas id="pulseChartChat"></canvas></div>
-            </div>
-            <div class="pulse-card">
-              <h3 class="pulse-card-title">New members per week</h3>
-              <div class="pulse-card-body"><canvas id="pulseChartGrowth"></canvas></div>
-            </div>
-            <div class="pulse-card">
-              <h3 class="pulse-card-title">Top contributors</h3>
-              <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopContributors"></ol></div>
-            </div>
-            <div class="pulse-card">
-              <h3 class="pulse-card-title">Top tabs visited</h3>
-              <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopPages"></ol></div>
-            </div>
-            <div class="pulse-card">
-              <h3 class="pulse-card-title">Top referrers</h3>
-              <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopReferrers"></ol></div>
-            </div>
-            <div class="pulse-card">
-              <h3 class="pulse-card-title">Top languages</h3>
-              <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopLangs"></ol></div>
-            </div>
+          </div>
 
-            <!-- ── Engagement par feature (events) ── -->
-            <div class="pulse-card pulse-card--wide">
-              <h3 class="pulse-card-title">Top collections viewed</h3>
-              <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopCollections"></ol></div>
+          <!-- ── Sub-section 2 : Audience ── -->
+          <div class="pulse-subsection">
+            <span class="pulse-subsection-label">Audience</span>
+            <div class="pulse-grid">
+              <div class="pulse-card">
+                <h3 class="pulse-card-title">Device</h3>
+                <div class="pulse-card-body"><canvas id="pulseChartDevice"></canvas></div>
+              </div>
+              <div class="pulse-card">
+                <h3 class="pulse-card-title">New vs returning</h3>
+                <div class="pulse-card-body"><canvas id="pulseChartReturning"></canvas></div>
+              </div>
+              <div class="pulse-card">
+                <h3 class="pulse-card-title">Signed-in vs anonymous</h3>
+                <div class="pulse-card-body"><canvas id="pulseChartAuth"></canvas></div>
+              </div>
             </div>
-            <div class="pulse-card">
-              <h3 class="pulse-card-title">Top profiles visited</h3>
-              <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopProfiles"></ol></div>
+          </div>
+
+          <!-- ── Sub-section 3 : Community ── -->
+          <div class="pulse-subsection">
+            <span class="pulse-subsection-label">Community</span>
+            <div class="pulse-grid">
+              <div class="pulse-card pulse-card--wide">
+                <h3 class="pulse-card-title">Chat activity</h3>
+                <div class="pulse-card-body"><canvas id="pulseChartChat"></canvas></div>
+              </div>
+              <div class="pulse-card">
+                <h3 class="pulse-card-title">New members per week</h3>
+                <div class="pulse-card-body"><canvas id="pulseChartGrowth"></canvas></div>
+              </div>
+              <div class="pulse-card pulse-card--full">
+                <h3 class="pulse-card-title">Top contributors</h3>
+                <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopContributors"></ol></div>
+              </div>
             </div>
-            <div class="pulse-card">
-              <h3 class="pulse-card-title">Snapshots run</h3>
-              <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopSnapshots"></ol></div>
+          </div>
+
+          <!-- ── Sub-section 4 : Sources & content ── -->
+          <div class="pulse-subsection">
+            <span class="pulse-subsection-label">Sources &amp; content</span>
+            <div class="pulse-grid">
+              <div class="pulse-card">
+                <h3 class="pulse-card-title">Top tabs visited</h3>
+                <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopPages"></ol></div>
+              </div>
+              <div class="pulse-card">
+                <h3 class="pulse-card-title">Top referrers</h3>
+                <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopReferrers"></ol></div>
+              </div>
+              <div class="pulse-card">
+                <h3 class="pulse-card-title">Top languages</h3>
+                <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopLangs"></ol></div>
+              </div>
             </div>
-            <div class="pulse-card">
-              <h3 class="pulse-card-title">Market Bot — collections added</h3>
-              <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopMarketBot"></ol></div>
-            </div>
-            <div class="pulse-card">
-              <h3 class="pulse-card-title">Cryptos tracked</h3>
-              <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopCryptos"></ol></div>
+          </div>
+
+          <!-- ── Sub-section 5 : Feature engagement ── -->
+          <div class="pulse-subsection">
+            <span class="pulse-subsection-label">Feature engagement</span>
+            <div class="pulse-grid">
+              <div class="pulse-card pulse-card--wide">
+                <h3 class="pulse-card-title">Top collections viewed</h3>
+                <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopCollections"></ol></div>
+              </div>
+              <div class="pulse-card">
+                <h3 class="pulse-card-title">Top profiles visited</h3>
+                <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopProfiles"></ol></div>
+              </div>
+              <div class="pulse-card">
+                <h3 class="pulse-card-title">Snapshots run</h3>
+                <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopSnapshots"></ol></div>
+              </div>
+              <div class="pulse-card">
+                <h3 class="pulse-card-title">Market Bot — collections added</h3>
+                <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopMarketBot"></ol></div>
+              </div>
+              <div class="pulse-card">
+                <h3 class="pulse-card-title">Cryptos tracked</h3>
+                <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopCryptos"></ol></div>
+              </div>
             </div>
           </div>
         </div>
@@ -9554,7 +9601,255 @@ document.addEventListener('DOMContentLoaded', initialize);
         initChat();
         initNavButtons();
         initSpotlight();
+        initHomeCustomize();
     };
+
+    /* ── HOME CUSTOMIZE — drag, hide & persist top-level home sections ─────
+     * The home is a flex column of full-width sections (and a few two-col
+     * rows). Each top-level child carries data-home-id. We expose an
+     * "edit mode" toggle that lets the user drag sections around and hide
+     * the ones they don't care about. The chosen layout is persisted
+     * per-browser in localStorage and re-applied on every home view.
+     *
+     * Notes on robustness:
+     *  - The default order is captured *once* on first run, so a user who
+     *    upgrades to a build that adds new sections still sees the new ones
+     *    appended (the merge logic below appends unknown ids at the end).
+     *  - We use Pointer Events for cross-platform drag (mouse + touch) —
+     *    no HTML5 dnd, which is unreliable on mobile.
+     *  - We never delete nodes from the DOM. Hidden sections stay in the
+     *    tree (display:none) so their state can be restored instantly.
+     *  - In edit mode we disable pointer-events on section content (CSS),
+     *    so dragging doesn't fire chat sends or button clicks.
+     */
+    let _homeCustomizeInit = false;
+    const HOME_LAYOUT_KEY = 'cwtf-home-layout-v1';
+
+    function initHomeCustomize() {
+        if (_homeCustomizeInit) return;
+        _homeCustomizeInit = true;
+
+        const homeBody = document.querySelector('.home-panel .home-body');
+        const btn      = document.getElementById('homeCustomizeBtn');
+        const doneBtn  = document.getElementById('homeCustomizeDone');
+        const resetBtn = document.getElementById('homeCustomizeReset');
+        if (!homeBody || !btn) return;
+
+        // Default order = order in which sections appear in the markup.
+        const defaultOrder = Array.from(homeBody.querySelectorAll(':scope > [data-home-id]'))
+            .map(el => el.dataset.homeId);
+
+        // Hidden dock : floating bar listing hidden sections so users can
+        // restore them. Created lazily, attached as the last child of body.
+        let hiddenDock = document.querySelector('.home-panel .home-hidden-dock');
+        if (!hiddenDock) {
+            hiddenDock = document.createElement('div');
+            hiddenDock.className = 'home-hidden-dock';
+            hiddenDock.setAttribute('aria-label', 'Hidden home sections');
+            homeBody.appendChild(hiddenDock);
+        }
+
+        function loadLayout() {
+            try {
+                const raw = localStorage.getItem(HOME_LAYOUT_KEY);
+                if (!raw) return null;
+                const obj = JSON.parse(raw);
+                if (!obj || !Array.isArray(obj.order)) return null;
+                return { order: obj.order, hidden: Array.isArray(obj.hidden) ? obj.hidden : [] };
+            } catch (_) { return null; }
+        }
+        function saveLayout(order, hidden) {
+            try { localStorage.setItem(HOME_LAYOUT_KEY, JSON.stringify({ order, hidden })); }
+            catch (_) { /* quota / private mode : silently ignore */ }
+        }
+
+        function currentOrder() {
+            return Array.from(homeBody.querySelectorAll(':scope > [data-home-id]'))
+                .map(el => el.dataset.homeId);
+        }
+        function currentHidden() {
+            return Array.from(homeBody.querySelectorAll(':scope > [data-home-id][data-home-hidden="1"]'))
+                .map(el => el.dataset.homeId);
+        }
+
+        function applyLayout(layout) {
+            if (!layout) return;
+            // Merge : start with stored order, then append any defaultOrder
+            // entries missing (new sections shipped in a newer build).
+            const merged = [...layout.order.filter(id => defaultOrder.includes(id))];
+            defaultOrder.forEach(id => { if (!merged.includes(id)) merged.push(id); });
+            // Reorder DOM. appendChild moves the node, preserving event
+            // listeners and internal state (Chart.js, chat connection, etc.)
+            merged.forEach(id => {
+                const el = homeBody.querySelector(`:scope > [data-home-id="${id}"]`);
+                if (el) homeBody.appendChild(el);
+            });
+            // Keep dock as the last child so it stays visually at the bottom.
+            homeBody.appendChild(hiddenDock);
+            // Apply hidden state.
+            const hiddenSet = new Set(layout.hidden || []);
+            defaultOrder.forEach(id => {
+                const el = homeBody.querySelector(`:scope > [data-home-id="${id}"]`);
+                if (!el) return;
+                if (hiddenSet.has(id)) el.dataset.homeHidden = '1';
+                else delete el.dataset.homeHidden;
+            });
+        }
+
+        function persist() {
+            saveLayout(currentOrder(), currentHidden());
+            renderHiddenDock();
+        }
+
+        // Friendly labels for the hidden-dock chips. Falls back to the id
+        // (capitalised) if not listed here.
+        const SECTION_LABELS = {
+            'spotlight'           : 'Spotlight',
+            'chat-live'           : 'Community Chat & Live Feed',
+            'crypto'              : 'Crypto Prices',
+            'featured-collections': 'Featured Collections',
+            'featured-artists'    : 'Featured Artists',
+            'featured-drops'      : 'Featured Drops',
+            'top-collections'     : 'Top Collections',
+            'updates'             : 'Latest Updates',
+            'pulse'               : 'Pulse'
+        };
+        function labelFor(id) {
+            return SECTION_LABELS[id] || id.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        }
+
+        function renderHiddenDock() {
+            const hidden = currentHidden();
+            hiddenDock.innerHTML = '';
+            const title = document.createElement('span');
+            title.className = 'home-hidden-dock-title';
+            title.textContent = 'Hidden sections';
+            hiddenDock.appendChild(title);
+            if (!hidden.length) {
+                const empty = document.createElement('span');
+                empty.className = 'home-hidden-dock-empty';
+                empty.textContent = 'None — drag the eye icon on a section to hide it.';
+                hiddenDock.appendChild(empty);
+                return;
+            }
+            hidden.forEach(id => {
+                const chip = document.createElement('button');
+                chip.type = 'button';
+                chip.className = 'home-hidden-chip';
+                chip.innerHTML = '<svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6z"/><circle cx="10" cy="10" r="2.5"/></svg><span></span>';
+                chip.querySelector('span').textContent = 'Show ' + labelFor(id);
+                chip.addEventListener('click', () => {
+                    const el = homeBody.querySelector(`:scope > [data-home-id="${id}"]`);
+                    if (el) delete el.dataset.homeHidden;
+                    persist();
+                });
+                hiddenDock.appendChild(chip);
+            });
+        }
+
+        // Build the per-section overlay (drag handle + hide button) once.
+        function ensureOverlays() {
+            homeBody.querySelectorAll(':scope > [data-home-id]').forEach(section => {
+                if (section.querySelector(':scope > .home-edit-overlay')) return;
+                const overlay = document.createElement('div');
+                overlay.className = 'home-edit-overlay';
+                overlay.innerHTML = `
+                    <span class="home-edit-handle" role="button" aria-label="Drag to reorder" title="Drag to reorder">
+                        <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                          <circle cx="7" cy="5" r="1"/><circle cx="13" cy="5" r="1"/>
+                          <circle cx="7" cy="10" r="1"/><circle cx="13" cy="10" r="1"/>
+                          <circle cx="7" cy="15" r="1"/><circle cx="13" cy="15" r="1"/>
+                        </svg>
+                    </span>
+                    <button type="button" class="home-edit-hide" aria-label="Hide this section" title="Hide this section">
+                        <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M2 10s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6z"/>
+                          <circle cx="10" cy="10" r="2.5"/>
+                          <line x1="3" y1="3" x2="17" y2="17"/>
+                        </svg>
+                    </button>`;
+                section.appendChild(overlay);
+                overlay.querySelector('.home-edit-hide').addEventListener('click', () => {
+                    section.dataset.homeHidden = '1';
+                    persist();
+                });
+                wireDrag(section, overlay.querySelector('.home-edit-handle'));
+            });
+        }
+
+        // Pointer-based drag : works on mouse + touch + pen. We snapshot the
+        // section midpoints on dragstart, then on each pointermove decide the
+        // closest neighbour and swap if needed.
+        function wireDrag(section, handle) {
+            handle.addEventListener('pointerdown', (ev) => {
+                if (homeBody.dataset.homeEdit !== '1') return;
+                ev.preventDefault();
+                handle.setPointerCapture(ev.pointerId);
+                section.classList.add('home-dragging');
+
+                const onMove = (e) => {
+                    const x = e.clientX, y = e.clientY;
+                    let target = null;
+                    let bestDist = Infinity;
+                    homeBody.querySelectorAll(':scope > [data-home-id]:not([data-home-hidden="1"])').forEach(other => {
+                        if (other === section) return;
+                        const r = other.getBoundingClientRect();
+                        // Only consider sections currently overlapping the
+                        // pointer vertically — this keeps the hit zone tight
+                        // and avoids "jumping" past unrelated rows.
+                        if (y < r.top - 30 || y > r.bottom + 30) return;
+                        const cy = r.top + r.height / 2;
+                        const d = Math.abs(cy - y);
+                        if (d < bestDist) { bestDist = d; target = other; }
+                    });
+                    homeBody.querySelectorAll('.home-drag-over').forEach(n => n.classList.remove('home-drag-over'));
+                    if (!target) return;
+                    target.classList.add('home-drag-over');
+                    const tr = target.getBoundingClientRect();
+                    const before = y < tr.top + tr.height / 2;
+                    if (before) target.parentNode.insertBefore(section, target);
+                    else        target.parentNode.insertBefore(section, target.nextSibling);
+                };
+                const onUp = (e) => {
+                    handle.releasePointerCapture(ev.pointerId);
+                    handle.removeEventListener('pointermove', onMove);
+                    handle.removeEventListener('pointerup', onUp);
+                    handle.removeEventListener('pointercancel', onUp);
+                    section.classList.remove('home-dragging');
+                    homeBody.querySelectorAll('.home-drag-over').forEach(n => n.classList.remove('home-drag-over'));
+                    // Keep dock pinned as last child after any reorder.
+                    homeBody.appendChild(hiddenDock);
+                    persist();
+                };
+                handle.addEventListener('pointermove', onMove);
+                handle.addEventListener('pointerup', onUp);
+                handle.addEventListener('pointercancel', onUp);
+            });
+        }
+
+        function setEditMode(on) {
+            homeBody.dataset.homeEdit = on ? '1' : '0';
+            btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+            btn.querySelector('.home-customize-btn-label').textContent = on ? 'Editing layout…' : 'Customize layout';
+            if (on) {
+                ensureOverlays();
+                renderHiddenDock();
+            }
+        }
+
+        // Wire toolbar.
+        btn.addEventListener('click', () => setEditMode(homeBody.dataset.homeEdit !== '1'));
+        if (doneBtn) doneBtn.addEventListener('click', () => setEditMode(false));
+        if (resetBtn) resetBtn.addEventListener('click', () => {
+            try { localStorage.removeItem(HOME_LAYOUT_KEY); } catch (_) {}
+            applyLayout({ order: defaultOrder, hidden: [] });
+            renderHiddenDock();
+        });
+
+        // Apply persisted layout on first init.
+        const saved = loadLayout();
+        if (saved) applyLayout(saved);
+    }
 
     // ── Feature Spotlight ────────────────────────────────────────────────
     // Big rotating showcase at the top of the home page. Auto-cycles
