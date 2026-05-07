@@ -11586,6 +11586,13 @@ body.is-profile-loading #profileLoadingOverlay * {
 .stats-table-wrap {
     overflow-x: auto;
     overflow-y: clip;
+    /* Sans min-width:0, dans un parent flex (.stats-panel column flex,
+       .home-section, etc.) le min-content de la table interne (cells
+       white-space:nowrap) gonfle la wrap au-delà du padding du panel
+       et la bordure + halo se font tronquer à droite/gauche.
+       min-width:0 force la wrap à respecter la largeur de son parent ;
+       l'overflow-x:auto en interne préserve le scroll horizontal. */
+    min-width: 0;
     /* height set dynamically by JS */
     border-radius: 14px;
     border: 1px solid rgba(0,179,255,0.5);
@@ -13291,32 +13298,11 @@ body.is-profile-loading #profileLoadingOverlay * {
     letter-spacing: 0.06em;
 }
 
-/* ── TOP LIST — même style que le tableau stats (halo + header + zebra) ── */
-.home-top-list {
-    display: flex;
-    flex-direction: column;
-    border: 1px solid rgba(0, 179, 255, 0.45);
-    border-radius: 14px;
-    overflow: hidden;
-    background: rgba(11, 20, 38, 0.7);
-    box-shadow:
-        0 0 0 1px rgba(0,179,255,0.4),
-        0 0 30px rgba(0,179,255,0.18),
-        0 0 60px rgba(0,179,255,0.08);
-}
-/* Header colonnes */
-.home-top-list-header {
-    display: grid;
-    grid-template-columns: 28px 32px 1fr 90px 90px 72px;
-    align-items: center;
-    gap: 12px;
-    padding: 9px 16px;
-    background: rgba(0, 179, 255, 0.06);
-    border-bottom: 1px solid rgba(0,179,255,0.18);
-}
-.home-top-list-header--creators {
-    grid-template-columns: 28px 36px 1fr 110px;
-}
+/* ── TOP LIST — header label utilisé par <th class="home-top-th"> dans la
+   vraie <table#homeTopTable>. Le reste de l'ancien layout div+grid
+   (.home-top-list / .home-top-list-header / .home-top-row / .home-top-rank /
+   .home-top-floor / .home-top-vol / .home-top-chg) a été retiré : aucun
+   HTML ne le référence depuis le passage en <table> (commit f00b14e). */
 .home-top-th {
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 13px;
@@ -13327,26 +13313,7 @@ body.is-profile-loading #profileLoadingOverlay * {
     padding: 4px 0;
 }
 .home-top-th--r { text-align: right; }
-
-/* ── Séparateurs verticaux entre colonnes ── */
-/* Header */
-.home-top-list-header > *:not(:last-child) {
-    border-right: 1px solid rgba(0,179,255,0.14);
-    padding-right: 12px;
-}
-.home-top-list-header > * + * {
-    padding-left: 0;
-}
-/* Rows — mêmes séparateurs */
-.home-top-row > *:not(:last-child) {
-    border-right: 1px solid rgba(255,255,255,0.05);
-    padding-right: 10px;
-}
-/* Creators table */
-.cb-creators-list .home-top-list-header > *:not(:last-child) {
-    border-right: 1px solid rgba(0,179,255,0.14);
-    padding-right: 12px;
-}
+/* Creators table — séparateurs entre colonnes */
 .cb-creator-row > *:not(:last-child) {
     border-right: 1px solid rgba(255,255,255,0.05);
     padding-right: 10px;
@@ -13387,25 +13354,10 @@ body.is-profile-loading #profileLoadingOverlay * {
     justify-content: center;
     padding: 24px;
 }
-.home-top-row {
-    display: grid;
-    grid-template-columns: 28px 32px 1fr 90px 90px 72px;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    cursor: pointer;
-    transition: background 0.12s;
-}
-.home-top-row:last-child { border-bottom: none; }
-.home-top-row:nth-child(even) { background: rgba(255,255,255,0.018); }
-.home-top-row:hover { background: rgba(0,179,255,0.07); }
-.home-top-rank {
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 12px;
-    color: rgba(255,255,255,0.3);
-    text-align: center;
-}
+/* Logo et nom dans la cellule Collection de la <table#homeTopTable>.
+   Les classes .home-top-row / .home-top-rank / .home-top-floor /
+   .home-top-vol / .home-top-chg appartenaient à l'ancien layout div+grid,
+   désormais remplacé par .stats-rank et les *-cell de la <td>. */
 .home-top-logo {
     width: 32px;
     height: 32px;
@@ -13421,18 +13373,6 @@ body.is-profile-loading #profileLoadingOverlay * {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-.home-top-floor, .home-top-vol {
-    font-size: 12px;
-    color: #fff;
-    text-align: right;
-    font-family: 'Geomanist-Bold', sans-serif;
-}
-.home-top-chg {
-    font-size: 11px;
-    font-family: 'Geomanist-Bold', sans-serif;
-    text-align: right;
-    color: rgba(255,255,255,0.45);
 }
 .home-top-up { color: #4ade80; }
 .home-top-down { color: #f87171; }
@@ -27311,92 +27251,6 @@ body { box-sizing: border-box; }
 }
 
 @media (max-width: 640px) {
-    /* Top Collections : passe de 6 colonnes (#, img, name, floor, vol, change)
-       à 5 — la colonne Change est masquée car elle déborde du cadre sur petit
-       écran. Le nom récupère toute la largeur restante. */
-    .home-top-list-header,
-    .home-top-row {
-        grid-template-columns: 24px 28px 1fr 68px 68px !important;
-        gap: 8px !important;
-        padding-left: 12px !important;
-        padding-right: 12px !important;
-    }
-    .home-top-list-header > *:nth-child(6),
-    .home-top-row > *:nth-child(6),
-    .home-top-chg {
-        display: none !important;
-    }
-    /* Bug: la règle de base ajoute padding-right: 10px aux cellules pour
-       afficher des séparateurs verticaux. Sur mobile la cellule image
-       (28px) perdait 10px → l'image de 26px était coupée à droite. On
-       passe sur des séparateurs en border-LEFT (style Market Bot) qui
-       fonctionnent par cellule "à partir de la 2e" — comme ça aucune
-       bordure n'apparaît après la dernière colonne visible (volume) :
-       la colonne change est en display:none, donc son border-left
-       n'est pas rendu. */
-    .home-top-row > *:not(:last-child),
-    .home-top-list-header > *:not(:last-child) {
-        border-right: none !important;
-        padding-right: 0 !important;
-    }
-    .home-top-row > * + *,
-    .home-top-list-header > * + * {
-        border-left: 1px solid rgba(255,255,255,0.08) !important;
-    }
-    /* Cell 2 (avatar — vide dans le header) et cell 3 (Collection) ne
-       portent PAS de séparateur, sinon on en a deux qui se touchent
-       dans la zone entre # et le nom. À la place on met une border-right
-       sur la cellule # (cell 1) → le séparateur s'aligne juste après
-       le rang, comme demandé. */
-    .home-top-row > *:nth-child(2),
-    .home-top-row > *:nth-child(3),
-    .home-top-list-header > *:nth-child(2),
-    .home-top-list-header > *:nth-child(3) {
-        border-left: none !important;
-    }
-    .home-top-row > *:first-child,
-    .home-top-list-header > *:first-child {
-        border-right: 1px solid rgba(255,255,255,0.08) !important;
-    }
-    /* Centre toutes les colonnes sauf "Collection" (qui doit rester
-       alignée à gauche pour image + nom) — header ET valeurs. */
-    .home-top-th--r,
-    .home-top-floor,
-    .home-top-vol,
-    .home-top-chg {
-        text-align: center !important;
-    }
-    /* Header "#" : par défaut text-align: start (gauche) alors que les
-       numéros 1, 2, 3, … en dessous sont centrés via .home-top-rank.
-       On centre aussi le header pour qu'il s'aligne sur les valeurs. */
-    .home-top-list-header > .home-top-th:first-child {
-        text-align: center !important;
-    }
-    /* Logo collection : matche la cellule 28px sans débordement. */
-    .home-top-logo {
-        width: 26px !important;
-        height: 26px !important;
-    }
-    /* Nom : autorise le retour à la ligne si vraiment trop long, sinon
-       ellipsis ; police légèrement plus dense. */
-    .home-top-name {
-        font-size: 13px !important;
-        min-width: 0 !important;
-    }
-    .home-top-floor,
-    .home-top-vol {
-        font-size: 12px !important;
-    }
-
-    /* Top Creators : 4 cols (#, avatar, name, primary-sales). Reduce padding
-       et largeur de la colonne valeur. */
-    .home-top-list-header--creators {
-        grid-template-columns: 24px 32px 1fr 80px !important;
-        gap: 8px !important;
-        padding-left: 12px !important;
-        padding-right: 12px !important;
-    }
-
     /* Header Top Collections / Top Creators sur mobile : titre + badge + tous
        les contrôles en dessous, alignés à gauche, pour un rendu propre. */
     .home-section-header {
@@ -27450,19 +27304,6 @@ body { box-sizing: border-box; }
     .stats-logo-btn {
         width: 36px !important;
         height: 36px !important;
-    }
-}
-
-@media (max-width: 380px) {
-    .home-top-list-header,
-    .home-top-row {
-        grid-template-columns: 22px 24px 1fr 56px 56px !important;
-        gap: 6px !important;
-        padding-left: 10px !important;
-        padding-right: 10px !important;
-    }
-    .home-top-list-header--creators {
-        grid-template-columns: 22px 28px 1fr 70px !important;
     }
 }
 

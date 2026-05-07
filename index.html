@@ -8505,63 +8505,10 @@ document.addEventListener('DOMContentLoaded', initialize);
         wrap.appendChild(spotlight);
     }
 
-    // ── Top collections (24H) depuis l'API stats ──────────────────────────
-    async function loadTopCollections() {
-        const list = document.getElementById('homeTopList');
-        if (!list) return;
-        try {
-            const res = await fetch(graphqlEndpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    operationName: 'GetCollectionsPage',
-                    variables: {
-                        first: 5, skip: 0,
-                        sort: { field: 'totalSalesDecimalInLast1Day', order: 'DESC' },
-                        isSortFieldZeroLast: true, timeRange: 'ONE_DAY',
-                        verifiedOnly: false, hideEmpty: true, withStats: true,
-                        networks: ['CRONOS', 'CRO']
-                    },
-                    query: `query GetCollectionsPage($first:Int,$skip:Int,$sort:SingleFieldSort,$withStats:Boolean!,$networks:[SupportedNetwork!],$isSortFieldZeroLast:Boolean!,$timeRange:TimeRange,$hideEmpty:Boolean,$verifiedOnly:Boolean){public{collections(first:$first,skip:$skip,sort:$sort,networks:$networks,isSortFieldZeroLast:$isSortFieldZeroLast,timeRange:$timeRange,hideEmpty:$hideEmpty,verifiedOnly:$verifiedOnly){id name verified logo{url}metrics{items owners}stats@include(if:$withStats){oneDayVolumeDecimal oneDayVolumeDecimalChange oneDayFloorPriceDecimal}}}}`
-                })
-            });
-            const json = await res.json();
-            const cols = json?.data?.public?.collections || [];
-            // Préserver le header row (home-top-list-header)
-            const hdrRow = list.querySelector('.home-top-list-header');
-            Array.from(list.children).forEach(c => { if (c !== hdrRow) c.remove(); });
-            cols.forEach((c, i) => {
-                const vol = Number(c.stats?.oneDayVolumeDecimal) || 0;
-                const chg = Number(c.stats?.oneDayVolumeDecimalChange) || 0;
-                const floor = Number(c.stats?.oneDayFloorPriceDecimal) || 0;
-                const fmtN = n => n >= 1000 ? '$' + (n/1000).toFixed(1) + 'K' : n > 0 ? '$' + Math.round(n) : '—';
-                const chgClass = chg > 0 ? 'home-top-up' : chg < 0 ? 'home-top-down' : '';
-                const chgText = chg !== 0 ? (chg > 0 ? '+' : '') + chg.toFixed(1) + '%' : '—';
-                const row = document.createElement('div');
-                row.className = 'home-top-row';
-                row.innerHTML = `
-                    <span class="home-top-rank">${i+1}</span>
-                    <img class="home-top-logo" src="${c.logo?.url||''}" alt="" loading="lazy"/>
-                    <span class="home-top-name">${c.name||'—'}</span>
-                    <span class="home-top-floor">${fmtN(floor)}</span>
-                    <span class="home-top-vol">${fmtN(vol)}</span>
-                    <span class="home-top-chg ${chgClass}">${chgText}</span>`;
-                row.addEventListener('click', () => {
-                    if (typeof window.loadCollectionById === 'function') window.loadCollectionById(c.id);
-                });
-                list.appendChild(row);
-            });
-            // Quick stats
-            const totalVol = cols.reduce((s, c) => s + (Number(c.stats?.oneDayVolumeDecimal)||0), 0);
-            const totalBuyers = 0;
-            const elV = document.getElementById('hqsVolume');
-            const elC = document.getElementById('hqsCollections');
-            if (elV) elV.textContent = totalVol >= 1000 ? '$' + (totalVol/1000).toFixed(1) + 'K' : '$' + Math.round(totalVol);
-            if (elC) elC.textContent = '100+';
-        } catch(e) {
-            if (list) list.innerHTML = '<div style="color:rgba(255,255,255,0.3);padding:20px;text-align:center;font-size:12px;">Unable to load data</div>';
-        }
-    }
+    // ── Top collections (24H) — l'ancienne version div+grid (loadTopCollections)
+    //    a été supprimée. Le rendu actuel passe par renderTopCollections() du
+    //    module home-boost qui peuple la vraie <table#homeTopTable>.
+    //    Voir aussi le commentaire en init() ligne ~9590.
 
     // ── Community Chat (Firebase Realtime Database) ──────────────────────
     // ⚠️ REMPLACER FB_CONFIG par les credentials de ton projet Firebase.
@@ -9192,7 +9139,12 @@ document.addEventListener('DOMContentLoaded', initialize);
                     ts:       firebase.database.ServerValue.TIMESTAMP,
                     signedIn: !!user,
                     user:     user?.username || null
-                }).catch(() => {});
+                }).catch(e => {
+                    // Log explicit pour faciliter le diagnostic : si la
+                    // règle Firebase analytics/events n'est pas publiée,
+                    // on retombera sur PERMISSION_DENIED.
+                    console.warn('[Pulse trackEvent] write failed for', type, '→', e?.code || e?.message || e);
+                });
             } catch (_) {}
         }
         window.trackEvent = trackEvent;
@@ -12594,6 +12546,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-07T16:55:00Z',
+            type:  'fix',
+            title: 'Top Collections card — full frame on mobile',
+            text:  'On smartphones the Top Collections card on the dedicated stats tab had its left and right edges clipped because the wrap doubled as the horizontal scroll container, and its min-content (a wide nowrap table) overflowed the panel. min-width:0 on the wrap lets it respect the panel width while preserving inner horizontal scroll, so the cyan halo is now visible on every side.'
+        },
         {
             date:  '2026-05-07T13:30:00Z',
             type:  'feature',
