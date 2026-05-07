@@ -1544,6 +1544,28 @@
               <h3 class="pulse-card-title">Top languages</h3>
               <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopLangs"></ol></div>
             </div>
+
+            <!-- ── Engagement par feature (events) ── -->
+            <div class="pulse-card pulse-card--wide">
+              <h3 class="pulse-card-title">Top collections viewed</h3>
+              <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopCollections"></ol></div>
+            </div>
+            <div class="pulse-card">
+              <h3 class="pulse-card-title">Top profiles visited</h3>
+              <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopProfiles"></ol></div>
+            </div>
+            <div class="pulse-card">
+              <h3 class="pulse-card-title">Snapshots run</h3>
+              <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopSnapshots"></ol></div>
+            </div>
+            <div class="pulse-card">
+              <h3 class="pulse-card-title">Market Bot — collections added</h3>
+              <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopMarketBot"></ol></div>
+            </div>
+            <div class="pulse-card">
+              <h3 class="pulse-card-title">Cryptos tracked</h3>
+              <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopCryptos"></ol></div>
+            </div>
           </div>
         </div>
       </div>
@@ -4108,6 +4130,11 @@ async function fetchProfileAndNFTs() {
     if (!username || username.toLowerCase() === currentUsername.toLowerCase()) {
         console.log('fetchProfileAndNFTs skipped:', { username, currentUsername });
         return;
+    }
+    // Pulse analytics : profil ouvert (target = username, label = display name
+    // fallback du même username car ils sont identiques en entrée).
+    if (typeof window.trackEvent === 'function') {
+        window.trackEvent('profile_view', username.toLowerCase(), username);
     }
 
     console.log('Starting fetchProfileAndNFTs for:', username);
@@ -7893,6 +7920,12 @@ document.addEventListener('DOMContentLoaded', initialize);
         window.showCollectionPanel(true); // skipWelcome
         if (typeof window._hideCpWelcome === 'function') window._hideCpWelcome();
         await loadCollection(id);
+        // Pulse analytics : trace la collection consultée APRÈS load pour
+        // récupérer le nom lisible (cpTitle est rempli par loadCollection).
+        if (id && typeof window.trackEvent === 'function') {
+            const name = document.getElementById('cpTitle')?.textContent?.trim() || null;
+            window.trackEvent('collection_view', id, name);
+        }
     };
 
     // ─────────────────────────────────────────────────────────────────────
@@ -9127,6 +9160,43 @@ document.addEventListener('DOMContentLoaded', initialize);
          * langue navigateur. Pas d'IP, pas de fingerprint, pas de cookies.   *
          * Une session = un onglet (déduplication via sessionStorage).        *
          * ------------------------------------------------------------------ */
+        /* ------------------------------------------------------------------ *
+         * Generic event tracker — push 1 record dans                         *
+         * analytics/events/{YYYY-MM-DD}/{eventId} avec :                     *
+         *   { type, target, label, ts, signedIn, user }                      *
+         *                                                                    *
+         * Types utilisés :                                                   *
+         *   'collection_view'  — un user a ouvert une collection             *
+         *   'profile_view'     — un user a ouvert un profil                  *
+         *   'snapshot_run'     — snapshot lancé pour une collection          *
+         *   'marketbot_add'    — collection ajoutée au Market Bot            *
+         *   'crypto_track'     — pair crypto ajoutée au tracker              *
+         *                                                                    *
+         * Best-effort : ne casse jamais l'action utilisateur si l'écriture   *
+         * Firebase échoue (rules pas à jour, offline, etc.).                 *
+         * ------------------------------------------------------------------ */
+        function trackEvent(type, target, label) {
+            try {
+                if (!fbDb) return;
+                if (!type || target == null || target === '') return;
+                const now   = new Date();
+                const today = now.getFullYear() + '-' +
+                              String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                              String(now.getDate()).padStart(2, '0');
+                const eid   = now.getTime().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+                const user  = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+                fbDb.ref(`analytics/events/${today}/${eid}`).set({
+                    type:     String(type).slice(0, 30),
+                    target:   String(target).slice(0, 100),
+                    label:    label != null ? String(label).slice(0, 120) : null,
+                    ts:       firebase.database.ServerValue.TIMESTAMP,
+                    signedIn: !!user,
+                    user:     user?.username || null
+                }).catch(() => {});
+            } catch (_) {}
+        }
+        window.trackEvent = trackEvent;
+
         function trackSiteVisit() {
             try {
                 if (sessionStorage.getItem('cronos-tracked')) return;
@@ -11164,7 +11234,13 @@ document.addEventListener('DOMContentLoaded', initialize);
 
     function addCollection(colData) {
         const added = addCollectionToDom(colData);
-        if (added) saveAll();
+        if (added) {
+            saveAll();
+            // Pulse analytics : collection ajoutée au Market Bot
+            if (typeof window.trackEvent === 'function' && colData?.id) {
+                window.trackEvent('marketbot_add', colData.id, colData.name || null);
+            }
+        }
     }
 
     // ── Suppression × (délégation) ─────────────────────────────
@@ -12519,16 +12595,16 @@ async function sha256hex(str) {
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
         {
-            date:  '2026-05-07T12:48:00Z',
+            date:  '2026-05-07T13:30:00Z',
             type:  'feature',
             title: 'Site activity dashboard — Pulse',
-            text:  'Anonymous 30-day stats panel at the bottom of the home: traffic KPIs (sessions, today, average, returning rate), community KPIs (registered members, online now, messages, signed-in share), plus charts for daily sessions, hourly distribution, activity heatmap, device split, new vs returning, signed-in vs anonymous, daily chat volume, weekly member growth, and top contributors / tabs / referrers / languages.'
+            text:  'Anonymous 30-day stats panel at the bottom of the home: traffic KPIs (sessions, today, average, returning rate), community KPIs (registered members, online now, messages, signed-in share), plus charts for daily sessions, hourly distribution, activity heatmap, device split, new vs returning, signed-in vs anonymous, daily chat volume, weekly member growth, and top contributors / tabs / referrers / languages. Engagement tracking now also surfaces top collections viewed, top profiles visited, snapshots run, Market Bot collections added, and cryptos tracked. Direct visits are credited under "Direct" in the referrers list instead of being silently dropped.'
         },
         {
-            date:  '2026-05-07T05:04:00Z',
-            type:  'feature',
+            date:  '2026-05-07T13:30:00Z',
+            type:  'improvement',
             title: 'Latest Updates section on home',
-            text:  'Compact changelog above Pulse showing the most recent product changes with date, time, category badge and a one-line description. Frame styled to match Top Collections (cyan halo) for visual consistency.'
+            text:  'Compact changelog above Pulse showing the most recent product changes with date, time, category badge and a one-line description. Frame styled to match Top Collections (cyan halo). Pinned to a fixed height with smooth scroll inside the card so older entries remain reachable without ever stretching the page.'
         },
         {
             date:  '2026-05-07T04:47:00Z',
@@ -12690,7 +12766,17 @@ async function sha256hex(str) {
             window.fbDb.ref('chat/messages').limitToLast(2000).once('value').catch(() => null)
         ]);
 
+        // ── Events (analytics/events/{date}/{id}) — actions utilisateurs ──
+        const allEvents = [];
+        const eventFetches = Promise.all(dates.map(async date => {
+            try {
+                const snap = await window.fbDb.ref(`analytics/events/${date}`).once('value');
+                snap.forEach(child => allEvents.push(Object.assign({ _date: date }, child.val())));
+            } catch (e) { /* perm denied / vide → ignore */ }
+        }));
+
         await sessionFetches;
+        await eventFetches;
         const [membersSnap, presenceSnap, messagesSnap] = await sideFetches;
 
         const members = [];
@@ -12708,14 +12794,15 @@ async function sha256hex(str) {
             });
         }
 
-        return { dates, dayCounts, sessions: allSessions, members, presence, messages, cutoffMs };
+        return { dates, dayCounts, sessions: allSessions, members, presence, messages, events: allEvents, cutoffMs };
     }
 
-    function renderPulseCharts({ dates, dayCounts, sessions, members, presence, messages, cutoffMs }) {
+    function renderPulseCharts({ dates, dayCounts, sessions, members, presence, messages, events, cutoffMs }) {
         // Défensifs : si les fetches "side" ont échoué, on traite comme vide.
         members  = members  || [];
         presence = presence || [];
         messages = messages || [];
+        events   = events   || [];
 
         // Détruit les charts existants pour éviter les doublons sur re-render
         Object.values(_pulseCharts).forEach(c => { try { c.destroy(); } catch (_) {} });
@@ -12860,11 +12947,12 @@ async function sha256hex(str) {
                 '</div>';
         }
 
-        // ── Top lists (pages, referrers, langs) ─────────────────────────
-        const tally = (key, max) => {
+        // ── Top-lists (pages, referrers, langs) ─────────────────────────
+        const tally = (key, max, treatEmptyAs) => {
             const m = new Map();
             sessions.forEach(s => {
-                const v = s[key];
+                let v = s[key];
+                if (!v && treatEmptyAs) v = treatEmptyAs;
                 if (!v) return;
                 m.set(v, (m.get(v) || 0) + 1);
             });
@@ -12884,7 +12972,11 @@ async function sha256hex(str) {
             ).join('');
         };
         renderList('pulseTopPages',     tally('page'));
-        renderList('pulseTopReferrers', tally('referrer'), v => {
+        // Top referrers : on compte les visites directes (referrer null) sous
+        // un libellé "Direct" — sinon la liste reste vide tant qu'aucun lien
+        // externe ne pointe vers le site.
+        renderList('pulseTopReferrers', tally('referrer', 8, '__direct__'), v => {
+            if (v === '__direct__') return 'Direct';
             try { return new URL(v).hostname.replace(/^www\./, ''); } catch (_) { return v; }
         });
         renderList('pulseTopLangs',     tally('lang'));
@@ -13017,6 +13109,28 @@ async function sha256hex(str) {
             .slice(0, 8)
             .map(([u, n]) => [userMsgDisplay.get(u) || u, n]);
         renderList('pulseTopContributors', topContrib);
+
+        // ── Listes basées sur analytics/events ──────────────────────────
+        // On group-by sur `target` (id/clé stable), et on prend le meilleur
+        // `label` rencontré (le nom lisible) pour l'affichage.
+        const eventTally = (eventType, max) => {
+            const counts = new Map();
+            const labels = new Map();
+            events.forEach(e => {
+                if (!e || e.type !== eventType || !e.target) return;
+                counts.set(e.target, (counts.get(e.target) || 0) + 1);
+                if (e.label && !labels.has(e.target)) labels.set(e.target, e.label);
+            });
+            return Array.from(counts.entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, max || 8)
+                .map(([target, n]) => [labels.get(target) || target, n]);
+        };
+        renderList('pulseTopCollections', eventTally('collection_view', 10));
+        renderList('pulseTopProfiles',    eventTally('profile_view'));
+        renderList('pulseTopSnapshots',   eventTally('snapshot_run'));
+        renderList('pulseTopMarketBot',   eventTally('marketbot_add'));
+        renderList('pulseTopCryptos',     eventTally('crypto_track'));
     }
 
     function escapeHtml(s) {
@@ -18599,8 +18713,15 @@ function exportCSV() {
 
 window._snapshotRun = () => {
   const id = (el_('snapshotColIdInput')?.value || '').trim();
-  if (id) runSnapshot(id);
-  else alert('Please paste a collection ID to snapshot.');
+  if (id) {
+    if (typeof window.trackEvent === 'function') {
+      // Pulse analytics : snapshot lancé (target = collection id,
+      // label = nom affiché dans la bannière si déjà chargé).
+      const label = document.getElementById('snapshotCollectionTitle')?.textContent?.trim() || null;
+      window.trackEvent('snapshot_run', id, label);
+    }
+    runSnapshot(id);
+  } else alert('Please paste a collection ID to snapshot.');
 };
 window._snapshotExport = exportCSV;
 
@@ -21443,6 +21564,10 @@ window.initSnapshotPanel = function() {
             savePairs();
             renderCard(pair);
             loadPairData(pair);
+            // Pulse analytics : nouvelle paire crypto ajoutée au tracker
+            if (typeof window.trackEvent === 'function') {
+                window.trackEvent('crypto_track', pair, pair);
+            }
         }
         closePicker();
     }
