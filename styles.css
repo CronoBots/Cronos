@@ -11602,9 +11602,11 @@ body.is-profile-loading #profileLoadingOverlay * {
         0 0 40px rgba(0,179,255,0.35),
         0 0 80px rgba(0,179,255,0.18);
     background: rgba(11,20,38,0.4);
-    /* Gap filtres → tableau : 20px. Compromis entre le 16px (encore un poil
-       trop serré) et le 24px (un peu trop aéré au goût du user). */
-    margin-top: 20px;
+    /* Aligné sur .sb-results-wrap (Market Bot vue table) : même margin-top (8px),
+       même position:relative pour ancrer un éventuel loader overlay, même
+       overflow:hidden, même halo. Rendu pixel-perfect identique. */
+    margin-top: 8px;
+    position: relative;
     box-sizing: border-box;
 }
 /* Inner scroll container — porte overflow-x:auto et toute la mécanique
@@ -26949,8 +26951,10 @@ body { box-sizing: border-box; }
         padding-left: 16px !important;
         padding-right: 16px !important;
     }
-    .stats-table-wrap {
-        overflow-x: auto;
+    /* Le scroll horizontal vit dans .stats-table-scroll (pattern Market Bot)
+       — la wrap reste overflow:hidden pour que la bordure halo'd ne soit
+       pas peinte sous le contenu scrollé sur iOS Safari. */
+    .stats-table-scroll {
         -webkit-overflow-scrolling: touch;
     }
     /* Filtres : chaque groupe sur sa propre ligne, boutons en largeur égale.
@@ -27238,8 +27242,10 @@ body { box-sizing: border-box; }
         max-height: 140px !important;
     }
 
-    /* Stats / Snapshot / Market Bot : scroll tactile renforcé sur les tables */
-    .stats-table-wrap,
+    /* Stats / Snapshot / Market Bot : scroll tactile renforcé sur les tables.
+       NB : .stats-table-wrap n'est plus le scroll container (Market Bot pattern),
+       on cible désormais .stats-table-scroll. */
+    .stats-table-scroll,
     .snapshot-table-wrap,
     .sb-table-wrap {
         overflow-x: auto !important;
