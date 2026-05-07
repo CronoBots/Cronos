@@ -8931,13 +8931,26 @@ document.addEventListener('DOMContentLoaded', initialize);
 
             const display = _fcEsc(msg.display || msg.user || 'Anonymous');
             const time    = formatDateTime(msg.t);
+            const me      = getCurrentUser();
+            const canDelete = !!(key && me && msg.user && msg.user === me.username);
+
             div.innerHTML =
                 '<svg class="home-chat-msg-system-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
                     '<path d="M11 4l5 6-5 6"/><path d="M16 10H4"/>' +
                 '</svg>' +
                 '<span class="home-chat-msg-system-user">' + display + '</span>' +
                 '<span class="home-chat-msg-system-text">joined the chat</span>' +
-                '<span class="home-chat-msg-system-time">' + time + '</span>';
+                '<span class="home-chat-msg-system-time">' + time + '</span>' +
+                (canDelete
+                    ? '<button class="home-chat-msg-system-delete" type="button" title="Remove this announcement" aria-label="Remove this announcement">' +
+                          '<svg width="10" height="10" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>' +
+                      '</button>'
+                    : '');
+
+            if (canDelete) {
+                div.querySelector('.home-chat-msg-system-delete')
+                    ?.addEventListener('click', () => deleteMsg(key));
+            }
 
             msgs.appendChild(div);
             _chatScrollToBottom(instant);
@@ -12471,23 +12484,57 @@ async function sha256hex(str) {
         });
     }
 
-    /* ── UPDATES — changelog statique de la home ─────────────────────────── *
-     * Liste maintenue à la main : à chaque modif live sur le site, on ajoute
-     * une entrée en tête. Tri d'affichage = ordre décroissant de date.
-     * Type : 'feature' (nouveau), 'fix' (bug), 'improvement' (polish).
-     * --------------------------------------------------------------------- */
+    /* ══════════════════════════════════════════════════════════════════════
+     *  HOME UPDATES — changelog public de la home
+     * ══════════════════════════════════════════════════════════════════════
+     *
+     *  ⚠️ MAINTENANCE OBLIGATOIRE
+     *  Chaque évolution déployée sur cronos.wtf doit apparaître ici.
+     *  Une entrée en TÊTE de tableau (newest-first) :
+     *      { date: ISO 8601, type: 'feature' | 'fix' | 'improvement',
+     *        title: 4–8 mots, text: 1 phrase explicative ≤ 200 car. }
+     *
+     *  ─── DISCIPLINE DE REGROUPEMENT (à respecter strictement) ──────────
+     *  Le but : refléter "ce qui change pour l'utilisateur", PAS le journal
+     *  des commits. Ne pas spammer la liste — regrouper intelligemment.
+     *
+     *    • Plusieurs commits qui livrent UNE fonctionnalité cohérente
+     *      → 1 SEULE entrée (utiliser la date du dernier commit).
+     *    • Une feature + ses correctifs / itérations le même jour ou à
+     *      < 24h d'intervalle, sur le même périmètre
+     *      → 1 SEULE entrée (mettre à jour la `text` plutôt qu'en créer
+     *      une nouvelle si elle décrit déjà bien le résultat final).
+     *    • Plusieurs petits fixes liés sur la même zone, livrés proches
+     *      → 1 SEULE entrée groupée ("Mobile polish: …").
+     *    • Changements vraiment indépendants livrés le même jour
+     *      → entrées séparées, c'est OK.
+     *
+     *  ─── EN PRATIQUE ───────────────────────────────────────────────────
+     *  Avant d'ajouter, parcourir les 1–2 dernières entrées :
+     *      - si l'une d'elles couvre encore correctement la nouveauté,
+     *        ÉTENDRE son `text` au lieu d'ajouter un doublon ;
+     *      - sinon, créer une nouvelle entrée propre.
+     *  Une coquille corrigée ou un micro-ajustement CSS ne mérite jamais
+     *  sa propre entrée — soit on étend, soit on n'écrit rien.
+     * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
         {
-            date:  '2026-05-07T05:01:00Z',
+            date:  '2026-05-07T12:48:00Z',
             type:  'feature',
-            title: 'Site activity dashboard',
-            text:  'New Pulse section at the bottom of the home with anonymous traffic stats from the last 30 days — sessions per day, hourly distribution, signed-in share, activity heatmap, and top tabs / referrers / languages.'
+            title: 'Site activity dashboard — Pulse',
+            text:  'Anonymous 30-day stats panel at the bottom of the home: traffic KPIs (sessions, today, average, returning rate), community KPIs (registered members, online now, messages, signed-in share), plus charts for daily sessions, hourly distribution, activity heatmap, device split, new vs returning, signed-in vs anonymous, daily chat volume, weekly member growth, and top contributors / tabs / referrers / languages.'
+        },
+        {
+            date:  '2026-05-07T05:04:00Z',
+            type:  'feature',
+            title: 'Latest Updates section on home',
+            text:  'Compact changelog above Pulse showing the most recent product changes with date, time, category badge and a one-line description. Frame styled to match Top Collections (cyan halo) for visual consistency.'
         },
         {
             date:  '2026-05-07T04:47:00Z',
             type:  'feature',
             title: 'Member join announcements in chat',
-            text:  'When a signed-in member joins, a discreet system message announces their arrival in the community chat. Throttled to once every 10 minutes per member to avoid noise on reloads.'
+            text:  'When a signed-in member joins, a discreet system message announces their arrival in the community chat. Throttled to once every 10 minutes per member to avoid noise on reloads, and the announcing member can dismiss their own announcement with a one-click delete.'
         },
         {
             date:  '2026-05-07T04:36:00Z',
