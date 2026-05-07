@@ -8538,9 +8538,11 @@ document.addEventListener('DOMContentLoaded', initialize);
             _myPresenceRef.set(payload);
             _myPresenceRef.onDisconnect().remove();
 
-            // Persister dans chat/members si identifié
+            // Persister dans chat/members si identifié.
+            // .update() (et non .set()) pour préserver les champs annexes
+            // comme lastJoinAt utilisé par le throttle de l'annonce de join.
             if (user) {
-                fbDb.ref(`chat/members/${newKey}`).set({
+                fbDb.ref(`chat/members/${newKey}`).update({
                     username: user.username,
                     display:  user.displayName || user.username,
                     avatar:   user.avatarUrl   || null,
@@ -8568,12 +8570,18 @@ document.addEventListener('DOMContentLoaded', initialize);
                 const now  = Date.now();
                 if (now - last < JOIN_ANNOUNCE_WINDOW_MS) return;  // déjà annoncé récemment
 
+                // text est requis par la règle Firebase chat/messages
+                // (.validate hasChildren(['user','text','t'])). On le fournit
+                // sous forme de phrase complète qui sert aussi de fallback
+                // de rendu si renderSystemMessage venait à être bypassé.
+                const display = user.displayName || user.username;
                 fbDb.ref('chat/messages').push({
                     system:  true,
                     event:   'join',
                     user:    user.username,
-                    display: user.displayName || user.username,
-                    avatar:  user.avatarUrl   || null,
+                    display: display,
+                    avatar:  user.avatarUrl || null,
+                    text:    display + ' joined the chat',
                     t:       firebase.database.ServerValue.TIMESTAMP
                 }).catch(e => console.error('[Community chat] join push failed:', e));
                 lastJoinRef.set(now).catch(() => {});
