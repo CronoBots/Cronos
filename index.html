@@ -8755,35 +8755,59 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
     /* Attache des handlers de swipe horizontal sur l'élément donné. Sur
      * mobile, l'utilisateur peut glisser vers la GAUCHE pour passer à la
      * card suivante (next) et vers la DROITE pour revenir à la précédente
-     * (prev). On filtre les scrolls verticaux : si le delta vertical
-     * dépasse SWIPE_MAX_Y, on ignore (c'était un scroll, pas un swipe).
-     * On filtre aussi les taps : un mouvement horizontal < SWIPE_MIN
-     * n'est pas considéré comme un swipe (ne déclenche rien). */
+     * (prev).
+     *
+     * Approche "directional lock" :
+     *  - Au touchstart on enregistre la position de départ.
+     *  - Pendant le touchmove, dès que le mouvement est plus horizontal
+     *    que vertical (et > LOCK_THRESHOLD), on "lock" le swipe : on
+     *    appelle preventDefault sur les touchmove suivants → ça bloque
+     *    le scroll natif et garantit que le swipe n'est pas perdu même
+     *    si le doigt dérive un peu en diagonale.
+     *  - Si le mouvement reste majoritairement vertical, on n'intercepte
+     *    rien et le scroll de la page se fait normalement.
+     *  - Au touchend, on déclenche prev/next uniquement si on a lock le
+     *    swipe ET que le delta horizontal a dépassé SWIPE_MIN. */
     function _attachSwipeNav(el, onPrev, onNext) {
         if (!el || el.dataset.cwtfSwipe === '1') return;
         el.dataset.cwtfSwipe = '1';
-        let startX = 0, startY = 0, active = false;
-        const SWIPE_MIN   = 40;
-        const SWIPE_MAX_Y = 60;
+        let startX = 0, startY = 0, active = false, locked = false;
+        const SWIPE_MIN     = 40;
+        const LOCK_THRESHOLD = 10;
         el.addEventListener('touchstart', (e) => {
             const t = e.touches?.[0];
             if (!t) return;
             startX = t.clientX;
             startY = t.clientY;
             active = true;
+            locked = false;
         }, { passive: true });
-        el.addEventListener('touchend', (e) => {
+        el.addEventListener('touchmove', (e) => {
             if (!active) return;
-            active = false;
-            const t = e.changedTouches?.[0];
+            const t = e.touches?.[0];
             if (!t) return;
             const dx = t.clientX - startX;
             const dy = t.clientY - startY;
-            if (Math.abs(dy) > SWIPE_MAX_Y) return;
+            // Une fois lock, on continue de bloquer le scroll même si le
+            // doigt remonte un peu — pour ne pas relâcher au milieu du
+            // swipe (effet désagréable où la page commence à scroller en
+            // plein swipe horizontal).
+            if (!locked && Math.abs(dx) > LOCK_THRESHOLD && Math.abs(dx) > Math.abs(dy)) {
+                locked = true;
+            }
+            if (locked) e.preventDefault();
+        }, { passive: false });
+        el.addEventListener('touchend', (e) => {
+            if (!active) return;
+            active = false;
+            if (!locked) return;            // c'était un scroll, pas un swipe
+            const t = e.changedTouches?.[0];
+            if (!t) return;
+            const dx = t.clientX - startX;
             if (dx <= -SWIPE_MIN)      onNext?.();
             else if (dx >= SWIPE_MIN)  onPrev?.();
         });
-        el.addEventListener('touchcancel', () => { active = false; });
+        el.addEventListener('touchcancel', () => { active = false; locked = false; });
     }
 
     /* ── Featured Collections spotlight rotation ──
@@ -9385,7 +9409,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // On utilise l'INDEX (0-5) comme data-emoji-idx pour éviter tout problème
         // d'encodage Unicode des emojis composés dans les attributs data-*.
         const QUICK_EMOJIS = ['❤️','😂','😮','🔥','👀','💎','👌','🙏'];
-        const EMOJI_KEYS   = ['heart','joy','wow','fire','eyes','gem'];
+        const EMOJI_KEYS   = ['heart','joy','wow','fire','eyes','gem','ok','pray'];
         let _reactionsListener = null;
         let _cachedReactions   = {};   // cache local pour les updates rapides
 
@@ -13447,6 +13471,18 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-08T17:00:00Z',
+            type:  'fix',
+            title: 'Chat — 👌 and 🙏 reactions now work',
+            text:  'The two new emoji reactions added recently were silently ignored because the internal key map only had 6 entries for the 8 emojis. Both 👌 and 🙏 now react properly when tapped.'
+        },
+        {
+            date:  '2026-05-08T17:00:00Z',
+            type:  'fix',
+            title: 'Mobile — featured swipe no longer hijacked by scroll',
+            text:  'On mobile, swiping a featured card with a slight diagonal motion used to scroll the page instead of navigating to the next collection. The swipe handler now locks the gesture as soon as it detects a horizontal intent and blocks the native scroll until the swipe completes.'
+        },
         {
             date:  '2026-05-08T16:00:00Z',
             type:  'fix',
