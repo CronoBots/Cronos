@@ -15385,7 +15385,16 @@ fragment CollectionStatsData on Collection {
     function applyColVisibility() {
         COLUMNS.forEach(col => {
             const visible = col.always || colVisibility[col.key];
-            document.querySelectorAll(`.scol-${col.key}, .stats-th--${col.key}, .stats-td--${col.key}`).forEach(el => {
+            // Pour les <col> : avec table-layout:fixed, "display:none"
+            // n'est pas suffisant — le moteur peut quand même réserver
+            // la largeur déclarée dans le CSS. On force aussi width:0
+            // sur les colonnes masquées, pour qu'elles ne créent plus
+            // d'espace vide au bout du tableau quand on scroll.
+            document.querySelectorAll(`.scol-${col.key}`).forEach(el => {
+                el.style.display = visible ? '' : 'none';
+                el.style.width   = visible ? '' : '0';
+            });
+            document.querySelectorAll(`.stats-th--${col.key}, .stats-td--${col.key}`).forEach(el => {
                 el.style.display = visible ? '' : 'none';
             });
         });
