@@ -13063,7 +13063,8 @@ body.is-profile-loading #profileLoadingOverlay * {
 /* Badge verified à côté du pseudo des membres certifiés (cf.
    _certsCache check dans renderAvatarStack). MÊME style que la
    .chat-verified-badge utilisée dans les messages — taille 13×13,
-   pastille verte avec checkmark sombre, glow doux. */
+   pastille cyan, checkmark sombre, glow doux. Positionné À DROITE
+   du pseudo via margin-left:auto sur le span (le name a flex:1). */
 .home-chat-member-verified {
     display: inline-flex;
     align-items: center;
@@ -13071,13 +13072,14 @@ body.is-profile-loading #profileLoadingOverlay * {
     width: 13px;
     height: 13px;
     min-width: 13px;
-    background: #34d399;
+    background: #00B3FF;
     border-radius: 50%;
     flex-shrink: 0;
-    box-shadow: 0 0 6px rgba(52,211,153,0.4);
-    color: #052015;
+    box-shadow: 0 0 6px rgba(0, 179, 255, 0.45);
+    color: #052035;
     padding: 0;
     box-sizing: border-box;
+    margin-left: auto;
 }
 .home-chat-member--certified .home-chat-member-name { color: #fff; }
 
@@ -13820,18 +13822,22 @@ body.is-profile-loading #profileLoadingOverlay * {
     width: 13px;
     height: 13px;
     min-width: 13px;
-    background: #34d399;
+    /* CYAN — c'est désormais la couleur unifiée de tous les badges
+       "compte certifié" du chat (membres dans la sidebar/modal ET
+       auteurs des messages). Avant on avait du vert, l'utilisateur
+       préfère du cyan pour rester dans l'identité du site. */
+    background: #00B3FF;
     border-radius: 50%;
     flex-shrink: 0;
     cursor: default;
-    box-shadow: 0 0 6px rgba(52,211,153,0.4);
+    box-shadow: 0 0 6px rgba(0, 179, 255, 0.45);
     transition: box-shadow 0.2s;
 }
 .chat-verified-badge:hover {
-    box-shadow: 0 0 10px rgba(52,211,153,0.7);
+    box-shadow: 0 0 10px rgba(0, 179, 255, 0.75);
 }
 .chat-verified-badge svg {
-    color: #052015;
+    color: #052035;
 }
 .home-chat-msg-time {
     font-size: 9px;
@@ -24431,10 +24437,14 @@ a.snap-holder-username:hover {
 .home-fc-spotlight {
     position: relative;
     isolation: isolate;
-    /* Pas de padding latéral : la carte spotlight prend la même largeur que
-       les autres frames du home (Top Collections, Updates, Pulse...) pour
-       un rendu uniforme. Les flèches prev/next sont positionnées en
-       absolute *par-dessus* la bannière, en haut. */
+    /* Flex column : la grille des cards prend flex:1 (toute la hauteur
+       disponible) et la barre de contrôles reste en bas. Sans ça, dans
+       le contexte .home-two-col--featured où le wrapper a une hauteur
+       fixée par flex stretch, la grille interne ne se redimensionnait
+       pas et les cards restaient à leur hauteur de contenu. */
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 .home-featured-grid {
     display: grid;
@@ -24537,26 +24547,30 @@ a.snap-holder-username:hover {
    so the bigger frame is used efficiently — hero on the left, content on
    the right. On narrower viewports it falls back to the existing vertical
    layout. */
-/* ───────── SPOTLIGHT v2 — split en 2 colonnes ─────────
- * GAUCHE : bannière 1500×500 (ratio 3:1) en haut + identité (logo + nom
- *          + artiste) + stats inline en dessous.
- * DROITE : showcase NFT — strip de 3 samples aléatoires en haut, puis
- *          grille 2×2 de tuiles "highlights" (Top sale, Top rank,
- *          Floor, Most liked).
- * Sur mobile (≤720px) la card empile les 2 colonnes en vertical. */
+/* ───────── SPOTLIGHT v3 — vertical stack (banner+infos | showcase) ─────────
+ * Le home Featured Collections vit maintenant dans une 2-col row
+ * (.home-two-col--featured) à côté de Featured Artists, donc la card
+ * spotlight elle-même est en VERTICAL :
+ *   HAUT : bannière 1500×500 (ratio 3:1) + identité (logo + nom +
+ *          artiste) + stats inline.
+ *   BAS  : showcase NFT — strip de 3 samples aléatoires + grille 2×2
+ *          de tuiles "highlights" (Top sale, Top rank, Floor, Most liked).
+ * Plus de split horizontal interne — la place manque dans une demi-largeur. */
 .home-fc-spotlight .home-feat-v3 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     aspect-ratio: auto;
-    min-height: 320px;
+    min-height: 0;
     overflow: hidden;
     position: relative;
 }
 .home-fc-spotlight .home-feat-v3-left {
     display: flex;
     flex-direction: column;
-    border-right: 1px solid rgba(0, 179, 255, 0.18);
+    border-right: none;
+    border-bottom: 1px solid rgba(0, 179, 255, 0.18);
     min-width: 0;
+    flex-shrink: 0;
 }
 .home-fc-spotlight .home-feat-v3-right {
     display: flex;
@@ -24565,6 +24579,10 @@ a.snap-holder-username:hover {
     padding: 10px 12px;
     background: rgba(11, 20, 38, 0.35);
     min-width: 0;
+    /* Hauteur dictée par le contenu (samples + grille de tuiles).
+       Pas de flex:1 ici : si le parent n'a pas de hauteur explicite (cas
+       single-column mobile), flex:1 collapse la section et le showcase
+       devient invisible. */
 }
 /* Bannière : ratio 3:1 = 1500/500, l'image source remplit exactement
    le rectangle via cover, sans recadrage vertical. */
@@ -24755,10 +24773,12 @@ a.snap-holder-username:hover {
 .home-feat-showcase-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
+    /* auto auto au lieu de 1fr 1fr : sans une hauteur explicite sur le
+       parent (.home-feat-v3-right est désormais content-sized), 1fr 1fr
+       donnait des rows à 0px et le 2×2 collapsed. Auto laisse les
+       tuiles s'afficher à leur hauteur naturelle. */
+    grid-template-rows: auto auto;
     gap: 6px;
-    flex: 1;
-    min-height: 0;
 }
 .home-feat-showcase-tile {
     display: flex;
@@ -25707,6 +25727,64 @@ a.snap-holder-username:hover {
     min-height: 480px;
     min-width: 0;
 }
+/* ══════════════════════════════════════════════════════════
+   GRILLE FEATURED COLLECTIONS + FEATURED ARTISTS — 2 colonnes
+   moitié-moitié, mêmes hauteurs forcées via flex stretch.
+   ══════════════════════════════════════════════════════════ */
+.home-two-col--featured {
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+}
+.home-two-col--featured > .home-section {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+}
+.home-two-col--featured > .home-section > .home-section-header {
+    flex-shrink: 0;
+}
+/* Le contenu (spotlight wrapper côté gauche, creators-grid côté droit)
+   prend tout l'espace vertical restant via flex:1. Hauteur min suffit
+   pour qu'on voit le banner+stats+showcase d'un coup côté Featured. */
+.home-two-col--featured .home-fc-spotlight,
+.home-two-col--featured .home-creators-grid {
+    flex: 1 1 0;
+    /* 540px = banner 3:1 + info ~120 + samples ~60 + grille 2×2 ~110
+       + controls bar 30 + un peu de breathing room. Sous 480 le
+       overflow:hidden de .home-feat-v3 clippait les 2 dernières tuiles
+       du showcase. */
+    min-height: 540px;
+    min-width: 0;
+}
+/* La carte interne (.home-feat-v3) doit elle aussi prendre toute la
+   hauteur du wrapper spotlight pour que la grille montre la même
+   hauteur que les Featured Artists à côté. */
+.home-two-col--featured .home-fc-spotlight .home-featured-grid {
+    flex: 1;
+    min-height: 0;
+}
+.home-two-col--featured .home-fc-spotlight .home-feat-v3 {
+    height: 100%;
+}
+@media (max-width: 860px) {
+    /* Stack vertical : Featured Collections au-dessus, Featured Artists
+       en dessous. La card spotlight prend la hauteur de son contenu
+       (banner + info + showcase) — pas de height:100% qui clipperait le
+       showcase via overflow:hidden de .home-feat-v3. */
+    .home-two-col--featured { grid-template-columns: 1fr; }
+    .home-two-col--featured .home-fc-spotlight,
+    .home-two-col--featured .home-creators-grid {
+        min-height: 360px;
+    }
+    .home-two-col--featured .home-fc-spotlight .home-feat-v3 {
+        height: auto;
+    }
+    .home-two-col--featured .home-fc-spotlight .home-featured-grid {
+        flex: none;
+    }
+}
+
 @media (max-width: 860px) {
     .home-two-col--chat-live { grid-template-columns: 1fr; }
 }
