@@ -28129,7 +28129,23 @@ body { box-sizing: border-box; }
     .snapshot-table-wrap,
     .sb-table-wrap {
         overflow-x: auto !important;
+        overflow-y: hidden !important;
         -webkit-overflow-scrolling: touch !important;
+        /* touch-action: pan-x → autorise EXPLICITEMENT le swipe
+           horizontal avec un doigt (et le scroll vertical de la page si
+           le geste est plutôt vertical). Sans ça, certains browsers
+           mobiles (Safari iOS notamment) considèrent le wrap comme
+           "pas scrollable horizontalement" même avec overflow-x:auto si
+           le contenu ne déborde pas TRÈS clairement. */
+        touch-action: pan-x !important;
+    }
+    /* Le mask-image fade gauche/droite était posé sur #statsTableScroll
+       uniquement (pas sur #sbTableWrap) → différence visuelle entre
+       Top Collections et Market Bot. Retiré pour que les deux tableaux
+       se comportent et se rendent strictement pareil au scroll. */
+    #statsTableScroll {
+        -webkit-mask-image: none !important;
+        mask-image: none !important;
     }
 }
 
