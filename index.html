@@ -8487,7 +8487,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             // 'totalSales' si le serveur renvoie une erreur (champ
             // pas reconnu sur certaines collections).
             const [byRank, byPrice, byLikes, byViews] = await Promise.all([
-                _fetchCollectionAssetsSorted(id, 'rarityRank', 'ASC', 12),  // 12 pour aussi avoir des samples
+                _fetchCollectionAssetsSorted(id, 'rarityRank', 'ASC', 20),  // 20 pour top rank + 8 samples uniques
                 _fetchCollectionAssetsSorted(id, 'price',      'ASC', 1),
                 _fetchCollectionAssetsSorted(id, 'likes',      'DESC', 1),
                 _fetchCollectionAssetsSorted(id, 'views',      'DESC', 1)
@@ -8532,17 +8532,17 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 ? { ...viewedAsset, views: Number(viewedAsset.views) || 0 }
                 : null;
 
-            // 4 samples random pris dans la liste rank (Fisher-Yates) —
-            // même nombre que les tuiles highlight pour qu'ils s'alignent
-            // exactement en dessous et remplissent toute la largeur.
-            const shuffled = rankAssets.slice();
-            for (let i = shuffled.length - 1; i > 0; i--) {
+            // 8 samples random pris dans la liste rank (Fisher-Yates),
+            // en excluant le top rank pour éviter les doublons visuels.
+            // 2 rangées de 4 tuiles alignées sur les 4 highlight au-dessus.
+            const sampleSource = rankAssets.slice(1);
+            for (let i = sampleSource.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                [sampleSource[i], sampleSource[j]] = [sampleSource[j], sampleSource[i]];
             }
 
             return {
-                samples: shuffled.slice(0, 4),
+                samples: sampleSource.slice(0, 8),
                 bestRank,
                 mostViewed,
                 mostLiked,
@@ -8593,7 +8593,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             return `<img src="${_fcEsc(img)}" alt="${_fcEsc(a?.name || '')}" loading="lazy" onerror="this.style.opacity='0.2'"/>`;
         };
 
-        const samples = (data.samples || []).slice(0, 4);
+        const samples = (data.samples || []).slice(0, 8);
         const samplesHtml = samples.length ? `
             <div class="home-feat-showcase-samples">
                 <span class="home-feat-showcase-strip-label">Sample NFTs</span>
@@ -8664,7 +8664,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             const card = grid.querySelector(`[data-col-id="${col.id}"]`);
             if (col.staticImages && col.staticImages.length) {
                 updateShowcase(card, {
-                    samples: col.staticImages.slice(0, 4).map(url => ({ main: { url } })),
+                    samples: col.staticImages.slice(0, 8).map(url => ({ main: { url } })),
                     bestRank: null, floor: null, mostLiked: null, bestSale: null
                 });
             }
@@ -13333,6 +13333,24 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-08T12:00:00Z',
+            type:  'improvement',
+            title: 'Featured Collections — 8 sample NFTs + mobile fix',
+            text:  'Twice as many sample NFTs (2 rows of 4) under the highlights, and the section no longer overlaps Featured Artists on mobile.'
+        },
+        {
+            date:  '2026-05-08T11:30:00Z',
+            type:  'improvement',
+            title: 'Home layout reorganised',
+            text:  'Community Pulse moved next to the chat, Market Bot Live Feed paired with Top Collections, Crypto Prices placed under Featured Drops, and the broken "Latest from X" section removed.'
+        },
+        {
+            date:  '2026-05-08T11:30:00Z',
+            type:  'improvement',
+            title: 'Featured showcase tiles redesigned',
+            text:  'Vertical centered layout — category label on top, larger NFT image, name and main value (rank / views / likes / floor) all centered.'
+        },
         {
             date:  '2026-05-07T22:00:00Z',
             type:  'improvement',

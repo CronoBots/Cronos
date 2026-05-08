@@ -24449,10 +24449,14 @@ a.snap-holder-username:hover {
 .home-featured-grid {
     display: grid;
     grid-template-columns: 1fr;
-    grid-template-rows:    1fr;
+    grid-template-rows:    auto;
     /* Every child sits in the same cell : we get a clean stack without
        absolute positioning, so the container auto-sizes to the tallest
-       slide and we keep regular flex inside each card. */
+       slide and we keep regular flex inside each card. `auto` (au lieu
+       de 1fr) garantit que la rangée prend la hauteur réelle des cards
+       même quand le parent n'a pas de hauteur explicite — sinon en
+       mobile (flex:none) la rangée pouvait se collapser et faire
+       chevaucher la section suivante. */
 }
 .home-featured-grid > * {
     grid-area: 1 / 1;
@@ -24713,9 +24717,9 @@ a.snap-holder-username:hover {
 /* ═══════ Showcase (sous les stats) — 4 highlights + samples row ═══════
    min-height fixe pour réserver la place du contenu DÈS le chargement
    initial — sinon le card se redimensionne quand les fetches finissent
-   et tout le contenu flashe vers le haut (layout shift). 300px = 4 tuiles
-   ~165px (image 100px + label/name/val + paddings) + samples ~120px
-   (image 100px + label) + gaps. */
+   et tout le contenu flashe vers le haut (layout shift). 410px = 4 tuiles
+   ~165px (image 100px + label/name/val + paddings) + samples 2×100px
+   + gap row + label + paddings = ~245px. */
 .home-fc-spotlight .home-feat-v3-showcase {
     display: flex;
     flex-direction: column;
@@ -24723,7 +24727,7 @@ a.snap-holder-username:hover {
     padding: 10px 12px 12px;
     background: rgba(11, 20, 38, 0.35);
     flex: 1;
-    min-height: 300px;
+    min-height: 410px;
     min-width: 0;
 }
 .home-feat-showcase-loading {
@@ -24750,9 +24754,10 @@ a.snap-holder-username:hover {
     color: rgba(0, 179, 255, 0.7);
     padding-left: 2px;
 }
-/* Samples : grille de vignettes carrées alignées sur les 4 tuiles
-   highlight au-dessus. Même largeur de cellule que les tuiles, donc
-   les samples remplissent toute la largeur du cadre featured. */
+/* Samples : grille 4 colonnes × 2 rangées (8 vignettes au total),
+   alignée sur les 4 tuiles highlight au-dessus. Même largeur de
+   cellule que les tuiles, donc chaque sample reste visuellement
+   à la même taille — on en a juste plus pour remplir le cadre. */
 .home-feat-showcase-samples-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -25846,7 +25851,13 @@ a.snap-holder-username:hover {
        (banner + info + showcase) — pas de height:100% qui clipperait le
        showcase via overflow:hidden de .home-feat-v3. */
     .home-two-col--featured { grid-template-columns: 1fr; }
-    .home-two-col--featured .home-fc-spotlight,
+    .home-two-col--featured .home-fc-spotlight {
+        /* Pas de min-height fixée : on laisse la card grandir avec son
+           contenu (banner + identity + stats + showcase 4 tuiles + 8
+           samples) — sinon le contenu débordait sous la section
+           Featured Artists qui suit. */
+        min-height: 0;
+    }
     .home-two-col--featured .home-creators-grid {
         min-height: 360px;
     }
