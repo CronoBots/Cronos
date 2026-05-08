@@ -14586,6 +14586,7 @@ async function sha256hex(str) {
     var currentVerifiedFilter = 'ALL'; // ALL | true | false
     var currentSort = { col: 'vol', dir: 'desc' }; // active column sort
     var _allRows = []; // full merged dataset for client-side filter+sort
+    var _statsRetrying = false; // garde anti-double-retry quand loadStats échoue
     // Exposé pour que la home page puisse lire les premières lignes sans re-fetch
     Object.defineProperty(window, '_statsAllRows', { get: () => _allRows, configurable: true });
     window._statsLoaded = false;
@@ -15197,10 +15198,21 @@ fragment CollectionStatsData on Collection {
             window.dispatchEvent(new CustomEvent('cronos:statsLoaded'));
             requestAnimationFrame(() => recalcColWidths());
         } catch (e) {
-            loading.style.display = 'none';
-            if (errEl) {
-                errEl.textContent = 'Failed to load collections: ' + (e.message || 'unknown error');
-                errEl.style.display = 'block';
+            // Pas d'affichage d'erreur visible : on log silencieusement
+            // dans la console et on retente automatiquement après un
+            // court délai. Le skeleton (3 dots) reste visible pendant
+            // ce temps — l'utilisateur ne voit pas de "Failed to load"
+            // pour des erreurs transitoires (rate limit, timing API,
+            // hydrate avant init complète, etc.).
+            console.warn('[Stats] load failed, retrying:', e?.message || e);
+            if (errEl) errEl.style.display = 'none';
+            if (loading) loading.style.display = 'flex';
+            if (!_statsRetrying) {
+                _statsRetrying = true;
+                setTimeout(() => {
+                    _statsRetrying = false;
+                    loadStats();
+                }, 2500);
             }
         } finally {
             if (refreshBtn) refreshBtn.classList.remove('is-spinning');
