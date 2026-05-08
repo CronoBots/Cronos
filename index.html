@@ -1206,8 +1206,11 @@
       </div>
     </section>
 
-    <!-- ══ 2 COLONNES : Community Chat (gauche) | Live Activity (droite) ══ -->
-    <div class="home-two-col home-two-col--chat-live">
+    <!-- ══ 2 COLONNES : Community Chat (gauche) | Community Pulse (droite) ══
+         Le chat et ses stats vivent côte-à-côte : voir le classement
+         des contributeurs, le nombre de membres en ligne, le volume
+         de messages, etc. directement à côté de la conversation. -->
+    <div class="home-two-col home-two-col--chat-pulse">
 
       <!-- COMMUNITY CHAT — colonne gauche -->
       <section class="home-section home-community-section">
@@ -1324,7 +1327,58 @@
         </div>
       </div>
 
-      <!-- LIVE ACTIVITY — colonne droite -->
+      <!-- COMMUNITY PULSE — colonne droite ─────────────────────────────
+           Compagnon stats du chat. Les éléments lisent les MÊMES IDs que
+           ceux que renderPulseCharts() / setKpi() ciblent — ils ont été
+           SORTIS du panneau Pulse principal en bas de la home pour vivre
+           ici, à côté de la zone qu'ils mesurent. */ -->
+      <section class="home-section home-community-pulse-section">
+        <div class="home-section-header">
+          <h2 class="home-section-title">Community Pulse</h2>
+          <span class="home-section-badge">Last 30 days</span>
+        </div>
+        <div class="pulse-wrap home-cp-wrap">
+          <div class="pulse-content home-cp-content">
+            <!-- KPIs community : registered / online / messages / signed-in.
+                 Mêmes IDs que dans Pulse → renderPulseCharts les remplit
+                 automatiquement quand initPulse() tourne. -->
+            <div class="pulse-kpis-group">
+              <span class="pulse-kpis-group-label">Community</span>
+              <div class="pulse-kpis">
+                <div class="pulse-kpi" title="Total members who have signed in to the community chat at least once."><span class="pulse-kpi-label">Registered members</span><span class="pulse-kpi-value" id="pulseKpiMembers">—</span></div>
+                <div class="pulse-kpi" title="Members currently signed in and connected to the chat right now (live, refreshes automatically)."><span class="pulse-kpi-label">Online now</span><span class="pulse-kpi-value pulse-kpi-value--live" id="pulseKpiOnline">—</span></div>
+                <div class="pulse-kpi" title="Chat messages sent over the last 30 days (system join announces excluded)."><span class="pulse-kpi-label">Messages (30d)</span><span class="pulse-kpi-value" id="pulseKpiMessages">—</span></div>
+                <div class="pulse-kpi" title="Share of sessions from visitors who were signed in to a Crypto.com NFT account."><span class="pulse-kpi-label">Signed-in share</span><span class="pulse-kpi-value" id="pulseKpiSigned">—</span></div>
+              </div>
+            </div>
+            <!-- Charts + top contributors. En full-width vu la place dispo. -->
+            <div class="pulse-grid home-cp-grid">
+              <div class="pulse-card pulse-card--full">
+                <h3 class="pulse-card-title">Chat activity</h3>
+                <div class="pulse-card-body"><canvas id="pulseChartChat"></canvas></div>
+              </div>
+              <div class="pulse-card pulse-card--full">
+                <h3 class="pulse-card-title">New members per week</h3>
+                <div class="pulse-card-body"><canvas id="pulseChartGrowth"></canvas></div>
+              </div>
+              <div class="pulse-card pulse-card--full">
+                <h3 class="pulse-card-title">Top contributors</h3>
+                <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopContributors"></ol></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- fin home-two-col--chat-pulse -->
+
+    <!-- ══ 2 COLONNES : Market Bot Live Feed (gauche) | Top Collections (droite) ══
+         Sous le chat, les 2 vues "live data" du site : ce qui se passe
+         en ce moment sur le marché (Live Feed) et le classement actuel
+         des collections (Top Collections home). ── -->
+    <div class="home-two-col home-two-col--market-top">
+
+      <!-- MARKET BOT LIVE FEED — colonne gauche -->
       <section class="home-section home-live-section">
         <div class="home-section-header">
           <div>
@@ -1332,9 +1386,6 @@
           </div>
           <span class="home-live-badge">LIVE</span>
         </div>
-        <!-- Vraie <table> identique à .sb-table (Market Bot) — mêmes classes
-             .sb-th / .sb-td / .sb-tr donc même style hérité (séparateurs,
-             zebra, alignement, hover). -->
         <div id="cbTicker" class="home-live-card sb-table-wrap home-live-table-wrap">
           <table class="sb-table home-live-table">
             <thead>
@@ -1352,38 +1403,38 @@
         </div>
       </section>
 
-    </div><!-- fin home-two-col--chat-live -->
+      <!-- TOP COLLECTIONS — colonne droite -->
+      <section class="home-section">
+        <div class="home-section-header">
+          <h2 class="home-section-title">Top Collections</h2>
+        </div>
+        <div class="home-top-table-wrap" id="homeTopList">
+          <table class="stats-table home-top-table" id="homeTopTable">
+            <colgroup>
+              <col style="width:44px">
+              <col>
+              <col style="width:80px">
+              <col style="width:90px">
+            </colgroup>
+            <thead>
+              <tr>
+                <th class="stats-th stats-th--center home-top-th">#</th>
+                <th class="stats-th stats-th--left home-top-th">Collection</th>
+                <th class="stats-th stats-th--center home-top-th">Floor</th>
+                <th class="stats-th stats-th--center home-top-th">VOL.</th>
+                <th class="stats-th stats-th--center home-top-th">VOL. %</th>
+              </tr>
+            </thead>
+            <tbody id="homeTopTableBody">
+              <tr><td colspan="6" class="home-top-loading-cell">
+                <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-    <!-- ── Crypto Prices (live from Crypto.com Exchange) ── -->
-    <section class="home-section home-crypto-section">
-      <div class="home-section-header home-crypto-header">
-        <h2 class="home-section-title">Crypto Prices</h2>
-        <!-- Bloc droit : filtre période (aligné sur le bord droit des cartes)
-             puis bouton "+ Add token" à sa droite. -->
-        <div class="home-crypto-header-right">
-          <div class="home-crypto-tf-global" id="cryptoTfGlobal">
-            <button class="home-crypto-tf-btn home-crypto-tf-btn--active" data-tf="24h" type="button">24H</button>
-            <button class="home-crypto-tf-btn" data-tf="7d"  type="button">7D</button>
-            <button class="home-crypto-tf-btn" data-tf="30d" type="button">30D</button>
-          </div>
-          <button class="home-section-action" id="cryptoAddBtn" type="button">+ Add token</button>
-        </div>
-      </div>
-      <div class="home-crypto-grid" id="homeCryptoGrid">
-        <div class="home-crypto-loading"><span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span></div>
-      </div>
-      <!-- Picker : <dialog> natif (caché par défaut au niveau navigateur) -->
-      <dialog class="home-crypto-picker-dialog" id="cryptoPickerDialog" aria-label="Add a crypto pair">
-        <div class="home-crypto-picker-card">
-          <div class="home-crypto-picker-header">
-            <span class="home-crypto-picker-title">Add a token</span>
-            <button class="home-crypto-picker-close" id="cryptoPickerClose" type="button" aria-label="Close">×</button>
-          </div>
-          <input class="home-crypto-picker-search" id="cryptoPickerSearch" type="text" placeholder="Search BTC, ETH, SOL…" autocomplete="off" spellcheck="false"/>
-          <div class="home-crypto-picker-list" id="cryptoPickerList"></div>
-        </div>
-      </dialog>
-    </section>
+    </div><!-- fin home-two-col--market-top -->
 
     <!-- ── Featured Collections — single-card spotlight (auto-rotates every
          FC_CYCLE_MS, paused on hover, manual nav via dots / arrows). The
@@ -1452,47 +1503,36 @@
       </div>
     </section>
 
-    <!-- ── Top Collections 24H ── -->
-    <div class="home-two-col home-two-col--bottom">
-
-      <section class="home-section">
-        <div class="home-section-header">
-          <h2 class="home-section-title">Top Collections</h2>
+    <!-- ── Crypto Prices (live from Crypto.com Exchange) ──
+         Déplacé sous Featured Drops pour regrouper les "infos marché"
+         (live feed + top collections + drops + crypto prices) avant
+         d'arriver à la news / pulse. -->
+    <section class="home-section home-crypto-section">
+      <div class="home-section-header home-crypto-header">
+        <h2 class="home-section-title">Crypto Prices</h2>
+        <div class="home-crypto-header-right">
+          <div class="home-crypto-tf-global" id="cryptoTfGlobal">
+            <button class="home-crypto-tf-btn home-crypto-tf-btn--active" data-tf="24h" type="button">24H</button>
+            <button class="home-crypto-tf-btn" data-tf="7d"  type="button">7D</button>
+            <button class="home-crypto-tf-btn" data-tf="30d" type="button">30D</button>
+          </div>
+          <button class="home-section-action" id="cryptoAddBtn" type="button">+ Add token</button>
         </div>
-        <!-- Vraie <table> identique à .stats-table (Top Collections panel) :
-             même classes .stats-th / .stats-td, même séparateurs, même zebra. -->
-        <div class="home-top-table-wrap" id="homeTopList">
-          <table class="stats-table home-top-table" id="homeTopTable">
-            <colgroup>
-              <col style="width:44px">
-              <col>
-              <col style="width:80px">
-              <col style="width:90px">
-              <!-- 5e <col> intentionnellement omis : la colonne VOL % est
-                   masquée sur smartphone via .home-top-chg-cell {display:none}.
-                   Sans <col>, aucune piste n'est réservée — la table remplit
-                   la carte au bord droit. Sur desktop la colonne reste
-                   auto-sized (les valeurs courtes "±x.x%" suffisent). -->
-            </colgroup>
-            <thead>
-              <tr>
-                <th class="stats-th stats-th--center home-top-th">#</th>
-                <th class="stats-th stats-th--left home-top-th">Collection</th>
-                <th class="stats-th stats-th--center home-top-th">Floor</th>
-                <th class="stats-th stats-th--center home-top-th">VOL.</th>
-                <th class="stats-th stats-th--center home-top-th">VOL. %</th>
-              </tr>
-            </thead>
-            <tbody id="homeTopTableBody">
-              <tr><td colspan="6" class="home-top-loading-cell">
-                <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
-              </td></tr>
-            </tbody>
-          </table>
+      </div>
+      <div class="home-crypto-grid" id="homeCryptoGrid">
+        <div class="home-crypto-loading"><span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span></div>
+      </div>
+      <dialog class="home-crypto-picker-dialog" id="cryptoPickerDialog" aria-label="Add a crypto pair">
+        <div class="home-crypto-picker-card">
+          <div class="home-crypto-picker-header">
+            <span class="home-crypto-picker-title">Add a token</span>
+            <button class="home-crypto-picker-close" id="cryptoPickerClose" type="button" aria-label="Close">×</button>
+          </div>
+          <input class="home-crypto-picker-search" id="cryptoPickerSearch" type="text" placeholder="Search BTC, ETH, SOL…" autocomplete="off" spellcheck="false"/>
+          <div class="home-crypto-picker-list" id="cryptoPickerList"></div>
         </div>
-      </section>
-
-    </div>
+      </dialog>
+    </section>
 
     <!-- ── UPDATES — changelog (full width, above Pulse) ── -->
     <section class="home-section home-updates-section">
@@ -1504,33 +1544,6 @@
         <span class="home-section-badge">Changelog</span>
       </div>
       <ol class="home-updates-list" id="homeUpdatesList"></ol>
-    </section>
-
-    <!-- ── X (Twitter) timeline embed — @Cronos_WTF ──
-         Embed officiel via widgets.js (chargé à la demande dans
-         initHomeXTimeline). On ne peut afficher QUE le timeline du compte —
-         les mentions et le hashtag #CronosWTF nécessitent l'API X v2 payante.
-         Le bouton "Mention us" en haut-droit ouvre la recherche X dans un
-         nouvel onglet pour donner une porte d'entrée vers le hashtag. -->
-    <section class="home-section home-x-section">
-      <div class="home-section-header">
-        <h2 class="home-section-title">
-          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" style="width:15px;height:15px;vertical-align:-2px;margin-right:8px;color:#fff;"><path d="M15.751 2.5h2.892l-6.318 7.219L19.75 17.5h-5.819l-4.557-5.96-5.213 5.96H1.27l6.756-7.722L1 2.5h5.965l4.119 5.447L15.751 2.5zm-1.013 13.405h1.602L5.337 4.014H3.62l11.118 11.891z"/></svg>
-          Latest from X
-        </h2>
-        <a class="home-section-action" href="https://twitter.com/search?q=%23CronosWTF%20OR%20%40Cronos_WTF&amp;f=live" target="_blank" rel="noopener">Mentions &amp; #CronosWTF →</a>
-      </div>
-      <div class="home-x-card" id="homeXCard">
-        <div class="home-x-loading" id="homeXLoading">
-          <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
-        </div>
-        <a class="twitter-timeline"
-           data-theme="dark"
-           data-tweet-limit="4"
-           data-chrome="noheader nofooter noborders transparent"
-           data-dnt="true"
-           href="https://twitter.com/Cronos_WTF">Tweets by Cronos_WTF</a>
-      </div>
     </section>
 
     <!-- ── PULSE — site activity stats (full width, bottom of home) ── -->
@@ -1561,16 +1574,8 @@
             </div>
           </div>
 
-          <!-- KPI row 2 — community -->
-          <div class="pulse-kpis-group">
-            <span class="pulse-kpis-group-label">Community</span>
-            <div class="pulse-kpis">
-              <div class="pulse-kpi" title="Total members who have signed in to the community chat at least once."><span class="pulse-kpi-label">Registered members</span><span class="pulse-kpi-value" id="pulseKpiMembers">—</span></div>
-              <div class="pulse-kpi" title="Members currently signed in and connected to the chat right now (live, refreshes automatically)."><span class="pulse-kpi-label">Online now</span><span class="pulse-kpi-value pulse-kpi-value--live" id="pulseKpiOnline">—</span></div>
-              <div class="pulse-kpi" title="Chat messages sent over the last 30 days (system join announces excluded)."><span class="pulse-kpi-label">Messages (30d)</span><span class="pulse-kpi-value" id="pulseKpiMessages">—</span></div>
-              <div class="pulse-kpi" title="Share of sessions from visitors who were signed in to a Crypto.com NFT account."><span class="pulse-kpi-label">Signed-in share</span><span class="pulse-kpi-value" id="pulseKpiSigned">—</span></div>
-            </div>
-          </div>
+          <!-- KPI row 2 (Community) déplacée dans la section Community
+               Pulse en haut de la home, à côté du chat. -->
 
           <!-- ── Sub-section 1 : Traffic over time ── -->
           <div class="pulse-subsection">
@@ -1610,24 +1615,9 @@
             </div>
           </div>
 
-          <!-- ── Sub-section 3 : Community ── -->
-          <div class="pulse-subsection">
-            <span class="pulse-subsection-label">Community</span>
-            <div class="pulse-grid">
-              <div class="pulse-card pulse-card--wide">
-                <h3 class="pulse-card-title">Chat activity</h3>
-                <div class="pulse-card-body"><canvas id="pulseChartChat"></canvas></div>
-              </div>
-              <div class="pulse-card">
-                <h3 class="pulse-card-title">New members per week</h3>
-                <div class="pulse-card-body"><canvas id="pulseChartGrowth"></canvas></div>
-              </div>
-              <div class="pulse-card pulse-card--full">
-                <h3 class="pulse-card-title">Top contributors</h3>
-                <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopContributors"></ol></div>
-              </div>
-            </div>
-          </div>
+          <!-- Sub-section "Community" (Chat activity / New members /
+               Top contributors) déplacée dans la section Community Pulse
+               en haut de la home, à côté du chat. -->
 
           <!-- ── Sub-section 4 : Sources & content ── -->
           <div class="pulse-subsection">
@@ -8542,7 +8532,9 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 ? { ...viewedAsset, views: Number(viewedAsset.views) || 0 }
                 : null;
 
-            // 3 samples random pris dans la liste rank (Fisher-Yates).
+            // 4 samples random pris dans la liste rank (Fisher-Yates) —
+            // même nombre que les tuiles highlight pour qu'ils s'alignent
+            // exactement en dessous et remplissent toute la largeur.
             const shuffled = rankAssets.slice();
             for (let i = shuffled.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -8550,7 +8542,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             }
 
             return {
-                samples: shuffled.slice(0, 3),
+                samples: shuffled.slice(0, 4),
                 bestRank,
                 mostViewed,
                 mostLiked,
@@ -8601,7 +8593,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             return `<img src="${_fcEsc(img)}" alt="${_fcEsc(a?.name || '')}" loading="lazy" onerror="this.style.opacity='0.2'"/>`;
         };
 
-        const samples = (data.samples || []).slice(0, 3);
+        const samples = (data.samples || []).slice(0, 4);
         const samplesHtml = samples.length ? `
             <div class="home-feat-showcase-samples">
                 <span class="home-feat-showcase-strip-label">Sample NFTs</span>
@@ -8672,7 +8664,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             const card = grid.querySelector(`[data-col-id="${col.id}"]`);
             if (col.staticImages && col.staticImages.length) {
                 updateShowcase(card, {
-                    samples: col.staticImages.slice(0, 3).map(url => ({ main: { url } })),
+                    samples: col.staticImages.slice(0, 4).map(url => ({ main: { url } })),
                     bestRank: null, floor: null, mostLiked: null, bestSale: null
                 });
             }
@@ -10335,54 +10327,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         initChat();
         initNavButtons();
         initSpotlight();
-        initHomeXTimeline();
     };
-
-    /* ── X timeline embed — @Cronos_WTF ──
-     * Chargement à la demande de widgets.js (uniquement quand la home s'active,
-     * pour ne pas pénaliser les autres onglets ni le 1er paint). Le widget
-     * Twitter remplace le <a class="twitter-timeline"> par un <iframe> dès qu'il
-     * a fini son rendu — on observe son apparition pour cacher les loading dots
-     * et révéler le contenu sans flash blanc. */
-    function initHomeXTimeline() {
-        const card    = document.getElementById('homeXCard');
-        const loading = document.getElementById('homeXLoading');
-        if (!card || card.dataset.cwtfX === '1') return;
-        card.dataset.cwtfX = '1';
-
-        const onIframe = () => {
-            if (!card.querySelector('iframe')) return false;
-            card.classList.add('home-x-card--ready');
-            if (loading) loading.style.display = 'none';
-            return true;
-        };
-
-        // widgets.js global may already be loaded (e.g. on a back-nav). If the
-        // <iframe> is already present we're done.
-        if (onIframe()) return;
-
-        // Inject the script once. Twitter's widgets.js auto-discovers any
-        // <a class="twitter-timeline"> already in the DOM and rewrites them.
-        if (!window._cwtfXScriptInjected) {
-            window._cwtfXScriptInjected = true;
-            const s = document.createElement('script');
-            s.src = 'https://platform.twitter.com/widgets.js';
-            s.async = true;
-            s.charset = 'utf-8';
-            document.body.appendChild(s);
-        } else if (window.twttr && window.twttr.widgets && typeof window.twttr.widgets.load === 'function') {
-            // Script already there but the timeline element was added after :
-            // re-scan so it gets rendered.
-            window.twttr.widgets.load(card);
-        }
-
-        // Poll for the rendered <iframe> ; bail out after 30s (network down).
-        let tries = 0;
-        const t = setInterval(() => {
-            tries++;
-            if (onIframe() || tries > 150) clearInterval(t);
-        }, 200);
-    }
 
     // One-shot cleanup : drop the obsolete persisted layout from the
     // earlier "customize home" experiment so it doesn't sit forever in

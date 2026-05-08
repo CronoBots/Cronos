@@ -24713,8 +24713,9 @@ a.snap-holder-username:hover {
 /* ═══════ Showcase (sous les stats) — 4 highlights + samples row ═══════
    min-height fixe pour réserver la place du contenu DÈS le chargement
    initial — sinon le card se redimensionne quand les fetches finissent
-   et tout le contenu flashe vers le haut (layout shift). 160px = 4 tuiles
-   ~70px + samples ~50px + paddings/gaps. */
+   et tout le contenu flashe vers le haut (layout shift). 300px = 4 tuiles
+   ~165px (image 100px + label/name/val + paddings) + samples ~120px
+   (image 100px + label) + gaps. */
 .home-fc-spotlight .home-feat-v3-showcase {
     display: flex;
     flex-direction: column;
@@ -24722,7 +24723,7 @@ a.snap-holder-username:hover {
     padding: 10px 12px 12px;
     background: rgba(11, 20, 38, 0.35);
     flex: 1;
-    min-height: 160px;
+    min-height: 300px;
     min-width: 0;
 }
 .home-feat-showcase-loading {
@@ -24749,23 +24750,23 @@ a.snap-holder-username:hover {
     color: rgba(0, 179, 255, 0.7);
     padding-left: 2px;
 }
-/* Samples : 3 vignettes BEAUCOUP plus petites que les highlights —
-   ce sont des "exemples visuels" secondaires, pas l'info principale.
-   Largeur fixée pour qu'elles ne grandissent pas avec la card sur
-   les écrans larges. Centrées en dessous des 4 tuiles. */
+/* Samples : grille de vignettes carrées alignées sur les 4 tuiles
+   highlight au-dessus. Même largeur de cellule que les tuiles, donc
+   les samples remplissent toute la largeur du cadre featured. */
 .home-feat-showcase-samples-row {
-    display: flex;
-    gap: 4px;
-    justify-content: flex-start;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
 }
 .home-feat-showcase-sample {
-    width: 32px;
-    height: 32px;
-    border-radius: 5px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-width: 100px;
+    margin: 0 auto;
+    border-radius: 7px;
     overflow: hidden;
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.10);
-    flex-shrink: 0;
 }
 .home-feat-showcase-sample img {
     width: 100%;
@@ -24782,16 +24783,19 @@ a.snap-holder-username:hover {
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
 }
-/* Tuile highlight COMPACTE — thumb à gauche + 3 lignes texte à droite
-   (label coloré · nom du NFT · valeur principale). Plus petite en
-   hauteur que la version "thumb plein-cadre" : on tient les 4 tuiles
-   sur une seule ligne sans manger toute la place. */
+/* Tuile highlight VERTICALE centrée :
+     LABEL coloré (en haut)
+     IMAGE NFT carrée (centrée, plein-cadre cellule)
+     NOM NFT (centré)
+     VALEUR principale (centrée — rank/likes/views/price)
+   Tous les éléments centrés, alignés sur l'axe central. */
 .home-feat-showcase-tile {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
+    text-align: center;
+    gap: 4px;
+    padding: 8px 6px 10px;
     background: rgba(0, 0, 0, 0.32);
     border: 1px solid rgba(0, 179, 255, 0.22);
     border-radius: 10px;
@@ -24802,35 +24806,11 @@ a.snap-holder-username:hover {
 .home-fc-spotlight .home-feat-v3:hover .home-feat-showcase-tile {
     border-color: rgba(0, 179, 255, 0.4);
 }
-.home-feat-showcase-tile-thumb {
-    width: 44px;
-    height: 44px;
-    border-radius: 7px;
-    overflow: hidden;
-    background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    flex-shrink: 0;
-}
-.home-feat-showcase-tile-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-.home-feat-showcase-tile-text {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    min-width: 0;
-    flex: 1;
-    align-items: flex-start;
-    text-align: left;
-}
 .home-feat-showcase-tile-label {
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 8.5px;
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: rgba(0, 179, 255, 0.7);
     line-height: 1;
@@ -24838,21 +24818,46 @@ a.snap-holder-username:hover {
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
+    order: 1;            /* label au-dessus de l'image */
+}
+.home-feat-showcase-tile-thumb {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-width: 100px;
+    border-radius: 7px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+    order: 2;
+    margin: 2px auto 4px;
+}
+.home-feat-showcase-tile-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+/* Le wrapper texte n'apparaît plus en flex (ses enfants sont positionnés
+   directement par order:1/3/4) — il sert juste à grouper l'info. */
+.home-feat-showcase-tile-text {
+    display: contents;
 }
 .home-feat-showcase-tile-name {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 11.5px;
+    font-size: 11px;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.85);
     line-height: 1.1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
+    order: 3;
 }
 .home-feat-showcase-tile-val {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 800;
     color: #fff;
     line-height: 1.1;
@@ -24860,6 +24865,7 @@ a.snap-holder-username:hover {
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
+    order: 4;
 }
 /* Couleurs spécifiques par type — petit accent visuel. */
 .home-feat-showcase-tile--rank   .home-feat-showcase-tile-label { color: #fbbf24; } /* or — rank */
@@ -24881,8 +24887,10 @@ a.snap-holder-username:hover {
     .home-fc-spotlight .home-feat-v3-stats { padding: 10px 12px; }
     .home-fc-spotlight .home-feat-v3-stat-val { font-size: 14px; }
     .home-fc-spotlight .home-feat-v3-showcase { padding: 8px 10px 10px; }
-    .home-feat-showcase-tile-thumb { width: 32px; height: 32px; }
+    .home-feat-showcase-tile-thumb { max-width: 64px; }
     .home-feat-showcase-tile-val { font-size: 11.5px; }
+    .home-feat-showcase-sample { max-width: 64px; }
+    .home-feat-showcase-samples-row { gap: 6px; }
     .home-fc-controls { margin-top: 10px; gap: 10px; }
 }
 
@@ -25713,30 +25721,79 @@ a.snap-holder-username:hover {
 /* ══════════════════════════════════════════════════════════
    GRILLE CHAT + LIVE ACTIVITY — live feed demi-largeur
    ══════════════════════════════════════════════════════════ */
-.home-two-col--chat-live {
-    grid-template-columns: 3fr 1fr;   /* live feed = ~25% de la largeur */
+/* ── 2-col CHAT + COMMUNITY PULSE (sa colonne stats) ── */
+.home-two-col--chat-pulse {
+    grid-template-columns: 3fr 2fr;   /* chat ~60%, pulse stats ~40% */
     align-items: stretch;
 }
-/* Force les deux sections (chat / live) à avoir EXACTEMENT la même hauteur :
-   les sections sont flex:column, leur header ne shrink pas, leur card prend
-   tout le reste avec flex:1. Comme align-items:stretch sur la grille parent,
-   les sections sont aussi hautes l'une que l'autre, et donc les cards aussi. */
-.home-two-col--chat-live > .home-section {
+.home-two-col--chat-pulse > .home-section {
     display: flex;
     flex-direction: column;
     min-height: 0;
 }
-.home-two-col--chat-live > .home-section > .home-section-header {
+.home-two-col--chat-pulse > .home-section > .home-section-header {
     flex-shrink: 0;
 }
-.home-two-col--chat-live .home-community-card,
-.home-two-col--chat-live .home-live-card {
+.home-two-col--chat-pulse .home-community-card,
+.home-two-col--chat-pulse .home-cp-wrap {
     flex: 1 1 0;
     height: auto;
-    /* Plus de place pour la communauté : 480px au lieu de 340px. Suffisant
-       pour voir ~6-8 messages d'un coup, la sidebar membres au complet et
-       l'input — sans trop dominer la home. */
-    min-height: 480px;
+    min-height: 540px;
+    min-width: 0;
+}
+.home-two-col--chat-pulse .home-cp-wrap {
+    /* Halo cyan unifié home — même cadre que les autres frames. */
+    border: 1px solid var(--home-halo-border);
+    border-radius: 14px;
+    background: rgba(11, 20, 38, 0.4);
+    box-shadow: var(--home-halo-shadow);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.home-two-col--chat-pulse .home-cp-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 14px 16px 16px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 179, 255, 0.25) transparent;
+}
+.home-two-col--chat-pulse .home-cp-content::-webkit-scrollbar { width: 6px; }
+.home-two-col--chat-pulse .home-cp-content::-webkit-scrollbar-track { background: transparent; }
+.home-two-col--chat-pulse .home-cp-content::-webkit-scrollbar-thumb {
+    background: rgba(0, 179, 255, 0.25);
+    border-radius: 3px;
+}
+/* KPIs en colonne narrow → on tasse le grid à 2 colonnes au lieu de 4. */
+.home-two-col--chat-pulse .pulse-kpis {
+    grid-template-columns: repeat(2, 1fr);
+}
+/* Charts en full-width dans la colonne droite. */
+.home-two-col--chat-pulse .home-cp-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* ── 2-col MARKET BOT LIVE FEED + TOP COLLECTIONS — sous le chat ── */
+.home-two-col--market-top {
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+}
+.home-two-col--market-top > .home-section {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+.home-two-col--market-top > .home-section > .home-section-header {
+    flex-shrink: 0;
+}
+.home-two-col--market-top .home-live-card,
+.home-two-col--market-top .home-top-table-wrap {
+    flex: 1 1 0;
+    min-height: 380px;
     min-width: 0;
 }
 /* ══════════════════════════════════════════════════════════
@@ -25802,7 +25859,8 @@ a.snap-holder-username:hover {
 }
 
 @media (max-width: 860px) {
-    .home-two-col--chat-live { grid-template-columns: 1fr; }
+    .home-two-col--chat-pulse,
+    .home-two-col--market-top { grid-template-columns: 1fr; }
 }
 
 /* ── Titre "page" — même taille que home-section-title standard ── */
@@ -26088,7 +26146,8 @@ body { box-sizing: border-box; }
 
 /* ── Mobile : live feed pleine largeur, colonnes adaptées ── */
 @media (max-width: 860px) {
-    .home-two-col--chat-live {
+    .home-two-col--chat-pulse,
+    .home-two-col--market-top {
         grid-template-columns: 1fr !important;
     }
     .home-live-section,
@@ -29706,52 +29765,6 @@ body { box-sizing: border-box; }
     .home-top-table th.stats-th { padding: 8px 4px !important; }
     .home-top-table td.stats-td { padding: 9px 4px !important; }
     .home-top-table .home-top-name-cell { padding-left: 8px !important; }
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   X (Twitter) timeline — @Cronos_WTF
-   widgets.js officiel Twitter, chargé à la demande par initHomeXTimeline().
-   On ne peut pas montrer mentions + hashtag sans l'API payante de X — voir
-   commentaire dans index.html.
-   ══════════════════════════════════════════════════════════════════════════ */
-.home-x-section { margin-top: 24px; }
-.home-x-card {
-    position: relative;
-    /* Halo unifié home (variables --home-halo-*). */
-    border: 1px solid var(--home-halo-border);
-    border-radius: 14px;
-    background: rgba(11, 20, 38, 0.4);
-    box-shadow: var(--home-halo-shadow);
-    padding: 14px;
-    min-height: 360px;
-    overflow: hidden;
-}
-/* Loading dots centrés tant que le widget n'est pas peint */
-.home-x-loading {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    pointer-events: none;
-}
-/* L'iframe injecté par widgets.js : on le force à se centrer + width 100%
-   pour qu'il respecte la carte halo'd au lieu de la déborder. Twitter set
-   parfois max-width:550px sur l'iframe — on l'autorise mais on centre. */
-.home-x-card iframe {
-    margin: 0 auto !important;
-    max-width: 100% !important;
-}
-/* Fade-in du contenu une fois le widget prêt */
-.home-x-card .twitter-timeline,
-.home-x-card iframe {
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-.home-x-card--ready .twitter-timeline,
-.home-x-card--ready iframe {
-    opacity: 1;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
