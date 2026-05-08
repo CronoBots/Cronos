@@ -9423,13 +9423,31 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             const emojiKey = EMOJI_KEYS[idx];
             if (!emojiKey) return;
             const path = 'chat/reactions/' + msgKey + '/' + emojiKey + '/' + sessKey;
+            // Rendu optimiste local : on update _cachedReactions et on
+            // re-render IMMÉDIATEMENT la pill, sans attendre le retour
+            // de Firebase. L'écoute en temps réel corrigera si l'écriture
+            // est rejetée (rules) — au moins l'utilisateur a un retour
+            // visuel instantané. Important : on sauvegarde l'état d'avant
+            // pour pouvoir rollback si besoin.
+            _cachedReactions[msgKey] = _cachedReactions[msgKey] || {};
+            _cachedReactions[msgKey][emojiKey] = _cachedReactions[msgKey][emojiKey] || {};
+            const wasMine = !!_cachedReactions[msgKey][emojiKey][sessKey];
+            if (wasMine) delete _cachedReactions[msgKey][emojiKey][sessKey];
+            else         _cachedReactions[msgKey][emojiKey][sessKey] = true;
+            const div = document.querySelector('[data-msg-key="' + msgKey + '"]');
+            if (div) updateReactionDisplay(div, _cachedReactions[msgKey] || {});
             try {
                 const ref  = fbDb.ref(path);
                 const snap = await ref.once('value');
                 if (snap.exists()) { await ref.remove(); }
                 else               { await ref.set(true); }
             } catch(e) {
-                console.error('[Reactions] Firebase write failed:', path, e);
+                // Si Firebase refuse (rules pas à jour pour les nouvelles
+                // clés 'ok'/'pray', par ex.), on rollback le cache local.
+                console.error('[Reactions] Firebase write failed for', emojiKey, '— check your DB rules allow this key. Path:', path, 'Error:', e?.message || e);
+                if (wasMine) _cachedReactions[msgKey][emojiKey][sessKey] = true;
+                else         delete _cachedReactions[msgKey][emojiKey][sessKey];
+                if (div) updateReactionDisplay(div, _cachedReactions[msgKey] || {});
             }
         }
 
@@ -13472,9 +13490,11 @@ async function sha256hex(str) {
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
         {
-            date:  '2026-05-08T17:00:00Z',
+            date:  '2026-05-08T17:30:00Z',
             type:  'fix',
-            title: 'Chat — 👌 and 🙏 reactions now work',
+            title: 'Chat — instant feedback when reacting',
+            text:  'When you tap an emoji, the reaction pill now appears immediately (optimistic render) instead of waiting for the server round-trip. If the write is rejected, the pill rolls back automatically and an explicit error is logged in the console.'
+        },
             text:  'The two new emoji reactions added recently were silently ignored because the internal key map only had 6 entries for the 8 emojis. Both 👌 and 🙏 now react properly when tapped.'
         },
         {
