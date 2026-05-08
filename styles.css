@@ -24742,17 +24742,23 @@ a.snap-holder-username:hover {
     color: rgba(0, 179, 255, 0.7);
     padding-left: 2px;
 }
+/* Samples : 3 vignettes BEAUCOUP plus petites que les highlights —
+   ce sont des "exemples visuels" secondaires, pas l'info principale.
+   Largeur fixée pour qu'elles ne grandissent pas avec la card sur
+   les écrans larges. Centrées en dessous des 4 tuiles. */
 .home-feat-showcase-samples-row {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
+    display: flex;
+    gap: 4px;
+    justify-content: flex-start;
 }
 .home-feat-showcase-sample {
-    aspect-ratio: 1 / 1;
-    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    border-radius: 5px;
     overflow: hidden;
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.10);
+    flex-shrink: 0;
 }
 .home-feat-showcase-sample img {
     width: 100%;
@@ -24762,38 +24768,41 @@ a.snap-holder-username:hover {
 }
 /* Grille 2×2 : Top sale, Top rank, Floor, Most liked. */
 .home-feat-showcase-grid {
+    /* 4 tuiles sur 1 ligne, réparties uniformément sur toute la largeur
+       du cadre. Les tuiles sont volontairement grandes (image NFT +
+       label + valeur) — c'est l'info principale du showcase. */
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    /* auto auto au lieu de 1fr 1fr : sans une hauteur explicite sur le
-       parent (.home-feat-v3-right est désormais content-sized), 1fr 1fr
-       donnait des rows à 0px et le 2×2 collapsed. Auto laisse les
-       tuiles s'afficher à leur hauteur naturelle. */
-    grid-template-rows: auto auto;
-    gap: 6px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
 }
+/* Tuile highlight : layout vertical en pleine largeur de colonne —
+   thumb NFT carré au-dessus (utilise tout le carré disponible),
+   label coloré + value sous l'image. Avec 4 colonnes égales sur une
+   ligne, les thumbs sont nettement plus grandes que la 2×2 d'avant. */
 .home-feat-showcase-tile {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 8px;
     background: rgba(0, 0, 0, 0.32);
-    border: 1px solid rgba(0, 179, 255, 0.18);
-    border-radius: 8px;
+    border: 1px solid rgba(0, 179, 255, 0.22);
+    border-radius: 10px;
     min-width: 0;
     overflow: hidden;
     transition: border-color 0.15s, background 0.15s;
 }
 .home-fc-spotlight .home-feat-v3:hover .home-feat-showcase-tile {
-    border-color: rgba(0, 179, 255, 0.32);
+    border-color: rgba(0, 179, 255, 0.4);
 }
 .home-feat-showcase-tile-thumb {
-    width: 36px;
-    height: 36px;
-    border-radius: 5px;
+    width: 100%;
+    aspect-ratio: 1 / 1;          /* thumbnail carré */
+    border-radius: 7px;
     overflow: hidden;
-    flex-shrink: 0;
     background: rgba(0, 0, 0, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
 }
 .home-feat-showcase-tile-thumb img {
     width: 100%;
@@ -24804,12 +24813,14 @@ a.snap-holder-username:hover {
 .home-feat-showcase-tile-text {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 2px;
     min-width: 0;
+    align-items: center;
+    text-align: center;
 }
 .home-feat-showcase-tile-label {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 8.5px;
+    font-size: 9px;
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -24818,16 +24829,18 @@ a.snap-holder-username:hover {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 100%;
 }
 .home-feat-showcase-tile-val {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 800;
     color: #fff;
     line-height: 1.1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 100%;
 }
 /* Couleurs spécifiques par type — petit accent visuel. */
 .home-feat-showcase-tile--rank   .home-feat-showcase-tile-label { color: #fbbf24; } /* or — rank */
@@ -25724,17 +25737,23 @@ a.snap-holder-username:hover {
 .home-two-col--featured > .home-section > .home-section-header {
     flex-shrink: 0;
 }
-/* Le contenu (spotlight wrapper côté gauche, creators-grid côté droit)
-   prend tout l'espace vertical restant via flex:1. Hauteur min suffit
-   pour qu'on voit le banner+stats+showcase d'un coup côté Featured. */
-.home-two-col--featured .home-fc-spotlight,
+/* Heights matching Collections vs Artists :
+   - Section Collections : header + .home-fc-spotlight (540px : cards
+     halo'd + controls bar) → total ~570px.
+   - Section Artists     : header + .home-creators-grid (~510px,
+     halo'd) + .home-fa-nav (~30px) → total ~570px.
+   Les deux frames halo'd ont visuellement la même hauteur (~510px
+   d'image visible) puisque .home-fc-spotlight contient TOUT (cards +
+   controls), tandis que .home-creators-grid ne contient que la card
+   halo'd et la nav vit dehors en sibling. */
+.home-two-col--featured .home-fc-spotlight {
+    flex: 1 1 0;
+    min-height: 540px;
+    min-width: 0;
+}
 .home-two-col--featured .home-creators-grid {
     flex: 1 1 0;
-    /* 540px = banner 3:1 + info ~120 + samples ~60 + grille 2×2 ~110
-       + controls bar 30 + un peu de breathing room. Sous 480 le
-       overflow:hidden de .home-feat-v3 clippait les 2 dernières tuiles
-       du showcase. */
-    min-height: 540px;
+    min-height: 510px;            /* nav 30px en sibling = 540 total */
     min-width: 0;
 }
 /* La carte interne (.home-feat-v3) doit elle aussi prendre toute la
@@ -26511,13 +26530,14 @@ body { box-sizing: border-box; }
 }
 
 /* ── Navigation (prev / progress / dots / next) ──
-   MÊME pattern que .home-fc-controls côté Featured Collections :
-   barre d'auto-rotation avec progress bar au milieu. */
+   Placée SOUS la card (pas en overlay) — exactement comme la
+   .home-fc-controls de Featured Collections. Position relative pour
+   tomber dans le flux du document, marge top pour le séparer du
+   bord de la card. */
 .home-fa-nav {
-    position: absolute;
-    bottom: 14px; left: 18px; right: 18px;
-    display: flex; align-items: center; gap: 12px;
-    z-index: 4;
+    margin-top: 14px;
+    display: flex; align-items: center; gap: 16px;
+    flex-shrink: 0;
 }
 .home-fa-prev, .home-fa-next {
     width: 28px; height: 28px;

@@ -8891,15 +8891,25 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         nav.querySelector('.home-fa-prev').addEventListener('click', ()=>goTo((current-1+n)%n));
         nav.querySelector('.home-fa-next').addEventListener('click', ()=>goTo((current+1)%n));
         nav.querySelectorAll('.home-fa-dot').forEach(d=>d.addEventListener('click',()=>goTo(+d.dataset.idx)));
+        // Append spotlight (slides) inside the halo'd grid wrapper, then
+        // remove the nav from its original parent and place it OUTSIDE the
+        // halo, comme sibling de .home-creators-grid — exactement comme la
+        // .home-fc-controls de Featured Collections vit sous la card.
+        spotlight.removeChild(nav);
         wrap.appendChild(spotlight);
+        wrap.parentNode.appendChild(nav);
 
         // Auto-rotate avec hover-pause + progress bar (même comportement
-        // que initFeaturedSpotlight côté Collections).
+        // que initFeaturedSpotlight côté Collections). Le hover-pause
+        // s'applique sur la SECTION entière (card halo + nav), pas
+        // seulement sur le spotlight, pour qu'utiliser les flèches /
+        // dots ne reset pas le cycle non plus.
         const FA_CYCLE_MS = 7000;
         let paused = false;
         let cycleStart = performance.now();
-        spotlight.addEventListener('mouseenter', () => { paused = true; });
-        spotlight.addEventListener('mouseleave', () => {
+        const hoverZone = wrap.parentNode || spotlight;
+        hoverZone.addEventListener('mouseenter', () => { paused = true; });
+        hoverZone.addEventListener('mouseleave', () => {
             paused = false;
             cycleStart = performance.now() - (parseFloat(fill?.style.width || '0') / 100) * FA_CYCLE_MS;
         });
