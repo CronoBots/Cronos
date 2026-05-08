@@ -24729,9 +24729,9 @@ a.snap-holder-username:hover {
 /* ═══════ Showcase (sous les stats) — 4 highlights + samples row ═══════
    min-height fixe pour réserver la place du contenu DÈS le chargement
    initial — sinon le card se redimensionne quand les fetches finissent
-   et tout le contenu flashe vers le haut (layout shift). 410px = 4 tuiles
-   ~165px (image 100px + label/name/val + paddings) + samples 2×100px
-   + gap row + label + paddings = ~245px. */
+   et tout le contenu flashe vers le haut (layout shift). 280px = 4 tuiles
+   ~165px (image 100px + label/name/val + paddings) + samples 1 rangée
+   (~60-80px selon la largeur de carte) + gap + paddings. */
 .home-fc-spotlight .home-feat-v3-showcase {
     display: flex;
     flex-direction: column;
@@ -24739,7 +24739,7 @@ a.snap-holder-username:hover {
     padding: 10px 12px 12px;
     background: rgba(11, 20, 38, 0.35);
     flex: 1;
-    min-height: 410px;
+    min-height: 280px;
     min-width: 0;
 }
 .home-feat-showcase-loading {
@@ -24750,7 +24750,9 @@ a.snap-holder-username:hover {
     gap: 6px;
     opacity: 0.4;
 }
-/* Strip "Sample NFTs" en haut : 3 vignettes alignées sur une ligne. */
+/* Strip de samples en bas du showcase : 8 vignettes carrées sur UNE
+   seule ligne, sans label ni texte — le nom du NFT s'affiche via le
+   tooltip natif (attribut title) au hover. */
 .home-feat-showcase-samples {
     display: flex;
     flex-direction: column;
@@ -24758,32 +24760,23 @@ a.snap-holder-username:hover {
     flex-shrink: 0;
 }
 .home-feat-showcase-strip-label {
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: rgba(0, 179, 255, 0.7);
-    padding-left: 2px;
+    /* Label "Sample NFTs" caché : la zone parle d'elle-même. */
+    display: none;
 }
-/* Samples : grille 4 colonnes × 2 rangées (8 vignettes au total),
-   alignée sur les 4 tuiles highlight au-dessus. Même largeur de
-   cellule que les tuiles, donc chaque sample reste visuellement
-   à la même taille — on en a juste plus pour remplir le cadre. */
 .home-feat-showcase-samples-row {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
 }
 .home-feat-showcase-sample {
     width: 100%;
     aspect-ratio: 1 / 1;
-    max-width: 100px;
     margin: 0 auto;
-    border-radius: 7px;
+    border-radius: 6px;
     overflow: hidden;
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.10);
+    cursor: default;
 }
 .home-feat-showcase-sample img {
     width: 100%;
@@ -24906,8 +24899,7 @@ a.snap-holder-username:hover {
     .home-fc-spotlight .home-feat-v3-showcase { padding: 8px 10px 10px; }
     .home-feat-showcase-tile-thumb { max-width: 64px; }
     .home-feat-showcase-tile-val { font-size: 11.5px; }
-    .home-feat-showcase-sample { max-width: 64px; }
-    .home-feat-showcase-samples-row { gap: 6px; }
+    .home-feat-showcase-samples-row { gap: 4px; }
     .home-fc-controls { margin-top: 10px; gap: 10px; }
 }
 
@@ -25858,20 +25850,23 @@ a.snap-holder-username:hover {
     height: 100%;
 }
 @media (max-width: 860px) {
-    /* Stack vertical : Featured Collections au-dessus, Featured Artists
-       en dessous. La card spotlight prend la hauteur de son contenu
-       (banner + info + showcase) — pas de height:100% qui clipperait le
-       showcase via overflow:hidden de .home-feat-v3. */
-    .home-two-col--featured { grid-template-columns: 1fr; }
-    .home-two-col--featured .home-fc-spotlight {
-        /* Pas de min-height fixée : on laisse la card grandir avec son
-           contenu (banner + identity + stats + showcase 4 tuiles + 8
-           samples) — sinon le contenu débordait sous la section
-           Featured Artists qui suit. */
+    /* Stack vertical : on bascule en flex column (au lieu de grid 1fr)
+       pour garantir que Featured Collections et Featured Artists soient
+       réellement l'un AU-DESSUS de l'autre, jamais superposés dans la
+       même cellule grid. Les sections grandissent avec leur contenu. */
+    .home-two-col--featured {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+    .home-two-col--featured > .home-section {
+        width: 100%;
         min-height: 0;
     }
+    .home-two-col--featured .home-fc-spotlight,
     .home-two-col--featured .home-creators-grid {
-        min-height: 360px;
+        flex: none;
+        min-height: 0;
     }
     .home-two-col--featured .home-fc-spotlight .home-feat-v3 {
         height: auto;
