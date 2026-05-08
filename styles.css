@@ -27991,11 +27991,11 @@ body { box-sizing: border-box; }
         box-shadow: 0 2px 10px rgba(0,0,0,0.35);
     }
 
-    /* Stats : masque les colonnes moins utiles sur petit écran */
-    .stats-th--ownerspct,
-    .stats-td--ownerspct,
-    .stats-th--creatorsales,
-    .stats-td--creatorsales { display: none !important; }
+    /* Stats (Top Collections) : on n'enlève PLUS aucune colonne sur
+       mobile — le tableau scrolle horizontalement (comme Market Bot)
+       grâce à width:max-content sur .stats-table + overflow-x:auto sur
+       .sb-table-wrap. Comme ça on voit toutes les infos en glissant
+       le doigt vers la gauche. */
 
     /* Snapshot : progress bar pleine largeur */
     .snapshot-inline-progress {
@@ -28491,14 +28491,20 @@ body { box-sizing: border-box; }
 }
 .home-crypto-tf-global {
     display: inline-flex;
-    align-items: center;
+    align-items: stretch;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
-    padding: 3px;
-    /* Gap plus visible entre les options (4px au lieu de 1px). */
-    gap: 4px;
+    /* Pas de padding intérieur — bouton actif aux extrémités touche
+       le bord (mêmes conventions que .stats-timerange / .cb-range-toggle). */
+    padding: 0;
+    gap: 0;
     box-sizing: border-box;
+    overflow: hidden;
+}
+/* Séparation entre boutons : fine bordure verticale. */
+.home-crypto-tf-global > .home-crypto-tf-btn + .home-crypto-tf-btn {
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
 }
 .home-crypto-tf-btn {
     background: transparent;
@@ -28509,14 +28515,11 @@ body { box-sizing: border-box; }
     font-weight: 700;
     letter-spacing: 0.06em;
     padding: 0 11px;
-    border-radius: 5px;
+    border-radius: 0;
     cursor: pointer;
     transition: all 0.12s ease;
-    /* Même hauteur que la barre de recherche / onglets / autres
-       filtres (32px) pour aligner toute la rangée. */
     height: 32px;
     box-sizing: border-box;
-    /* Contenu centré horizontalement et verticalement. */
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -28940,18 +28943,29 @@ body { box-sizing: border-box; }
 .stats-verified-filter,
 .cb-range-toggle {
     display: inline-flex !important;
-    align-items: center !important;
+    align-items: stretch !important;
     background: rgba(255, 255, 255, 0.04) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 8px !important;
-    padding: 3px !important;
-    /* Gap plus visible (4px au lieu de 1px) pour qu'on distingue
-       clairement chaque option du filtre — sinon les boutons étaient
-       quasi collés et on ne voyait pas où l'un finissait et où l'autre
-       commençait. */
-    gap: 4px !important;
+    /* Pas de padding intérieur : si le bouton aux extrémités est actif
+       (cyan), il doit toucher les bords gauche/droit du cadre — pas de
+       gap résiduel. Le clipping par overflow:hidden + border-radius
+       fournit les coins arrondis pour les boutons première/dernière
+       position. */
+    padding: 0 !important;
+    gap: 0 !important;
     box-sizing: border-box !important;
-    overflow: visible !important;
+    overflow: hidden !important;
+}
+/* Séparation visuelle entre les boutons : fine bordure verticale
+   (1px) à gauche de chaque bouton sauf le premier. Alternative au
+   gap:4px d'avant qui laissait du fond visible — ici les boutons
+   sont collés mais visuellement séparés par cette fine ligne. */
+.stats-timerange > .stats-tr-btn + .stats-tr-btn,
+.stats-chain-filter > .stats-cf-btn + .stats-cf-btn,
+.stats-verified-filter > .stats-vf-btn + .stats-vf-btn,
+.cb-range-toggle > .cb-range-btn + .cb-range-btn {
+    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 .stats-tr-btn,
@@ -28967,12 +28981,15 @@ body { box-sizing: border-box; }
     letter-spacing: 0.06em !important;
     text-transform: uppercase;
     padding: 0 11px !important;
-    border-radius: 5px !important;
+    /* Pas de border-radius interne : les coins arrondis sont fournis
+       par le container (overflow:hidden + border-radius:8px). Du coup
+       le bouton actif aux extrémités touche pile le bord arrondi du
+       cadre. */
+    border-radius: 0 !important;
     cursor: pointer;
     transition: all 0.12s ease !important;
     /* Hauteur 32px → exactement la même que .stats-search-input
-       (barre de recherche du panel) et que les onglets, pour que tous
-       les contrôles de la rangée s'alignent visuellement. */
+       (barre de recherche du panel) et que les onglets. */
     height: 32px !important;
     min-height: 32px !important;
     box-sizing: border-box !important;
