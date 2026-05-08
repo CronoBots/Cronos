@@ -14587,6 +14587,7 @@ async function sha256hex(str) {
     var currentSort = { col: 'vol', dir: 'desc' }; // active column sort
     var _allRows = []; // full merged dataset for client-side filter+sort
     var _statsRetrying = false; // garde anti-double-retry quand loadStats échoue
+    var _statsLoading = false;  // garde anti-double-fetch (concurrent calls)
     // Exposé pour que la home page puisse lire les premières lignes sans re-fetch
     Object.defineProperty(window, '_statsAllRows', { get: () => _allRows, configurable: true });
     window._statsLoaded = false;
@@ -15137,9 +15138,24 @@ fragment CollectionStatsData on Collection {
         const errEl   = document.getElementById('statsError');
         const table   = document.getElementById('statsTable');
         if (!loading) return;
-        loading.style.display = 'flex';
-        if (errEl) errEl.style.display = 'none';
-        if (table) table.style.display = 'none';
+        // Garde anti-double-fetch : si un loadStats est déjà en cours, on
+        // n'en relance pas un second en parallèle (sinon le 2e pouvait
+        // cacher le tableau pendant que le 1er finissait → flash visible).
+        if (_statsLoading && !forceRefresh) return;
+        _statsLoading = true;
+
+        // Refresh "optimiste" : si on a DÉJÀ des données affichées
+        // (window._statsLoaded === true), on garde le tableau visible et
+        // on ne montre pas le skeleton — le fetch se fait en arrière-plan
+        // et les données sont remplacées seulement si le fetch réussit.
+        // Sinon (premier chargement), on montre le skeleton + masque la
+        // table comme avant.
+        const haveData = !!window._statsLoaded;
+        if (!haveData) {
+            loading.style.display = 'flex';
+            if (errEl) errEl.style.display = 'none';
+            if (table) table.style.display = 'none';
+        }
 
         const refreshBtn = document.getElementById('statsRefreshBtn');
         if (refreshBtn) refreshBtn.classList.add('is-spinning');
@@ -15199,22 +15215,25 @@ fragment CollectionStatsData on Collection {
             requestAnimationFrame(() => recalcColWidths());
         } catch (e) {
             // Pas d'affichage d'erreur visible : on log silencieusement
-            // dans la console et on retente automatiquement après un
-            // court délai. Le skeleton (3 dots) reste visible pendant
-            // ce temps — l'utilisateur ne voit pas de "Failed to load"
-            // pour des erreurs transitoires (rate limit, timing API,
-            // hydrate avant init complète, etc.).
-            console.warn('[Stats] load failed, retrying:', e?.message || e);
+            // dans la console. Si on n'a JAMAIS chargé de données, on
+            // relance loadStats automatiquement après un court délai
+            // (le skeleton reste visible). Si on a déjà des données
+            // affichées, on les garde — pas de flash, pas de retry
+            // forcé : l'utilisateur retentera lui-même via la nav.
+            console.warn('[Stats] load failed:', e?.message || e);
             if (errEl) errEl.style.display = 'none';
-            if (loading) loading.style.display = 'flex';
-            if (!_statsRetrying) {
-                _statsRetrying = true;
-                setTimeout(() => {
-                    _statsRetrying = false;
-                    loadStats();
-                }, 2500);
+            if (!window._statsLoaded) {
+                if (loading) loading.style.display = 'flex';
+                if (!_statsRetrying) {
+                    _statsRetrying = true;
+                    setTimeout(() => {
+                        _statsRetrying = false;
+                        loadStats();
+                    }, 2500);
+                }
             }
         } finally {
+            _statsLoading = false;
             if (refreshBtn) refreshBtn.classList.remove('is-spinning');
         }
     }
