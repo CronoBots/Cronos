@@ -24564,28 +24564,9 @@ a.snap-holder-username:hover {
     overflow: hidden;
     position: relative;
 }
-.home-fc-spotlight .home-feat-v3-left {
-    display: flex;
-    flex-direction: column;
-    border-right: none;
-    border-bottom: 1px solid rgba(0, 179, 255, 0.18);
-    min-width: 0;
-    flex-shrink: 0;
-}
-.home-fc-spotlight .home-feat-v3-right {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 10px 12px;
-    background: rgba(11, 20, 38, 0.35);
-    min-width: 0;
-    /* Hauteur dictée par le contenu (samples + grille de tuiles).
-       Pas de flex:1 ici : si le parent n'a pas de hauteur explicite (cas
-       single-column mobile), flex:1 collapse la section et le showcase
-       devient invisible. */
-}
-/* Bannière : ratio 3:1 = 1500/500, l'image source remplit exactement
-   le rectangle via cover, sans recadrage vertical. */
+/* Bannière : ratio 3:1, full-width. L'identité (logo + nom + artiste)
+   est positionnée en absolute par-dessus le coin bas-gauche, avec un
+   dégradé sombre au bas pour la lisibilité. */
 .home-fc-spotlight .home-feat-v3-hero {
     position: relative;
     aspect-ratio: 3 / 1;
@@ -24597,43 +24578,39 @@ a.snap-holder-username:hover {
     background-size: cover;
     background-position: center;
 }
+/* Tint plus marqué en bas de la bannière pour que le pseudo + nom
+   restent lisibles, même sur des bannières claires. */
 .home-fc-spotlight .home-feat-v3-hero-tint {
     background: linear-gradient(
         180deg,
-        rgba(8, 14, 28, 0.05) 0%,
-        rgba(8, 14, 28, 0.20) 100%);
+        rgba(8, 14, 28, 0.00) 30%,
+        rgba(8, 14, 28, 0.45) 70%,
+        rgba(8, 14, 28, 0.85) 100%);
 }
-/* Info zone (logo+nom+artiste+stats) sous la bannière. */
-.home-fc-spotlight .home-feat-v3-info {
-    flex: 1;
-    padding: 14px 18px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    min-width: 0;
-    background: rgba(11, 20, 38, 0.4);
-}
-/* Identity — logo (overlap discret au-dessus de la frontière banner/info)
-   + nom + ligne BY ARTIST ✓. */
+/* Identity — overlay absolute en BAS-GAUCHE de la bannière. */
 .home-fc-spotlight .home-feat-v3-identity {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 12px;
+    z-index: 3;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     gap: 12px;
-    margin-top: -28px;             /* logo qui dépasse sur la bannière */
     min-width: 0;
 }
 .home-fc-spotlight .home-feat-v3-logo {
-    width: 56px;
-    height: 56px;
-    border-radius: 12px;
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
     flex-shrink: 0;
     border: 2px solid rgba(11, 20, 38, 0.95);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+    background: rgba(255,255,255,0.05);
 }
 .home-fc-spotlight .home-feat-v3-id-text {
     flex: 1;
     min-width: 0;
-    padding-bottom: 4px;            /* aligne le texte avec le bas du logo */
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -24678,24 +24655,28 @@ a.snap-holder-username:hover {
     width: 13px;
     height: 13px;
 }
-/* Stats inline style cp-stats-row (vue Collection). */
+/* Stats : ligne sous la bannière, full-width, 3 stats répartis
+   uniformément (Floor / Owners / Volume). Style cp-stats-row : value
+   au-dessus, label en dessous, séparés par fines barres verticales. */
 .home-fc-spotlight .home-feat-v3-stats {
     display: flex;
     flex-wrap: nowrap;
     gap: 0;
-    padding: 0;
-    background: transparent;
+    padding: 12px 16px;
+    background: rgba(11, 20, 38, 0.5);
     border: none;
+    border-bottom: 1px solid rgba(0, 179, 255, 0.12);
     backdrop-filter: none;
-    margin-top: auto;               /* pousse les stats vers le bas de l'info */
+    flex-shrink: 0;
 }
 .home-fc-spotlight .home-feat-v3-stat {
     display: flex;
     flex-direction: column-reverse;  /* value au-dessus, label en dessous */
     align-items: center;
     gap: 2px;
-    padding: 0 14px 0 0;
-    margin-right: 14px;
+    flex: 1;                          /* répartit également les 3 stats */
+    padding: 0 12px 0 0;
+    margin-right: 12px;
     border-right: 1px solid rgba(255, 255, 255, 0.12);
     background: transparent;
     border-radius: 0;
@@ -24718,7 +24699,7 @@ a.snap-holder-username:hover {
 }
 .home-fc-spotlight .home-feat-v3-stat-val {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 800;
     letter-spacing: 0.01em;
     color: #fff;
@@ -24726,7 +24707,17 @@ a.snap-holder-username:hover {
     font-variant-numeric: tabular-nums;
 }
 
-/* ═══════ Showcase (côté droit) ═══════ */
+/* ═══════ Showcase (sous les stats) — 4 highlights + samples row ═══════ */
+.home-fc-spotlight .home-feat-v3-showcase {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px 12px;
+    background: rgba(11, 20, 38, 0.35);
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+}
 .home-feat-showcase-loading {
     flex: 1;
     display: flex;
@@ -24839,36 +24830,25 @@ a.snap-holder-username:hover {
     text-overflow: ellipsis;
 }
 /* Couleurs spécifiques par type — petit accent visuel. */
-.home-feat-showcase-tile--sale  .home-feat-showcase-tile-label { color: #4ade80; }
-.home-feat-showcase-tile--rank  .home-feat-showcase-tile-label { color: #fbbf24; }
-.home-feat-showcase-tile--floor .home-feat-showcase-tile-label { color: #00B3FF; }
-.home-feat-showcase-tile--liked .home-feat-showcase-tile-label { color: #f87171; }
+.home-feat-showcase-tile--rank   .home-feat-showcase-tile-label { color: #fbbf24; } /* or — rank */
+.home-feat-showcase-tile--viewed .home-feat-showcase-tile-label { color: #a78bfa; } /* purple — views */
+.home-feat-showcase-tile--liked  .home-feat-showcase-tile-label { color: #f87171; } /* red — likes */
+.home-feat-showcase-tile--floor  .home-feat-showcase-tile-label { color: #00B3FF; } /* cyan — floor */
+.home-feat-showcase-tile--sale   .home-feat-showcase-tile-label { color: #4ade80; } /* legacy, gardé au cas où */
 
 /* CTA caché en spotlight — toute la card est cliquable. */
 .home-fc-spotlight .home-feat-v3-cta { display: none; }
 
 @media (max-width: 720px) {
-    /* Mobile : empilage vertical (gauche au-dessus, droite en dessous). */
-    .home-fc-spotlight .home-feat-v3 {
-        grid-template-columns: 1fr;
-        min-height: 0;
-    }
-    .home-fc-spotlight .home-feat-v3-left {
-        border-right: none;
-        border-bottom: 1px solid rgba(0, 179, 255, 0.18);
-    }
-    .home-fc-spotlight .home-feat-v3-info {
-        padding: 12px 14px;
-        gap: 12px;
-    }
-    .home-fc-spotlight .home-feat-v3-identity {
-        margin-top: -22px;
-    }
-    .home-fc-spotlight .home-feat-v3-logo { width: 48px; height: 48px; }
+    /* Mobile : layout vertical (banner+identity overlay → stats →
+       showcase). Tailles réduites pour la place dispo. */
+    .home-fc-spotlight .home-feat-v3-identity { left: 10px; right: 10px; bottom: 10px; gap: 10px; }
+    .home-fc-spotlight .home-feat-v3-logo { width: 44px; height: 44px; }
     .home-fc-spotlight .home-feat-v3-name { font-size: 15px; }
     .home-fc-spotlight .home-feat-v3-creator { font-size: 9.5px; }
-    .home-fc-spotlight .home-feat-v3-stat-val { font-size: 13px; }
-    .home-fc-spotlight .home-feat-v3-right { padding: 10px 12px; }
+    .home-fc-spotlight .home-feat-v3-stats { padding: 10px 12px; }
+    .home-fc-spotlight .home-feat-v3-stat-val { font-size: 14px; }
+    .home-fc-spotlight .home-feat-v3-showcase { padding: 8px 10px 10px; }
     .home-feat-showcase-tile-thumb { width: 32px; height: 32px; }
     .home-feat-showcase-tile-val { font-size: 11.5px; }
     .home-fc-controls { margin-top: 10px; gap: 10px; }
@@ -26530,46 +26510,60 @@ body { box-sizing: border-box; }
     font-family: sans-serif; font-style: italic; padding: 12px 0;
 }
 
-/* ── Navigation (dots + numéro) ── */
+/* ── Navigation (prev / progress / dots / next) ──
+   MÊME pattern que .home-fc-controls côté Featured Collections :
+   barre d'auto-rotation avec progress bar au milieu. */
 .home-fa-nav {
     position: absolute;
-    bottom: 18px; left: 32px;
+    bottom: 14px; left: 18px; right: 18px;
     display: flex; align-items: center; gap: 12px;
     z-index: 4;
 }
 .home-fa-prev, .home-fa-next {
     width: 28px; height: 28px;
     border-radius: 50%;
-    background: rgba(7,15,30,0.65);
-    border: 1px solid rgba(0,179,255,0.22);
-    color: rgba(255,255,255,0.65);
+    background: rgba(0, 179, 255, 0.10);
+    border: 1px solid rgba(0,179,255,0.35);
+    color: #00B3FF;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(6px);
-    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    flex-shrink: 0;
+    padding: 0;
+    transition: background 0.18s, border-color 0.18s, color 0.18s;
 }
 .home-fa-prev:hover, .home-fa-next:hover {
-    background: rgba(0,179,255,0.15);
-    border-color: rgba(0,179,255,0.55); color: #00B3FF;
+    background: rgba(0, 179, 255, 0.25);
+    border-color: #00B3FF; color: #fff;
+}
+.home-fa-progress {
+    flex: 1;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.home-fa-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, rgba(0,179,255,0.5), #00B3FF);
+    border-radius: 2px;
+    transition: width 0.12s linear;
 }
 .home-fa-dots {
-    display: flex; align-items: center; gap: 7px;
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0;
 }
 .home-fa-dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: rgba(255,255,255,0.2);
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
     border: none; cursor: pointer; padding: 0;
-    transition: background 0.25s, width 0.3s;
+    transition: background 0.18s, transform 0.18s, width 0.22s;
 }
+.home-fa-dot:hover { background: rgba(0, 179, 255, 0.5); }
 .home-fa-dot.is-active {
     background: #00B3FF;
-    width: 20px; border-radius: 4px;
-    box-shadow: 0 0 8px rgba(0,179,255,0.6);
-}
-.home-fa-counter {
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 10px; color: rgba(255,255,255,0.3);
-    letter-spacing: 0.06em; margin-left: 4px;
+    width: 22px;
+    border-radius: 4px;
 }
 
 /* home-creators-grid — défini plus haut avec colonnes verticales */

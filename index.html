@@ -1401,7 +1401,6 @@
       <section class="home-section home-section--featured">
         <div class="home-section-header">
           <h2 class="home-section-title">Featured Collections</h2>
-          <span class="home-section-badge home-section-badge--rotate">Spotlight · auto-rotates</span>
         </div>
         <div class="home-fc-spotlight" id="homeFeaturedSpotlight" data-active="0">
           <div class="home-featured-grid" id="homeFeaturedGrid"><!-- cards injected by JS --></div>
@@ -8220,50 +8219,51 @@ document.addEventListener('DOMContentLoaded', initialize);
         //    is visible — no more cropping. Banners use `cover` since
         //    they're designed for full-bleed.
         card.innerHTML = `
-            <!-- Spotlight v2 : carte split en 2 colonnes.
-                 GAUCHE : bannière (3:1, 1500×500) + identité + stats.
-                 DROITE : showcase NFT (samples aléatoires + 4 highlights
-                 best sale / top rank / floor / most liked). -->
-            <div class="home-feat-v3-left">
-                <div class="home-feat-v3-hero">
-                    <div class="home-feat-v3-hero-bg"  style="background-image:url('${safeLogo}');"></div>
-                    <div class="home-feat-v3-hero-img" style="background-image:url('${safeLogo}');"></div>
-                    <div class="home-feat-v3-hero-tint"></div>
-                    <span class="home-feat-v3-change" style="display:none;"></span>
-                </div>
-                <div class="home-feat-v3-info">
-                    <div class="home-feat-v3-identity">
-                        <img class="home-feat-v3-logo" src="${safeLogo}" alt="" loading="lazy" onerror="this.style.opacity='0.25';this.style.background='rgba(255,255,255,0.05)';"/>
-                        <div class="home-feat-v3-id-text">
-                            <!-- Badge verified rendu côté CRÉATEUR par
-                                 updateFeaturedCardStats (cf. plus bas). -->
-                            <span class="home-feat-v3-name-row">
-                                <span class="home-feat-v3-name">${col.name || '—'}</span>
-                            </span>
-                            <span class="home-feat-v3-creator home-feat-v3-creator--loading">
-                                <span class="home-feat-v3-creator-text">Loading…</span>
-                                <span class="home-feat-v3-verified-slot"></span>
-                            </span>
-                        </div>
-                    </div>
-                    <!-- Stats inline (style "vue Collection") -->
-                    <div class="home-feat-v3-stats">
-                        <div class="home-feat-v3-stat">
-                            <span class="home-feat-v3-stat-label">Floor</span>
-                            <span class="home-feat-v3-stat-val" data-stat="floor">—</span>
-                        </div>
-                        <div class="home-feat-v3-stat">
-                            <span class="home-feat-v3-stat-label">Owners</span>
-                            <span class="home-feat-v3-stat-val" data-stat="owners">—</span>
-                        </div>
-                        <div class="home-feat-v3-stat">
-                            <span class="home-feat-v3-stat-label" data-label="vol">Volume</span>
-                            <span class="home-feat-v3-stat-val" data-stat="vol">—</span>
-                        </div>
+            <!-- Spotlight v3 : layout vertical empilé en 4 zones.
+                 1) HERO : bannière plein-cadre 3:1 + identité OVERLAY en
+                    bas-gauche (logo carré + nom de collection + ligne
+                    "BY ARTIST ✓") qui chevauche la bannière.
+                 2) STATS : 3 stats inline (Floor / Owners / Volume).
+                 3) HIGHLIGHTS : 4 tuiles dans l'ordre demandé —
+                    Top rank · Most viewed · Most liked · Floor.
+                 4) SAMPLES : 3 vignettes random pour donner un aperçu
+                    du look des NFTs de la collection. -->
+            <div class="home-feat-v3-hero">
+                <div class="home-feat-v3-hero-bg"  style="background-image:url('${safeLogo}');"></div>
+                <div class="home-feat-v3-hero-img" style="background-image:url('${safeLogo}');"></div>
+                <div class="home-feat-v3-hero-tint"></div>
+                <span class="home-feat-v3-change" style="display:none;"></span>
+                <!-- Identité en overlay sur le coin bas-gauche du hero. -->
+                <div class="home-feat-v3-identity">
+                    <img class="home-feat-v3-logo" src="${safeLogo}" alt="" loading="lazy" onerror="this.style.opacity='0.25';this.style.background='rgba(255,255,255,0.05)';"/>
+                    <div class="home-feat-v3-id-text">
+                        <span class="home-feat-v3-name-row">
+                            <span class="home-feat-v3-name">${col.name || '—'}</span>
+                        </span>
+                        <span class="home-feat-v3-creator home-feat-v3-creator--loading">
+                            <span class="home-feat-v3-creator-text">Loading…</span>
+                            <span class="home-feat-v3-verified-slot"></span>
+                        </span>
                     </div>
                 </div>
             </div>
-            <div class="home-feat-v3-right" data-showcase>
+            <!-- Stats inline juste sous la bannière. -->
+            <div class="home-feat-v3-stats">
+                <div class="home-feat-v3-stat">
+                    <span class="home-feat-v3-stat-label">Floor</span>
+                    <span class="home-feat-v3-stat-val" data-stat="floor">—</span>
+                </div>
+                <div class="home-feat-v3-stat">
+                    <span class="home-feat-v3-stat-label">Owners</span>
+                    <span class="home-feat-v3-stat-val" data-stat="owners">—</span>
+                </div>
+                <div class="home-feat-v3-stat">
+                    <span class="home-feat-v3-stat-label" data-label="vol">Volume</span>
+                    <span class="home-feat-v3-stat-val" data-stat="vol">—</span>
+                </div>
+            </div>
+            <!-- Showcase : 4 highlights + samples row, injectés par updateShowcase(). -->
+            <div class="home-feat-v3-showcase" data-showcase>
                 <div class="home-feat-showcase-loading">
                     <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
                 </div>
@@ -8468,19 +8468,19 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
 
     async function fetchCollectionShowcase(id) {
         try {
-            const [byRank, byPrice, byLikes, salesJson] = await Promise.all([
+            // 4 fetches en parallèle : rank, price (floor), likes, views.
+            // L'API Crypto.com NFT supporte plusieurs sorts, on tente
+            // 'views' pour "most viewed" et on garde un fallback sur
+            // 'totalSales' si le serveur renvoie une erreur (champ
+            // pas reconnu sur certaines collections).
+            const [byRank, byPrice, byLikes, byViews] = await Promise.all([
                 _fetchCollectionAssetsSorted(id, 'rarityRank', 'ASC', 12),  // 12 pour aussi avoir des samples
                 _fetchCollectionAssetsSorted(id, 'price',      'ASC', 1),
                 _fetchCollectionAssetsSorted(id, 'likes',      'DESC', 1),
-                fetch(graphqlEndpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        operationName: 'GetFeatTopSale',
-                        variables: { collectionId: id, first: 50, naturesIn: ['transferred'] },
-                        query: `query GetFeatTopSale($collectionId:ID!,$first:Int!,$naturesIn:[String!]){public{collection(id:$collectionId){eventHistory(first:$first,naturesIn:$naturesIn){edges{node{asset{id name cover{url} main{url}} listing{salePriceDecimalUSD currency} amountDecimal}}}}}}`
-                    })
-                }).then(r => r.json()).catch(() => null)
+                _fetchCollectionAssetsSorted(id, 'views',      'DESC', 1)
+                    .then(r => (r?.errors || !r?.data?.public?.assets)
+                        ? _fetchCollectionAssetsSorted(id, 'totalSales', 'DESC', 1)
+                        : r)
             ]);
 
             const rankAssets = byRank?.data?.public?.assets || [];
@@ -8509,10 +8509,18 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             const likedAsset = byLikes?.data?.public?.assets?.[0] || null;
             const mostLiked = likedAsset ? { ...likedAsset } : null;
 
-            // Top sale : on garde l'eventHistory pour la meilleure vente
-            // historique en USD (cf. handler dans renderShowcase).
-            let bestSale = null;
-            const edges = salesJson?.data?.public?.collection?.eventHistory?.edges || [];
+            // Most viewed : premier de la liste sortie par views DESC
+            // (fallback sur totalSales si le sort views n'est pas
+            // supporté). Idem, on affiche juste le NFT sans compteur.
+            const viewedAsset = byViews?.data?.public?.assets?.[0] || null;
+            const mostViewed = viewedAsset ? { ...viewedAsset } : null;
+
+            let bestSale = null; // remplacé par mostViewed dans l'UI ; on garde
+                                  // la variable locale pour ne pas tout démolir.
+            // (Top sale n'est plus affiché — l'utilisateur a demandé
+            // mostViewed à sa place. On supprime le fetch eventHistory qui
+            // était lourd.)
+            const edges = []; // placeholder, plus de fetch
             for (const edge of edges) {
                 const node = edge?.node;
                 if (!node?.asset) continue;
@@ -8541,9 +8549,9 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             return {
                 samples: shuffled.slice(0, 3),
                 bestRank,
-                floor,
+                mostViewed,
                 mostLiked,
-                bestSale
+                floor
             };
         } catch(e) {
             console.warn('[Featured showcase] fetch failed:', e);
@@ -8628,15 +8636,19 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             return fmtPrice(f.price, f.currency);
         };
 
+        // Ordre demandé : 1) Top rank — 2) Most viewed — 3) Most liked —
+        // 4) Floor. Les 4 tuiles forment une grille 2×2 (Top rank +
+        // Most viewed sur la 1re ligne, Most liked + Floor sur la 2e).
+        // Samples row APRÈS les tuiles, comme une accroche visuelle finale.
         const tilesHtml = `
             <div class="home-feat-showcase-grid">
-                ${tile('Top sale',   fmtMoney(data.bestSale?.priceUSD),                            data.bestSale,  'sale')}
-                ${tile('Top rank',   data.bestRank ? '#' + data.bestRank.rank : '',                data.bestRank,  'rank')}
-                ${tile('Floor',      fmtFloor(data.floor),                                         data.floor,     'floor')}
-                ${tile('Most liked', data.mostLiked ? '❤ ' + extractNum(data.mostLiked.name) : '', data.mostLiked, 'liked')}
+                ${tile('Top rank',    data.bestRank  ? '#' + data.bestRank.rank                   : '', data.bestRank,  'rank')}
+                ${tile('Most viewed', data.mostViewed ? extractNum(data.mostViewed.name)            : '', data.mostViewed, 'viewed')}
+                ${tile('Most liked',  data.mostLiked ? '❤ ' + extractNum(data.mostLiked.name)      : '', data.mostLiked, 'liked')}
+                ${tile('Floor',       fmtFloor(data.floor),                                              data.floor,      'floor')}
             </div>`;
 
-        wrap.innerHTML = samplesHtml + tilesHtml;
+        wrap.innerHTML = tilesHtml + samplesHtml;
     }
 
     async function buildFeatured() {
@@ -8856,24 +8868,49 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         });
         const n = FEATURED_CREATORS.length;
         let current = 0;
+        // Nav row : prev arrow · progress bar · dots · next arrow.
+        // MÊME pattern visuel que Featured Collections (home-fc-controls)
+        // pour rester cohérent. Auto-rotate + hover-pause + progress fill
+        // mimic exactement initFeaturedSpotlight().
         const nav = document.createElement('div');
         nav.className = 'home-fa-nav';
         nav.innerHTML = `
             <button class="home-fa-prev" type="button" aria-label="Previous"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="12,4 6,10 12,16"/></svg></button>
+            <div class="home-fa-progress"><div class="home-fa-progress-fill"></div></div>
             <div class="home-fa-dots">${FEATURED_CREATORS.map((_,i)=>`<button class="home-fa-dot${i===0?' is-active':''}" data-idx="${i}" type="button"></button>`).join('')}</div>
-            <button class="home-fa-next" type="button" aria-label="Next"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="8,4 14,10 8,16"/></svg></button>
-            <span class="home-fa-counter"><span class="home-fa-cur">1</span> / ${n}</span>`;
+            <button class="home-fa-next" type="button" aria-label="Next"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="8,4 14,10 8,16"/></svg></button>`;
         spotlight.appendChild(nav);
+        const fill = nav.querySelector('.home-fa-progress-fill');
+
         function goTo(idx) {
             spotlight.querySelectorAll('.home-fa-slide').forEach((s,i)=>s.classList.toggle('is-active',i===idx));
             nav.querySelectorAll('.home-fa-dot').forEach((d,i)=>d.classList.toggle('is-active',i===idx));
-            nav.querySelector('.home-fa-cur').textContent = idx+1;
             current = idx;
+            cycleStart = performance.now();
         }
         nav.querySelector('.home-fa-prev').addEventListener('click', ()=>goTo((current-1+n)%n));
         nav.querySelector('.home-fa-next').addEventListener('click', ()=>goTo((current+1)%n));
         nav.querySelectorAll('.home-fa-dot').forEach(d=>d.addEventListener('click',()=>goTo(+d.dataset.idx)));
         wrap.appendChild(spotlight);
+
+        // Auto-rotate avec hover-pause + progress bar (même comportement
+        // que initFeaturedSpotlight côté Collections).
+        const FA_CYCLE_MS = 7000;
+        let paused = false;
+        let cycleStart = performance.now();
+        spotlight.addEventListener('mouseenter', () => { paused = true; });
+        spotlight.addEventListener('mouseleave', () => {
+            paused = false;
+            cycleStart = performance.now() - (parseFloat(fill?.style.width || '0') / 100) * FA_CYCLE_MS;
+        });
+        function tick(now) {
+            const elapsed = now - cycleStart;
+            const pct = Math.min(100, (elapsed / FA_CYCLE_MS) * 100);
+            if (fill && !paused) fill.style.width = pct + '%';
+            if (!paused && elapsed >= FA_CYCLE_MS) goTo((current + 1) % n);
+            requestAnimationFrame(tick);
+        }
+        if (n > 1) requestAnimationFrame(tick);
     }
 
     // ── Top collections (24H) — l'ancienne version div+grid (loadTopCollections)
@@ -9228,7 +9265,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // ── Emoji reactions ─────────────────────────────────────────────────────
         // On utilise l'INDEX (0-5) comme data-emoji-idx pour éviter tout problème
         // d'encodage Unicode des emojis composés dans les attributs data-*.
-        const QUICK_EMOJIS = ['❤️','😂','😮','🔥','👀','💎'];
+        const QUICK_EMOJIS = ['❤️','😂','😮','🔥','👀','💎','👌','🙏'];
         const EMOJI_KEYS   = ['heart','joy','wow','fire','eyes','gem'];
         let _reactionsListener = null;
         let _cachedReactions   = {};   // cache local pour les updates rapides
