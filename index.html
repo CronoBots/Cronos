@@ -22146,23 +22146,16 @@ window.initSnapshotPanel = function() {
     }
 
     /* ──────────────────────────────────────────────────────────────────────
-       2. TOUCH SUPPORT pour le drag-to-scroll de #statsTableScroll
-          Le scroll horizontal vit dans le conteneur interne (sb-table-wrap),
-          pas sur la wrap halo'd qui est overflow:hidden.
+       2. (RETIRÉ) Touch drag-to-scroll sur #statsTableScroll
+          On dépendait avant d'un JS qui forçait scroller.scrollLeft à
+          chaque touchmove. Effet de bord : le scroll horizontal était
+          un peu rigide, et l'élan/inertie naturelle du scroll mobile
+          (le "fling" iOS) était écrasé. Le tableau Market Bot, lui,
+          utilise UNIQUEMENT le scroll natif via overflow-x:auto +
+          -webkit-overflow-scrolling:touch, donc plus fluide.
+          On supprime ce patch — Top Collections hérite du même scroll
+          natif que Market Bot via la classe partagée .sb-table-wrap.
        ─────────────────────────────────────────────────────────────────── */
-    function patchDragScrollWithTouch() {
-        var scroller = document.getElementById('statsTableScroll');
-        if (!scroller || scroller._touchDragWired) return;
-        scroller._touchDragWired = true;
-        var startX = 0, scrollLeft = 0;
-        scroller.addEventListener('touchstart', function (e) {
-            startX = e.touches[0].pageX;
-            scrollLeft = scroller.scrollLeft;
-        }, { passive: true });
-        scroller.addEventListener('touchmove', function (e) {
-            scroller.scrollLeft = scrollLeft - (e.touches[0].pageX - startX);
-        }, { passive: true });
-    }
 
     /* ──────────────────────────────────────────────────────────────────────
        3. SIDEBAR OVERLAY MOBILE — Bouton profil flottant (≤640px)
@@ -22225,12 +22218,6 @@ window.initSnapshotPanel = function() {
     function bootstrap() {
         initMobileSearch();
         initMobileSidebarToggle();
-        var t = setInterval(function () {
-            if (document.getElementById('statsTableWrap')) {
-                patchDragScrollWithTouch();
-                clearInterval(t);
-            }
-        }, 200);
     }
 
     if (document.readyState === 'loading') {
