@@ -8461,7 +8461,9 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 collectionId,
                 first: first || 1,
                 skip: skip || 0,
-                sort: [{ order, field: sortField }],
+                // sortField=null/undefined → on omet le sort (utile pour les
+                // collections où aucun sort field standard n'est supporté).
+                sort: sortField ? [{ order, field: sortField }] : [],
                 listingTypes: []
             },
             query: q
@@ -8482,16 +8484,20 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
     /* Fetch dédié aux samples random : essaie plusieurs sort fields en
      * cascade pour gérer les schemas qui restreignent l'enum SortField.
      * Couvre :
-     *  1) tokenId ASC                — sort souvent supporté
-     *  2) mintedAt DESC              — fallback chronologique
-     *  3) totalSales DESC            — sort éprouvé (utilisé ailleurs)
-     *  4) rarityRank ASC             — fonctionne sur les collections
-     *                                  qui ont du ranking
+     *  1) sans sort                  — fonctionne SANS dépendre d'un
+     *                                  champ trié (idéal pour les
+     *                                  collections sans rarityRank).
+     *  2) tokenId ASC
+     *  3) mintedAt DESC
+     *  4) totalSales DESC
+     *  5) rarityRank ASC             — utile sur les collections qui
+     *                                  ont du ranking, en dernier recours
      * À chaque essai, on garde le skip random pour piocher PARTOUT dans
      * la collection (pas juste les premiers/top items). Retourne le
      * tableau d'assets dès qu'il est non-vide, sinon []. */
     async function _fetchSamplesAssets(id, count, skip) {
         const tries = [
+            [null,         null],   // pas de sort
             ['tokenId',    'ASC'],
             ['mintedAt',   'DESC'],
             ['totalSales', 'DESC'],
@@ -8501,6 +8507,14 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             const r = await _fetchCollectionAssetsSorted(id, field, order, count, skip);
             const assets = r?.data?.public?.assets;
             if (assets && assets.length) return assets;
+            // Si l'API rejette le skip (ex. skip > total), on retente
+            // immédiatement avec skip=0 — au moins on aura les premiers
+            // assets, même si pas vraiment "random".
+            if (skip > 0) {
+                const r2 = await _fetchCollectionAssetsSorted(id, field, order, count, 0);
+                const assets2 = r2?.data?.public?.assets;
+                if (assets2 && assets2.length) return assets2;
+            }
         }
         return [];
     }
@@ -8564,7 +8578,26 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
 
             // Samples random — list shuffle pour mélanger même quand le
             // serveur retourne dans un ordre fixe (tokenId ASC, etc.).
-            const sampleSource = (samplesAssets || []).slice();
+            let sampleSource = (samplesAssets || []).slice();
+            // Fallback ultime : si aucun sort n'a fonctionné pour les
+            // samples, on réutilise les 4 highlight assets (Top Rank,
+            // Most Viewed, Most Liked, Floor) — au moins on affiche
+            // QUELQUE CHOSE plutôt qu'une rangée vide. Filtre les nulls
+            // et déduplique sur l'id.
+            if (!sampleSource.length) {
+                const fallback = [topRankAsset, floorAsset, likedAsset, viewedAsset]
+                    .filter(Boolean);
+                const seen = new Set();
+                sampleSource = fallback.filter(a => {
+                    const k = a?.id || a?.name;
+                    if (!k || seen.has(k)) return false;
+                    seen.add(k);
+                    return true;
+                });
+                if (!sampleSource.length) {
+                    console.warn('[Featured showcase] no samples available for', id);
+                }
+            }
             for (let i = sampleSource.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [sampleSource[i], sampleSource[j]] = [sampleSource[j], sampleSource[i]];
