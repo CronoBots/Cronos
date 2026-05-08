@@ -14573,12 +14573,19 @@ async function sha256hex(str) {
         // Les suggestions topnav sont alimentées directement par searchProfiles (pas de clone HTML)
     }
 
-    /* ── Stats panel ── */
-    let currentTimeRange = 'ONE_DAY';
-    let currentChainFilter = 'ALL'; // ALL | CRONOS | CRO
-    let currentVerifiedFilter = 'ALL'; // ALL | true | false
-    let currentSort = { col: 'vol', dir: 'desc' }; // active column sort
-    let _allRows = []; // full merged dataset for client-side filter+sort
+    /* ── Stats panel ──
+       Déclarations en var (pas let) pour éviter une "Temporal Dead
+       Zone" si une fonction définie plus haut dans le même IIFE
+       accède à ces variables avant que cette ligne soit atteinte
+       (ex. preloader top-level qui appelle window._loadStats avant
+       que l'IIFE finisse de s'évaluer). Avec var elles sont juste
+       undefined initialement, et le code de loadStats gère ça
+       sans planter. */
+    var currentTimeRange = 'ONE_DAY';
+    var currentChainFilter = 'ALL'; // ALL | CRONOS | CRO
+    var currentVerifiedFilter = 'ALL'; // ALL | true | false
+    var currentSort = { col: 'vol', dir: 'desc' }; // active column sort
+    var _allRows = []; // full merged dataset for client-side filter+sort
     // Exposé pour que la home page puisse lire les premières lignes sans re-fetch
     Object.defineProperty(window, '_statsAllRows', { get: () => _allRows, configurable: true });
     window._statsLoaded = false;
