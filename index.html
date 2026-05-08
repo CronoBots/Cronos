@@ -8454,13 +8454,13 @@ fragment DefaultListingV2WithFilter on Asset {defaultListingV2(where:$where, lis
 query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsSearch,$sort:[SingleFieldSort!],$listingTypes:[ListingType!]){public{assets(collectionId:$collectionId,first:$first,skip:$skip,where:$where,sort:$sort,listingTypes:$listingTypes){...AssetBaseDetail ...DefaultListingV2WithFilter latestPurchasedEdition{priceUSD}}}}`;
     const _GCA_QUERY_NOVIEWS = _GCA_QUERY.replace(' views', '');
 
-    function _fetchCollectionAssetsSorted(collectionId, sortField, order, first) {
+    function _fetchCollectionAssetsSorted(collectionId, sortField, order, first, skip) {
         const body = (q) => JSON.stringify({
             operationName: 'GetCollectionAssets',
             variables: {
                 collectionId,
                 first: first || 1,
-                skip: 0,
+                skip: skip || 0,
                 sort: [{ order, field: sortField }],
                 listingTypes: []
             },
@@ -8479,26 +8479,40 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         });
     }
 
-    async function fetchCollectionShowcase(id) {
+    async function fetchCollectionShowcase(id, items) {
         try {
-            // 4 fetches en parallèle : rank, price (floor), likes, views.
-            // L'API Crypto.com NFT supporte plusieurs sorts, on tente
-            // 'views' pour "most viewed" et on garde un fallback sur
-            // 'totalSales' si le serveur renvoie une erreur (champ
-            // pas reconnu sur certaines collections).
-            const [byRank, byPrice, byLikes, byViews] = await Promise.all([
-                _fetchCollectionAssetsSorted(id, 'rarityRank', 'ASC', 20),  // 20 pour top rank + 8 samples uniques
-                _fetchCollectionAssetsSorted(id, 'price',      'ASC', 1),
+            // Total supply de la collection (fourni par fetchFeaturedStats
+            // → metrics.items). Si > 8, on choisit un offset random pour
+            //   piocher les samples PARTOUT dans la collection — pas
+            //   uniquement dans le top rank (qui peut être absent sur
+            //   certaines collections sans rarityRank, ex. Loaded
+            //   Mushroom). Tri agnostique : tokenId ASC.
+            const samplesSize = 8;
+            const total = Number(items) || 0;
+            const sampleSkip = total > samplesSize
+                ? Math.floor(Math.random() * Math.max(1, total - samplesSize))
+                : 0;
+
+            // 5 fetches en parallèle : 4 highlights (rank / price / likes /
+            // views) + 1 dédié aux samples random (tokenId + skip).
+            const [byRank, byPrice, byLikes, byViews, bySamples] = await Promise.all([
+                _fetchCollectionAssetsSorted(id, 'rarityRank', 'ASC',  1),
+                _fetchCollectionAssetsSorted(id, 'price',      'ASC',  1),
                 _fetchCollectionAssetsSorted(id, 'likes',      'DESC', 1),
                 _fetchCollectionAssetsSorted(id, 'views',      'DESC', 1)
                     .then(r => (r?.errors || !r?.data?.public?.assets)
                         ? _fetchCollectionAssetsSorted(id, 'totalSales', 'DESC', 1)
+                        : r),
+                // Samples : tri tokenId ASC + skip random pour piocher
+                // dans toute la collection. Si tokenId rejeté (schema
+                // sans ce champ), fallback sur 'id' puis 'mintedAt'.
+                _fetchCollectionAssetsSorted(id, 'tokenId', 'ASC', samplesSize, sampleSkip)
+                    .then(r => (r?.errors || !r?.data?.public?.assets)
+                        ? _fetchCollectionAssetsSorted(id, 'mintedAt', 'DESC', samplesSize, sampleSkip)
                         : r)
             ]);
 
-            const rankAssets = byRank?.data?.public?.assets || [];
-            // Premier de la liste sortie par rarityRank ASC = NFT le plus rare.
-            const topRankAsset = rankAssets[0] || null;
+            const topRankAsset = byRank?.data?.public?.assets?.[0] || null;
             const bestRank = topRankAsset
                 ? { ...topRankAsset, rank: Number(topRankAsset.defaultRarityRank) || 1 }
                 : null;
@@ -8517,36 +8531,33 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 : null;
 
             // Most liked : premier de la liste sortie par likes DESC.
-            // On capture le count `likes` (renvoyé par le fragment Asset).
             const likedAsset = byLikes?.data?.public?.assets?.[0] || null;
             const mostLiked = likedAsset
                 ? { ...likedAsset, likes: Number(likedAsset.likes) || 0 }
                 : null;
 
             // Most viewed : premier de la liste sortie par views DESC
-            // (fallback sur totalSales si le sort views n'est pas
-            // supporté). On capture le count `views` quand le serveur le
-            // renvoie (sinon undefined → tile affiche juste le nom).
+            // (fallback sur totalSales si le sort views n'est pas supporté).
             const viewedAsset = byViews?.data?.public?.assets?.[0] || null;
             const mostViewed = viewedAsset
                 ? { ...viewedAsset, views: Number(viewedAsset.views) || 0 }
                 : null;
 
-            // 8 samples random pris dans la liste rank (Fisher-Yates),
-            // en excluant le top rank pour éviter les doublons visuels.
-            // 2 rangées de 4 tuiles alignées sur les 4 highlight au-dessus.
-            const sampleSource = rankAssets.slice(1);
+            // Samples random — list shuffle pour mélanger même quand le
+            // serveur retourne dans un ordre fixe (tokenId ASC).
+            const sampleSource = (bySamples?.data?.public?.assets || []).slice();
             for (let i = sampleSource.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [sampleSource[i], sampleSource[j]] = [sampleSource[j], sampleSource[i]];
             }
 
             return {
-                samples: sampleSource.slice(0, 8),
+                samples: sampleSource.slice(0, samplesSize),
                 bestRank,
                 mostViewed,
                 mostLiked,
-                floor
+                floor,
+                total
             };
         } catch(e) {
             console.warn('[Featured showcase] fetch failed:', e);
@@ -8633,14 +8644,23 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             return fmtNum(v);
         };
 
-        // Ordre demandé : 1) Top rank — 2) Most viewed — 3) Most liked —
-        // 4) Floor. Tuiles 1×4 sur une ligne (cf. CSS).
+        // Format rank : "1 / total" (sans le #) quand on connaît le total
+        // supply de la collection, sinon juste "1".
+        const fmtRank = (rank, total) => {
+            const r = Number(rank);
+            if (!r || r <= 0) return '—';
+            const t = Number(total) || 0;
+            return t > 0 ? `${fmtNum(r)} / ${fmtNum(t)}` : String(r);
+        };
+
+        // Ordre : Top rank — Most viewed — Most liked — Floor Price.
+        // Layout 2×2 horizontal (cf. CSS .home-feat-showcase-grid).
         const tilesHtml = `
             <div class="home-feat-showcase-grid">
-                ${tile('Top rank',    data.bestRank?.name   || '', data.bestRank ? '#' + data.bestRank.rank        : '—', data.bestRank,   'rank')}
-                ${tile('Most viewed', data.mostViewed?.name || '', fmtCount(data.mostViewed?.views) + ' views',           data.mostViewed, 'viewed')}
-                ${tile('Most liked',  data.mostLiked?.name  || '', '❤ ' + fmtCount(data.mostLiked?.likes),                data.mostLiked,  'liked')}
-                ${tile('Floor',       data.floor?.name      || '', fmtFloor(data.floor),                                  data.floor,      'floor')}
+                ${tile('Top rank',    data.bestRank?.name   || '', fmtRank(data.bestRank?.rank, data.total),       data.bestRank,   'rank')}
+                ${tile('Most viewed', data.mostViewed?.name || '', fmtCount(data.mostViewed?.views) + ' views',     data.mostViewed, 'viewed')}
+                ${tile('Most liked',  data.mostLiked?.name  || '', '❤ ' + fmtCount(data.mostLiked?.likes),          data.mostLiked,  'liked')}
+                ${tile('Floor Price', data.floor?.name      || '', fmtFloor(data.floor),                            data.floor,      'floor')}
             </div>`;
 
         wrap.innerHTML = tilesHtml + samplesHtml;
@@ -8668,15 +8688,54 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     bestRank: null, floor: null, mostLiked: null, bestSale: null
                 });
             }
-            const [data, showcase] = await Promise.all([
-                fetchFeaturedStats(col.id),
-                col.staticImages ? Promise.resolve(null) : fetchCollectionShowcase(col.id)
-            ]);
+            // On fetch les stats d'abord pour récupérer metrics.items
+            // (total supply), nécessaire pour : a) afficher "1 / total"
+            // dans le tile Top Rank, b) calculer un skip random qui va
+            // piocher des samples PARTOUT dans la collection.
+            const data = await fetchFeaturedStats(col.id);
+            const items = Number(data?.metrics?.items) || 0;
+            const showcase = col.staticImages
+                ? null
+                : await fetchCollectionShowcase(col.id, items);
             if (card) {
                 updateFeaturedCardStats(card, data);
                 if (showcase) updateShowcase(card, showcase);
             }
         });
+    }
+
+    /* Attache des handlers de swipe horizontal sur l'élément donné. Sur
+     * mobile, l'utilisateur peut glisser vers la GAUCHE pour passer à la
+     * card suivante (next) et vers la DROITE pour revenir à la précédente
+     * (prev). On filtre les scrolls verticaux : si le delta vertical
+     * dépasse SWIPE_MAX_Y, on ignore (c'était un scroll, pas un swipe).
+     * On filtre aussi les taps : un mouvement horizontal < SWIPE_MIN
+     * n'est pas considéré comme un swipe (ne déclenche rien). */
+    function _attachSwipeNav(el, onPrev, onNext) {
+        if (!el || el.dataset.cwtfSwipe === '1') return;
+        el.dataset.cwtfSwipe = '1';
+        let startX = 0, startY = 0, active = false;
+        const SWIPE_MIN   = 40;
+        const SWIPE_MAX_Y = 60;
+        el.addEventListener('touchstart', (e) => {
+            const t = e.touches?.[0];
+            if (!t) return;
+            startX = t.clientX;
+            startY = t.clientY;
+            active = true;
+        }, { passive: true });
+        el.addEventListener('touchend', (e) => {
+            if (!active) return;
+            active = false;
+            const t = e.changedTouches?.[0];
+            if (!t) return;
+            const dx = t.clientX - startX;
+            const dy = t.clientY - startY;
+            if (Math.abs(dy) > SWIPE_MAX_Y) return;
+            if (dx <= -SWIPE_MIN)      onNext?.();
+            else if (dx >= SWIPE_MIN)  onPrev?.();
+        });
+        el.addEventListener('touchcancel', () => { active = false; });
     }
 
     /* ── Featured Collections spotlight rotation ──
@@ -8743,6 +8802,9 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         prev?.addEventListener('click', (e) => { e.stopPropagation(); show(active - 1); });
         next?.addEventListener('click', (e) => { e.stopPropagation(); show(active + 1); });
         dots.forEach((d, i) => d.addEventListener('click', (e) => { e.stopPropagation(); show(i); }));
+
+        // Swipe gauche/droite sur mobile pour naviguer entre les cards.
+        _attachSwipeNav(grid, () => show(active - 1), () => show(active + 1));
 
         requestAnimationFrame(tick);
     }
@@ -8851,7 +8913,9 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         const wrap = document.getElementById('homeFeaturedCreatorsGrid');
         if (!wrap || wrap.querySelector('.home-fa-spotlight')) return;
         wrap.innerHTML = '';
-        wrap.className = '';
+        // On GARDE la className `home-creators-grid` — c'est le wrapper
+        // halo qui englobe désormais le spotlight ET la nav (pour que les
+        // flèches + progress + dots soient intégrées au bas du cadre).
         const profiles = await Promise.all(FEATURED_CREATORS.map(c => fetchCreatorProfile(c.username)));
         const colsList = await Promise.all(profiles.map(p => p?.uuid ? fetchCreatorCollections(p.uuid) : Promise.resolve([])));
         const spotlight = document.createElement('div');
@@ -8886,13 +8950,15 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         nav.querySelector('.home-fa-prev').addEventListener('click', ()=>goTo((current-1+n)%n));
         nav.querySelector('.home-fa-next').addEventListener('click', ()=>goTo((current+1)%n));
         nav.querySelectorAll('.home-fa-dot').forEach(d=>d.addEventListener('click',()=>goTo(+d.dataset.idx)));
-        // Append spotlight (slides) inside the halo'd grid wrapper, then
-        // remove the nav from its original parent and place it OUTSIDE the
-        // halo, comme sibling de .home-creators-grid — exactement comme la
-        // .home-fc-controls de Featured Collections vit sous la card.
+        // Swipe gauche/droite sur mobile pour naviguer entre les artists.
+        _attachSwipeNav(spotlight, ()=>goTo((current-1+n)%n), ()=>goTo((current+1)%n));
+        // Append spotlight (slides) + nav DANS le wrapper halo — la nav
+        // est désormais intégrée au bas du cadre featured (même halo que
+        // le spotlight), pour matcher le comportement de Featured
+        // Collections où les controls vivent dans le bas du cadre.
         spotlight.removeChild(nav);
         wrap.appendChild(spotlight);
-        wrap.parentNode.appendChild(nav);
+        wrap.appendChild(nav);
 
         // Auto-rotate avec hover-pause + progress bar (même comportement
         // que initFeaturedSpotlight côté Collections). Le hover-pause
@@ -13333,6 +13399,18 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-08T15:30:00Z',
+            type:  'improvement',
+            title: 'Featured — random samples, integrated controls, swipe nav',
+            text:  'Sample NFTs are now picked randomly across the entire collection (works even on collections without rarity ranks). Spotlight arrows + progress + dots are now integrated at the bottom of the featured frame. On mobile you can swipe left/right to navigate between collections or artists.'
+        },
+        {
+            date:  '2026-05-08T15:30:00Z',
+            type:  'improvement',
+            title: 'Featured showcase — Top rank shows "1 / total"',
+            text:  'Top Rank tile now displays "1 / 10000" instead of "#1" so you can see the collection size at a glance. "Floor" tile renamed to "Floor Price" for clarity.'
+        },
         {
             date:  '2026-05-08T14:30:00Z',
             type:  'improvement',

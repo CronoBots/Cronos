@@ -13384,15 +13384,18 @@ body.is-profile-loading #profileLoadingOverlay * {
 
 /* Featured Artists — colonnes verticales entre les cartes */
 .home-creators-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 0;
-    /* Halo unifié home (variables --home-halo-*). */
+    /* Wrap halo qui englobe le spotlight Featured Artists + sa nav
+       (flèches + progress + dots). Flex column : le spotlight grandit
+       pour remplir, la nav reste en bas — exactement comme la
+       .home-fc-spotlight côté Collections. */
+    display: flex;
+    flex-direction: column;
     border: 1px solid var(--home-halo-border);
     border-radius: 14px;
     overflow: hidden;
     box-shadow: var(--home-halo-shadow);
     background: rgba(11,20,38,0.6);
+    min-height: 0;
 }
 .home-creator-card {
     border-radius: 0;
@@ -24457,6 +24460,16 @@ a.snap-holder-username:hover {
     display: flex;
     flex-direction: column;
     min-height: 0;
+    /* Halo unifié home (variables --home-halo-*) — le halo est désormais
+       sur le SPOTLIGHT (et plus sur la card individuelle) pour englober
+       à la fois la card active ET la barre de contrôles dans le même
+       cadre. Du coup les flèches + progress + dots sont intégrés au bas
+       du cadre featured, pas séparés en dessous. */
+    border: 1px solid var(--home-halo-border);
+    border-radius: 16px;
+    box-shadow: var(--home-halo-shadow);
+    background: rgba(11, 20, 38, 0.85);
+    overflow: hidden;
 }
 .home-featured-grid {
     display: grid;
@@ -24511,12 +24524,19 @@ a.snap-holder-username:hover {
     color: #fff;
 }
 
-/* Controls bar : progress fill on the left, dots on the right */
+/* Controls bar : intégrée DANS le bas du cadre featured (le spotlight
+   porte le halo, pas la card individuelle). Fond légèrement plus sombre
+   + border-top pour séparer visuellement de la card sans casser l'unité
+   du cadre. */
 .home-fc-controls {
-    margin-top: 14px;
+    margin: 0;
+    padding: 10px 14px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
+    background: rgba(0, 0, 0, 0.35);
+    border-top: 1px solid rgba(0, 179, 255, 0.18);
+    flex-shrink: 0;
 }
 .home-fc-progress {
     flex: 1;
@@ -24925,13 +24945,9 @@ a.snap-holder-username:hover {
 .home-feat-v3 {
     position: relative;
     overflow: hidden;
-    border-radius: 16px;
-    background: rgba(11, 20, 38, 0.85);
-    /* Halo unifié home (variables --home-halo-*). Card stays still : no
-       transform, no border-color change on hover — same behaviour as the
-       chat / Top Collections / Updates frames. */
-    border: 1px solid var(--home-halo-border);
-    box-shadow: var(--home-halo-shadow);
+    /* Pas de border / shadow / radius / bg ici : c'est désormais le wrapper
+       .home-fc-spotlight qui porte le halo, pour englober card + controls
+       dans le même cadre. La card reste juste un conteneur flex column. */
     cursor: pointer;
     min-height: 320px;
     display: flex;
@@ -26421,24 +26437,13 @@ body { box-sizing: border-box; }
 .home-fa-spotlight {
     position: relative;
     width: 100%;
-    height: 340px;
-    border-radius: 22px;
+    flex: 1;
+    min-height: 340px;
     overflow: hidden;
-    border: 1.5px solid rgba(0, 179, 255, 0.45);
-    box-shadow:
-        0 0 0 1px rgba(0, 179, 255, 0.30),
-        0 0 40px rgba(0, 179, 255, 0.25),
-        0 0 80px rgba(0, 179, 255, 0.12),
-        0 12px 40px rgba(0, 0, 0, 0.5);
-    transition: border-color 0.25s, box-shadow 0.25s;
-}
-.home-fa-spotlight:hover {
-    border-color: rgba(0,179,255,0.65);
-    box-shadow:
-        0 0 0 1px rgba(0,179,255,0.45),
-        0 0 55px rgba(0,179,255,0.35),
-        0 0 100px rgba(0,179,255,0.18),
-        0 16px 50px rgba(0,0,0,0.6);
+    /* Halo retiré : c'est désormais le parent .home-creators-grid qui
+       porte le halo (border + box-shadow), pour englober le spotlight
+       + la nav dans un seul cadre. flex:1 pour remplir la hauteur du
+       wrap (qui se cale sur la hauteur de Featured Collections à côté). */
 }
 
 /* Slides empilées */
@@ -26640,8 +26645,13 @@ body { box-sizing: border-box; }
    tomber dans le flux du document, marge top pour le séparer du
    bord de la card. */
 .home-fa-nav {
-    margin-top: 14px;
-    display: flex; align-items: center; gap: 16px;
+    /* Nav intégrée DANS le bas du cadre featured artists (mêmes
+       conventions que .home-fc-controls de Featured Collections). */
+    margin: 0;
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 14px;
+    background: rgba(0, 0, 0, 0.35);
+    border-top: 1px solid rgba(0, 179, 255, 0.18);
     flex-shrink: 0;
 }
 .home-fa-prev, .home-fa-next {
@@ -28651,8 +28661,11 @@ body { box-sizing: border-box; }
 .home-live-card,
 .home-top-list,
 .home-feat-card,
-.home-crypto-card,
-.home-fa-spotlight {
+.home-crypto-card {
+    /* .home-fa-spotlight retiré : le halo est désormais sur le wrapper
+       parent .home-creators-grid (pour englober spotlight + nav dans
+       le même cadre). Idem côté Collections : le halo est sur
+       .home-fc-spotlight, pas sur .home-feat-v3. */
     box-shadow:
         0 0 0 1px rgba(0,179,255,0.4),
         0 0 30px rgba(0,179,255,0.18),
@@ -28665,8 +28678,7 @@ body { box-sizing: border-box; }
 .home-live-card:hover,
 .home-top-list:hover,
 .home-feat-card:hover,
-.home-crypto-card:hover,
-.home-fa-spotlight:hover {
+.home-crypto-card:hover {
     /* Pas de halo plus fort au hover — l'intensité reste celle du halo
        de base de la table Top Collections. */
     box-shadow:
