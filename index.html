@@ -8479,23 +8479,48 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         });
     }
 
+    /* Fetch dédié aux samples random : essaie plusieurs sort fields en
+     * cascade pour gérer les schemas qui restreignent l'enum SortField.
+     * Couvre :
+     *  1) tokenId ASC                — sort souvent supporté
+     *  2) mintedAt DESC              — fallback chronologique
+     *  3) totalSales DESC            — sort éprouvé (utilisé ailleurs)
+     *  4) rarityRank ASC             — fonctionne sur les collections
+     *                                  qui ont du ranking
+     * À chaque essai, on garde le skip random pour piocher PARTOUT dans
+     * la collection (pas juste les premiers/top items). Retourne le
+     * tableau d'assets dès qu'il est non-vide, sinon []. */
+    async function _fetchSamplesAssets(id, count, skip) {
+        const tries = [
+            ['tokenId',    'ASC'],
+            ['mintedAt',   'DESC'],
+            ['totalSales', 'DESC'],
+            ['rarityRank', 'ASC']
+        ];
+        for (const [field, order] of tries) {
+            const r = await _fetchCollectionAssetsSorted(id, field, order, count, skip);
+            const assets = r?.data?.public?.assets;
+            if (assets && assets.length) return assets;
+        }
+        return [];
+    }
+
     async function fetchCollectionShowcase(id, items) {
         try {
             // Total supply de la collection (fourni par fetchFeaturedStats
-            // → metrics.items). Si > 8, on choisit un offset random pour
-            //   piocher les samples PARTOUT dans la collection — pas
-            //   uniquement dans le top rank (qui peut être absent sur
-            //   certaines collections sans rarityRank, ex. Loaded
-            //   Mushroom). Tri agnostique : tokenId ASC.
+            // → metrics.items). Si > samplesSize, on choisit un offset
+            // random pour piocher les samples PARTOUT dans la collection
+            // (pas juste le top rank/views/likes). Marche aussi pour les
+            // collections sans rarityRank (ex. Loaded Mushroom).
             const samplesSize = 8;
             const total = Number(items) || 0;
             const sampleSkip = total > samplesSize
                 ? Math.floor(Math.random() * Math.max(1, total - samplesSize))
                 : 0;
 
-            // 5 fetches en parallèle : 4 highlights (rank / price / likes /
-            // views) + 1 dédié aux samples random (tokenId + skip).
-            const [byRank, byPrice, byLikes, byViews, bySamples] = await Promise.all([
+            // Fetches en parallèle : 4 highlights (rank / price / likes /
+            // views) + 1 dédié aux samples random (cascade de sort fields).
+            const [byRank, byPrice, byLikes, byViews, samplesAssets] = await Promise.all([
                 _fetchCollectionAssetsSorted(id, 'rarityRank', 'ASC',  1),
                 _fetchCollectionAssetsSorted(id, 'price',      'ASC',  1),
                 _fetchCollectionAssetsSorted(id, 'likes',      'DESC', 1),
@@ -8503,13 +8528,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     .then(r => (r?.errors || !r?.data?.public?.assets)
                         ? _fetchCollectionAssetsSorted(id, 'totalSales', 'DESC', 1)
                         : r),
-                // Samples : tri tokenId ASC + skip random pour piocher
-                // dans toute la collection. Si tokenId rejeté (schema
-                // sans ce champ), fallback sur 'id' puis 'mintedAt'.
-                _fetchCollectionAssetsSorted(id, 'tokenId', 'ASC', samplesSize, sampleSkip)
-                    .then(r => (r?.errors || !r?.data?.public?.assets)
-                        ? _fetchCollectionAssetsSorted(id, 'mintedAt', 'DESC', samplesSize, sampleSkip)
-                        : r)
+                _fetchSamplesAssets(id, samplesSize, sampleSkip)
             ]);
 
             const topRankAsset = byRank?.data?.public?.assets?.[0] || null;
@@ -8544,8 +8563,8 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 : null;
 
             // Samples random — list shuffle pour mélanger même quand le
-            // serveur retourne dans un ordre fixe (tokenId ASC).
-            const sampleSource = (bySamples?.data?.public?.assets || []).slice();
+            // serveur retourne dans un ordre fixe (tokenId ASC, etc.).
+            const sampleSource = (samplesAssets || []).slice();
             for (let i = sampleSource.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [sampleSource[i], sampleSource[j]] = [sampleSource[j], sampleSource[i]];
@@ -13399,6 +13418,18 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-08T16:00:00Z',
+            type:  'fix',
+            title: 'Featured samples now show on every collection',
+            text:  'Sample NFTs fetch tries multiple sort fields in cascade (tokenId, mintedAt, totalSales, rarityRank), so collections without rarity ranks (like Loaded Mushroom) now display their samples too.'
+        },
+        {
+            date:  '2026-05-08T16:00:00Z',
+            type:  'fix',
+            title: 'Featured controls — bottom strip aligned with frame',
+            text:  'On mobile the spotlight arrows + progress + dots are now properly tucked inside the cyan frame. Removed leftover margin that was pushing them outside.'
+        },
         {
             date:  '2026-05-08T15:30:00Z',
             type:  'improvement',
