@@ -28508,8 +28508,13 @@ body { box-sizing: border-box; }
     align-items: center;
     justify-content: center;
     text-align: center;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
 }
-.home-crypto-tf-btn:hover { color: rgba(255, 255, 255, 0.9); }
+@media (hover: hover) {
+    .home-crypto-tf-btn:hover { color: rgba(255, 255, 255, 0.9); }
+}
+.home-crypto-tf-btn:active,
 .home-crypto-tf-btn--active {
     background: rgba(0, 179, 255, 0.18);
     color: #00B3FF;
@@ -28958,22 +28963,66 @@ body { box-sizing: border-box; }
     align-items: center !important;
     justify-content: center !important;
     text-align: center !important;
+    /* Pas d'outline natif (qui apparaissait noir/sombre après un tap
+       sur mobile et restait sticky tant qu'on cliquait pas ailleurs). */
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
 }
 
-.stats-tr-btn:hover,
-.stats-cf-btn:hover,
-.stats-vf-btn:hover,
-.cb-range-btn:hover {
-    color: rgba(255, 255, 255, 0.9) !important;
-    background: rgba(255, 255, 255, 0.04) !important;
+/* Hover cantonné aux pointeurs réels (souris). Sur tactile, le :hover
+   peut rester "sticky" après un tap : le bouton garde un fond gris
+   foncé alors qu'on attend le passage en cyan. Avec @media (hover: hover)
+   le style est ignoré sur écran tactile, donc plus de sticky. */
+@media (hover: hover) {
+    .stats-tr-btn:hover,
+    .stats-cf-btn:hover,
+    .stats-vf-btn:hover,
+    .cb-range-btn:hover {
+        color: rgba(255, 255, 255, 0.9) !important;
+        background: rgba(255, 255, 255, 0.04) !important;
+    }
 }
 
+/* Feedback INSTANTANÉ au mousedown / touchstart : le bouton passe
+   directement en cyan (même style que --active) — comme ça l'utilisateur
+   voit la sélection avant même que le JS ait eu le temps de toggler la
+   classe --active au click. */
+.stats-tr-btn:active,
+.stats-cf-btn:active,
+.stats-vf-btn:active,
+.cb-range-btn:active,
 .stats-tr-btn--active,
 .stats-cf-btn--active,
 .stats-vf-btn--active,
 .cb-range-btn.cb-range-active {
     background: rgba(0, 179, 255, 0.18) !important;
     color: #00B3FF !important;
+}
+
+/* Anti sticky-hover : sur tactile, après un tap le browser peut laisser
+   le pseudo-état :hover collé au bouton tant qu'on ne tape pas ailleurs.
+   Du coup le bouton reste avec un fond gris foncé visible (au lieu de
+   passer cyan) — l'utilisateur voit "noir" sans comprendre pourquoi.
+   Sur tactile (hover: none), on force le state base (transparent +
+   couleur normale) pour que le seul état visible reste --active. */
+@media (hover: none) {
+    .stats-tr-btn:hover,
+    .stats-cf-btn:hover,
+    .stats-vf-btn:hover,
+    .cb-range-btn:hover,
+    .home-crypto-tf-btn:hover {
+        background: transparent !important;
+        color: rgba(255, 255, 255, 0.55) !important;
+    }
+    /* Sauf pour le bouton réellement actif — on garde son cyan. */
+    .stats-tr-btn--active:hover,
+    .stats-cf-btn--active:hover,
+    .stats-vf-btn--active:hover,
+    .cb-range-btn.cb-range-active:hover,
+    .home-crypto-tf-btn--active:hover {
+        background: rgba(0, 179, 255, 0.18) !important;
+        color: #00B3FF !important;
+    }
 }
 
 /* Boutons désactivés (ex: Rarity sur une collection sans rang) */
