@@ -13884,6 +13884,11 @@ body.is-profile-loading #profileLoadingOverlay * {
     -webkit-backdrop-filter: blur(8px);
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
     opacity: 0;
+    /* pointer-events: none par défaut — sinon sur mobile les boutons
+       reply/edit/delete sont cliquables même invisibles, et un tap
+       dans le coin inférieur-droit du message déclenche une action
+       fantôme avant le double-tap qui devrait révéler la pill. */
+    pointer-events: none;
     transition: opacity 0.15s;
     white-space: nowrap;
     z-index: 3;
@@ -13894,12 +13899,19 @@ body.is-profile-loading #profileLoadingOverlay * {
 /* Desktop : reveal au hover du message. Gated comme la react-bar pour
    éviter le sticky-hover sur tactile. */
 @media (hover: hover) {
-    .home-chat-msg--community:hover .home-chat-msg-actions { opacity: 1; }
+    .home-chat-msg--community:hover .home-chat-msg-actions {
+        opacity: 1;
+        pointer-events: auto;
+    }
 }
 /* Mobile / universel : la pill apparaît aussi quand le message est
-   "ouvert" (.is-react-open) — donc le long-press révèle À LA FOIS la
-   barre emoji et les boutons reply/edit/delete. */
-.home-chat-msg--community.is-react-open .home-chat-msg-actions { opacity: 1; }
+   "ouvert" (.is-react-open) — donc le double-tap révèle À LA FOIS la
+   barre emoji et les boutons reply/edit/delete (cliquables seulement
+   à ce moment-là). */
+.home-chat-msg--community.is-react-open .home-chat-msg-actions {
+    opacity: 1;
+    pointer-events: auto;
+}
 .home-chat-msg-action {
     /* Boutons un peu plus grands pour que les 3 icônes (Reply / Edit /
        Delete) soient toutes bien visibles et cliquables — et que la pill
