@@ -8233,18 +8233,21 @@ document.addEventListener('DOMContentLoaded', initialize);
                 <div class="home-feat-v3-hero-img" style="background-image:url('${safeLogo}');"></div>
                 <div class="home-feat-v3-hero-tint"></div>
                 <span class="home-feat-v3-change" style="display:none;"></span>
-                <!-- Identité en overlay sur le coin bas-gauche du hero. -->
-                <div class="home-feat-v3-identity">
-                    <img class="home-feat-v3-logo" src="${safeLogo}" alt="" loading="lazy" onerror="this.style.opacity='0.25';this.style.background='rgba(255,255,255,0.05)';"/>
-                    <div class="home-feat-v3-id-text">
-                        <span class="home-feat-v3-name-row">
-                            <span class="home-feat-v3-name">${col.name || '—'}</span>
-                        </span>
-                        <span class="home-feat-v3-creator home-feat-v3-creator--loading">
-                            <span class="home-feat-v3-creator-text">Loading…</span>
-                            <span class="home-feat-v3-verified-slot"></span>
-                        </span>
-                    </div>
+            </div>
+            <!-- Identité : SIBLING du hero (pas dedans), avec un margin-top
+                 négatif pour que le logo chevauche moitié-banner / moitié-
+                 dessous. Les enfants sont alignés bottom pour que le texte
+                 reste à hauteur du bas du logo. -->
+            <div class="home-feat-v3-identity">
+                <img class="home-feat-v3-logo" src="${safeLogo}" alt="" loading="lazy" onerror="this.style.opacity='0.25';this.style.background='rgba(255,255,255,0.05)';"/>
+                <div class="home-feat-v3-id-text">
+                    <span class="home-feat-v3-name-row">
+                        <span class="home-feat-v3-name">${col.name || '—'}</span>
+                    </span>
+                    <span class="home-feat-v3-creator home-feat-v3-creator--loading">
+                        <span class="home-feat-v3-creator-text">Loading…</span>
+                        <span class="home-feat-v3-verified-slot"></span>
+                    </span>
                 </div>
             </div>
             <!-- Stats inline juste sous la bannière. -->
@@ -8260,6 +8263,10 @@ document.addEventListener('DOMContentLoaded', initialize);
                 <div class="home-feat-v3-stat">
                     <span class="home-feat-v3-stat-label" data-label="vol">Volume</span>
                     <span class="home-feat-v3-stat-val" data-stat="vol">—</span>
+                </div>
+                <div class="home-feat-v3-stat">
+                    <span class="home-feat-v3-stat-label">Volume traded</span>
+                    <span class="home-feat-v3-stat-val" data-stat="traded">—</span>
                 </div>
             </div>
             <!-- Showcase : 4 highlights + samples row, injectés par updateShowcase(). -->
@@ -8390,10 +8397,14 @@ document.addEventListener('DOMContentLoaded', initialize);
         const elOwners = card.querySelector('[data-stat="owners"]');
         const elVol    = card.querySelector('[data-stat="vol"]');
         const elVolLbl = card.querySelector('[data-label="vol"]');
+        const elTraded = card.querySelector('[data-stat="traded"]');
         if (elFloor)  elFloor.textContent  = fmtMoney(floor);
         if (elOwners) elOwners.textContent = fmtNum(owners);
         if (elVol)    elVol.textContent    = fmtMoney(volValue);
         if (elVolLbl) elVolLbl.textContent = volLabel;
+        // Volume traded = somme cumulative de toutes les ventes (USD) sur
+        // toute la durée de vie de la collection.
+        if (elTraded) elTraded.textContent = fmtMoney(Number(data.metrics?.totalSalesDecimal) || 0);
 
         // 24h change badge — only shown when there's been recent activity
         const change = Number(data.stats?.oneDayVolumeDecimalChange) || 0;
@@ -8443,27 +8454,39 @@ document.addEventListener('DOMContentLoaded', initialize);
      * Toutes les requêtes sont best-effort (Promise.all, .catch).
      * Si une requête échoue, l'item correspondant est simplement absent
      * du showcase (la grille s'adapte). */
-    const _GCA_QUERY = `fragment AssetBaseDetail on Asset {id name cover{url} main{url} defaultRarityRank}
+    /* Note : on demande likes et views au passage. likes EST exposé sur
+       le type Asset (cf. eventHistory query). views n'est pas garanti —
+       si le serveur le rejette, _fetchCollectionAssetsSorted-likes fait
+       un fallback sans le champ via _GCA_QUERY_NOVIEWS. */
+    const _GCA_QUERY = `fragment AssetBaseDetail on Asset {id name cover{url} main{url} defaultRarityRank likes views}
 fragment AssetListing on Listing {priceDecimal salePriceDecimalUSD currency}
 fragment DefaultListingV2WithFilter on Asset {defaultListingV2(where:$where, listingTypes:$listingTypes, sort:$sort){...AssetListing}}
 query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsSearch,$sort:[SingleFieldSort!],$listingTypes:[ListingType!]){public{assets(collectionId:$collectionId,first:$first,skip:$skip,where:$where,sort:$sort,listingTypes:$listingTypes){...AssetBaseDetail ...DefaultListingV2WithFilter latestPurchasedEdition{priceUSD}}}}`;
+    const _GCA_QUERY_NOVIEWS = _GCA_QUERY.replace(' views', '');
 
     function _fetchCollectionAssetsSorted(collectionId, sortField, order, first) {
-        return fetch(graphqlEndpoint, {
+        const body = (q) => JSON.stringify({
+            operationName: 'GetCollectionAssets',
+            variables: {
+                collectionId,
+                first: first || 1,
+                skip: 0,
+                sort: [{ order, field: sortField }],
+                listingTypes: []
+            },
+            query: q
+        });
+        const post = (q) => fetch(graphqlEndpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                operationName: 'GetCollectionAssets',
-                variables: {
-                    collectionId,
-                    first: first || 1,
-                    skip: 0,
-                    sort: [{ order, field: sortField }],
-                    listingTypes: []
-                },
-                query: _GCA_QUERY
-            })
+            body: body(q)
         }).then(r => r.json()).catch(() => null);
+        // 1er essai avec likes + views ; si le serveur rejette (views n'est
+        // pas exposé sur ce schéma), on retente sans views.
+        return post(_GCA_QUERY).then(r => {
+            if (r && r.errors && /views/i.test(JSON.stringify(r.errors))) return post(_GCA_QUERY_NOVIEWS);
+            return r;
+        });
     }
 
     async function fetchCollectionShowcase(id) {
@@ -8503,41 +8526,21 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 }
                 : null;
 
-            // Most liked : premier de la liste sortie par likes DESC. Le
-            // count exact n'est pas dans la réponse (l'API ne le renvoie
-            // pas sur ce schema) — on n'affiche pas le nombre, juste le NFT.
+            // Most liked : premier de la liste sortie par likes DESC.
+            // On capture le count `likes` (renvoyé par le fragment Asset).
             const likedAsset = byLikes?.data?.public?.assets?.[0] || null;
-            const mostLiked = likedAsset ? { ...likedAsset } : null;
+            const mostLiked = likedAsset
+                ? { ...likedAsset, likes: Number(likedAsset.likes) || 0 }
+                : null;
 
             // Most viewed : premier de la liste sortie par views DESC
             // (fallback sur totalSales si le sort views n'est pas
-            // supporté). Idem, on affiche juste le NFT sans compteur.
+            // supporté). On capture le count `views` quand le serveur le
+            // renvoie (sinon undefined → tile affiche juste le nom).
             const viewedAsset = byViews?.data?.public?.assets?.[0] || null;
-            const mostViewed = viewedAsset ? { ...viewedAsset } : null;
-
-            let bestSale = null; // remplacé par mostViewed dans l'UI ; on garde
-                                  // la variable locale pour ne pas tout démolir.
-            // (Top sale n'est plus affiché — l'utilisateur a demandé
-            // mostViewed à sa place. On supprime le fetch eventHistory qui
-            // était lourd.)
-            const edges = []; // placeholder, plus de fetch
-            for (const edge of edges) {
-                const node = edge?.node;
-                if (!node?.asset) continue;
-                const usd = Number(node.listing?.salePriceDecimalUSD) || 0;
-                if (usd <= 0) continue;
-                if (!bestSale || usd > bestSale.priceUSD) {
-                    bestSale = {
-                        id:       node.asset.id,
-                        name:     node.asset.name,
-                        cover:    node.asset.cover,
-                        main:     node.asset.main,
-                        priceUSD: usd,
-                        amount:   Number(node.amountDecimal) || 0,
-                        currency: node.listing?.currency || ''
-                    };
-                }
-            }
+            const mostViewed = viewedAsset
+                ? { ...viewedAsset, views: Number(viewedAsset.views) || 0 }
+                : null;
 
             // 3 samples random pris dans la liste rank (Fisher-Yates).
             const shuffled = rankAssets.slice();
@@ -8607,45 +8610,45 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 </div>
             </div>` : '';
 
-        const tile = (label, value, asset, modifier) => {
+        // Tuile compacte : thumb à gauche + 3 lignes de texte à droite
+        // (label coloré · nom NFT · valeur principale). NFT name est
+        // tronqué à 18 chars avec ellipsis pour ne pas péter le layout.
+        const tile = (label, name, value, asset, modifier) => {
             if (!asset) return '';
             return `
                 <div class="home-feat-showcase-tile home-feat-showcase-tile--${modifier}" title="${_fcEsc(asset.name || '')}">
                     <div class="home-feat-showcase-tile-thumb">${thumb(asset)}</div>
                     <div class="home-feat-showcase-tile-text">
                         <span class="home-feat-showcase-tile-label">${label}</span>
+                        <span class="home-feat-showcase-tile-name">${_fcEsc(name)}</span>
                         <span class="home-feat-showcase-tile-val">${value}</span>
                     </div>
                 </div>`;
         };
 
-        // Helper : extrait le numéro d'un nom de NFT (ex. "Loaded Lion #11"
-        // → "#11") pour les tuiles dont la valeur principale n'est pas
-        // un prix ou un rang (ex. Most liked).
-        const extractNum = (name) => {
-            const m = /(#\d+)/.exec(String(name || ''));
-            return m ? m[1] : (name || '').slice(0, 14);
-        };
-        // Floor : on préfère la valeur USD quand elle existe (la plupart
-        // des listings Crypto.com NFT sont en USD), sinon on affiche le
-        // priceDecimal + ticker en fallback.
+        // Floor : on préfère la valeur USD quand elle existe.
         const fmtFloor = (f) => {
-            if (!f) return '';
+            if (!f) return '—';
             const usd = Number(f.priceUSD) || 0;
             if (usd > 0) return fmtMoney(usd);
             return fmtPrice(f.price, f.currency);
         };
+        // Like / view counts : si l'API ne les renvoie pas, on affiche
+        // juste un dash plutôt que "0" (qui serait trompeur).
+        const fmtCount = (n) => {
+            const v = Number(n);
+            if (!v || v <= 0) return '—';
+            return fmtNum(v);
+        };
 
         // Ordre demandé : 1) Top rank — 2) Most viewed — 3) Most liked —
-        // 4) Floor. Les 4 tuiles forment une grille 2×2 (Top rank +
-        // Most viewed sur la 1re ligne, Most liked + Floor sur la 2e).
-        // Samples row APRÈS les tuiles, comme une accroche visuelle finale.
+        // 4) Floor. Tuiles 1×4 sur une ligne (cf. CSS).
         const tilesHtml = `
             <div class="home-feat-showcase-grid">
-                ${tile('Top rank',    data.bestRank  ? '#' + data.bestRank.rank                   : '', data.bestRank,  'rank')}
-                ${tile('Most viewed', data.mostViewed ? extractNum(data.mostViewed.name)            : '', data.mostViewed, 'viewed')}
-                ${tile('Most liked',  data.mostLiked ? '❤ ' + extractNum(data.mostLiked.name)      : '', data.mostLiked, 'liked')}
-                ${tile('Floor',       fmtFloor(data.floor),                                              data.floor,      'floor')}
+                ${tile('Top rank',    data.bestRank?.name   || '', data.bestRank ? '#' + data.bestRank.rank        : '—', data.bestRank,   'rank')}
+                ${tile('Most viewed', data.mostViewed?.name || '', fmtCount(data.mostViewed?.views) + ' views',           data.mostViewed, 'viewed')}
+                ${tile('Most liked',  data.mostLiked?.name  || '', '❤ ' + fmtCount(data.mostLiked?.likes),                data.mostLiked,  'liked')}
+                ${tile('Floor',       data.floor?.name      || '', fmtFloor(data.floor),                                  data.floor,      'floor')}
             </div>`;
 
         wrap.innerHTML = tilesHtml + samplesHtml;

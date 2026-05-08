@@ -24578,35 +24578,37 @@ a.snap-holder-username:hover {
     background-size: cover;
     background-position: center;
 }
-/* Tint plus marqué en bas de la bannière pour que le pseudo + nom
-   restent lisibles, même sur des bannières claires. */
+/* Tint très léger sur le hero — la lisibilité du texte vient
+   désormais de la position de l'identité hors bannière (sous), donc
+   pas besoin d'un dégradé sombre marqué. */
 .home-fc-spotlight .home-feat-v3-hero-tint {
     background: linear-gradient(
         180deg,
-        rgba(8, 14, 28, 0.00) 30%,
-        rgba(8, 14, 28, 0.45) 70%,
-        rgba(8, 14, 28, 0.85) 100%);
+        rgba(8, 14, 28, 0.00) 50%,
+        rgba(8, 14, 28, 0.10) 100%);
 }
-/* Identity — overlay absolute en BAS-GAUCHE de la bannière. */
+/* Identity = SIBLING du hero. Le logo chevauche le bord inférieur de
+   la bannière (moitié dedans / moitié dehors) via un margin-top négatif.
+   Le bloc texte est à droite du logo et ne dépasse pas la bannière —
+   il vit dans la bande qui suit le hero. */
 .home-fc-spotlight .home-feat-v3-identity {
-    position: absolute;
-    left: 14px;
-    right: 14px;
-    bottom: 12px;
+    position: relative;
     z-index: 3;
+    margin-top: -38px;            /* moitié du logo (76 / 2 = 38) */
+    padding: 0 18px;
     display: flex;
-    align-items: center;
-    gap: 12px;
+    align-items: flex-end;
+    gap: 14px;
     min-width: 0;
 }
 .home-fc-spotlight .home-feat-v3-logo {
-    width: 52px;
-    height: 52px;
-    border-radius: 10px;
+    width: 76px;
+    height: 76px;
+    border-radius: 14px;
     flex-shrink: 0;
-    border: 2px solid rgba(11, 20, 38, 0.95);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.6);
-    background: rgba(255,255,255,0.05);
+    border: 3px solid rgba(11, 20, 38, 0.95);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.65);
+    background: rgba(11, 20, 38, 0.85);
 }
 .home-fc-spotlight .home-feat-v3-id-text {
     flex: 1;
@@ -24614,6 +24616,7 @@ a.snap-holder-username:hover {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    padding-bottom: 6px;          /* aligne le texte avec le bas du logo */
 }
 .home-fc-spotlight .home-feat-v3-name {
     font-family: 'Geomanist-Bold', sans-serif;
@@ -24707,7 +24710,11 @@ a.snap-holder-username:hover {
     font-variant-numeric: tabular-nums;
 }
 
-/* ═══════ Showcase (sous les stats) — 4 highlights + samples row ═══════ */
+/* ═══════ Showcase (sous les stats) — 4 highlights + samples row ═══════
+   min-height fixe pour réserver la place du contenu DÈS le chargement
+   initial — sinon le card se redimensionne quand les fetches finissent
+   et tout le contenu flashe vers le haut (layout shift). 160px = 4 tuiles
+   ~70px + samples ~50px + paddings/gaps. */
 .home-fc-spotlight .home-feat-v3-showcase {
     display: flex;
     flex-direction: column;
@@ -24715,7 +24722,7 @@ a.snap-holder-username:hover {
     padding: 10px 12px 12px;
     background: rgba(11, 20, 38, 0.35);
     flex: 1;
-    min-height: 0;
+    min-height: 160px;
     min-width: 0;
 }
 .home-feat-showcase-loading {
@@ -24775,16 +24782,16 @@ a.snap-holder-username:hover {
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
 }
-/* Tuile highlight : layout vertical en pleine largeur de colonne —
-   thumb NFT carré au-dessus (utilise tout le carré disponible),
-   label coloré + value sous l'image. Avec 4 colonnes égales sur une
-   ligne, les thumbs sont nettement plus grandes que la 2×2 d'avant. */
+/* Tuile highlight COMPACTE — thumb à gauche + 3 lignes texte à droite
+   (label coloré · nom du NFT · valeur principale). Plus petite en
+   hauteur que la version "thumb plein-cadre" : on tient les 4 tuiles
+   sur une seule ligne sans manger toute la place. */
 .home-feat-showcase-tile {
     display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-    padding: 8px;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
     background: rgba(0, 0, 0, 0.32);
     border: 1px solid rgba(0, 179, 255, 0.22);
     border-radius: 10px;
@@ -24796,8 +24803,8 @@ a.snap-holder-username:hover {
     border-color: rgba(0, 179, 255, 0.4);
 }
 .home-feat-showcase-tile-thumb {
-    width: 100%;
-    aspect-ratio: 1 / 1;          /* thumbnail carré */
+    width: 44px;
+    height: 44px;
     border-radius: 7px;
     overflow: hidden;
     background: rgba(0, 0, 0, 0.5);
@@ -24813,14 +24820,15 @@ a.snap-holder-username:hover {
 .home-feat-showcase-tile-text {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
     min-width: 0;
-    align-items: center;
-    text-align: center;
+    flex: 1;
+    align-items: flex-start;
+    text-align: left;
 }
 .home-feat-showcase-tile-label {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 9px;
+    font-size: 8.5px;
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -24831,9 +24839,20 @@ a.snap-holder-username:hover {
     text-overflow: ellipsis;
     max-width: 100%;
 }
+.home-feat-showcase-tile-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
 .home-feat-showcase-tile-val {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 800;
     color: #fff;
     line-height: 1.1;
@@ -25738,22 +25757,20 @@ a.snap-holder-username:hover {
     flex-shrink: 0;
 }
 /* Heights matching Collections vs Artists :
-   - Section Collections : header + .home-fc-spotlight (540px : cards
-     halo'd + controls bar) → total ~570px.
-   - Section Artists     : header + .home-creators-grid (~510px,
-     halo'd) + .home-fa-nav (~30px) → total ~570px.
-   Les deux frames halo'd ont visuellement la même hauteur (~510px
-   d'image visible) puisque .home-fc-spotlight contient TOUT (cards +
-   controls), tandis que .home-creators-grid ne contient que la card
-   halo'd et la nav vit dehors en sibling. */
+   - Section Collections : header + .home-fc-spotlight (620px : cards
+     halo'd + controls bar) → total ~650px.
+   - Section Artists     : header + .home-creators-grid (~590px,
+     halo'd) + .home-fa-nav (~30px) → total ~650px.
+   Bump à 620 (avant 540) pour caser banner + identity overlay + 4
+   stats + showcase 160px sans clipping/scroll interne. */
 .home-two-col--featured .home-fc-spotlight {
     flex: 1 1 0;
-    min-height: 540px;
+    min-height: 620px;
     min-width: 0;
 }
 .home-two-col--featured .home-creators-grid {
     flex: 1 1 0;
-    min-height: 510px;            /* nav 30px en sibling = 540 total */
+    min-height: 590px;            /* nav 30px en sibling = 620 total */
     min-width: 0;
 }
 /* La carte interne (.home-feat-v3) doit elle aussi prendre toute la
