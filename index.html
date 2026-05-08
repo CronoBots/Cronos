@@ -1220,7 +1220,12 @@
               <span id="homeMobileMemberCount">0</span>
               <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="7" cy="7" r="3"/><path d="M1 17c0-2.8 2.7-5 6-5"/><circle cx="14" cy="8" r="2.5"/><path d="M11 17c0-2.4 2-4 3-4s3 1.6 3 4"/></svg>
             </button>
-            <span class="home-community-live" id="homeChatStatus">connecting…</span>
+            <!-- Status pill ("LIVE" / "OFFLINE") retiré : la connexion
+                 chat est silencieuse, on n'avait pas besoin de l'afficher
+                 en permanence dans le header. Le span reste dans le DOM
+                 pour ne pas casser le JS qui pose son textContent — il
+                 est juste caché en CSS (display:none). -->
+            <span class="home-community-live" id="homeChatStatus" hidden>connecting…</span>
           </div>
         </div>
 
@@ -8416,28 +8421,47 @@ document.addEventListener('DOMContentLoaded', initialize);
     }
 
     /* ── Showcase de la collection (côté droit du spotlight) ──────────────
-     * Récupère ~50 NFTs avec rang, prix, likes, image, puis un peu
-     * d'historique de ventes (transferred) pour identifier le "top sale".
-     * Renvoie un objet avec :
-     *   - samples : 3 NFTs random pris dans le pool (des exemples)
-     *   - bestRank : NFT avec le defaultRarityRank le plus bas (rarest)
-     *   - floor    : NFT listé au prix le plus bas (+ son prix)
-     *   - mostLiked: NFT avec le plus grand nombre de likes
-     *   - bestSale : meilleure vente historique récente (+ prix USD)
-     * Tout est best-effort : si l'API est down ou qu'un champ n'existe
-     * pas, l'item est simplement absent du résultat. */
+     * On fait 3 requêtes GetCollectionAssets (l'endpoint officiel
+     * Crypto.com NFT) avec des SORT différents pour récupérer en TÊTE
+     * de chaque liste l'asset qui nous intéresse :
+     *   - Top rank   : sort rarityRank ASC → premier = #1 (rarest)
+     *   - Floor      : sort price      ASC → premier = listing le moins cher
+     *   - Most liked : sort likes      DESC → premier = le plus aimé
+     * + une 4e requête eventHistory(naturesIn:['transferred']) pour le top
+     * sale historique. + on prend 3 samples random dans la liste rank.
+     *
+     * Toutes les requêtes sont best-effort (Promise.all, .catch).
+     * Si une requête échoue, l'item correspondant est simplement absent
+     * du showcase (la grille s'adapte). */
+    const _GCA_QUERY = `fragment AssetBaseDetail on Asset {id name cover{url} main{url} defaultRarityRank}
+fragment AssetListing on Listing {priceDecimal salePriceDecimalUSD currency}
+fragment DefaultListingV2WithFilter on Asset {defaultListingV2(where:$where, listingTypes:$listingTypes, sort:$sort){...AssetListing}}
+query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsSearch,$sort:[SingleFieldSort!],$listingTypes:[ListingType!]){public{assets(collectionId:$collectionId,first:$first,skip:$skip,where:$where,sort:$sort,listingTypes:$listingTypes){...AssetBaseDetail ...DefaultListingV2WithFilter latestPurchasedEdition{priceUSD}}}}`;
+
+    function _fetchCollectionAssetsSorted(collectionId, sortField, order, first) {
+        return fetch(graphqlEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                operationName: 'GetCollectionAssets',
+                variables: {
+                    collectionId,
+                    first: first || 1,
+                    skip: 0,
+                    sort: [{ order, field: sortField }],
+                    listingTypes: []
+                },
+                query: _GCA_QUERY
+            })
+        }).then(r => r.json()).catch(() => null);
+    }
+
     async function fetchCollectionShowcase(id) {
         try {
-            const [assetsJson, salesJson] = await Promise.all([
-                fetch(graphqlEndpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        operationName: 'GetFeatShowcase',
-                        variables: { collectionId: id, first: 50, skip: 0 },
-                        query: `query GetFeatShowcase($collectionId:ID,$first:Int!,$skip:Int!){public{assets(collectionId:$collectionId,first:$first,skip:$skip){id name main{url} cover{url} defaultRarityRank likes defaultListingV2{priceDecimal currency}}}}`
-                    })
-                }).then(r => r.json()).catch(() => null),
+            const [byRank, byPrice, byLikes, salesJson] = await Promise.all([
+                _fetchCollectionAssetsSorted(id, 'rarityRank', 'ASC', 12),  // 12 pour aussi avoir des samples
+                _fetchCollectionAssetsSorted(id, 'price',      'ASC', 1),
+                _fetchCollectionAssetsSorted(id, 'likes',      'DESC', 1),
                 fetch(graphqlEndpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -8449,47 +8473,34 @@ document.addEventListener('DOMContentLoaded', initialize);
                 }).then(r => r.json()).catch(() => null)
             ]);
 
-            const assets = assetsJson?.data?.public?.assets || [];
-            if (!assets.length) return null;
-
-            // Pool aléatoire pour les samples (Fisher-Yates).
-            const shuffled = assets.slice();
-            for (let i = shuffled.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-            }
-
-            // Helpers : retourne null si pas de candidat.
-            const sortedByRank = assets
-                .filter(a => Number.isFinite(Number(a.defaultRarityRank)) && Number(a.defaultRarityRank) > 0)
-                .slice()
-                .sort((a, b) => Number(a.defaultRarityRank) - Number(b.defaultRarityRank));
-            const sortedByPrice = assets
-                .filter(a => Number(a.defaultListingV2?.priceDecimal) > 0)
-                .slice()
-                .sort((a, b) => Number(a.defaultListingV2.priceDecimal) - Number(b.defaultListingV2.priceDecimal));
-            const sortedByLikes = assets
-                .filter(a => Number(a.likes) > 0)
-                .slice()
-                .sort((a, b) => Number(b.likes) - Number(a.likes));
-
-            const bestRank = sortedByRank[0]
-                ? { ...sortedByRank[0], rank: Number(sortedByRank[0].defaultRarityRank) }
+            const rankAssets = byRank?.data?.public?.assets || [];
+            // Premier de la liste sortie par rarityRank ASC = NFT le plus rare.
+            const topRankAsset = rankAssets[0] || null;
+            const bestRank = topRankAsset
+                ? { ...topRankAsset, rank: Number(topRankAsset.defaultRarityRank) || 1 }
                 : null;
-            const floor = sortedByPrice[0]
+
+            // Floor : premier de la liste sortie par price ASC. On lit le
+            // prix sur defaultListingV2 (présent puisqu'on filtre sur les
+            // listings via le sort price).
+            const floorAsset = byPrice?.data?.public?.assets?.[0] || null;
+            const floor = floorAsset && floorAsset.defaultListingV2
                 ? {
-                    ...sortedByPrice[0],
-                    price: Number(sortedByPrice[0].defaultListingV2.priceDecimal),
-                    currency: sortedByPrice[0].defaultListingV2.currency || ''
+                    ...floorAsset,
+                    price:    Number(floorAsset.defaultListingV2.priceDecimal) || 0,
+                    priceUSD: Number(floorAsset.defaultListingV2.salePriceDecimalUSD) || 0,
+                    currency: floorAsset.defaultListingV2.currency || ''
                 }
                 : null;
-            const mostLiked = sortedByLikes[0]
-                ? { ...sortedByLikes[0], likes: Number(sortedByLikes[0].likes) }
-                : null;
 
-            // Top sale : on parcourt l'historique transferred et on retient
-            // celui avec le salePriceDecimalUSD max (l'API peut renvoyer
-            // null/undefined sur des transferts hors marché).
+            // Most liked : premier de la liste sortie par likes DESC. Le
+            // count exact n'est pas dans la réponse (l'API ne le renvoie
+            // pas sur ce schema) — on n'affiche pas le nombre, juste le NFT.
+            const likedAsset = byLikes?.data?.public?.assets?.[0] || null;
+            const mostLiked = likedAsset ? { ...likedAsset } : null;
+
+            // Top sale : on garde l'eventHistory pour la meilleure vente
+            // historique en USD (cf. handler dans renderShowcase).
             let bestSale = null;
             const edges = salesJson?.data?.public?.collection?.eventHistory?.edges || [];
             for (const edge of edges) {
@@ -8499,15 +8510,22 @@ document.addEventListener('DOMContentLoaded', initialize);
                 if (usd <= 0) continue;
                 if (!bestSale || usd > bestSale.priceUSD) {
                     bestSale = {
-                        id:        node.asset.id,
-                        name:      node.asset.name,
-                        cover:     node.asset.cover,
-                        main:      node.asset.main,
-                        priceUSD:  usd,
-                        amount:    Number(node.amountDecimal) || 0,
-                        currency:  node.listing?.currency || ''
+                        id:       node.asset.id,
+                        name:     node.asset.name,
+                        cover:    node.asset.cover,
+                        main:     node.asset.main,
+                        priceUSD: usd,
+                        amount:   Number(node.amountDecimal) || 0,
+                        currency: node.listing?.currency || ''
                     };
                 }
+            }
+
+            // 3 samples random pris dans la liste rank (Fisher-Yates).
+            const shuffled = rankAssets.slice();
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
             }
 
             return {
@@ -8583,12 +8601,29 @@ document.addEventListener('DOMContentLoaded', initialize);
                 </div>`;
         };
 
+        // Helper : extrait le numéro d'un nom de NFT (ex. "Loaded Lion #11"
+        // → "#11") pour les tuiles dont la valeur principale n'est pas
+        // un prix ou un rang (ex. Most liked).
+        const extractNum = (name) => {
+            const m = /(#\d+)/.exec(String(name || ''));
+            return m ? m[1] : (name || '').slice(0, 14);
+        };
+        // Floor : on préfère la valeur USD quand elle existe (la plupart
+        // des listings Crypto.com NFT sont en USD), sinon on affiche le
+        // priceDecimal + ticker en fallback.
+        const fmtFloor = (f) => {
+            if (!f) return '';
+            const usd = Number(f.priceUSD) || 0;
+            if (usd > 0) return fmtMoney(usd);
+            return fmtPrice(f.price, f.currency);
+        };
+
         const tilesHtml = `
             <div class="home-feat-showcase-grid">
                 ${tile('Top sale',   fmtMoney(data.bestSale?.priceUSD),                            data.bestSale,  'sale')}
-                ${tile('Top rank',   data.bestRank ? '#' + data.bestRank.rank                : '', data.bestRank,  'rank')}
-                ${tile('Floor',      data.floor    ? fmtPrice(data.floor.price, data.floor.currency) : '', data.floor,     'floor')}
-                ${tile('Most liked', data.mostLiked ? '❤ ' + fmtNum(data.mostLiked.likes)        : '', data.mostLiked, 'liked')}
+                ${tile('Top rank',   data.bestRank ? '#' + data.bestRank.rank : '',                data.bestRank,  'rank')}
+                ${tile('Floor',      fmtFloor(data.floor),                                         data.floor,     'floor')}
+                ${tile('Most liked', data.mostLiked ? '❤ ' + extractNum(data.mostLiked.name) : '', data.mostLiked, 'liked')}
             </div>`;
 
         wrap.innerHTML = samplesHtml + tilesHtml;
@@ -9652,11 +9687,16 @@ document.addEventListener('DOMContentLoaded', initialize);
                     _cacheName(uname, dname);
                     // Badge "verified" : on l'ajoute à côté du pseudo si le
                     // membre figure dans _certsCache (= il a fait la
-                    // procédure de certification du compte). Même check que
-                    // pour les messages eux-mêmes — cohérence visuelle.
+                    // procédure de certification du compte). MÊME structure
+                    // et même style que la .chat-verified-badge utilisée
+                    // sur les messages — pastille verte 13×13 avec un
+                    // checkmark dedans. Cohérence visuelle parfaite avec
+                    // le reste du chat.
                     const isCertified = !!_certsCache[String(uname).toLowerCase()];
                     const verifiedHtml = isCertified
-                        ? '<svg class="home-chat-member-verified" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-label="Account certified"><polyline points="2,6 5,9 10,3"/></svg>'
+                        ? '<span class="home-chat-member-verified" title="Account certified on Crypto.com NFT" aria-label="Account certified">' +
+                              '<svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg>' +
+                          '</span>'
                         : '';
                     // data-mention-display = ce qu'on insère dans le chat
                     // quand on clique (ex. "THE PHOTOGRAPH"). data-mention-
@@ -9811,8 +9851,11 @@ document.addEventListener('DOMContentLoaded', initialize);
                         const existing = el.querySelector('.home-chat-member-verified');
                         if (isCertified && !existing) {
                             const span = document.createElement('span');
-                            span.innerHTML = '<svg class="home-chat-member-verified" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-label="Account certified"><polyline points="2,6 5,9 10,3"/></svg>';
-                            el.appendChild(span.firstChild);
+                            span.className = 'home-chat-member-verified';
+                            span.title = 'Account certified on Crypto.com NFT';
+                            span.setAttribute('aria-label', 'Account certified');
+                            span.innerHTML = '<svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg>';
+                            el.appendChild(span);
                         } else if (!isCertified && existing) {
                             existing.remove();
                         }
