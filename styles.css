@@ -24715,6 +24715,14 @@ a.snap-holder-username:hover {
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.45);
     line-height: 1;
+    /* Garde le label sur 1 ligne — important pour conserver l'alignement
+       horizontal entre les 4 stats (sinon "Volume traded" wrappait sur 2
+       lignes alors que les 3 autres restaient sur 1, déséquilibrant la
+       hauteur visuelle). */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 .home-fc-spotlight .home-feat-v3-stat-val {
     font-family: 'Geomanist-Bold', sans-serif;
@@ -24729,9 +24737,9 @@ a.snap-holder-username:hover {
 /* ═══════ Showcase (sous les stats) — 4 highlights + samples row ═══════
    min-height fixe pour réserver la place du contenu DÈS le chargement
    initial — sinon le card se redimensionne quand les fetches finissent
-   et tout le contenu flashe vers le haut (layout shift). 280px = 4 tuiles
-   ~165px (image 100px + label/name/val + paddings) + samples 1 rangée
-   (~60-80px selon la largeur de carte) + gap + paddings. */
+   et tout le contenu flashe vers le haut (layout shift). 240px = grille
+   2×2 horizontale (~2 × (64px image + 20px paddings) = ~170px) + samples
+   1 rangée (~60-80px) + gap + paddings. */
 .home-fc-spotlight .home-feat-v3-showcase {
     display: flex;
     flex-direction: column;
@@ -24739,7 +24747,7 @@ a.snap-holder-username:hover {
     padding: 10px 12px 12px;
     background: rgba(11, 20, 38, 0.35);
     flex: 1;
-    min-height: 280px;
+    min-height: 240px;
     min-width: 0;
 }
 .home-feat-showcase-loading {
@@ -24784,28 +24792,29 @@ a.snap-holder-username:hover {
     object-fit: cover;
     display: block;
 }
-/* Grille 2×2 : Top sale, Top rank, Floor, Most liked. */
+/* Grille 2×2 : Top rank, Most viewed, Most liked, Floor.
+   Plus de place par tuile que le 4×1 précédent → on peut afficher
+   l'image NFT à gauche et le label/valeur à droite sans tronquer. */
 .home-feat-showcase-grid {
-    /* 4 tuiles sur 1 ligne, réparties uniformément sur toute la largeur
-       du cadre. Les tuiles sont volontairement grandes (image NFT +
-       label + valeur) — c'est l'info principale du showcase. */
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
     gap: 8px;
 }
-/* Tuile highlight VERTICALE centrée :
-     LABEL coloré (en haut)
-     IMAGE NFT carrée (centrée, plein-cadre cellule)
-     NOM NFT (centré)
-     VALEUR principale (centrée — rank/likes/views/price)
-   Tous les éléments centrés, alignés sur l'axe central. */
+/* Tuile highlight HORIZONTALE :
+     IMAGE NFT à gauche (carrée, fixe ~64px)
+     TEXTE à droite empilé : LABEL en haut, VALEUR en gros
+   Le nom du NFT n'est plus affiché (il est répétitif puisque c'est
+   toujours la même collection — déjà visible en haut avec le titre).
+   Le tooltip natif (attribut title sur la tuile) donne quand même
+   le nom NFT spécifique au hover. */
 .home-feat-showcase-tile {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    text-align: center;
-    gap: 4px;
-    padding: 8px 6px 10px;
+    text-align: left;
+    gap: 12px;
+    padding: 10px;
     background: rgba(0, 0, 0, 0.32);
     border: 1px solid rgba(0, 179, 255, 0.22);
     border-radius: 10px;
@@ -24816,31 +24825,16 @@ a.snap-holder-username:hover {
 .home-fc-spotlight .home-feat-v3:hover .home-feat-showcase-tile {
     border-color: rgba(0, 179, 255, 0.4);
 }
-.home-feat-showcase-tile-label {
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 8.5px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(0, 179, 255, 0.7);
-    line-height: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-    order: 1;            /* label au-dessus de l'image */
-}
 .home-feat-showcase-tile-thumb {
-    width: 100%;
+    width: 64px;
+    height: 64px;
     aspect-ratio: 1 / 1;
-    max-width: 100px;
-    border-radius: 7px;
+    border-radius: 8px;
     overflow: hidden;
     background: rgba(0, 0, 0, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.08);
     flex-shrink: 0;
-    order: 2;
-    margin: 2px auto 4px;
+    margin: 0;
 }
 .home-feat-showcase-tile-thumb img {
     width: 100%;
@@ -24848,26 +24842,38 @@ a.snap-holder-username:hover {
     object-fit: cover;
     display: block;
 }
-/* Le wrapper texte n'apparaît plus en flex (ses enfants sont positionnés
-   directement par order:1/3/4) — il sert juste à grouper l'info. */
+/* Wrapper texte = colonne flex à droite du thumb. */
 .home-feat-showcase-tile-text {
-    display: contents;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
 }
-.home-feat-showcase-tile-name {
+.home-feat-showcase-tile-label {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 11px;
+    font-size: 9px;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.85);
-    line-height: 1.1;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(0, 179, 255, 0.85);
+    line-height: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
-    order: 3;
+}
+/* Nom NFT caché — toujours rendu dans le DOM (pour le tooltip via
+   attribut title sur la tuile parent), juste masqué visuellement
+   pour gagner de la place et éviter la répétition "Loaded Lio…"
+   sur les 4 tuiles. */
+.home-feat-showcase-tile-name {
+    display: none;
 }
 .home-feat-showcase-tile-val {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 800;
     color: #fff;
     line-height: 1.1;
@@ -24875,14 +24881,16 @@ a.snap-holder-username:hover {
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
-    order: 4;
 }
-/* Couleurs spécifiques par type — petit accent visuel. */
-.home-feat-showcase-tile--rank   .home-feat-showcase-tile-label { color: #fbbf24; } /* or — rank */
-.home-feat-showcase-tile--viewed .home-feat-showcase-tile-label { color: #a78bfa; } /* purple — views */
-.home-feat-showcase-tile--liked  .home-feat-showcase-tile-label { color: #f87171; } /* red — likes */
-.home-feat-showcase-tile--floor  .home-feat-showcase-tile-label { color: #00B3FF; } /* cyan — floor */
-.home-feat-showcase-tile--sale   .home-feat-showcase-tile-label { color: #4ade80; } /* legacy, gardé au cas où */
+/* Couleurs unifiées (cyan) pour les 4 labels — plus de variance
+   par type, look plus pro et cohérent avec le reste du home. */
+.home-feat-showcase-tile--rank   .home-feat-showcase-tile-label,
+.home-feat-showcase-tile--viewed .home-feat-showcase-tile-label,
+.home-feat-showcase-tile--liked  .home-feat-showcase-tile-label,
+.home-feat-showcase-tile--floor  .home-feat-showcase-tile-label,
+.home-feat-showcase-tile--sale   .home-feat-showcase-tile-label {
+    color: rgba(0, 179, 255, 0.85);
+}
 
 /* CTA caché en spotlight — toute la card est cliquable. */
 .home-fc-spotlight .home-feat-v3-cta { display: none; }
@@ -24897,8 +24905,11 @@ a.snap-holder-username:hover {
     .home-fc-spotlight .home-feat-v3-stats { padding: 10px 12px; }
     .home-fc-spotlight .home-feat-v3-stat-val { font-size: 14px; }
     .home-fc-spotlight .home-feat-v3-showcase { padding: 8px 10px 10px; }
-    .home-feat-showcase-tile-thumb { max-width: 64px; }
-    .home-feat-showcase-tile-val { font-size: 11.5px; }
+    /* Tile horizontale plus compacte sur mobile. */
+    .home-feat-showcase-tile { gap: 8px; padding: 8px; }
+    .home-feat-showcase-tile-thumb { width: 48px; height: 48px; }
+    .home-feat-showcase-tile-label { font-size: 8.5px; }
+    .home-feat-showcase-tile-val { font-size: 14px; }
     .home-feat-showcase-samples-row { gap: 4px; }
     .home-fc-controls { margin-top: 10px; gap: 10px; }
 }
