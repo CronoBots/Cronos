@@ -8482,34 +8482,30 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
     }
 
     /* Fetch dédié aux samples random : essaie plusieurs sort fields en
-     * cascade pour gérer les schemas qui restreignent l'enum SortField.
-     * Couvre :
-     *  1) sans sort                  — fonctionne SANS dépendre d'un
-     *                                  champ trié (idéal pour les
-     *                                  collections sans rarityRank).
-     *  2) tokenId ASC
-     *  3) mintedAt DESC
-     *  4) totalSales DESC
-     *  5) rarityRank ASC             — utile sur les collections qui
-     *                                  ont du ranking, en dernier recours
-     * À chaque essai, on garde le skip random pour piocher PARTOUT dans
-     * la collection (pas juste les premiers/top items). Retourne le
-     * tableau d'assets dès qu'il est non-vide, sinon []. */
+     * cascade pour gérer les schemas qui restreignent l'enum SortField
+     * et les collections sans certains champs (ex. pas de rarityRank).
+     * On commence par les essais les plus "neutres" puis on retombe sur
+     * des sorts qu'on sait éprouvés (price / likes / views), même si
+     * ce ne sont plus tout à fait "random" — au moins l'utilisateur
+     * voit des NFT de la collection. Pour chaque essai, on tente avec
+     * le skip random puis avec skip=0 si ça revient vide. */
     async function _fetchSamplesAssets(id, count, skip) {
         const tries = [
-            [null,         null],   // pas de sort
+            [null,         null],   // sort: [] — pas de tri imposé
             ['tokenId',    'ASC'],
             ['mintedAt',   'DESC'],
+            ['rarityRank', 'ASC'],
             ['totalSales', 'DESC'],
-            ['rarityRank', 'ASC']
+            ['views',      'DESC'], // on sait que ça marche (utilisé par Most Viewed)
+            ['likes',      'DESC'], // on sait que ça marche (utilisé par Most Liked)
+            ['price',      'ASC']   // on sait que ça marche (utilisé par Floor)
         ];
         for (const [field, order] of tries) {
             const r = await _fetchCollectionAssetsSorted(id, field, order, count, skip);
             const assets = r?.data?.public?.assets;
             if (assets && assets.length) return assets;
-            // Si l'API rejette le skip (ex. skip > total), on retente
-            // immédiatement avec skip=0 — au moins on aura les premiers
-            // assets, même si pas vraiment "random".
+            // Si le skip random ne donne rien, retry immédiat avec skip=0
+            // — au moins on aura les premiers assets pour ce sort.
             if (skip > 0) {
                 const r2 = await _fetchCollectionAssetsSorted(id, field, order, count, 0);
                 const assets2 = r2?.data?.public?.assets;
