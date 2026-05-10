@@ -11870,11 +11870,23 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 .stats-tr--alt { background: rgba(255,255,255,0.018); }
 .stats-tr:last-child { border-bottom: none; }
-.stats-tr:hover { background: rgba(0,179,255,0.06) !important; }
-/* Chain badge stays same color on row hover, no underline */
-.stats-tr:hover .stats-chain-badge  { text-decoration: none !important; }
-.stats-tr:hover .stats-chain--cronos { color: var(--color1) !important; }
-.stats-tr:hover .stats-chain--pos    { color: #7dde9a !important; }
+/* Hover ligne entière : confiné aux pointeurs réels (souris).
+   Sur tactile, sans @media (hover: hover) le :hover reste « collé » après
+   un tap pendant le scroll → la ligne touchée garde le fond cyan jusqu'au
+   prochain tap ailleurs. Avec ce wrap, mobile ne reçoit aucun highlight. */
+@media (hover: hover) {
+    .stats-tr:hover { background: rgba(0,179,255,0.06) !important; }
+    /* Chain badge stays same color on row hover, no underline */
+    .stats-tr:hover .stats-chain-badge   { text-decoration: none !important; }
+    .stats-tr:hover .stats-chain--cronos { color: var(--color1) !important; }
+    .stats-tr:hover .stats-chain--pos    { color: #7dde9a !important; }
+}
+/* Tap-highlight natif Android (voile gris/bleu sur la cellule touchée
+   pendant le scroll) supprimé sur la table Top Collections. */
+.stats-table,
+.stats-tr,
+.stats-th,
+.stats-td { -webkit-tap-highlight-color: transparent; }
 
 
 .stats-td {
@@ -27841,7 +27853,11 @@ body { box-sizing: border-box; }
     /* Filtres : chaque groupe sur sa propre ligne, boutons en largeur égale.
        Avant : tout flottait à droite et débordait sur 3-4 lignes désordonnées. */
     .stats-panel-title-row {
-        flex-direction: column;
+        /* column-reverse → l'ordre DOM (search/summary first, filters/columns
+           second) est inversé visuellement : sur mobile la barre de recherche
+           et le résumé apparaissent EN DESSOUS du bloc filtres + sélecteur
+           de colonnes. */
+        flex-direction: column-reverse;
         align-items: stretch !important;
         gap: 10px !important;
     }
@@ -27849,6 +27865,13 @@ body { box-sizing: border-box; }
     .stats-panel-controls {
         width: 100%;
         align-items: stretch !important;
+    }
+    /* Résumé (Collections N · Period volume $X) centré horizontalement
+       sous la barre de recherche, au-dessus de la barre de filtres /
+       sélection de colonne. */
+    .stats-left-controls .stats-summary {
+        width: 100%;
+        justify-content: center;
     }
     /* flex-wrap avec chaque groupe forcé à 100% → nouvelle ligne automatique
        sauf pour columns + refresh qui partagent la dernière ligne */
