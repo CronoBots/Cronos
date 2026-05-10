@@ -1215,7 +1215,7 @@
       <!-- COMMUNITY CHAT — colonne gauche -->
       <section class="home-section home-community-section">
         <div class="home-section-header">
-          <h2 class="home-section-title">WTF CHAT</h2>
+          <h2 class="home-section-title">Community Chat</h2>
           <div class="home-chat-header-right">
             <!-- Badge membres — visible seulement sur mobile, ouvre le modal -->
             <button class="home-chat-members-btn" id="homeChatMembersBtn" type="button" aria-label="Show members" style="display:none;">
@@ -1345,7 +1345,7 @@
             <div class="pulse-kpis-group">
               <span class="pulse-kpis-group-label">Community</span>
               <div class="pulse-kpis">
-                <div class="pulse-kpi" title="Total members who have signed in to WTF CHAT at least once."><span class="pulse-kpi-label">Registered members</span><span class="pulse-kpi-value" id="pulseKpiMembers">—</span></div>
+                <div class="pulse-kpi" title="Total members who have signed in to the community chat at least once."><span class="pulse-kpi-label">Registered members</span><span class="pulse-kpi-value" id="pulseKpiMembers">—</span></div>
                 <div class="pulse-kpi" title="Members currently signed in and connected to the chat right now (live, refreshes automatically)."><span class="pulse-kpi-label">Online now</span><span class="pulse-kpi-value pulse-kpi-value--live" id="pulseKpiOnline">—</span></div>
                 <div class="pulse-kpi" title="Chat messages sent over the last 30 days (system join announces excluded)."><span class="pulse-kpi-label">Messages (30d)</span><span class="pulse-kpi-value" id="pulseKpiMessages">—</span></div>
                 <div class="pulse-kpi" title="Share of sessions from visitors who were signed in to a Crypto.com NFT account."><span class="pulse-kpi-label">Signed-in share</span><span class="pulse-kpi-value" id="pulseKpiSigned">—</span></div>
@@ -2793,11 +2793,11 @@ async function fetchProfilePageData(username) {
         }
     });
 }
-// Aligned with the official `GetProfileAssets` query (v2 reference). Champs
-// non lus côté JS (rarityScore/Rank, externalRarity*, isSoulbound,
-// primarySalesCount, ownerEditionsTotal, defaultEditionId,
-// externalNftMetadata.isSuspicious) retirés pour réduire le payload — voir
-// CRYPTO_NFT_API.md pour la liste complète des champs disponibles.
+// Aligned with the official `GetProfileAssets` query (v2 reference) — added:
+//   copies / copiesInCirculation, main{url}, primary/secondary listings counts,
+//   primarySalesCount, totalSalesDecimal, isSoulbound, rarityScore + externalRarity*,
+//   defaultEditionId, latestPurchasedEdition.id, externalNftMetadata.isSuspicious,
+//   ownerEditionsTotal, collection.metrics.items / verified / logo.
 const nftQuery = `
     query GetProfileAssets($ownerId: ID!, $first: Int!, $skip: Int!) {
         public {
@@ -2810,8 +2810,10 @@ const nftQuery = `
                 cover { url }
                 primaryListingsCount
                 secondaryListingsCount
+                primarySalesCount
                 totalSalesDecimal
                 isCurated
+                isSoulbound
                 isExternalNft
                 collection {
                     id
@@ -2823,9 +2825,16 @@ const nftQuery = `
                     enableInternalRarity
                     enableExternalRarity
                 }
+                rarityScore
+                rarityRank
+                externalRarityScore
+                externalRarityRank
                 defaultRarityRank
+                defaultEditionId
+                ownerEditionsTotal
                 externalNftMetadata {
                     network
+                    isSuspicious
                 }
                 defaultListingV2 {
                     editionId
@@ -3253,8 +3262,10 @@ const profileAssetSelectionSet = `
                 cover { url }
                 primaryListingsCount
                 secondaryListingsCount
+                primarySalesCount
                 totalSalesDecimal
                 isCurated
+                isSoulbound
                 isExternalNft
                 collection {
                     id
@@ -3266,8 +3277,14 @@ const profileAssetSelectionSet = `
                     enableInternalRarity
                     enableExternalRarity
                 }
+                rarityScore
+                rarityRank
+                externalRarityScore
+                externalRarityRank
                 defaultRarityRank
-                externalNftMetadata { network }
+                defaultEditionId
+                ownerEditionsTotal
+                externalNftMetadata { network isSuspicious }
                 defaultListingV2 {
                     editionId salePriceDecimalUSD priceDecimal currency
                     mode auctionCloseAt auctionHasBids
@@ -3462,9 +3479,12 @@ const getSearchPreviewResultsQuery = `
                     id
                     cover { url }
                     name
-                    externalNftMetadata { network }
+                    externalNftMetadata { network isSuspicious }
                     copies
                     copiesInCirculation
+                    defaultEditionId
+                    primaryListingsCount
+                    secondaryListingsCount
                     kind
                     isCurated
                     defaultListingV2 { editionId }
@@ -3521,8 +3541,10 @@ const collectionAssetsQuery = `
                 cover { url }
                 primaryListingsCount
                 secondaryListingsCount
+                primarySalesCount
                 totalSalesDecimal
                 isCurated
+                isSoulbound
                 isExternalNft
                 collection {
                     id
@@ -3533,8 +3555,13 @@ const collectionAssetsQuery = `
                     enableInternalRarity
                     enableExternalRarity
                 }
-                externalNftMetadata { network }
+                externalNftMetadata { network isSuspicious }
+                rarityScore
+                rarityRank
+                externalRarityScore
+                externalRarityRank
                 defaultRarityRank
+                defaultEditionId
                 defaultListingV2 {
                     editionId salePriceDecimalUSD priceDecimal currency
                     mode auctionCloseAt auctionHasBids
@@ -7533,16 +7560,20 @@ document.addEventListener('DOMContentLoaded', initialize);
                 main { url }
                 cover { url }
                 primaryListingsCount secondaryListingsCount
-                totalSalesDecimal
-                isCurated isExternalNft
+                primarySalesCount totalSalesDecimal
+                isCurated isSoulbound isExternalNft
+                royaltiesRateDecimal
                 defaultListingV2 {
                     editionId
                     salePriceDecimalUSD priceDecimal currency
-                    mode auctionCloseAt auctionHasBids
+                    mode auctionCloseAt auctionMinPriceDecimal auctionHasBids
                 }
+                rarityScore
                 defaultRarityRank
+                externalRarityScore
+                externalRarityRank
                 likes
-                externalNftMetadata { network }
+                externalNftMetadata { network isSuspicious }
                 latestPurchasedEdition { id priceUSD }
             }
         }
@@ -9074,15 +9105,6 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         let fbDb          = null;
         let _certsCache   = {};   /* { username_lower: tokenHash } — populated from Firebase /certs */
         window._certsCache = _certsCache;
-        /* Supporters cache : { username_lower: true } — populé depuis Firebase
-           /chat/supporters. Un membre est "supporter" s'il possède au moins
-           1 NFT de la collection CRONOS.WTF (vérifié à la connexion via
-           profileAssets paginé, mis en cache 24h dans localStorage).
-           Même pattern que _certsCache : listener Firebase + re-render des
-           messages/membres déjà affichés quand le cache change. */
-        let _supportersCache = {};
-        window._supportersCache = _supportersCache;
-        const SUPPORTER_COLLECTION_ID = '2ec243b8746154fd9dc1c892d7f54fe9'; /* CRONOS.WTF */
         let fbInitialized = false;
         let lastSendAt    = 0;
 
@@ -9166,71 +9188,6 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             } catch(e) { return null; }
         }
 
-        /* ------------------------------------------------------------------ *
-         * Supporter status                                                   *
-         *                                                                    *
-         * Un membre est "supporter" s'il possède au moins 1 NFT de la        *
-         * collection SUPPORTER_COLLECTION_ID (CRONOS.WTF). On scanne ses     *
-         * profileAssets par pages de 100 et on s'arrête dès qu'on trouve un  *
-         * match (ou après MAX_PAGES). Résultat caché 24h en localStorage     *
-         * pour éviter de re-fetcher à chaque chargement. Si match → écrit    *
-         * `chat/supporters/{username_lower}: true` dans Firebase ; sinon →   *
-         * remove (supporter qui aurait revendu).                             *
-         *                                                                    *
-         * Sécurité : check client-side uniquement (même modèle que /certs).  *
-         * Un attaquant qui aurait l'écriture Firebase pourrait fake le flag, *
-         * mais ça reste cohérent avec l'existant.                            *
-         * ------------------------------------------------------------------ */
-        async function _verifySupporterByApi(username) {
-            const Q = `query CheckSupporter($ownerId:ID!,$first:Int!,$skip:Int!){public{profileAssets(ownerId:$ownerId,first:$first,skip:$skip){collection{id}}}}`;
-            const PAGE_SIZE = 100;
-            const MAX_PAGES = 10;
-            for (let page = 0; page < MAX_PAGES; page++) {
-                try {
-                    const res = await fetch('https://crypto.com/nft-api/graphql', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            operationName: 'CheckSupporter',
-                            variables: { ownerId: username, first: PAGE_SIZE, skip: page * PAGE_SIZE },
-                            query: Q
-                        })
-                    });
-                    if (!res.ok) return false;
-                    const json = await res.json();
-                    const assets = json?.data?.public?.profileAssets || [];
-                    if (assets.some(a => a?.collection?.id === SUPPORTER_COLLECTION_ID)) return true;
-                    if (assets.length < PAGE_SIZE) return false; /* dernier page atteinte, pas trouvé */
-                } catch(e) { return false; }
-            }
-            return false;
-        }
-
-        async function syncSupporterFlag() {
-            const user = getCurrentUser();
-            if (!user || !user.username || !fbDb) return;
-            const key = String(user.username).toLowerCase();
-            const cacheKey = 'cronos_chat_supporter_' + key;
-            const TTL = 24 * 60 * 60 * 1000; /* 24h */
-            /* Cache localStorage : évite de re-fetch à chaque session */
-            try {
-                const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-                if (cached && (Date.now() - (cached.t || 0)) < TTL) {
-                    if (cached.v) fbDb.ref('chat/supporters/' + key).set(true).catch(() => {});
-                    return;
-                }
-            } catch(e) {}
-            const isSupporter = await _verifySupporterByApi(user.username);
-            try { localStorage.setItem(cacheKey, JSON.stringify({ v: !!isSupporter, t: Date.now() })); } catch(e) {}
-            if (isSupporter) {
-                fbDb.ref('chat/supporters/' + key).set(true).catch(() => {});
-            } else {
-                /* Si un ancien supporter a revendu, on retire le flag pour
-                   que son badge disparaisse au prochain refresh du cache. */
-                fbDb.ref('chat/supporters/' + key).remove().catch(() => {});
-            }
-        }
-
         // Met à jour la présence Firebase quand le statut auth change.
         // Appelée aussi bien au démarrage qu'après un login/logout en live.
         function syncPresence() {
@@ -9270,10 +9227,6 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     lastSeen: firebase.database.ServerValue.TIMESTAMP
                 });
                 announceJoinIfNeeded(user, newKey);
-                /* Vérifie si le membre possède un NFT CRONOS.WTF — fire &
-                   forget, le résultat alimente Firebase /chat/supporters
-                   et déclenche un re-render des badges. */
-                syncSupporterFlag();
             }
         }
 
@@ -9604,37 +9557,21 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             // Cache username → display so future mentions of this user are
             // rendered as @<display name> in the highlighted pill.
             if (msg.user) _cacheName(msg.user, msg.display);
-            /* Badge certifié : affiché dès que l'auteur est présent dans
-               _certsCache (= il a fait la procédure de cert au moins une
-               fois). MÊME comportement que la sidebar membres pour la
-               cohérence — sinon les anciens messages d'un membre certifié
-               après coup n'avaient pas le badge alors que son entrée
-               dans la sidebar oui. tokenPending sert seulement à éviter
-               un flash si le cache n'est pas encore chargé : on rend le
-               span avec display:none, le listener Firebase /certs le
-               révélera (ou le retirera) quand le cache arrive. */
+            /* Badge: only shown when msg.certToken matches Firebase /certs/{username}/token.
+               An impersonator without the real secret key cannot produce the correct hash. */
             const userKey = (msg.user || '').toLowerCase();
-            const cacheHit = !!_certsCache[userKey];
-            const cachePending = !cacheHit && msg.certToken; /* msg signé mais cache pas encore là */
-            const verifiedBadgeHtml = (cacheHit || cachePending)
-                ? `<span class="chat-verified-badge"${cachePending ? ' style="display:none;"' : ''} title="Account ownership certified on Crypto.com NFT">
+            const tokenMatch = msg.certToken && _certsCache[userKey] && msg.certToken === _certsCache[userKey];
+            const tokenPending = msg.certToken && !_certsCache[userKey]; /* cache not yet loaded */
+            const verifiedBadgeHtml = (tokenMatch || tokenPending)
+                ? `<span class="chat-verified-badge"${tokenPending ? ' style="display:none;"' : ''} title="Account ownership certified on Crypto.com NFT">
                        <svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg>
-                   </span>`
-                : '';
-            /* Badge supporter CRONOS.WTF : possède au moins 1 NFT de la
-               collection. Cache rempli par le listener Firebase /chat/supporters
-               (même listener qui patch ce badge si le cache arrive après le
-               rendu initial du message). */
-            const supporterBadgeHtml = userKey && _supportersCache[userKey]
-                ? `<span class="chat-supporter-badge" title="CRONOS.WTF supporter — owns a piece of the platform" aria-label="CRONOS.WTF supporter">
-                       <svg width="9" height="9" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true"><polygon points="7,1 8.47,4.98 12.71,5.15 9.38,7.77 10.53,11.85 7,9.5 3.47,11.85 4.62,7.77 1.29,5.15 5.53,4.98"/></svg>
                    </span>`
                 : '';
             const div = document.createElement('div');
             div.className = 'home-chat-msg home-chat-msg--community' + (isMine ? ' home-chat-msg--mine' : '');
             if (key) div.dataset.msgKey = key;
             if (msg.user) div.dataset.msgUser = msg.user;
-            if (cachePending) { div.dataset.certPending = userKey; div.dataset.certToken = msg.certToken; }
+            if (tokenPending) { div.dataset.certPending = userKey; div.dataset.certToken = msg.certToken; }
 
             // Barre emoji flottante (style Discord) — index utilisé pour éviter les bugs Unicode
             const reactBarHtml = key ? `
@@ -9673,7 +9610,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 ${reactBarHtml}
                 <div class="home-chat-msg-meta">
                     <span class="home-chat-msg-user-wrap">
-                        <span class="home-chat-msg-user">${_fcEsc(msg.display || msg.user || 'Anonymous')}</span>${verifiedBadgeHtml}${supporterBadgeHtml}
+                        <span class="home-chat-msg-user">${_fcEsc(msg.display || msg.user || 'Anonymous')}</span>${verifiedBadgeHtml}
                     </span>
                     <span class="home-chat-msg-meta-right">
                         <span class="home-chat-msg-time">${formatDateTime(msg.t)}</span>
@@ -9957,20 +9894,10 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     // sur les messages — pastille verte 13×13 avec un
                     // checkmark dedans. Cohérence visuelle parfaite avec
                     // le reste du chat.
-                    const unameLower = String(uname).toLowerCase();
-                    const isCertified = !!_certsCache[unameLower];
-                    const isSupporter = !!_supportersCache[unameLower];
+                    const isCertified = !!_certsCache[String(uname).toLowerCase()];
                     const verifiedHtml = isCertified
                         ? '<span class="home-chat-member-verified" title="Account certified on Crypto.com NFT" aria-label="Account certified">' +
                               '<svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg>' +
-                          '</span>'
-                        : '';
-                    /* Pastille supporter CRONOS.WTF — affichée à côté du
-                       badge certifié si le membre possède un NFT de la
-                       collection (cache /chat/supporters). */
-                    const supporterHtml = isSupporter
-                        ? '<span class="home-chat-member-supporter" title="CRONOS.WTF supporter — owns a piece of the platform" aria-label="CRONOS.WTF supporter">' +
-                              '<svg width="8" height="8" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true"><polygon points="7,1 8.47,4.98 12.71,5.15 9.38,7.77 10.53,11.85 7,9.5 3.47,11.85 4.62,7.77 1.29,5.15 5.53,4.98"/></svg>' +
                           '</span>'
                         : '';
                     // data-mention-display = ce qu'on insère dans le chat
@@ -9978,12 +9905,12 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     // username = identifiant technique pour la résolution
                     // côté render (matchera @THE PHOTOGRAPH ou @snipe13).
                     return `
-                    <div class="home-chat-member${offCls}${isCertified ? ' home-chat-member--certified' : ''}${isSupporter ? ' home-chat-member--supporter' : ''}" data-mention-username="${_fcEsc(uname)}" data-mention-display="${_fcEsc(dname)}" role="button" tabindex="0" title="Mention @${_fcEsc(dname)} in chat">
+                    <div class="home-chat-member${offCls}${isCertified ? ' home-chat-member--certified' : ''}" data-mention-username="${_fcEsc(uname)}" data-mention-display="${_fcEsc(dname)}" role="button" tabindex="0" title="Mention @${_fcEsc(dname)} in chat">
                         ${m.avatar
                             ? `<img class="home-chat-member-avatar" src="${_fcEsc(m.avatar)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><span class="home-chat-member-initial" style="display:none">${_fcEsc(dname[0].toUpperCase())}</span>`
                             : `<span class="home-chat-member-initial">${_fcEsc(dname[0].toUpperCase())}</span>`
                         }
-                        <span class="home-chat-member-name">${_fcEsc(dname)}</span>${verifiedHtml}${supporterHtml}
+                        <span class="home-chat-member-name">${_fcEsc(dname)}</span>${verifiedHtml}
                     </div>`;
                 }).join('') +
                 (extra > 0 ? `<div class="home-chat-member home-chat-member--more">+${extra} more</div>` : '');
@@ -10096,8 +10023,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 trackSiteVisit();
 
                 /* Subscribe to /certs — builds local cache of verified tokens.
-                   Badge présent dès que l'auteur est dans _certsCache
-                   (cf. logique simplifiée dans renderMessage). */
+                   Badge is only shown when msg.certToken matches this cache. */
                 fbDb.ref('certs').on('value', snap => {
                     _certsCache = {};
                     snap.forEach(child => {
@@ -10105,32 +10031,14 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                         if (token) _certsCache[child.key] = token;
                     });
                     window._certsCache = _certsCache; /* keep global reference in sync */
-                    /* Patch tous les messages déjà rendus : ajoute / retire
-                       la pastille cyan en fonction du cache courant. Même
-                       pattern que le listener /chat/supporters plus bas. */
-                    document.querySelectorAll('.home-chat-msg[data-msg-user]').forEach(el => {
-                        const u = String(el.dataset.msgUser || '').toLowerCase();
-                        const wrap = el.querySelector('.home-chat-msg-user-wrap');
-                        if (!wrap) return;
-                        const existing = wrap.querySelector('.chat-verified-badge');
-                        const isCert = !!_certsCache[u];
-                        if (isCert) {
-                            if (existing) {
-                                existing.style.display = '';
-                                existing.removeAttribute('data-cert-pending');
-                            } else {
-                                const span = document.createElement('span');
-                                span.className = 'chat-verified-badge';
-                                span.title = 'Account ownership certified on Crypto.com NFT';
-                                span.innerHTML = '<svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg>';
-                                /* Insert avant le badge supporter s'il existe pour
-                                   garder l'ordre cyan → gold dans le DOM. */
-                                const sup = wrap.querySelector('.chat-supporter-badge');
-                                if (sup) wrap.insertBefore(span, sup);
-                                else wrap.appendChild(span);
-                            }
-                        } else if (existing) {
-                            existing.remove();
+                    /* Re-render any already-displayed messages to update badges */
+                    document.querySelectorAll('[data-cert-pending]').forEach(el => {
+                        const u = el.dataset.certPending;
+                        const t = el.dataset.certToken;
+                        if (u && t && _certsCache[u] === t) {
+                            el.removeAttribute('data-cert-pending');
+                            const badge = el.querySelector('.chat-verified-badge');
+                            if (badge) badge.style.display = 'inline-flex';
                         }
                     });
                     /* Patch les membres déjà rendus dans la sidebar/modal :
@@ -10151,51 +10059,6 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                             span.innerHTML = '<svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg>';
                             el.appendChild(span);
                         } else if (!isCertified && existing) {
-                            existing.remove();
-                        }
-                    });
-                });
-
-                /* Subscribe to /chat/supporters — pastille "supporter CRONOS.WTF"
-                   pour les membres qui possèdent un NFT de la collection. Même
-                   logique que /certs : on rebuild le cache à chaque changement
-                   et on patch les éléments déjà rendus en place. */
-                fbDb.ref('chat/supporters').on('value', snap => {
-                    _supportersCache = {};
-                    snap.forEach(child => { if (child.val()) _supportersCache[child.key] = true; });
-                    window._supportersCache = _supportersCache;
-                    /* Patch messages déjà rendus */
-                    document.querySelectorAll('.home-chat-msg[data-msg-user]').forEach(el => {
-                        const u = String(el.dataset.msgUser || '').toLowerCase();
-                        const wrap = el.querySelector('.home-chat-msg-user-wrap');
-                        if (!wrap) return;
-                        const existing = wrap.querySelector('.chat-supporter-badge');
-                        const isSup = !!_supportersCache[u];
-                        if (isSup && !existing) {
-                            const span = document.createElement('span');
-                            span.className = 'chat-supporter-badge';
-                            span.title = 'CRONOS.WTF supporter — owns a piece of the platform';
-                            span.setAttribute('aria-label', 'CRONOS.WTF supporter');
-                            span.innerHTML = '<svg width="9" height="9" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true"><polygon points="7,1 8.47,4.98 12.71,5.15 9.38,7.77 10.53,11.85 7,9.5 3.47,11.85 4.62,7.77 1.29,5.15 5.53,4.98"/></svg>';
-                            wrap.appendChild(span);
-                        } else if (!isSup && existing) {
-                            existing.remove();
-                        }
-                    });
-                    /* Patch membres sidebar / modal */
-                    document.querySelectorAll('.home-chat-member[data-mention-username]').forEach(el => {
-                        const u = String(el.dataset.mentionUsername || '').toLowerCase();
-                        const isSup = !!_supportersCache[u];
-                        el.classList.toggle('home-chat-member--supporter', isSup);
-                        const existing = el.querySelector('.home-chat-member-supporter');
-                        if (isSup && !existing) {
-                            const span = document.createElement('span');
-                            span.className = 'home-chat-member-supporter';
-                            span.title = 'CRONOS.WTF supporter — owns a piece of the platform';
-                            span.setAttribute('aria-label', 'CRONOS.WTF supporter');
-                            span.innerHTML = '<svg width="8" height="8" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true"><polygon points="7,1 8.47,4.98 12.71,5.15 9.38,7.77 10.53,11.85 7,9.5 3.47,11.85 4.62,7.77 1.29,5.15 5.53,4.98"/></svg>';
-                            el.appendChild(span);
-                        } else if (!isSup && existing) {
                             existing.remove();
                         }
                     });
@@ -16664,9 +16527,9 @@ async function fetchDropsData() {
     // 1. Fetch live/upcoming and ended in parallel
     const [liveRes, endedRes] = await Promise.all([
       tryFetch(JSON.stringify({ operationName: 'LiveAndUpcomingDrops', variables: { first: 100, cacheId: 'dropsPage-liveAndUpcomingDrops-en' },
-          query: 'query LiveAndUpcomingDrops($cacheId:ID,$first:Int){public(cacheId:$cacheId){liveAndUpcomingDrops(first:$first){id name description cover{url} creator{displayName username avatar{url} verified} startAt endAt isPublicReadOnly premiumDropConfig{type}}}}' })),
+          query: 'query LiveAndUpcomingDrops($cacheId:ID,$first:Int){public(cacheId:$cacheId){liveAndUpcomingDrops(first:$first){id name description cover{url} creator{displayName username avatar{url} verified} startAt endAt isPublicReadOnly premiumDropConfig{id type startAt endAt}}}}' })),
       tryFetch(JSON.stringify({ operationName: 'EndedDrops', variables: { first: 9, skip: 0, cacheId: 'dropsPage-endedDrops-en' },
-          query: 'query EndedDrops($cacheId:ID,$first:Int,$skip:Int){public(cacheId:$cacheId){endedDrops(first:$first,skip:$skip){id name description cover{url} creator{displayName username avatar{url} verified} startAt endAt isPublicReadOnly premiumDropConfig{type}}}}' }))
+          query: 'query EndedDrops($cacheId:ID,$first:Int,$skip:Int){public(cacheId:$cacheId){endedDrops(first:$first,skip:$skip){id name description cover{url} creator{displayName username avatar{url} verified} startAt endAt isPublicReadOnly premiumDropConfig{id type startAt endAt}}}}' }))
     ]);
 
     const liveData  = liveRes  ? await liveRes.json()  : null;
@@ -20613,8 +20476,8 @@ window.initSnapshotPanel = function() {
             ) {
                 id name verified
                 logo { url }
-                creator { username verified }
-                metrics { totalSalesDecimal }
+                creator { username displayName verified }
+                metrics { items owners totalSalesDecimal }
                 stats @include(if: $withStats) {
                     floorPriceDecimal
                     oneDayVolumeDecimal      oneDayVolumeDecimalChange      oneDayBuyerCount
@@ -22849,7 +22712,7 @@ window.initSnapshotPanel = function() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     operationName: 'GetFDSamples',
-                    variables: { collectionId: collectionId, first: 5, skip: 0 },
+                    variables: { collectionId: collectionId, first: 20, skip: 0 },
                     query: 'query GetFDSamples($collectionId:ID,$first:Int!,$skip:Int!){public{assets(collectionId:$collectionId,first:$first,skip:$skip){cover{url}}}}'
                 })
             });

@@ -11870,23 +11870,11 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 .stats-tr--alt { background: rgba(255,255,255,0.018); }
 .stats-tr:last-child { border-bottom: none; }
-/* Hover ligne entière : confiné aux pointeurs réels (souris).
-   Sur tactile, sans @media (hover: hover) le :hover reste « collé » après
-   un tap pendant le scroll → la ligne touchée garde le fond cyan jusqu'au
-   prochain tap ailleurs. Avec ce wrap, mobile ne reçoit aucun highlight. */
-@media (hover: hover) {
-    .stats-tr:hover { background: rgba(0,179,255,0.06) !important; }
-    /* Chain badge stays same color on row hover, no underline */
-    .stats-tr:hover .stats-chain-badge   { text-decoration: none !important; }
-    .stats-tr:hover .stats-chain--cronos { color: var(--color1) !important; }
-    .stats-tr:hover .stats-chain--pos    { color: #7dde9a !important; }
-}
-/* Tap-highlight natif Android (voile gris/bleu sur la cellule touchée
-   pendant le scroll) supprimé sur la table Top Collections. */
-.stats-table,
-.stats-tr,
-.stats-th,
-.stats-td { -webkit-tap-highlight-color: transparent; }
+.stats-tr:hover { background: rgba(0,179,255,0.06) !important; }
+/* Chain badge stays same color on row hover, no underline */
+.stats-tr:hover .stats-chain-badge  { text-decoration: none !important; }
+.stats-tr:hover .stats-chain--cronos { color: var(--color1) !important; }
+.stats-tr:hover .stats-chain--pos    { color: #7dde9a !important; }
 
 
 .stats-td {
@@ -13095,31 +13083,6 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 .home-chat-member--certified .home-chat-member-name { color: #fff; }
 
-/* Badge supporter CRONOS.WTF dans la sidebar/modal — pastille gold avec
-   étoile, distincte du badge "certifié" cyan. Affichée à côté du pseudo
-   d'un membre qui possède un NFT de la collection 2ec243...
-   margin-left: auto par défaut pour se coller à droite ; si le membre
-   est AUSSI certifié, le sélecteur `+` le repositionne juste à droite
-   du badge certifié avec 4px de gap. Pas de box-shadow (halo retiré). */
-.home-chat-member-supporter {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 13px;
-    height: 13px;
-    min-width: 13px;
-    background: linear-gradient(135deg, #ffd966 0%, #ff8c42 100%);
-    border-radius: 50%;
-    flex-shrink: 0;
-    color: #2a1500;
-    padding: 0;
-    box-sizing: border-box;
-    margin-left: auto;
-}
-.home-chat-member-supporter svg { display: block; }
-.home-chat-member-verified + .home-chat-member-supporter { margin-left: 4px; }
-.home-chat-member--supporter .home-chat-member-name { color: #fff; }
-
 /* ── Header droit du chat ── */
 .home-chat-header-right {
     display: flex; align-items: center; gap: 8px;
@@ -13194,8 +13157,7 @@ body.is-profile-loading #profileLoadingOverlay * {
     width: 32px; height: 32px; font-size: 13px;
 }
 .home-chat-members-section--modal .home-chat-member-name { font-size: 13.5px; }
-.home-chat-members-section--modal .home-chat-member-verified,
-.home-chat-members-section--modal .home-chat-member-supporter { width: 13px; height: 13px; padding: 2px; }
+.home-chat-members-section--modal .home-chat-member-verified { width: 13px; height: 13px; padding: 2px; }
 /* Footer modal — rappel du total membres (online + offline). Style
    pill cohérent avec le badge mobile membres dans le header. */
 .home-chat-modal-total {
@@ -13880,30 +13842,6 @@ body.is-profile-loading #profileLoadingOverlay * {
 .chat-verified-badge svg {
     color: #052035;
 }
-/* Badge supporter CRONOS.WTF dans les messages — pastille gold/orange
-   avec étoile, à côté (ou à la place) du badge cyan certifié. Alignement
-   géré par le gap:4px de .home-chat-msg-user-wrap (parent inline-flex).
-   Pas de box-shadow (halo retiré sur demande) et l'étoile SVG est centrée
-   géométriquement dans le viewBox 14×14. */
-.chat-supporter-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 13px;
-    height: 13px;
-    min-width: 13px;
-    background: linear-gradient(135deg, #ffd966 0%, #ff8c42 100%);
-    border-radius: 50%;
-    flex-shrink: 0;
-    cursor: default;
-    color: #2a1500;
-    /* vertical-align:middle force l'alignement sur le milieu de la
-       hauteur de ligne du pseudo, indépendamment de la baseline (qui
-       sinon plaçait la pastille un poil trop haut sous .home-chat-msg-meta
-       qui aligne ses enfants en baseline). */
-    vertical-align: middle;
-}
-.chat-supporter-badge svg { display: block; }
 .home-chat-msg-time {
     font-size: 9px;
     color: rgba(255,255,255,0.3);
@@ -27903,11 +27841,7 @@ body { box-sizing: border-box; }
     /* Filtres : chaque groupe sur sa propre ligne, boutons en largeur égale.
        Avant : tout flottait à droite et débordait sur 3-4 lignes désordonnées. */
     .stats-panel-title-row {
-        /* column-reverse → l'ordre DOM (search/summary first, filters/columns
-           second) est inversé visuellement : sur mobile la barre de recherche
-           et le résumé apparaissent EN DESSOUS du bloc filtres + sélecteur
-           de colonnes. */
-        flex-direction: column-reverse;
+        flex-direction: column;
         align-items: stretch !important;
         gap: 10px !important;
     }
@@ -27915,13 +27849,6 @@ body { box-sizing: border-box; }
     .stats-panel-controls {
         width: 100%;
         align-items: stretch !important;
-    }
-    /* Résumé (Collections N · Period volume $X) centré horizontalement
-       sous la barre de recherche, au-dessus de la barre de filtres /
-       sélection de colonne. */
-    .stats-left-controls .stats-summary {
-        width: 100%;
-        justify-content: center;
     }
     /* flex-wrap avec chaque groupe forcé à 100% → nouvelle ligne automatique
        sauf pour columns + refresh qui partagent la dernière ligne */
