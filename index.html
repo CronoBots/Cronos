@@ -2793,11 +2793,11 @@ async function fetchProfilePageData(username) {
         }
     });
 }
-// Aligned with the official `GetProfileAssets` query (v2 reference). Champs
-// non lus côté JS (rarityScore/Rank, externalRarity*, isSoulbound,
-// primarySalesCount, ownerEditionsTotal, defaultEditionId,
-// externalNftMetadata.isSuspicious) retirés pour réduire le payload — voir
-// CRYPTO_NFT_API.md pour la liste complète des champs disponibles.
+// Aligned with the official `GetProfileAssets` query (v2 reference) — added:
+//   copies / copiesInCirculation, main{url}, primary/secondary listings counts,
+//   primarySalesCount, totalSalesDecimal, isSoulbound, rarityScore + externalRarity*,
+//   defaultEditionId, latestPurchasedEdition.id, externalNftMetadata.isSuspicious,
+//   ownerEditionsTotal, collection.metrics.items / verified / logo.
 const nftQuery = `
     query GetProfileAssets($ownerId: ID!, $first: Int!, $skip: Int!) {
         public {
@@ -2810,8 +2810,10 @@ const nftQuery = `
                 cover { url }
                 primaryListingsCount
                 secondaryListingsCount
+                primarySalesCount
                 totalSalesDecimal
                 isCurated
+                isSoulbound
                 isExternalNft
                 collection {
                     id
@@ -2823,9 +2825,16 @@ const nftQuery = `
                     enableInternalRarity
                     enableExternalRarity
                 }
+                rarityScore
+                rarityRank
+                externalRarityScore
+                externalRarityRank
                 defaultRarityRank
+                defaultEditionId
+                ownerEditionsTotal
                 externalNftMetadata {
                     network
+                    isSuspicious
                 }
                 defaultListingV2 {
                     editionId
@@ -3253,8 +3262,10 @@ const profileAssetSelectionSet = `
                 cover { url }
                 primaryListingsCount
                 secondaryListingsCount
+                primarySalesCount
                 totalSalesDecimal
                 isCurated
+                isSoulbound
                 isExternalNft
                 collection {
                     id
@@ -3266,8 +3277,14 @@ const profileAssetSelectionSet = `
                     enableInternalRarity
                     enableExternalRarity
                 }
+                rarityScore
+                rarityRank
+                externalRarityScore
+                externalRarityRank
                 defaultRarityRank
-                externalNftMetadata { network }
+                defaultEditionId
+                ownerEditionsTotal
+                externalNftMetadata { network isSuspicious }
                 defaultListingV2 {
                     editionId salePriceDecimalUSD priceDecimal currency
                     mode auctionCloseAt auctionHasBids
@@ -3462,9 +3479,12 @@ const getSearchPreviewResultsQuery = `
                     id
                     cover { url }
                     name
-                    externalNftMetadata { network }
+                    externalNftMetadata { network isSuspicious }
                     copies
                     copiesInCirculation
+                    defaultEditionId
+                    primaryListingsCount
+                    secondaryListingsCount
                     kind
                     isCurated
                     defaultListingV2 { editionId }
@@ -3521,8 +3541,10 @@ const collectionAssetsQuery = `
                 cover { url }
                 primaryListingsCount
                 secondaryListingsCount
+                primarySalesCount
                 totalSalesDecimal
                 isCurated
+                isSoulbound
                 isExternalNft
                 collection {
                     id
@@ -3533,8 +3555,13 @@ const collectionAssetsQuery = `
                     enableInternalRarity
                     enableExternalRarity
                 }
-                externalNftMetadata { network }
+                externalNftMetadata { network isSuspicious }
+                rarityScore
+                rarityRank
+                externalRarityScore
+                externalRarityRank
                 defaultRarityRank
+                defaultEditionId
                 defaultListingV2 {
                     editionId salePriceDecimalUSD priceDecimal currency
                     mode auctionCloseAt auctionHasBids
@@ -7533,16 +7560,20 @@ document.addEventListener('DOMContentLoaded', initialize);
                 main { url }
                 cover { url }
                 primaryListingsCount secondaryListingsCount
-                totalSalesDecimal
-                isCurated isExternalNft
+                primarySalesCount totalSalesDecimal
+                isCurated isSoulbound isExternalNft
+                royaltiesRateDecimal
                 defaultListingV2 {
                     editionId
                     salePriceDecimalUSD priceDecimal currency
-                    mode auctionCloseAt auctionHasBids
+                    mode auctionCloseAt auctionMinPriceDecimal auctionHasBids
                 }
+                rarityScore
                 defaultRarityRank
+                externalRarityScore
+                externalRarityRank
                 likes
-                externalNftMetadata { network }
+                externalNftMetadata { network isSuspicious }
                 latestPurchasedEdition { id priceUSD }
             }
         }
@@ -16664,9 +16695,9 @@ async function fetchDropsData() {
     // 1. Fetch live/upcoming and ended in parallel
     const [liveRes, endedRes] = await Promise.all([
       tryFetch(JSON.stringify({ operationName: 'LiveAndUpcomingDrops', variables: { first: 100, cacheId: 'dropsPage-liveAndUpcomingDrops-en' },
-          query: 'query LiveAndUpcomingDrops($cacheId:ID,$first:Int){public(cacheId:$cacheId){liveAndUpcomingDrops(first:$first){id name description cover{url} creator{displayName username avatar{url} verified} startAt endAt isPublicReadOnly premiumDropConfig{type}}}}' })),
+          query: 'query LiveAndUpcomingDrops($cacheId:ID,$first:Int){public(cacheId:$cacheId){liveAndUpcomingDrops(first:$first){id name description cover{url} creator{displayName username avatar{url} verified} startAt endAt isPublicReadOnly premiumDropConfig{id type startAt endAt}}}}' })),
       tryFetch(JSON.stringify({ operationName: 'EndedDrops', variables: { first: 9, skip: 0, cacheId: 'dropsPage-endedDrops-en' },
-          query: 'query EndedDrops($cacheId:ID,$first:Int,$skip:Int){public(cacheId:$cacheId){endedDrops(first:$first,skip:$skip){id name description cover{url} creator{displayName username avatar{url} verified} startAt endAt isPublicReadOnly premiumDropConfig{type}}}}' }))
+          query: 'query EndedDrops($cacheId:ID,$first:Int,$skip:Int){public(cacheId:$cacheId){endedDrops(first:$first,skip:$skip){id name description cover{url} creator{displayName username avatar{url} verified} startAt endAt isPublicReadOnly premiumDropConfig{id type startAt endAt}}}}' }))
     ]);
 
     const liveData  = liveRes  ? await liveRes.json()  : null;
@@ -20613,8 +20644,8 @@ window.initSnapshotPanel = function() {
             ) {
                 id name verified
                 logo { url }
-                creator { username verified }
-                metrics { totalSalesDecimal }
+                creator { username displayName verified }
+                metrics { items owners totalSalesDecimal }
                 stats @include(if: $withStats) {
                     floorPriceDecimal
                     oneDayVolumeDecimal      oneDayVolumeDecimalChange      oneDayBuyerCount
@@ -22849,7 +22880,7 @@ window.initSnapshotPanel = function() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     operationName: 'GetFDSamples',
-                    variables: { collectionId: collectionId, first: 5, skip: 0 },
+                    variables: { collectionId: collectionId, first: 20, skip: 0 },
                     query: 'query GetFDSamples($collectionId:ID,$first:Int!,$skip:Int!){public{assets(collectionId:$collectionId,first:$first,skip:$skip){cover{url}}}}'
                 })
             });
