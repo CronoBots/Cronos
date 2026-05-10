@@ -1215,7 +1215,7 @@
       <!-- COMMUNITY CHAT — colonne gauche -->
       <section class="home-section home-community-section">
         <div class="home-section-header">
-          <h2 class="home-section-title">CHAT.WTF</h2>
+          <h2 class="home-section-title">WTF CHAT</h2>
           <div class="home-chat-header-right">
             <!-- Badge membres — visible seulement sur mobile, ouvre le modal -->
             <button class="home-chat-members-btn" id="homeChatMembersBtn" type="button" aria-label="Show members" style="display:none;">
@@ -1345,7 +1345,7 @@
             <div class="pulse-kpis-group">
               <span class="pulse-kpis-group-label">Community</span>
               <div class="pulse-kpis">
-                <div class="pulse-kpi" title="Total members who have signed in to CHAT.WTF at least once."><span class="pulse-kpi-label">Registered members</span><span class="pulse-kpi-value" id="pulseKpiMembers">—</span></div>
+                <div class="pulse-kpi" title="Total members who have signed in to WTF CHAT at least once."><span class="pulse-kpi-label">Registered members</span><span class="pulse-kpi-value" id="pulseKpiMembers">—</span></div>
                 <div class="pulse-kpi" title="Members currently signed in and connected to the chat right now (live, refreshes automatically)."><span class="pulse-kpi-label">Online now</span><span class="pulse-kpi-value pulse-kpi-value--live" id="pulseKpiOnline">—</span></div>
                 <div class="pulse-kpi" title="Chat messages sent over the last 30 days (system join announces excluded)."><span class="pulse-kpi-label">Messages (30d)</span><span class="pulse-kpi-value" id="pulseKpiMessages">—</span></div>
                 <div class="pulse-kpi" title="Share of sessions from visitors who were signed in to a Crypto.com NFT account."><span class="pulse-kpi-label">Signed-in share</span><span class="pulse-kpi-value" id="pulseKpiSigned">—</span></div>
@@ -9604,13 +9604,20 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             // Cache username → display so future mentions of this user are
             // rendered as @<display name> in the highlighted pill.
             if (msg.user) _cacheName(msg.user, msg.display);
-            /* Badge: only shown when msg.certToken matches Firebase /certs/{username}/token.
-               An impersonator without the real secret key cannot produce the correct hash. */
+            /* Badge certifié : affiché dès que l'auteur est présent dans
+               _certsCache (= il a fait la procédure de cert au moins une
+               fois). MÊME comportement que la sidebar membres pour la
+               cohérence — sinon les anciens messages d'un membre certifié
+               après coup n'avaient pas le badge alors que son entrée
+               dans la sidebar oui. tokenPending sert seulement à éviter
+               un flash si le cache n'est pas encore chargé : on rend le
+               span avec display:none, le listener Firebase /certs le
+               révélera (ou le retirera) quand le cache arrive. */
             const userKey = (msg.user || '').toLowerCase();
-            const tokenMatch = msg.certToken && _certsCache[userKey] && msg.certToken === _certsCache[userKey];
-            const tokenPending = msg.certToken && !_certsCache[userKey]; /* cache not yet loaded */
-            const verifiedBadgeHtml = (tokenMatch || tokenPending)
-                ? `<span class="chat-verified-badge"${tokenPending ? ' style="display:none;"' : ''} title="Account ownership certified on Crypto.com NFT">
+            const cacheHit = !!_certsCache[userKey];
+            const cachePending = !cacheHit && msg.certToken; /* msg signé mais cache pas encore là */
+            const verifiedBadgeHtml = (cacheHit || cachePending)
+                ? `<span class="chat-verified-badge"${cachePending ? ' style="display:none;"' : ''} title="Account ownership certified on Crypto.com NFT">
                        <svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg>
                    </span>`
                 : '';
@@ -9620,7 +9627,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                rendu initial du message). */
             const supporterBadgeHtml = userKey && _supportersCache[userKey]
                 ? `<span class="chat-supporter-badge" title="CRONOS.WTF supporter — owns a piece of the platform" aria-label="CRONOS.WTF supporter">
-                       <svg width="9" height="9" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true"><path d="M7 0.5 L8.85 4.85 L13.5 5.4 L9.9 8.55 L11 13.2 L7 10.85 L3 13.2 L4.1 8.55 L0.5 5.4 L5.15 4.85 Z"/></svg>
+                       <svg width="9" height="9" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true"><polygon points="7,1 8.47,4.98 12.71,5.15 9.38,7.77 10.53,11.85 7,9.5 3.47,11.85 4.62,7.77 1.29,5.15 5.53,4.98"/></svg>
                    </span>`
                 : '';
             const div = document.createElement('div');
@@ -9963,7 +9970,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                        collection (cache /chat/supporters). */
                     const supporterHtml = isSupporter
                         ? '<span class="home-chat-member-supporter" title="CRONOS.WTF supporter — owns a piece of the platform" aria-label="CRONOS.WTF supporter">' +
-                              '<svg width="8" height="8" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true"><path d="M7 0.5 L8.85 4.85 L13.5 5.4 L9.9 8.55 L11 13.2 L7 10.85 L3 13.2 L4.1 8.55 L0.5 5.4 L5.15 4.85 Z"/></svg>' +
+                              '<svg width="8" height="8" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true"><polygon points="7,1 8.47,4.98 12.71,5.15 9.38,7.77 10.53,11.85 7,9.5 3.47,11.85 4.62,7.77 1.29,5.15 5.53,4.98"/></svg>' +
                           '</span>'
                         : '';
                     // data-mention-display = ce qu'on insère dans le chat
@@ -10089,7 +10096,8 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 trackSiteVisit();
 
                 /* Subscribe to /certs — builds local cache of verified tokens.
-                   Badge is only shown when msg.certToken matches this cache. */
+                   Badge présent dès que l'auteur est dans _certsCache
+                   (cf. logique simplifiée dans renderMessage). */
                 fbDb.ref('certs').on('value', snap => {
                     _certsCache = {};
                     snap.forEach(child => {
@@ -10097,14 +10105,32 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                         if (token) _certsCache[child.key] = token;
                     });
                     window._certsCache = _certsCache; /* keep global reference in sync */
-                    /* Re-render any already-displayed messages to update badges */
-                    document.querySelectorAll('[data-cert-pending]').forEach(el => {
-                        const u = el.dataset.certPending;
-                        const t = el.dataset.certToken;
-                        if (u && t && _certsCache[u] === t) {
-                            el.removeAttribute('data-cert-pending');
-                            const badge = el.querySelector('.chat-verified-badge');
-                            if (badge) badge.style.display = 'inline-flex';
+                    /* Patch tous les messages déjà rendus : ajoute / retire
+                       la pastille cyan en fonction du cache courant. Même
+                       pattern que le listener /chat/supporters plus bas. */
+                    document.querySelectorAll('.home-chat-msg[data-msg-user]').forEach(el => {
+                        const u = String(el.dataset.msgUser || '').toLowerCase();
+                        const wrap = el.querySelector('.home-chat-msg-user-wrap');
+                        if (!wrap) return;
+                        const existing = wrap.querySelector('.chat-verified-badge');
+                        const isCert = !!_certsCache[u];
+                        if (isCert) {
+                            if (existing) {
+                                existing.style.display = '';
+                                existing.removeAttribute('data-cert-pending');
+                            } else {
+                                const span = document.createElement('span');
+                                span.className = 'chat-verified-badge';
+                                span.title = 'Account ownership certified on Crypto.com NFT';
+                                span.innerHTML = '<svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg>';
+                                /* Insert avant le badge supporter s'il existe pour
+                                   garder l'ordre cyan → gold dans le DOM. */
+                                const sup = wrap.querySelector('.chat-supporter-badge');
+                                if (sup) wrap.insertBefore(span, sup);
+                                else wrap.appendChild(span);
+                            }
+                        } else if (existing) {
+                            existing.remove();
                         }
                     });
                     /* Patch les membres déjà rendus dans la sidebar/modal :
@@ -10150,7 +10176,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                             span.className = 'chat-supporter-badge';
                             span.title = 'CRONOS.WTF supporter — owns a piece of the platform';
                             span.setAttribute('aria-label', 'CRONOS.WTF supporter');
-                            span.innerHTML = '<svg width="9" height="9" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true"><path d="M7 0.5 L8.85 4.85 L13.5 5.4 L9.9 8.55 L11 13.2 L7 10.85 L3 13.2 L4.1 8.55 L0.5 5.4 L5.15 4.85 Z"/></svg>';
+                            span.innerHTML = '<svg width="9" height="9" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true"><polygon points="7,1 8.47,4.98 12.71,5.15 9.38,7.77 10.53,11.85 7,9.5 3.47,11.85 4.62,7.77 1.29,5.15 5.53,4.98"/></svg>';
                             wrap.appendChild(span);
                         } else if (!isSup && existing) {
                             existing.remove();
@@ -10167,7 +10193,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                             span.className = 'home-chat-member-supporter';
                             span.title = 'CRONOS.WTF supporter — owns a piece of the platform';
                             span.setAttribute('aria-label', 'CRONOS.WTF supporter');
-                            span.innerHTML = '<svg width="8" height="8" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true"><path d="M7 0.5 L8.85 4.85 L13.5 5.4 L9.9 8.55 L11 13.2 L7 10.85 L3 13.2 L4.1 8.55 L0.5 5.4 L5.15 4.85 Z"/></svg>';
+                            span.innerHTML = '<svg width="8" height="8" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true"><polygon points="7,1 8.47,4.98 12.71,5.15 9.38,7.77 10.53,11.85 7,9.5 3.47,11.85 4.62,7.77 1.29,5.15 5.53,4.98"/></svg>';
                             el.appendChild(span);
                         } else if (!isSup && existing) {
                             existing.remove();
