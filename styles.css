@@ -13100,7 +13100,7 @@ body.is-profile-loading #profileLoadingOverlay * {
    d'un membre qui possède un NFT de la collection 2ec243...
    margin-left: auto par défaut pour se coller à droite ; si le membre
    est AUSSI certifié, le sélecteur `+` le repositionne juste à droite
-   du badge certifié avec 4px de gap. */
+   du badge certifié avec 4px de gap. Pas de box-shadow (halo retiré). */
 .home-chat-member-supporter {
     display: inline-flex;
     align-items: center;
@@ -13111,12 +13111,12 @@ body.is-profile-loading #profileLoadingOverlay * {
     background: linear-gradient(135deg, #ffd966 0%, #ff8c42 100%);
     border-radius: 50%;
     flex-shrink: 0;
-    box-shadow: 0 0 6px rgba(255, 180, 60, 0.55);
     color: #2a1500;
     padding: 0;
     box-sizing: border-box;
     margin-left: auto;
 }
+.home-chat-member-supporter svg { display: block; }
 .home-chat-member-verified + .home-chat-member-supporter { margin-left: 4px; }
 .home-chat-member--supporter .home-chat-member-name { color: #fff; }
 
@@ -13882,7 +13882,9 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 /* Badge supporter CRONOS.WTF dans les messages — pastille gold/orange
    avec étoile, à côté (ou à la place) du badge cyan certifié. Alignement
-   géré par le gap:4px de .home-chat-msg-user-wrap (parent inline-flex). */
+   géré par le gap:4px de .home-chat-msg-user-wrap (parent inline-flex).
+   Pas de box-shadow (halo retiré sur demande) et l'étoile SVG est centrée
+   géométriquement dans le viewBox 14×14. */
 .chat-supporter-badge {
     display: inline-flex;
     align-items: center;
@@ -13895,12 +13897,13 @@ body.is-profile-loading #profileLoadingOverlay * {
     flex-shrink: 0;
     cursor: default;
     color: #2a1500;
-    box-shadow: 0 0 6px rgba(255, 180, 60, 0.55);
-    transition: box-shadow 0.2s;
+    /* vertical-align:middle force l'alignement sur le milieu de la
+       hauteur de ligne du pseudo, indépendamment de la baseline (qui
+       sinon plaçait la pastille un poil trop haut sous .home-chat-msg-meta
+       qui aligne ses enfants en baseline). */
+    vertical-align: middle;
 }
-.chat-supporter-badge:hover {
-    box-shadow: 0 0 10px rgba(255, 180, 60, 0.85);
-}
+.chat-supporter-badge svg { display: block; }
 .home-chat-msg-time {
     font-size: 9px;
     color: rgba(255,255,255,0.3);
