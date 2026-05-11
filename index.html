@@ -9162,6 +9162,10 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         let _currentSessKey = null;   // clé de session active (u_username ou s_xxx)
         let _sessionJoinAnnounced = false;  // évite un 2e push d'annonce dans cette session
         const JOIN_ANNOUNCE_WINDOW_MS = 10 * 60 * 1000;  // throttle 10 min cross-reload
+        // TTL des annonces "X joined the chat" : auto-expirent au-delà.
+        // Côté rendu, les messages plus vieux sont skip ; on les supprime
+        // aussi de Firebase au passage pour garder /chat/messages propre.
+        const JOIN_MESSAGE_TTL_MS = 24 * 60 * 60 * 1000;  // 24h
 
         // ── Intercepteur localStorage — émet cronos:auth sur le même onglet ──
         // Le `storage` event natif ne se déclenche que dans les autres onglets,
@@ -9549,6 +9553,19 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
 
         function renderMessage(msg, key, instant) {
             if (msg.system) {
+                // Les annonces "X joined the chat" disparaissent après 24h.
+                // On skip le rendu ET on supprime l'entrée Firebase au passage
+                // pour auto-nettoyer /chat/messages (self-healing : la 1re
+                // session qui croise un vieux join le retire de la base).
+                if (msg.event === 'join') {
+                    const ts = Number(msg.t);
+                    if (ts && Date.now() - ts > JOIN_MESSAGE_TTL_MS) {
+                        if (fbDb && key) {
+                            fbDb.ref('chat/messages/' + key).remove().catch(() => {});
+                        }
+                        return;
+                    }
+                }
                 renderSystemMessage(msg, key, instant);
                 return;
             }
