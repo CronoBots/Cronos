@@ -27872,11 +27872,14 @@ body { box-sizing: border-box; }
         width: 100%;
     }
     /* flex-wrap avec chaque groupe forcé à 100% → nouvelle ligne automatique
-       sauf pour columns + refresh qui partagent la dernière ligne */
+       sauf pour columns + refresh qui partagent la dernière ligne.
+       gap: 6px → aligné sur l'écart inter-boutons de .sb-filters-right
+       (Market Bot), pour que le rythme vertical entre les rangées de
+       filtres soit identique d'un panel à l'autre. */
     .stats-panel-controls {
         flex-direction: row !important;
         flex-wrap: wrap !important;
-        gap: 8px !important;
+        gap: 6px !important;
     }
     .stats-timerange,
     .stats-chain-filter,
@@ -28175,6 +28178,20 @@ body { box-sizing: border-box; }
     .snapshot-table .snapshot-th,
     .snapshot-table .snapshot-td {
         white-space: nowrap;
+    }
+    /* Confine le scroll horizontal AU SEUL tableau : sans min-width:0
+       sur la chaîne de flex/block parents, la table wide pousse
+       .snapshot-collection-header (et donc bannière + stats) à dépasser
+       la largeur de l'écran. Avec min-width:0 + max-width:100%, le
+       header reste cadré sur le viewport et seul .snapshot-table-wrap
+       (qui a overflow-x:auto) scrolle horizontalement. */
+    .snapshot-inner > #snapshotResultSection,
+    #snapshotResultSection > .snapshot-collection-header,
+    .snapshot-collection-header > .snapshot-collection-banner-media,
+    .snapshot-collection-banner-media > .snapshot-summary,
+    .snapshot-collection-header > .snapshot-table-toolbar {
+        min-width: 0;
+        max-width: 100%;
     }
     /* Le mask-image fade gauche/droite était posé sur #statsTableScroll
        uniquement (pas sur #sbTableWrap) → différence visuelle entre

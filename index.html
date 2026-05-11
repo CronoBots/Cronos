@@ -662,7 +662,7 @@
             <input class="snapshot-opt-toggle-input" id="snapshotOptFirstHeld" type="checkbox"/>
             <span class="snapshot-opt-toggle-track"><span class="snapshot-opt-toggle-thumb"></span></span>
             <span class="snapshot-opt-toggle-label">
-              <span class="snapshot-opt-toggle-title">Held dates</span>
+              <span class="snapshot-opt-toggle-title">First held</span>
               <span class="snapshot-opt-toggle-sub">+ API calls</span>
             </span>
           </label>
@@ -673,7 +673,7 @@
             <input class="snapshot-opt-toggle-input" id="snapshotOptWalletEst" type="checkbox"/>
             <span class="snapshot-opt-toggle-track"><span class="snapshot-opt-toggle-thumb"></span></span>
             <span class="snapshot-opt-toggle-label">
-              <span class="snapshot-opt-toggle-title">Wallet $</span>
+              <span class="snapshot-opt-toggle-title">Portfolio est.</span>
               <span class="snapshot-opt-toggle-sub">× floor</span>
             </span>
           </label>
@@ -1990,7 +1990,7 @@
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,15 7,9 11,12 18,4"/><line x1="2" y1="18" x2="18" y2="18"/></svg>
         TOP COLLECTIONS
       </h1>
-      <p class="drops-page-sub">Live rankings of Crypto.com NFT collections by volume, floor &amp; buyers</p>
+      <p class="drops-page-sub">Live rankings of Crypto.com NFT collections</p>
     </div>
     <!-- Controls row: search + summary LEFT, filters RIGHT -->
     <div class="stats-panel-title-row">
@@ -2024,7 +2024,7 @@
             <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="3" width="4" height="14" rx="1"/><rect x="8" y="3" width="4" height="14" rx="1"/><rect x="13" y="3" width="4" height="14" rx="1"/>
             </svg>
-            <span id="statsColSelectorLabel">Columns</span>
+            <span id="statsColSelectorLabel">Columns displayed</span>
           </button>
           <div class="stats-col-dropdown" id="statsColDropdown" style="display:none;">
             <div class="stats-col-list" id="statsColList"></div>
@@ -13462,6 +13462,18 @@ async function sha256hex(str) {
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
         {
+            date:  '2026-05-11T18:00:00Z',
+            type:  'improvement',
+            title: 'Top Collections — tighter mobile filters, clearer column counter',
+            text:  'Subtitle shortened to "Live rankings of Crypto.com NFT collections". On mobile, spacing between filter rows (24H/7D/30D/ALL, chain, verified, columns) matches Market Bot for a consistent rhythm. The columns selector now reads "11 Columns displayed" so you can see at a glance how many are currently active.'
+        },
+        {
+            date:  '2026-05-11T17:00:00Z',
+            type:  'improvement',
+            title: 'Snapshot panel — cleaner controls + mobile table fix',
+            text:  'Preset dropdown removed in favour of a direct "Add a Collection" button and a contact link to suggest new collections. Toggles renamed for clarity ("Wallet $" → "Portfolio est.", "Held dates" → "First held"). On mobile, the holders table now scrolls horizontally inside its frame instead of pushing the banner and stats off-screen.'
+        },
+        {
             date:  '2026-05-08T18:00:00Z',
             type:  'improvement',
             title: 'Filter buttons — clearer separation, centered labels',
@@ -15430,13 +15442,13 @@ fragment CollectionStatsData on Collection {
         document.querySelectorAll('.stats-col-check').forEach(cb => {
             cb.checked = !!colVisibility[cb.dataset.col];
         });
-        // Update button label with count of visible columns ("14 Columns") —
+        // Update button label with count of visible columns ("14 Columns displayed") —
         // miroir du compteur de collections du Market Bot, pour qu'on voie
         // d'un coup d'œil combien de colonnes sont actuellement affichées.
         const lbl = document.getElementById('statsColSelectorLabel');
         if (lbl) {
             const n = COLUMNS.filter(c => c.always || colVisibility[c.key]).length;
-            lbl.textContent = n + ' Column' + (n > 1 ? 's' : '');
+            lbl.textContent = n + ' Column' + (n > 1 ? 's' : '') + ' displayed';
         }
     }
 
