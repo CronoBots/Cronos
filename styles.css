@@ -24326,16 +24326,20 @@ a.snap-holder-username:hover {
    of the file so they win the cascade over the original .snapshot-th /
    .snapshot-td / .snapshot-collection-header overrides.
  * ──────────────────────────────────────────────────────────────────────── */
-/* Bigger header cells */
+/* Bigger header cells — bordure horizontale alignée sur Market Bot
+   (.sb-th : rgba(255,255,255,0.15)) pour partager la MÊME ligne de
+   séparation horizontale entre tous les tableaux du site. */
 .snapshot-collection-header .snapshot-th {
     padding: 16px 18px;
     font-size: 13px;
-    border-bottom: 1px solid rgba(255,255,255,0.18);   /* visible bottom rule */
+    border-bottom: 1px solid rgba(255,255,255,0.15);
 }
-/* Bigger body cells — applies whether table is in collection-header or not */
+/* Bigger body cells — applies whether table is in collection-header or not.
+   Bordure horizontale alignée sur Market Bot (.sb-tr : rgba(255,255,255,0.04))
+   pour un séparateur de rangée homogène entre tous les tableaux. */
 .snapshot-table .snapshot-td {
     padding: 15px 18px;
-    border-bottom: 1px solid rgba(255,255,255,0.09);   /* visible row separator */
+    border-bottom: 1px solid rgba(255,255,255,0.04);
 }
 /* Visible vertical column separators (skipped before the first cell) */
 .snapshot-table .snapshot-th + .snapshot-th,
@@ -27839,16 +27843,33 @@ body { box-sizing: border-box; }
        horizontal (même classe que Market Bot vue table) — règle déjà
        gérée par les styles Market Bot, rien à ajouter ici. */
     /* Filtres : chaque groupe sur sa propre ligne, boutons en largeur égale.
-       Avant : tout flottait à droite et débordait sur 3-4 lignes désordonnées. */
+       Avant : tout flottait à droite et débordait sur 3-4 lignes désordonnées.
+       Ordre mobile : filtres (incl. sélecteur colonnes) → barre de recherche
+       → résumé "Collections · Period volume" (centré). L'écart entre le
+       sélecteur colonnes et la barre de recherche est aligné sur l'écart
+       inter-filtres (8px) pour un rythme vertical uniforme. */
     .stats-panel-title-row {
         flex-direction: column;
         align-items: stretch !important;
-        gap: 10px !important;
+        gap: 8px !important;
     }
     .stats-left-controls,
     .stats-panel-controls {
         width: 100%;
         align-items: stretch !important;
+    }
+    .stats-panel .stats-panel-controls { order: 1; }
+    .stats-panel .stats-left-controls {
+        order: 2;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .stats-panel .stats-left-controls .stats-search-wrap { order: 1; }
+    .stats-panel .stats-left-controls .stats-summary {
+        order: 2;
+        justify-content: center;
+        text-align: center;
+        width: 100%;
     }
     /* flex-wrap avec chaque groupe forcé à 100% → nouvelle ligne automatique
        sauf pour columns + refresh qui partagent la dernière ligne */
@@ -29510,9 +29531,12 @@ body { box-sizing: border-box; }
     display: table-cell !important;
 }
 
-/* 4. Séparateurs horizontaux (entre chaque ligne) — bord à bord */
+/* 4. Séparateurs horizontaux (entre chaque ligne) — bord à bord.
+   Aligné sur Market Bot en vue table (.sb-tr : rgba(255,255,255,0.04))
+   pour partager la MÊME ligne de séparation horizontale entre tous les
+   tableaux du site. */
 .home-live-table .sb-tr {
-    border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.04) !important;
 }
 .home-live-table .sb-tr:last-child {
     border-bottom: none !important;
@@ -29534,11 +29558,12 @@ body { box-sizing: border-box; }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   FIX : Séparateurs horizontaux visibles — Top Collections (onglet stats)
-   Augmente l'opacité de 0.04 → 0.12 pour matcher le rendu Market Bot.
+   Top Collections — séparateur horizontal aligné sur Market Bot en vue
+   table (.sb-tr : rgba(255,255,255,0.04)) pour partager la même ligne de
+   séparation horizontale entre tous les tableaux du site.
    ══════════════════════════════════════════════════════════════════════════ */
 .stats-table .stats-tr {
-    border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.04) !important;
 }
 .stats-table .stats-tr:last-child {
     border-bottom: none !important;
@@ -29547,10 +29572,12 @@ body { box-sizing: border-box; }
 /* ══════════════════════════════════════════════════════════════════════════
    FIX : Home Top Collections — adopte le style du tableau Live Feed
    Séparateurs verticaux entre colonnes + horizontaux entre lignes identiques.
+   Séparateur horizontal aligné sur Market Bot en vue table
+   (.sb-tr : rgba(255,255,255,0.04)) pour homogénéiser tous les tableaux.
    ══════════════════════════════════════════════════════════════════════════ */
 /* Séparateurs horizontaux */
 .home-top-table .stats-tr {
-    border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.04) !important;
 }
 .home-top-table .stats-tr:last-child {
     border-bottom: none !important;
