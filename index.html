@@ -15,7 +15,7 @@
 <link as="image" href="icon.png?v=2" rel="preload"/>
 <!-- Preload WOFF2 quand dispo (3x plus léger), sinon le @font-face fallback OTF -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2"/>
-<link href="styles.css?v=1778140000" rel="stylesheet"/>
+<link href="styles.css?v=1778145000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -9164,21 +9164,28 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // l'annonce de connexion la plus récente. Quand un nouveau "join"
         // arrive, on supprime de Firebase l'ancien (child_removed cascade
         // le retrait du DOM dans tous les onglets).
-        // Map<username, { type, key, t }> — pour chaque membre on track
-        // UNIQUEMENT la pastille la plus récente (join OU leave). Quand
-        // un nouvel événement arrive, la précédente (peu importe son
-        // type) est retirée de Firebase. Résultat : au plus 1 seule
-        // pastille active par membre, qui reflète toujours son état le
-        // plus récent (connecté ou déconnecté).
-        const _latestEventByUser = new Map();
+        // Map<username, { key, t }> — pour chaque membre, dernière
+        // annonce « is connected » trackée. Au plus 1 join visible par
+        // user à la fois (la plus récente).
+        const _latestJoinByUser  = new Map();
+        // Idem pour les « is disconnected ». 1 join + 1 leave peuvent
+        // coexister (état « currently disconnected » du membre, qui
+        // affiche son join PUIS son leave). Mais à la (re)connexion du
+        // membre, les DEUX sont retirées et seul le nouveau join reste.
+        const _latestLeaveByUser = new Map();
         // Snapshot live des usernames présents (rempli par le listener
-        // chat/presence). Sert au render des leave : si un leave arrive
-        // pour un user qui est ACTUELLEMENT présent dans /chat/presence,
-        // on l'écarte silencieusement — c'est forcément un leave stale
-        // émis par onDisconnect() d'un onglet précédent (le timestamp
-        // du leave est posé par le serveur, donc peut être postérieur à
-        // celui d'une re-connexion plus récente).
+        // chat/presence). Sert au filtre des leaves stale : un leave
+        // qui arrive pour un user actuellement dans /chat/presence est
+        // forcément périmé (timestamp serveur de onDisconnect() postérieur
+        // à un re-connect plus récent — sans ce filtre la déconnexion
+        // fantôme effacerait la connexion fraîche).
         const _onlineUsernames   = new Set();
+        // Flag : true dès que le listener chat/presence a fire au moins
+        // une fois. Avant ça, _onlineUsernames est non fiable (vide).
+        // Les leaves reçus pendant cette fenêtre sont mis en queue et
+        // re-traités quand presence est prête.
+        let   _presenceReady     = false;
+        const _pendingLeaves     = [];
         // { key, t } — UNE SEULE annonce d'update visible dans le chat
         // à un instant donné. Quand une nouvelle apparaît, l'ancienne
         // est supprimée de Firebase.
@@ -9691,6 +9698,91 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         }
 
         /* ------------------------------------------------------------------ *
+         * Pipeline join / leave — applique la règle métier :                 *
+         *   • Quand un membre se connecte : on supprime SES anciennes        *
+         *     pastilles (join précédent ET leave précédent) → seule la       *
+         *     nouvelle « is connected » reste affichée.                      *
+         *   • Quand un membre se déconnecte : on supprime SON leave          *
+         *     précédent (si déconnexion répétée), mais on garde SON join     *
+         *     en cours (= le join + le nouveau leave coexistent, ce qui      *
+         *     représente « la session qui vient de finir »).                 *
+         *   • Filtre stale : un leave qui arrive pour un user actuellement   *
+         *     en présence est rejeté (onDisconnect serveur retardé après    *
+         *     un re-connect rapide). Tant que le listener presence n'a pas   *
+         *     fire (race au chargement), les leaves sont mis en queue.       *
+         * ------------------------------------------------------------------ */
+        function _processJoinEvent(msg, key, ts) {
+            const uname = msg.user;
+            if (!uname || !fbDb) return;
+            const newT = ts || 0;
+            // Cleanup du join précédent du même user (au plus 1 join visible).
+            const prevJ = _latestJoinByUser.get(uname);
+            if (prevJ && prevJ.key !== key) {
+                if ((prevJ.t || 0) <= newT) {
+                    fbDb.ref('chat/messages/' + prevJ.key).remove().catch(() => {});
+                    _latestJoinByUser.set(uname, { key, t: newT });
+                } else {
+                    // Out-of-order : ce join est plus ancien que celui
+                    // déjà tracké → on le jette, jamais rendu.
+                    fbDb.ref('chat/messages/' + key).remove().catch(() => {});
+                    return false;
+                }
+            } else if (!prevJ) {
+                _latestJoinByUser.set(uname, { key, t: newT });
+            }
+            // Reconnexion : on retire toute pastille « is disconnected »
+            // précédente (le membre est revenu, son disconnect n'a plus
+            // de sens). La cascade child_removed retire le DOM partout.
+            const prevL = _latestLeaveByUser.get(uname);
+            if (prevL && prevL.key) {
+                fbDb.ref('chat/messages/' + prevL.key).remove().catch(() => {});
+                _latestLeaveByUser.delete(uname);
+            }
+            return true;
+        }
+        function _processLeaveEvent(msg, key, ts, instant) {
+            const uname = msg.user;
+            if (!uname) return true;
+            // Filtre stale : user actuellement en présence → leave périmé.
+            if (_onlineUsernames.size > 0 && _onlineUsernames.has(uname)) {
+                if (fbDb && key) fbDb.ref('chat/messages/' + key).remove().catch(() => {});
+                return false;
+            }
+            // Race au chargement : presence pas encore prête → queue, on
+            // re-traitera quand le listener chat/presence aura fire.
+            if (!_presenceReady) {
+                _pendingLeaves.push({ msg, key, ts, instant });
+                return false;
+            }
+            if (!fbDb) return true;
+            const newT = ts || 0;
+            const prevL = _latestLeaveByUser.get(uname);
+            if (prevL && prevL.key !== key) {
+                if ((prevL.t || 0) <= newT) {
+                    fbDb.ref('chat/messages/' + prevL.key).remove().catch(() => {});
+                    _latestLeaveByUser.set(uname, { key, t: newT });
+                } else {
+                    fbDb.ref('chat/messages/' + key).remove().catch(() => {});
+                    return false;
+                }
+            } else if (!prevL) {
+                _latestLeaveByUser.set(uname, { key, t: newT });
+            }
+            // On NE TOUCHE PAS _latestJoinByUser ici — le join du membre
+            // reste visible aux côtés de son leave (état « currently
+            // disconnected »). Il sera nettoyé à la prochaine reconnexion.
+            return true;
+        }
+        function _drainPendingLeaves() {
+            if (_pendingLeaves.length === 0) return;
+            const queue = _pendingLeaves.splice(0);
+            queue.forEach(item => {
+                const ok = _processLeaveEvent(item.msg, item.key, item.ts, item.instant);
+                if (ok) renderSystemMessage(item.msg, item.key, item.instant);
+            });
+        }
+
+        /* ------------------------------------------------------------------ *
          * Message système (join). Pas d'actions edit/delete, pas de réactions,
          * pas de badge cert. Layout centré et compact, distinct des messages
          * communautaires.
@@ -9835,46 +9927,10 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                         }
                         return;
                     }
-                    // Filtre absolu : un LEAVE qui arrive pour un user
-                    // actuellement présent dans /chat/presence est par
-                    // définition stale (le user est revenu). Cas typique :
-                    // tab fermé → onDisconnect émet le leave côté serveur
-                    // avec un timestamp postérieur à celui du nouveau join
-                    // — sans ce filtre la déconnexion fantôme effacerait
-                    // la connexion fraîche. Suppression silencieuse.
-                    if (msg.event === 'leave' && msg.user
-                        && _onlineUsernames.size > 0
-                        && _onlineUsernames.has(msg.user)) {
-                        if (fbDb && key) {
-                            fbDb.ref('chat/messages/' + key).remove().catch(() => {});
-                        }
-                        return;
-                    }
-                    // Per-membre : au plus 1 pastille active à la fois.
-                    // Toujours la PLUS RÉCENTE (join OU leave), peu
-                    // importe son type. Quand un nouvel événement arrive
-                    // pour un user, on supprime la précédente (même type
-                    // ou type opposé). À la reconnexion d'un membre, son
-                    // ancienne pastille « is disconnected » disparaît
-                    // donc automatiquement.
-                    const uname = msg.user;
-                    if (uname && fbDb) {
-                        const newT = ts || 0;
-                        const prev = _latestEventByUser.get(uname);
-                        if (prev && prev.key !== key) {
-                            if ((prev.t || 0) <= newT) {
-                                // Nouveau plus récent → on retire l'ancien.
-                                fbDb.ref('chat/messages/' + prev.key).remove().catch(() => {});
-                                _latestEventByUser.set(uname, { type: msg.event, key, t: newT });
-                            } else {
-                                // Nouveau plus ancien (out-of-order) → on
-                                // le jette, le tracké reste le bon état.
-                                fbDb.ref('chat/messages/' + key).remove().catch(() => {});
-                                return;
-                            }
-                        } else if (!prev) {
-                            _latestEventByUser.set(uname, { type: msg.event, key, t: newT });
-                        }
+                    if (msg.event === 'leave') {
+                        if (!_processLeaveEvent(msg, key, ts, instant)) return;
+                    } else {
+                        _processJoinEvent(msg, key, ts);
                     }
                 }
                 renderSystemMessage(msg, key, instant);
@@ -10428,14 +10484,14 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 });
                 fbDb.ref('chat/messages').limitToLast(50).on('child_removed', snap => {
                     removeMessageById(snap.key);
-                    // Si on supprime la pastille join/leave trackée pour
-                    // un user, on libère l'entrée de la map (sinon la
-                    // dédup continuerait à viser une clé qui n'existe
-                    // plus).
-                    for (const [u, info] of _latestEventByUser) {
-                        if (info.key === snap.key) { _latestEventByUser.delete(u); break; }
+                    // Libère les entrées des maps de tracking pour qu'on
+                    // ne re-cible pas une clé déjà supprimée.
+                    for (const [u, info] of _latestJoinByUser) {
+                        if (info.key === snap.key) { _latestJoinByUser.delete(u);  break; }
                     }
-                    // Idem pour l'annonce d'update suivie.
+                    for (const [u, info] of _latestLeaveByUser) {
+                        if (info.key === snap.key) { _latestLeaveByUser.delete(u); break; }
+                    }
                     if (_latestUpdateMsg && _latestUpdateMsg.key === snap.key) {
                         _latestUpdateMsg = null;
                     }
@@ -10506,22 +10562,22 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     // Snapshot live des usernames présents.
                     _onlineUsernames.clear();
                     seenUsers.forEach(u => _onlineUsernames.add(u));
-                    // Cleanup réactif des leaves stale : si la pastille
-                    // trackée pour un user est de type 'leave' alors que
-                    // ce user est actuellement présent dans /chat/presence,
-                    // on la retire de Firebase. Couvre la race où le
-                    // child_added du leave a précédé l'init du presence
-                    // listener, donc le filtre côté render n'a pas pu
-                    // s'appliquer.
+                    _presenceReady = true;
+                    // Cleanup réactif : les leaves trackés pour un user
+                    // actuellement online sont stale (re-connect rapide,
+                    // multi-onglets…) → retirés de Firebase.
                     if (fbDb && _onlineUsernames.size > 0) {
-                        for (const [uname, info] of _latestEventByUser) {
-                            if (info && info.type === 'leave' && info.key
-                                && _onlineUsernames.has(uname)) {
+                        for (const [uname, info] of _latestLeaveByUser) {
+                            if (info && info.key && _onlineUsernames.has(uname)) {
                                 fbDb.ref('chat/messages/' + info.key).remove().catch(() => {});
-                                _latestEventByUser.delete(uname);
+                                _latestLeaveByUser.delete(uname);
                             }
                         }
                     }
+                    // Drain de la queue de leaves reçus avant que
+                    // presence soit prête. Re-applique le filtre stale
+                    // maintenant que _onlineUsernames est fiable.
+                    _drainPendingLeaves();
                     // "viewers" = visiteurs anonymes uniquement (sans les membres nommés)
                     const totalConnected = anonCount;
 
@@ -14199,6 +14255,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-13T05:00:00Z',
+            type:  'fix',
+            title: 'Chat — connect + disconnect both visible, cleared on reconnect',
+            text:  'A disconnected member shows both their "is connected" and "is disconnected" pills (so you see they were here, then left). On reconnect, both old pills are removed and only the fresh "is connected" appears. Stale leave events from a delayed onDisconnect are silently dropped when the user is already back online.'
+        },
         {
             date:  '2026-05-13T04:30:00Z',
             type:  'fix',
