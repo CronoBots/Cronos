@@ -15,7 +15,7 @@
 <link as="image" href="icon.png?v=2" rel="preload"/>
 <!-- Preload WOFF2 quand dispo (3x plus léger), sinon le @font-face fallback OTF -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2"/>
-<link href="styles.css?v=1778120000" rel="stylesheet"/>
+<link href="styles.css?v=1778125000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -9141,6 +9141,13 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         let _myPresenceRef  = null;   // référence de la clé de session courante
         let _currentSessKey = null;   // clé de session active (u_username ou s_xxx)
         let _sessionJoinAnnounced = false;  // évite un 2e push d'annonce dans cette session
+        // Pour les annonces de DÉCONNEXION : on pré-génère une clé Firebase
+        // côté client et on programme un push différé via onDisconnect(). Le
+        // serveur écrit alors le message au moment exact où la connexion
+        // tombe. _scheduledLeaveRef = ref de ce message (utilisée pour
+        // cancel() en cas de logout ou de re-login).
+        let _scheduledLeaveRef       = null;
+        let _scheduledLeaveForUser   = null;
         const JOIN_ANNOUNCE_WINDOW_MS = 10 * 60 * 1000;  // throttle 10 min cross-reload
         // TTL des annonces "X joined the chat" : auto-expirent au-delà.
         // Côté rendu, les messages plus vieux sont skip ; on les supprime
@@ -9157,7 +9164,15 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // l'annonce de connexion la plus récente. Quand un nouveau "join"
         // arrive, on supprime de Firebase l'ancien (child_removed cascade
         // le retrait du DOM dans tous les onglets).
-        const _latestJoinByUser = new Map();
+        const _latestJoinByUser  = new Map();
+        // Idem pour les déconnexions — 1 seule annonce "is disconnected"
+        // par membre à un instant donné.
+        const _latestLeaveByUser = new Map();
+        // Snapshot live des usernames présents (rempli par le listener
+        // chat/presence). Sert au render des leave : si un leave arrive
+        // pour un user qui a encore une session active ailleurs, on
+        // l'écarte silencieusement (false-positive multi-onglets).
+        const _onlineUsernames   = new Set();
         // { key, t } — UNE SEULE annonce d'update visible dans le chat
         // à un instant donné. Quand une nouvelle apparaît, l'ancienne
         // est supprimée de Firebase.
@@ -9233,11 +9248,53 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     lastSeen: firebase.database.ServerValue.TIMESTAMP
                 });
                 announceJoinIfNeeded(user, memberKey);
+                scheduleLeaveAnnounce(user);
             } else {
                 // Logout en live : on libère le flag pour qu'un re-login
-                // dans le même onglet puisse re-annoncer correctement.
+                // dans le même onglet puisse re-annoncer correctement,
+                // et on annule le leave qui aurait été émis pour l'ancien
+                // user — il ne quitte pas vraiment le chat, juste l'auth.
                 _sessionJoinAnnounced = false;
+                cancelScheduledLeave();
             }
+        }
+
+        /* ------------------------------------------------------------------ *
+         * Annonce "X is disconnected"                                        *
+         * Pré-génère une clé Firebase et programme un push différé via      *
+         * onDisconnect(). Quand la WebSocket de cet onglet tombe (close /   *
+         * reload / crash), le serveur Firebase écrit le message tout seul.  *
+         * Re-programmé à chaque login / changement d'utilisateur.            *
+         * ------------------------------------------------------------------ */
+        function scheduleLeaveAnnounce(user) {
+            if (!fbDb || !user || !user.username) return;
+            // Déjà programmé pour CE user → on garde tel quel (idempotent
+            // sur les heartbeats / visibilitychange qui rappellent
+            // syncPresence en boucle).
+            if (_scheduledLeaveForUser === user.username && _scheduledLeaveRef) return;
+            // Changement d'user (re-login) → on annule l'ancien d'abord.
+            cancelScheduledLeave();
+            const display = user.displayName || user.username;
+            const ref     = fbDb.ref('chat/messages').push();
+            const payload = {
+                system:  true,
+                event:   'leave',
+                user:    user.username,
+                display: display,
+                avatar:  user.avatarUrl || null,
+                text:    display + ' left the chat',
+                t:       firebase.database.ServerValue.TIMESTAMP
+            };
+            ref.onDisconnect().set(payload).then(() => {
+                _scheduledLeaveRef     = ref;
+                _scheduledLeaveForUser = user.username;
+            }).catch(e => console.error('[Community chat] leave schedule failed:', e));
+        }
+        function cancelScheduledLeave() {
+            if (!_scheduledLeaveRef) return;
+            _scheduledLeaveRef.onDisconnect().cancel().catch(() => {});
+            _scheduledLeaveRef     = null;
+            _scheduledLeaveForUser = null;
         }
 
         /* ------------------------------------------------------------------ *
@@ -9640,8 +9697,10 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
          * communautaires.
          * ------------------------------------------------------------------ */
         function renderSystemMessage(msg, key, instant) {
+            const isLeave = msg.event === 'leave';
             const div = document.createElement('div');
-            div.className = 'home-chat-msg home-chat-msg--system home-chat-msg--join';
+            div.className = 'home-chat-msg home-chat-msg--system '
+                          + (isLeave ? 'home-chat-msg--leave' : 'home-chat-msg--join');
             if (key) div.dataset.msgKey = key;
 
             const display = _fcEsc(msg.display || msg.user || 'Anonymous');
@@ -9649,12 +9708,19 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             const me      = getCurrentUser();
             const canDelete = !!(key && me && msg.user && msg.user === me.username);
 
+            // Flèche → pour les join (entrée), ← pour les leave (sortie).
+            const arrowSvg = isLeave
+                ? '<svg class="home-chat-msg-system-icon" width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                      '<path d="M9 4l-5 6 5 6"/><path d="M4 10h12"/>' +
+                  '</svg>'
+                : '<svg class="home-chat-msg-system-icon" width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                      '<path d="M11 4l5 6-5 6"/><path d="M16 10H4"/>' +
+                  '</svg>';
+
             div.innerHTML =
-                '<svg class="home-chat-msg-system-icon" width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-                    '<path d="M11 4l5 6-5 6"/><path d="M16 10H4"/>' +
-                '</svg>' +
+                arrowSvg +
                 '<span class="home-chat-msg-system-user">' + display + '</span>' +
-                '<span class="home-chat-msg-system-text">is connected</span>' +
+                '<span class="home-chat-msg-system-text">' + (isLeave ? 'is disconnected' : 'is connected') + '</span>' +
                 '<span class="home-chat-msg-system-time">' + time + '</span>' +
                 (canDelete
                     ? '<button class="home-chat-msg-system-delete" type="button" title="Remove this announcement" aria-label="Remove this announcement">' +
@@ -9759,11 +9825,10 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     renderUpdateMessage(msg, key, instant);
                     return;
                 }
-                // Les annonces "X joined the chat" disparaissent après 24h.
-                // On skip le rendu ET on supprime l'entrée Firebase au passage
-                // pour auto-nettoyer /chat/messages (self-healing : la 1re
-                // session qui croise un vieux join le retire de la base).
-                if (msg.event === 'join') {
+                // Les annonces "X joined the chat" / "X left the chat"
+                // disparaissent après 24h. On skip le rendu ET on supprime
+                // l'entrée Firebase au passage (self-healing).
+                if (msg.event === 'join' || msg.event === 'leave') {
                     const ts = Number(msg.t);
                     if (ts && Date.now() - ts > JOIN_MESSAGE_TTL_MS) {
                         if (fbDb && key) {
@@ -9771,31 +9836,48 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                         }
                         return;
                     }
-                    // Dédup : on ne garde QUE l'annonce de connexion la plus
-                    // récente par membre. Si on rencontre un join pour un
-                    // user qui a déjà une annonce trackée, on supprime la
-                    // plus ancienne (Firebase → child_removed cascade le
-                    // retrait du DOM dans tous les onglets, y compris cet
-                    // onglet via la même socket).
+                    // False-positive multi-onglets : un leave arrive pour un
+                    // user qui a encore une session active ailleurs. On
+                    // l'écarte silencieusement. On laisse passer si la map
+                    // de présence n'est pas encore peuplée (chargement
+                    // initial) — le listener cleanra plus tard.
+                    if (msg.event === 'leave' && msg.user
+                        && _onlineUsernames.size > 0
+                        && _onlineUsernames.has(msg.user)) {
+                        if (fbDb && key) {
+                            fbDb.ref('chat/messages/' + key).remove().catch(() => {});
+                        }
+                        return;
+                    }
+                    // Dédup : 1 seule annonce du même type par user. Les
+                    // joins et leaves se neutralisent mutuellement quand on
+                    // en reçoit un nouveau — "X is connected" disparaît si
+                    // un "X is disconnected" arrive après, et vice-versa.
                     const uname = msg.user;
+                    const map   = msg.event === 'join' ? _latestJoinByUser : _latestLeaveByUser;
+                    const other = msg.event === 'join' ? _latestLeaveByUser : _latestJoinByUser;
                     if (uname && fbDb) {
-                        const prev = _latestJoinByUser.get(uname);
+                        const prev = map.get(uname);
                         if (prev && prev.key !== key) {
                             const prevT = prev.t || 0;
                             const newT  = ts || 0;
                             if (prevT <= newT) {
-                                // Le précédent est plus ancien → on le retire
-                                // et on enregistre la nouvelle annonce.
                                 fbDb.ref('chat/messages/' + prev.key).remove().catch(() => {});
-                                _latestJoinByUser.set(uname, { key, t: newT });
+                                map.set(uname, { key, t: newT });
                             } else {
-                                // Le nouveau arrive en retard et est plus
-                                // ancien que celui déjà gardé → on le jette.
                                 fbDb.ref('chat/messages/' + key).remove().catch(() => {});
                                 return;
                             }
                         } else if (!prev) {
-                            _latestJoinByUser.set(uname, { key, t: ts || 0 });
+                            map.set(uname, { key, t: ts || 0 });
+                        }
+                        // Annonce inverse encore en place → on la retire
+                        // pour ne pas afficher "X is connected" + "X is
+                        // disconnected" en même temps.
+                        const opp = other.get(uname);
+                        if (opp && opp.key) {
+                            fbDb.ref('chat/messages/' + opp.key).remove().catch(() => {});
+                            other.delete(uname);
                         }
                     }
                 }
@@ -10350,14 +10432,14 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 });
                 fbDb.ref('chat/messages').limitToLast(50).on('child_removed', snap => {
                     removeMessageById(snap.key);
-                    // Si on supprime une annonce de join trackée pour un
-                    // user, on retire l'entrée de la map (sinon la dédup
+                    // Si on supprime une annonce de join/leave trackée pour
+                    // un user, on retire l'entrée de la map (sinon la dédup
                     // continuerait à viser une clé qui n'existe plus).
                     for (const [u, info] of _latestJoinByUser) {
-                        if (info.key === snap.key) {
-                            _latestJoinByUser.delete(u);
-                            break;
-                        }
+                        if (info.key === snap.key) { _latestJoinByUser.delete(u);  break; }
+                    }
+                    for (const [u, info] of _latestLeaveByUser) {
+                        if (info.key === snap.key) { _latestLeaveByUser.delete(u); break; }
                     }
                     // Idem pour l'annonce d'update suivie.
                     if (_latestUpdateMsg && _latestUpdateMsg.key === snap.key) {
@@ -10427,6 +10509,12 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                             namedOnline.push(v);
                         }
                     });
+                    // Snapshot live des usernames présents — utilisé par le
+                    // listener de messages pour écarter les leaves dont
+                    // l'auteur a encore une session active ailleurs (false-
+                    // positive fermeture d'un onglet parmi plusieurs).
+                    _onlineUsernames.clear();
+                    seenUsers.forEach(u => _onlineUsernames.add(u));
                     // "viewers" = visiteurs anonymes uniquement (sans les membres nommés)
                     const totalConnected = anonCount;
 
@@ -14104,6 +14192,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-13T03:00:00Z',
+            type:  'feature',
+            title: 'Chat — disconnect pills + members badge aligned',
+            text:  'Red "X is disconnected" pills now appear when a member leaves the chat (only the latest one per member is kept). The verified ✓ badge in the members list now sits right next to the username with a white V and the same vertical alignment as in chat messages.'
+        },
         {
             date:  '2026-05-13T02:30:00Z',
             type:  'improvement',

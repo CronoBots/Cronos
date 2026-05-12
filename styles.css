@@ -13057,14 +13057,22 @@ body.is-profile-loading #profileLoadingOverlay * {
        messages (.home-chat-msg-user) et avec les autres labels du chat. */
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    flex: 1;
+    /* flex: 0 1 auto + min-width: 0 → le pseudo prend sa largeur
+       naturelle (badge collé juste derrière) tout en pouvant rétrécir
+       avec ellipsis si la ligne déborde. Avant on avait flex: 1, qui
+       remplissait toute la ligne et avec margin-left: auto poussait le
+       badge tout à droite. Désormais le badge ✓ sit JUSTE après le
+       pseudo, comme dans les messages du chat. */
+    flex: 0 1 auto;
     min-width: 0;
 }
 /* Badge verified à côté du pseudo des membres certifiés (cf.
    _certsCache check dans renderAvatarStack). MÊME style que la
-   .chat-verified-badge utilisée dans les messages — taille 13×13,
-   pastille cyan, checkmark sombre, glow doux. Positionné À DROITE
-   du pseudo via margin-left:auto sur le span (le name a flex:1). */
+   .chat-verified-badge utilisée dans les messages : pastille cyan
+   13×13, V BLANC (contraste max sur le cyan), glow doux. Positionné
+   IMMÉDIATEMENT après le pseudo (plus de margin-left: auto) — gap de
+   7px hérité du flex parent, l'écart est resserré par un margin-left
+   négatif pour matcher le rendu compact du chat. */
 .home-chat-member-verified {
     display: inline-flex;
     align-items: center;
@@ -13076,10 +13084,14 @@ body.is-profile-loading #profileLoadingOverlay * {
     border-radius: 50%;
     flex-shrink: 0;
     box-shadow: 0 0 6px rgba(0, 179, 255, 0.45);
-    color: #052035;
+    color: #fff;
     padding: 0;
     box-sizing: border-box;
-    margin-left: auto;
+    margin-left: -3px;  /* 7px de gap parent → ~4px effectif, comme .home-chat-msg-user-wrap */
+    /* Geomanist-Bold caps anchored above line-box center : on shift le
+       badge vers le haut pour qu'il soit optiquement centré sur le
+       pseudo (cf. .home-chat-msg-user-wrap .chat-verified-badge). */
+    transform: translateY(-1.5px);
 }
 .home-chat-member--certified .home-chat-member-name { color: #fff; }
 
@@ -14209,6 +14221,48 @@ body.is-profile-loading #profileLoadingOverlay * {
     line-height: 1.4;
 }
 .home-chat-msg--join .home-chat-msg-system-delete {
+    align-self: center;
+}
+
+/* Annonces de déconnexion ("X is disconnected") — rouge, symétrique
+   du --join. Hérite TOUT le layout de .home-chat-msg--system (margin,
+   padding, gap, font-size, baseline) : seuls les colors changent. */
+.home-chat-msg--leave {
+    background: rgba(248,113,113,0.08) !important;
+    border-color: rgba(248,113,113,0.28) !important;
+    color: rgba(255,255,255,0.55) !important;
+}
+.home-chat-msg--leave .home-chat-msg-system-icon {
+    width: 11px;
+    height: 11px;
+    color: #f87171;
+    flex-shrink: 0;
+    align-self: center;
+}
+.home-chat-msg--leave .home-chat-msg-system-user {
+    color: #f87171;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.4;
+}
+.home-chat-msg--leave .home-chat-msg-system-text {
+    color: rgba(255,255,255,0.5);
+    line-height: 1.4;
+}
+.home-chat-msg--leave .home-chat-msg-system-time {
+    color: rgba(255,255,255,0.3);
+    font-size: 9.5px;
+    margin-left: 4px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.4;
+}
+.home-chat-msg--leave .home-chat-msg-system-delete {
     align-self: center;
 }
 
