@@ -28211,6 +28211,37 @@ body { box-sizing: border-box; }
         min-width: 0;
         max-width: 100%;
     }
+    /* Bannière + stats : sur mobile, la .snapshot-collection-banner-media
+       avait aspect-ratio: 16/5 + overflow: hidden, ce qui donnait ~125px
+       de haut sur un écran 400px. Le .snapshot-summary (overlay absolute
+       en bas) compte 4 rangées × 2 colonnes pour les 7 stats, soit
+       ~200px — donc 3 des 4 rangées passaient SOUS la bordure inférieure
+       de la bannière et étaient clippées par overflow:hidden. Résultat :
+       on ne voyait QUE le dernier stat (« Volume Traded »).
+       Fix : on libère la hauteur du conteneur, on garde le 16/5 sur la
+       seule image (et sur l'overlay / le texte centré), et on bascule
+       le summary en flux normal sous l'image — tous les stats visibles
+       sur une grille 2 colonnes. */
+    .snapshot-collection-banner-media {
+        aspect-ratio: auto !important;
+        overflow: visible !important;
+    }
+    .snapshot-collection-banner-media > .snapshot-collection-banner-img {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16 / 5;
+        object-fit: cover;
+        display: block;
+    }
+    .snapshot-collection-banner-media > .snapshot-collection-banner-overlay,
+    .snapshot-collection-banner-media > .snapshot-collection-banner-info,
+    .snapshot-collection-banner-media > .snapshot-collection-banner-link {
+        bottom: auto;
+        aspect-ratio: 16 / 5;
+    }
+    .snapshot-collection-banner-media > .snapshot-summary {
+        position: static !important;
+    }
     /* Le mask-image fade gauche/droite était posé sur #statsTableScroll
        uniquement (pas sur #sbTableWrap) → différence visuelle entre
        Top Collections et Market Bot. Retiré pour que les deux tableaux
