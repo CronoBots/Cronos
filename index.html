@@ -9127,6 +9127,11 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // Côté rendu, les messages plus vieux sont skip ; on les supprime
         // aussi de Firebase au passage pour garder /chat/messages propre.
         const JOIN_MESSAGE_TTL_MS = 24 * 60 * 60 * 1000;  // 24h
+        // Map<username, { key, t }> — pour chaque membre, on ne garde que
+        // l'annonce de connexion la plus récente. Quand un nouveau "join"
+        // arrive, on supprime de Firebase l'ancien (child_removed cascade
+        // le retrait du DOM dans tous les onglets).
+        const _latestJoinByUser = new Map();
 
         // ── Intercepteur localStorage — émet cronos:auth sur le même onglet ──
         // Le `storage` event natif ne se déclenche que dans les autres onglets,
@@ -9155,21 +9160,22 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
 
         // Met à jour la présence Firebase quand le statut auth change.
         // Appelée aussi bien au démarrage qu'après un login/logout en live.
+        //
+        // ⚠️ Race fix : on utilise TOUJOURS une clé de session unique par
+        // onglet (s_<random>), JAMAIS u_<username>. Sinon, quand un onglet
+        // se recharge :
+        //     1. nouvel onglet écrit chat/presence/u_alice = {...}
+        //     2. l'ancien socket finit par timeout côté Firebase
+        //     3. onDisconnect().remove() de l'ancien tab supprime u_alice
+        //     4. le nouvel onglet apparaît offline alors qu'il est actif.
+        // Avec des clés uniques, le remove de l'ancien ne touche pas la
+        // clé du nouveau. La déduplication "1 entrée par username" est
+        // faite côté listener plus bas.
         function syncPresence() {
-            if (!fbDb || !_presenceRef) return;
-            const user   = getCurrentUser();
-            const newKey = user ? 'u_' + user.username : _currentSessKey;
-            if (!newKey) return;
+            if (!fbDb || !_presenceRef || !_currentSessKey) return;
+            const user = getCurrentUser();
 
-            // Si la clé a changé (anon → identifié ou inverse) : nettoyer l'ancienne
-            if (_currentSessKey && _currentSessKey !== newKey) {
-                _presenceRef.child(_currentSessKey).remove().catch(() => {});
-                if (_myPresenceRef) _myPresenceRef.onDisconnect().cancel().catch(() => {});
-                _sessionJoinAnnounced = false;  // nouveau membre → nouvelle annonce possible
-            }
-
-            _currentSessKey  = newKey;
-            _myPresenceRef   = _presenceRef.child(newKey);
+            _myPresenceRef = _presenceRef.child(_currentSessKey);
 
             const payload = {
                 t:        Date.now(),
@@ -9182,16 +9188,24 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             _myPresenceRef.onDisconnect().remove();
 
             // Persister dans chat/members si identifié.
+            // Clé persistante u_<username> (différente de la clé de présence
+            // s_<random>) — c'est cette clé que announceJoinIfNeeded utilise
+            // pour throttler les annonces de connexion.
             // .update() (et non .set()) pour préserver les champs annexes
             // comme lastJoinAt utilisé par le throttle de l'annonce de join.
             if (user) {
-                fbDb.ref(`chat/members/${newKey}`).update({
+                const memberKey = 'u_' + user.username;
+                fbDb.ref(`chat/members/${memberKey}`).update({
                     username: user.username,
                     display:  user.displayName || user.username,
                     avatar:   user.avatarUrl   || null,
                     lastSeen: firebase.database.ServerValue.TIMESTAMP
                 });
-                announceJoinIfNeeded(user, newKey);
+                announceJoinIfNeeded(user, memberKey);
+            } else {
+                // Logout en live : on libère le flag pour qu'un re-login
+                // dans le même onglet puisse re-annoncer correctement.
+                _sessionJoinAnnounced = false;
             }
         }
 
@@ -9525,6 +9539,33 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                             fbDb.ref('chat/messages/' + key).remove().catch(() => {});
                         }
                         return;
+                    }
+                    // Dédup : on ne garde QUE l'annonce de connexion la plus
+                    // récente par membre. Si on rencontre un join pour un
+                    // user qui a déjà une annonce trackée, on supprime la
+                    // plus ancienne (Firebase → child_removed cascade le
+                    // retrait du DOM dans tous les onglets, y compris cet
+                    // onglet via la même socket).
+                    const uname = msg.user;
+                    if (uname && fbDb) {
+                        const prev = _latestJoinByUser.get(uname);
+                        if (prev && prev.key !== key) {
+                            const prevT = prev.t || 0;
+                            const newT  = ts || 0;
+                            if (prevT <= newT) {
+                                // Le précédent est plus ancien → on le retire
+                                // et on enregistre la nouvelle annonce.
+                                fbDb.ref('chat/messages/' + prev.key).remove().catch(() => {});
+                                _latestJoinByUser.set(uname, { key, t: newT });
+                            } else {
+                                // Le nouveau arrive en retard et est plus
+                                // ancien que celui déjà gardé → on le jette.
+                                fbDb.ref('chat/messages/' + key).remove().catch(() => {});
+                                return;
+                            }
+                        } else if (!prev) {
+                            _latestJoinByUser.set(uname, { key, t: ts || 0 });
+                        }
                     }
                 }
                 renderSystemMessage(msg, key, instant);
@@ -10073,14 +10114,23 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 });
                 fbDb.ref('chat/messages').limitToLast(50).on('child_removed', snap => {
                     removeMessageById(snap.key);
+                    // Si on supprime une annonce de join trackée pour un
+                    // user, on retire l'entrée de la map (sinon la dédup
+                    // continuerait à viser une clé qui n'existe plus).
+                    for (const [u, info] of _latestJoinByUser) {
+                        if (info.key === snap.key) {
+                            _latestJoinByUser.delete(u);
+                            break;
+                        }
+                    }
                 });
                 if (status) status.textContent = 'live';
                 // ── Présence en ligne ──
-                _presenceRef = fbDb.ref('chat/presence');
-                const sessionUser = getCurrentUser();
-                _currentSessKey = sessionUser
-                    ? 'u_' + sessionUser.username
-                    : 's_' + Math.random().toString(36).slice(2, 10);
+                // Clé de présence : TOUJOURS unique par onglet (s_<random>),
+                // jamais basée sur le username. Voir le commentaire détaillé
+                // dans syncPresence() pour la race condition que ça évite.
+                _presenceRef    = fbDb.ref('chat/presence');
+                _currentSessKey = 's_' + Math.random().toString(36).slice(2, 10);
 
                 // Appel initial via syncPresence (écrit présence + members)
                 syncPresence();
@@ -10109,15 +10159,26 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 _presenceRef.on('value', snap => {
                     const onlineKeys  = new Set();
                     const namedOnline = [];
+                    // Dédup par username : depuis le passage à des clés de
+                    // présence uniques par onglet, le même membre peut avoir
+                    // plusieurs entrées simultanées (un onglet ≠ un autre).
+                    // On garde la 1re rencontrée pour l'affichage, et on
+                    // compte 1 seul "online" par membre.
+                    const seenUsers   = new Set();
+                    let   anonCount   = 0;
                     snap.forEach(child => {
                         const v = child.val();
-                        if (!v.anon && v.username) {
+                        if (!v) return;
+                        if (v.anon) {
+                            anonCount++;
+                        } else if (v.username && !seenUsers.has(v.username)) {
+                            seenUsers.add(v.username);
                             onlineKeys.add('u_' + v.username);
                             namedOnline.push(v);
                         }
                     });
                     // "viewers" = visiteurs anonymes uniquement (sans les membres nommés)
-                    const totalConnected = snap.numChildren() - namedOnline.length;
+                    const totalConnected = anonCount;
 
                     // Récupérer tous les membres connus pour calculer les offline
                     fbDb.ref('chat/members').once('value', membersSnap => {
@@ -13461,6 +13522,18 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-12T18:00:00Z',
+            type:  'fix',
+            title: 'Chat — reliable online status + cleaner join announces',
+            text:  'Reopening the browser would sometimes leave you marked offline: the previous tab\'s onDisconnect was wiping the new tab\'s presence entry (same key). Each tab now uses a unique presence key, and the listener dedupes per username. Also, only the most recent "X joined the chat" per member is kept — older join announces from the same user are auto-removed so the chat doesn\'t accumulate duplicates.'
+        },
+        {
+            date:  '2026-05-12T17:30:00Z',
+            type:  'improvement',
+            title: 'Mobile — Market Bot layout matches Top Collections',
+            text:  'On mobile, Market Bot filters now stack with a 7px gap (same rhythm as Top Collections). Search bar takes the full width on its own line above the live feed, with the sales count centered just below. Top Collections filter gap also bumped to 7px so the two panels feel identical.'
+        },
         {
             date:  '2026-05-11T18:00:00Z',
             type:  'improvement',
