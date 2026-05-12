@@ -14124,12 +14124,12 @@ body.is-profile-loading #profileLoadingOverlay * {
     align-self: center;
     padding: 6px 10px;
 }
-/* Annonces de connexion ("X joined the chat") — variante du système.
-   Override la teinte ambrée pour rester sobre (cyan brand + blanc atténué)
-   et rendre le bloc inline-flex plus compact. */
+/* Annonces de connexion ("X is connected") — pastille verte compacte.
+   Vert = "présence active", code couleur cohérent avec les dots online
+   ailleurs sur le site. */
 .home-chat-msg--join {
-    background: rgba(0,179,255,0.06) !important;
-    border: 1px solid rgba(0,179,255,0.18) !important;
+    background: rgba(34,197,94,0.08) !important;
+    border: 1px solid rgba(34,197,94,0.28) !important;
     color: rgba(255,255,255,0.55) !important;
     display: inline-flex !important;
     align-items: center;
@@ -14139,15 +14139,23 @@ body.is-profile-loading #profileLoadingOverlay * {
     margin: 6px auto !important;
     max-width: 90%;
     font-size: 10.5px !important;
+    /* line-height: 1.4 partagé par tous les enfants pour que les box
+       autour des textes aient la même hauteur, et que align-items:center
+       centre VRAIMENT le pseudo (uppercase + bold) avec le reste. */
+    line-height: 1.4;
 }
 .home-chat-msg--join .home-chat-msg-system-icon {
     width: 11px;
     height: 11px;
-    color: #00B3FF;
+    color: #22c55e;
     flex-shrink: 0;
+    /* Le SVG seul a une baseline qui dépasse la box ; le bumper en
+       inline-flex le force à occuper exactement la même hauteur de
+       ligne que les spans frères. */
+    display: inline-flex;
 }
 .home-chat-msg--join .home-chat-msg-system-user {
-    color: #00B3FF;
+    color: #22c55e;
     font-family: 'Geomanist-Bold', sans-serif;
     font-weight: 700;
     letter-spacing: 0.06em;
@@ -14158,30 +14166,64 @@ body.is-profile-loading #profileLoadingOverlay * {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    /* line-height aligné sur le parent + display inline-flex pour que
+       la box uppercase soit centrée verticalement avec les autres
+       spans (sinon les capitales remontent visuellement à cause de
+       l'absence de descendantes). */
+    line-height: 1.4;
+    display: inline-flex;
+    align-items: center;
 }
 .home-chat-msg--join .home-chat-msg-system-text {
     color: rgba(255,255,255,0.5);
+    line-height: 1.4;
 }
 .home-chat-msg--join .home-chat-msg-system-time {
     color: rgba(255,255,255,0.3);
     font-size: 9.5px;
     margin-left: 4px;
     font-variant-numeric: tabular-nums;
+    line-height: 1.4;
 }
 
-/* Annonces d'update — strictement le même style discret que .home-chat-msg--join
-   (la pastille update porte les deux classes). On override SEULEMENT :
-   - cursor:pointer pour signaler que c'est cliquable
-   - léger hover qui éclaircit la bordure
-   Le label « NEW UPDATE » utilise la classe .home-chat-msg-system-user
-   et hérite donc du même cyan/MAJUSCULES que le username des joins. */
+/* Annonces d'update — même pastille compacte que les joins mais en
+   ROUGE. Cliquable (cursor:pointer + hover), affiche l'heure comme
+   les connexions. */
 .home-chat-msg--update {
+    background: rgba(239,68,68,0.10) !important;
+    border: 1px solid rgba(239,68,68,0.4) !important;
+    color: rgba(255,255,255,0.7) !important;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px !important;
+    border-radius: 999px;
+    margin: 6px auto !important;
+    max-width: 90%;
+    font-size: 10.5px !important;
+    line-height: 1.4;
     cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
 }
 .home-chat-msg--update:hover {
-    border-color: rgba(0,179,255,0.5) !important;
-    background: rgba(0,179,255,0.10) !important;
+    background: rgba(239,68,68,0.16) !important;
+    border-color: rgba(239,68,68,0.6) !important;
 }
+.home-chat-msg--update .home-chat-msg-system-text {
+    color: #ef4444;
+    font-family: 'Geomanist-Bold', sans-serif;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1.4;
+}
+.home-chat-msg--update .home-chat-msg-system-time {
+    color: rgba(255,255,255,0.35);
+    font-size: 9.5px;
+    margin-left: 4px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.4;
+}
+
 /* Bouton de suppression — visible uniquement si l'auteur du join est
    l'utilisateur courant. Discret (opacity réduite), s'éclaircit au survol. */
 .home-chat-msg-system-delete {
