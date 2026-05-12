@@ -9540,7 +9540,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     '<path d="M11 4l5 6-5 6"/><path d="M16 10H4"/>' +
                 '</svg>' +
                 '<span class="home-chat-msg-system-user">' + display + '</span>' +
-                '<span class="home-chat-msg-system-text">joined the chat</span>' +
+                '<span class="home-chat-msg-system-text">is connected</span>' +
                 '<span class="home-chat-msg-system-time">' + time + '</span>' +
                 (canDelete
                     ? '<button class="home-chat-msg-system-delete" type="button" title="Remove this announcement" aria-label="Remove this announcement">' +
@@ -9594,15 +9594,17 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         }
 
         /* Rendu spécial pour les annonces d'update (event === 'update').
-           Pastille minimaliste : texte « New update online » en jaune
-           (style .home-chat-msg--system par défaut, pas de --join cyan,
-           pas de titre détaillé). Cliquable → ouvre Latest Updates.
-           Pas de bouton delete (auto-purgé par dedup). */
+           Pastille au style des joins (compact, cliquable) mais en rouge
+           pour la distinguer du vert des connexions. On garde l'heure
+           comme sur les messages de connexion. */
         function renderUpdateMessage(msg, key, instant) {
             const div = document.createElement('div');
             div.className = 'home-chat-msg home-chat-msg--system home-chat-msg--update';
             if (key) div.dataset.msgKey = key;
-            div.textContent = 'New update online';
+            const time = formatDateTime(msg.t);
+            div.innerHTML =
+                '<span class="home-chat-msg-system-text">New update online</span>' +
+                '<span class="home-chat-msg-system-time">' + time + '</span>';
             div.title = 'Open Latest Updates';
             div.addEventListener('click', () => {
                 // Si un panel fullscreen (Snapshot, Market Bot, etc.) est
