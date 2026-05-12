@@ -15,7 +15,7 @@
 <link as="image" href="icon.png?v=2" rel="preload"/>
 <!-- Preload WOFF2 quand dispo (3x plus léger), sinon le @font-face fallback OTF -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2"/>
-<link href="styles.css?v=1778130000" rel="stylesheet"/>
+<link href="styles.css?v=1778135000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -9299,48 +9299,41 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
 
         /* ------------------------------------------------------------------ *
          * Annonce "X joined the chat"                                        *
-         * Une fois par session de page (flag _sessionJoinAnnounced) ET       *
-         * seulement si le membre n'a pas déjà été annoncé dans les 10 min   *
-         * précédentes (champ chat/members/{key}/lastJoinAt). Évite le spam  *
-         * sur reload + heartbeat + visibilitychange.                         *
+         * 1 push par session de page (flag _sessionJoinAnnounced suffit) :   *
+         * chaque (ré)ouverture d'onglet émet une nouvelle pastille. Le      *
+         * throttle cross-session a été retiré — l'utilisateur veut voir 1   *
+         * connection ET 1 deconnection par membre, et la dédup côté render *
+         * garantit qu'on n'a jamais 2 pastilles du même type (l'ancienne   *
+         * est retirée de Firebase quand la nouvelle arrive).                *
          * ------------------------------------------------------------------ */
         function announceJoinIfNeeded(user, key) {
             if (_sessionJoinAnnounced) return;
             if (!fbDb || !user || !key) return;
-            _sessionJoinAnnounced = true;  // pose le verrou avant l'I/O pour bloquer toute concurrence
+            _sessionJoinAnnounced = true;
 
-            const lastJoinRef  = fbDb.ref(`chat/members/${key}/lastJoinAt`);
-            const firstJoinRef = fbDb.ref(`chat/members/${key}/firstJoinAt`);
-            lastJoinRef.once('value').then(snap => {
-                const last = Number(snap.val()) || 0;
-                const now  = Date.now();
-                if (now - last < JOIN_ANNOUNCE_WINDOW_MS) return;  // déjà annoncé récemment
-
-                // text est requis par la règle Firebase chat/messages
-                // (.validate hasChildren(['user','text','t'])). On le fournit
-                // sous forme de phrase complète qui sert aussi de fallback
-                // de rendu si renderSystemMessage venait à être bypassé.
-                const display = user.displayName || user.username;
-                fbDb.ref('chat/messages').push({
-                    system:  true,
-                    event:   'join',
-                    user:    user.username,
-                    display: display,
-                    avatar:  user.avatarUrl || null,
-                    text:    display + ' joined the chat',
-                    t:       firebase.database.ServerValue.TIMESTAMP
-                }).catch(e => console.error('[Community chat] join push failed:', e));
-                lastJoinRef.set(now).catch(() => {});
-
-                // 1re annonce ever pour ce membre → on enregistre aussi firstJoinAt
-                // (utilisé par Pulse pour le chart "member growth").
-                if (last === 0) {
-                    firstJoinRef.set(now).catch(() => {});
-                }
+            const display = user.displayName || user.username;
+            fbDb.ref('chat/messages').push({
+                system:  true,
+                event:   'join',
+                user:    user.username,
+                display: display,
+                avatar:  user.avatarUrl || null,
+                text:    display + ' joined the chat',
+                t:       firebase.database.ServerValue.TIMESTAMP
             }).catch(e => {
-                console.error('[Community chat] join check failed:', e);
+                console.error('[Community chat] join push failed:', e);
                 _sessionJoinAnnounced = false;  // libère le verrou pour retry
             });
+
+            // firstJoinAt : 1re annonce ever pour ce membre → on tag pour
+            // les charts Pulse "member growth". On garde lastJoinAt pour
+            // compat éventuelle ailleurs mais on ne s'en sert plus pour
+            // throttler.
+            const firstJoinRef = fbDb.ref(`chat/members/${key}/firstJoinAt`);
+            firstJoinRef.once('value').then(snap => {
+                if (!snap.exists()) firstJoinRef.set(Date.now()).catch(() => {});
+            }).catch(() => {});
+            fbDb.ref(`chat/members/${key}/lastJoinAt`).set(Date.now()).catch(() => {});
         }
 
         function refreshAuthState() {
@@ -9836,26 +9829,15 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                         }
                         return;
                     }
-                    // False-positive multi-onglets : un leave arrive pour un
-                    // user qui a encore une session active ailleurs. On
-                    // l'écarte silencieusement. On laisse passer si la map
-                    // de présence n'est pas encore peuplée (chargement
-                    // initial) — le listener cleanra plus tard.
-                    if (msg.event === 'leave' && msg.user
-                        && _onlineUsernames.size > 0
-                        && _onlineUsernames.has(msg.user)) {
-                        if (fbDb && key) {
-                            fbDb.ref('chat/messages/' + key).remove().catch(() => {});
-                        }
-                        return;
-                    }
-                    // Dédup : 1 seule annonce du même type par user. Les
-                    // joins et leaves se neutralisent mutuellement quand on
-                    // en reçoit un nouveau — "X is connected" disparaît si
-                    // un "X is disconnected" arrive après, et vice-versa.
+                    // Dédup STRICT par type — au plus 1 pastille « is
+                    // connected » ET 1 pastille « is disconnected » par
+                    // membre. Les deux peuvent coexister (1 + 1 OK), mais
+                    // jamais 2 du même type. Si un join arrive pour un
+                    // user qui a déjà une annonce join trackée, on retire
+                    // la plus ancienne. Les leaves sont indépendantes —
+                    // un join ne supprime PAS un leave et inversement.
                     const uname = msg.user;
                     const map   = msg.event === 'join' ? _latestJoinByUser : _latestLeaveByUser;
-                    const other = msg.event === 'join' ? _latestLeaveByUser : _latestJoinByUser;
                     if (uname && fbDb) {
                         const prev = map.get(uname);
                         if (prev && prev.key !== key) {
@@ -9870,14 +9852,6 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                             }
                         } else if (!prev) {
                             map.set(uname, { key, t: ts || 0 });
-                        }
-                        // Annonce inverse encore en place → on la retire
-                        // pour ne pas afficher "X is connected" + "X is
-                        // disconnected" en même temps.
-                        const opp = other.get(uname);
-                        if (opp && opp.key) {
-                            fbDb.ref('chat/messages/' + opp.key).remove().catch(() => {});
-                            other.delete(uname);
                         }
                     }
                 }
@@ -10509,33 +10483,13 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                             namedOnline.push(v);
                         }
                     });
-                    // Snapshot live des usernames présents — utilisé par le
-                    // listener de messages pour écarter les leaves dont
-                    // l'auteur a encore une session active ailleurs (false-
-                    // positive fermeture d'un onglet parmi plusieurs).
+                    // Snapshot live des usernames présents — toujours
+                    // utile pour d'autres parties du chat (compteurs,
+                    // affichage online/offline). On ne s'en sert PLUS
+                    // pour effacer les leaves : la spec est explicite,
+                    // 1 join + 1 leave peuvent coexister par user.
                     _onlineUsernames.clear();
                     seenUsers.forEach(u => _onlineUsernames.add(u));
-                    // Cleanup réactif des pastilles "is disconnected" qui
-                    // traînent pour des users qui sont (revenus) en ligne :
-                    //   • Tab fermé → leave émis par onDisconnect()
-                    //   • Tab ré-ouvert juste après → la presence revient
-                    //     AVANT que l'utilisateur ne voie son propre leave
-                    //   • Le check "online ?" côté child_added peut rater
-                    //     si messages charge avant presence
-                    // Ici on rattrape : si un leave tracké correspond à un
-                    // user maintenant online, on le retire de Firebase
-                    // (child_removed cascadera le retrait du DOM partout).
-                    // Idem pour un flap WebSocket en cours de session : le
-                    // leave fire serveur-side, on le nettoie au prochain
-                    // tick presence.
-                    if (fbDb && _onlineUsernames.size > 0) {
-                        for (const [uname, info] of _latestLeaveByUser) {
-                            if (_onlineUsernames.has(uname) && info && info.key) {
-                                fbDb.ref('chat/messages/' + info.key).remove().catch(() => {});
-                                _latestLeaveByUser.delete(uname);
-                            }
-                        }
-                    }
                     // "viewers" = visiteurs anonymes uniquement (sans les membres nommés)
                     const totalConnected = anonCount;
 
@@ -14213,6 +14167,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-13T04:00:00Z',
+            type:  'fix',
+            title: 'Chat — re-announce on every (re)connect, keep 1 join + 1 leave',
+            text:  'Reconnecting now always shows a fresh "is connected" pill (10-min throttle removed). A connection and a disconnection can coexist per member — what is enforced is at most 1 of each type, never 2 of the same.'
+        },
         {
             date:  '2026-05-13T03:30:00Z',
             type:  'fix',
