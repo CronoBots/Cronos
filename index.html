@@ -871,17 +871,14 @@
 <!-- ── SUPPORT PANEL ── -->
 <div class="sup-panel" id="supportPanel" style="display:none;">
 
-  <!-- ── HERO SECTION ── -->
-  <div class="sup2-hero">
-    <div class="sup2-hero-bg">
-      <div class="sup2-orb sup2-orb--1"></div>
-      <div class="sup2-orb sup2-orb--2"></div>
-      <div class="sup2-orb sup2-orb--3"></div>
-    </div>
-    <div class="sup2-hero-inner">
-      <div class="sup2-badge">Built with ❤️ for the Cronos community</div>
-      <h1 class="sup2-title">Support<br><span class="sup2-title-accent">CRONOS.WTF</span></h1>
-      <p class="sup2-subtitle">Months of work. Zero ads. Zero paywall.<br>One tool, entirely free — kept alive by people like you.</p>
+  <!-- ── HEADER aligned with Drops / Snapshot / Top Collections / Market Bot ── -->
+  <div class="sup-panel-header">
+    <div class="stats-page-title-block">
+      <h1 class="drops-page-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        SUPPORT CRONOS.WTF
+      </h1>
+      <p class="drops-page-sub">Help keep the platform alive — free, ad-free, paywall-free</p>
     </div>
   </div>
 
@@ -978,16 +975,19 @@
       </div>
     </div>
 
-    <!-- ROW 3 : Supporters -->
+    <!-- ROW 3 : Top supporters — unified table (NFT buyers + manual donations) -->
     <div class="sup2-supporters-row">
       <div class="sup2-supporters-header">
-        <h2 class="sup2-section-label">Supporters</h2>
+        <h2 class="sup2-section-label">Top supporters</h2>
         <button class="sup2-add-btn" id="supAddDonorBtn" type="button">
           <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 4v12M4 10h12"/></svg>
           I contributed
         </button>
       </div>
-      <div class="sup2-supporters-list" id="supDonorsList"></div>
+      <p class="sup2-supporters-note">Includes manual contributions and buyers of <a href="https://crypto.com/nft/collection/2ec243b8746154fd9dc1c892d7f54fe9" target="_blank" rel="noopener">CRONOS.WTF</a> NFTs (live from crypto.com).</p>
+      <div class="sup2-supporters-table-wrap" id="supSupportersTable">
+        <div class="sup2-no-donors">Loading supporters…</div>
+      </div>
     </div>
 
     <!-- Thank you -->
@@ -12787,70 +12787,342 @@ async function sha256hex(str) {
 
 
 <script>
-/* ── SUPPORT PAGE : progress + donors ── */
-(function() {
-    const GOAL = 150;
-    const LS_DONORS = 'cronos_donors_v1';
+/* ════════════════════════════════════════════════════════════════════════
+ *  SUPPORT PAGE — supporters unifiés (Firebase + acheteurs NFT live)
+ *
+ *  Sources fusionnées :
+ *    1. /support/donations Firebase — push depuis la modal "I contributed".
+ *       Schema : { name (str ≤64), amount (num >0 ≤100000), t (num ms),
+ *                  message (str ≤200, optionnel) }
+ *    2. Acheteurs NFT de la collection CRONOS.WTF (live) — agrégation via
+ *       l'API GraphQL crypto.com (getCollectionEventHistory, transferred).
+ *       Pour chaque buyer, on additionne ses ventes en USD payées.
+ *
+ *  Les deux sources sont fusionnées par username (case-insensitive) avec
+ *  somme des montants. Tableau trié DESC.
+ *
+ *  ⚠️ Rules Firebase à ajouter au niveau racine de "rules" :
+ *      "support": {
+ *        "donations": {
+ *          ".read": true,
+ *          ".write": true,
+ *          "$id": {
+ *            ".validate": "newData.hasChildren(['name','amount','t'])
+ *                          && newData.child('name').isString()
+ *                          && newData.child('name').val().length >= 1
+ *                          && newData.child('name').val().length <= 64
+ *                          && newData.child('amount').isNumber()
+ *                          && newData.child('amount').val() > 0
+ *                          && newData.child('amount').val() <= 100000
+ *                          && newData.child('t').isNumber()
+ *                          && (!newData.hasChild('message')
+ *                              || (newData.child('message').isString()
+ *                                  && newData.child('message').val().length <= 200))"
+ *          }
+ *        }
+ *      }
+ *  Tant que ce path n'existe pas en prod, on retombe automatiquement sur
+ *  localStorage (clé cronos_donors_v1) — aucune erreur visible côté user.
+ * ════════════════════════════════════════════════════════════════════════ */
+(function () {
+    const GOAL          = 150;
+    const OUR_COL_ID    = '2ec243b8746154fd9dc1c892d7f54fe9';   // CRONOS.WTF
+    const GQL           = 'https://crypto.com/nft-api/graphql';
+    const NFT_HIST_PAGES = 5;                                    // ~500 ventes max
+    const LS_DONORS     = 'cronos_donors_v1';                    // fallback offline
 
-    // Données hardcodées initiales — Unscoop peut les mettre à jour ici
-    const SEED_DONORS = [
-        // { name: 'CroWhale', amount: 50, date: '2026-04-01' },
-    ];
+    /* Query : transferred events + buyer avatar */
+    const Q_HIST_AV = `query getCollectionEventHistory($collectionId:ID!,$first:Int!,$after:String){
+        public{collection(id:$collectionId){eventHistory(first:$first,after:$after,naturesIn:["transferred"]){
+            edges{node{
+                listing{salePriceDecimalUSD}
+                amountDecimal createdAt
+                toUser{uuid username displayName avatar{url}}
+            }}
+            pageInfo{endCursor hasNextPage}
+        }}}}`;
 
-    function getDonors() {
+    async function gql(op, vars, q) {
+        const r = await fetch(GQL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ operationName: op, variables: vars, query: q }) });
+        const j = await r.json();
+        return j?.data?.public || null;
+    }
+
+    function _esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function _norm(s) { return (s || '').toString().trim().toLowerCase(); }
+
+    /* ── NFT supporters : pagination jusqu'à NFT_HIST_PAGES × 100 ventes,
+       agrégation par buyer (clé = username lowercase, fallback uuid). */
+    async function fetchNftSupporters() {
+        const map = new Map();
+        let after = null;
+        for (let p = 0; p < NFT_HIST_PAGES; p++) {
+            let d;
+            try {
+                d = await gql('getCollectionEventHistory',
+                              { collectionId: OUR_COL_ID, first: 100, after }, Q_HIST_AV);
+            } catch (_) { break; }
+            const ev = d?.collection?.eventHistory;
+            if (!ev) break;
+            ev.edges.forEach(e => {
+                const n = e.node;
+                const usd = Number(n.listing?.salePriceDecimalUSD || n.amountDecimal) || 0;
+                const u = n.toUser;
+                if (!u || usd <= 0) return;
+                const key = _norm(u.username || u.uuid);
+                if (!key) return;
+                const ex = map.get(key);
+                if (ex) {
+                    ex.amount += usd;
+                    ex.count++;
+                } else {
+                    map.set(key, {
+                        kind:    'nft',
+                        uuid:    u.uuid || null,
+                        name:    u.displayName || u.username || 'Anonymous',
+                        username: u.username || null,
+                        avatar:  u.avatar?.url || null,
+                        amount:  usd,
+                        count:   1
+                    });
+                }
+            });
+            if (!ev.pageInfo?.hasNextPage) break;
+            after = ev.pageInfo.endCursor;
+        }
+        return [...map.values()];
+    }
+
+    /* ── Manual donations : Firebase /support/donations, fallback localStorage */
+    async function fetchManualDonations() {
+        if (window.fbDb) {
+            try {
+                const snap = await window.fbDb.ref('support/donations').once('value');
+                const list = [];
+                snap.forEach(c => {
+                    const v = c.val();
+                    if (v && v.name && Number(v.amount) > 0) {
+                        list.push({
+                            kind:    'manual',
+                            name:    v.name,
+                            amount:  Number(v.amount),
+                            message: v.message || null,
+                            t:       Number(v.t) || 0
+                        });
+                    }
+                });
+                if (list.length) return list;
+            } catch (e) {
+                console.warn('[Support] Firebase read failed, fallback to localStorage:', e);
+            }
+        }
         try {
-            const d = JSON.parse(localStorage.getItem(LS_DONORS) || 'null');
-            return Array.isArray(d) ? d : [...SEED_DONORS];
-        } catch(e) { return [...SEED_DONORS]; }
+            const arr = JSON.parse(localStorage.getItem(LS_DONORS) || '[]');
+            return (Array.isArray(arr) ? arr : []).map(d => ({
+                kind: 'manual',
+                name: d.name,
+                amount: Number(d.amount) || 0,
+                message: d.message || null,
+                t: 0
+            }));
+        } catch (_) { return []; }
     }
 
-    function saveDonors(donors) {
-        localStorage.setItem(LS_DONORS, JSON.stringify(donors));
+    /* ── Push contribution : tente Firebase, retombe sur localStorage si KO. */
+    async function pushManualDonation({ name, amount, message }) {
+        const payload = {
+            name:   String(name).slice(0, 64),
+            amount: Number(amount),
+            t:      Date.now()
+        };
+        if (message) payload.message = String(message).slice(0, 200);
+
+        if (window.fbDb) {
+            try {
+                await window.fbDb.ref('support/donations').push(payload);
+                return { ok: true, where: 'firebase' };
+            } catch (e) {
+                console.error('[Support] Firebase push failed, falling back to localStorage:', e);
+            }
+        }
+        try {
+            const arr = JSON.parse(localStorage.getItem(LS_DONORS) || '[]');
+            arr.push({
+                name:    payload.name,
+                amount:  payload.amount,
+                message: payload.message || '',
+                date:    new Date().toISOString().slice(0, 10)
+            });
+            localStorage.setItem(LS_DONORS, JSON.stringify(arr));
+            return { ok: true, where: 'local' };
+        } catch (e) {
+            return { ok: false, where: null };
+        }
     }
 
-    function totalRaised(donors) {
-        return donors.reduce((s, d) => s + (Number(d.amount) || 0), 0);
+    /* Fusion : NFT supporters + manuals → 1 ligne par username, additionne
+       les montants. On garde le drapeau de source (nft / manual / both)
+       pour l'affichage des badges. */
+    function mergeSupporters(nfts, manuals) {
+        const byKey = new Map();
+        nfts.forEach(n => {
+            const k = _norm(n.username || n.name);
+            byKey.set(k, {
+                key: k,
+                name: n.name,
+                username: n.username,
+                avatar: n.avatar,
+                nftAmount: n.amount,
+                nftCount:  n.count,
+                manualAmount: 0,
+                manualCount:  0,
+                message: null
+            });
+        });
+        manuals.forEach(m => {
+            const k = _norm(m.name);
+            if (!k) return;
+            const ex = byKey.get(k);
+            if (ex) {
+                ex.manualAmount += m.amount;
+                ex.manualCount++;
+                if (!ex.message && m.message) ex.message = m.message;
+            } else {
+                byKey.set(k, {
+                    key: k,
+                    name: m.name,
+                    username: null,
+                    avatar: null,
+                    nftAmount: 0,
+                    nftCount:  0,
+                    manualAmount: m.amount,
+                    manualCount:  1,
+                    message: m.message || null
+                });
+            }
+        });
+        const arr = [...byKey.values()].map(s => Object.assign(s, {
+            totalAmount: s.nftAmount + s.manualAmount
+        }));
+        arr.sort((a, b) => b.totalAmount - a.totalAmount);
+        return arr;
     }
 
-    function renderProgress(donors) {
-        const raised = totalRaised(donors);
+    function renderProgress(supporters) {
+        const raised = supporters.reduce((s, x) => s + x.totalAmount, 0);
         const pct = Math.min(100, Math.round((raised / GOAL) * 100));
         const bar = document.getElementById('supProgressBar');
         const pctEl = document.getElementById('supProgressPct');
         const raisedEl = document.getElementById('supProgressRaised');
         if (bar) { setTimeout(() => bar.style.width = pct + '%', 80); bar.dataset.pct = pct; }
         if (pctEl) pctEl.textContent = pct + '%';
-        if (raisedEl) raisedEl.textContent = '$' + raised + ' raised';
+        if (raisedEl) raisedEl.textContent = '$' + Math.round(raised) + ' raised';
     }
 
-    function renderDonors(donors) {
-        const list = document.getElementById('supDonorsList');
-        if (!list) return;
-        if (!donors.length) {
-            list.innerHTML = '<div class="sup2-no-donors">Be the first to appear here 🌟</div>';
+    function fmtAmount(n) {
+        if (n >= 1000) return '$' + (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+        if (n >= 100)  return '$' + Math.round(n);
+        return '$' + n.toFixed(2);
+    }
+
+    function renderTable(supporters) {
+        const wrap = document.getElementById('supSupportersTable');
+        if (!wrap) return;
+        if (!supporters.length) {
+            wrap.innerHTML = '<div class="sup2-no-donors">Be the first to appear here 🌟</div>';
             return;
         }
-        const sorted = [...donors].sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0));
-        list.innerHTML = sorted.map((d, i) => `
-            <div class="sup2-supporter-item">
-                <div class="sup2-supporter-rank">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#' + (i+1)}</div>
-                <div class="sup2-supporter-avatar">${(d.name || '?')[0].toUpperCase()}</div>
-                <div class="sup2-supporter-info">
-                    <span class="sup2-supporter-name">${d.name || 'Anonymous'}</span>
-                    ${d.message ? `<span class="sup2-supporter-msg">"${d.message}"</span>` : ''}
-                </div>
-                <div class="sup2-supporter-amount">$${Number(d.amount).toFixed(0)}</div>
-            </div>`).join('');
+        const rows = supporters.slice(0, 100).map((s, i) => {
+            const rank = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#' + (i + 1);
+            const initial = ((s.name || '?')[0] || '?').toUpperCase();
+            const avatar = s.avatar
+                ? `<img class="sup2-table-avatar" src="${_esc(s.avatar)}" alt="" loading="lazy" onerror="this.outerHTML='&lt;span class=\\&quot;sup2-table-avatar sup2-table-avatar--initial\\&quot;&gt;${_esc(initial)}&lt;/span&gt;'"/>`
+                : `<span class="sup2-table-avatar sup2-table-avatar--initial">${_esc(initial)}</span>`;
+            const tags = [];
+            if (s.nftAmount    > 0) tags.push(`<span class="sup2-tag sup2-tag--nft" title="${s.nftCount} NFT${s.nftCount>1?'s':''} bought from CRONOS.WTF — $${s.nftAmount.toFixed(2)}">NFT × ${s.nftCount}</span>`);
+            if (s.manualAmount > 0) tags.push(`<span class="sup2-tag sup2-tag--manual" title="Manual contribution — $${s.manualAmount.toFixed(2)}">Donation</span>`);
+            const nameContent = s.username
+                ? `<a href="https://crypto.com/nft/profile/${_esc(s.username)}" target="_blank" rel="noopener">${_esc(s.name)}</a>`
+                : _esc(s.name);
+            return `<tr class="sup2-tr">
+                <td class="sup2-td sup2-td--rank">${rank}</td>
+                <td class="sup2-td sup2-td--holder">
+                    <div class="sup2-table-holder">
+                        ${avatar}
+                        <div class="sup2-table-name-block">
+                            <span class="sup2-table-name">${nameContent}</span>
+                            ${s.message ? `<span class="sup2-table-msg">"${_esc(s.message)}"</span>` : ''}
+                        </div>
+                    </div>
+                </td>
+                <td class="sup2-td sup2-td--tags">${tags.join('')}</td>
+                <td class="sup2-td sup2-td--amount">${fmtAmount(s.totalAmount)}</td>
+            </tr>`;
+        }).join('');
+
+        wrap.innerHTML = `
+            <table class="sup2-table">
+                <thead><tr>
+                    <th class="sup2-th sup2-th--rank">Rank</th>
+                    <th class="sup2-th">Supporter</th>
+                    <th class="sup2-th sup2-th--tags">Source</th>
+                    <th class="sup2-th sup2-th--amount">Total</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>`;
     }
 
-    function initSupport() {
-        const donors = getDonors();
-        renderProgress(donors);
-        renderDonors(donors);
+    let _refreshTimer  = null;
+    let _subscribed    = false;
+    let _initialised   = false;
 
-        // Modal "I contributed"
+    async function refreshAll() {
+        const [nfts, manuals] = await Promise.all([
+            fetchNftSupporters().catch(() => []),
+            fetchManualDonations().catch(() => [])
+        ]);
+        const merged = mergeSupporters(nfts, manuals);
+        renderProgress(merged);
+        renderTable(merged);
+    }
+
+    /* Une fois Firebase prêt, on s'abonne aux écritures de donations pour
+       que le tableau se rafraîchisse instantanément quand quelqu'un push
+       depuis la modal "I contributed". Throttle 300ms en cas de rafale. */
+    function subscribeDonations() {
+        if (_subscribed) return;
+        const ready = () => {
+            if (!window.fbDb || _subscribed) return false;
+            try {
+                window.fbDb.ref('support/donations').on('value', () => {
+                    clearTimeout(_refreshTimer);
+                    _refreshTimer = setTimeout(refreshAll, 300);
+                });
+                _subscribed = true;
+                return true;
+            } catch (e) {
+                console.warn('[Support] Firebase subscribe failed:', e);
+                return false;
+            }
+        };
+        if (ready()) return;
+        // Firebase peut être init plus tard (initChat est lazy) — on retry
+        // 1×/sec pendant 30s puis on abandonne silencieusement.
+        let attempts = 0;
+        const iv = setInterval(() => {
+            if (ready() || ++attempts > 30) clearInterval(iv);
+        }, 1000);
+    }
+
+    function bindAddBtn() {
         const addBtn = document.getElementById('supAddDonorBtn');
-        addBtn?.addEventListener('click', () => {
+        if (!addBtn || addBtn.dataset.bound === '1') return;
+        addBtn.dataset.bound = '1';
+        addBtn.addEventListener('click', () => {
             const existing = document.getElementById('supDonorModal');
             if (existing) { existing.style.display = 'flex'; return; }
 
@@ -12869,35 +13141,39 @@ async function sha256hex(str) {
                     <input class="login-modal-input" id="sdAmount" type="number" placeholder="Amount donated ($)" style="margin-bottom:8px;"/>
                     <input class="login-modal-input" id="sdMsg" placeholder="A message (optional)" style="margin-bottom:12px;"/>
                     <button class="login-modal-btn" id="sdSubmit" type="button">Add me to the list</button>
-                    <p class="login-modal-note">This is stored locally. Unscoop will verify and validate contributions.</p>
+                    <p class="login-modal-note">Saved to the cloud — Unscoop will verify and validate contributions.</p>
                 </div>`;
             document.body.appendChild(modal);
 
             document.getElementById('supDonorClose').addEventListener('click', () => modal.style.display = 'none');
             modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
-            document.getElementById('sdSubmit').addEventListener('click', () => {
-                const name = document.getElementById('sdName').value.trim();
+            document.getElementById('sdSubmit').addEventListener('click', async () => {
+                const name   = document.getElementById('sdName').value.trim();
                 const amount = parseFloat(document.getElementById('sdAmount').value) || 0;
-                const msg = document.getElementById('sdMsg').value.trim();
+                const msg    = document.getElementById('sdMsg').value.trim();
                 if (!name || amount <= 0) return;
-                const donors2 = getDonors();
-                donors2.push({ name, amount, message: msg, date: new Date().toISOString().slice(0,10) });
-                saveDonors(donors2);
-                renderProgress(donors2);
-                renderDonors(donors2);
+                await pushManualDonation({ name, amount, message: msg });
                 modal.style.display = 'none';
+                refreshAll();
             });
         });
     }
 
-    // Init quand le panel support est affiché
+    function initSupport() {
+        if (_initialised) { refreshAll(); return; }
+        _initialised = true;
+        bindAddBtn();
+        refreshAll();
+        subscribeDonations();
+    }
+
+    /* Init au passage display:none → display:block du panel support */
     const obs = new MutationObserver(() => {
-        const panel = document.getElementById('supportPanel');
-        if (panel && panel.style.display !== 'none') initSupport();
+        const p = document.getElementById('supportPanel');
+        if (p && p.style.display !== 'none') initSupport();
     });
     const panel = document.getElementById('supportPanel');
     if (panel) obs.observe(panel, { attributes: true, attributeFilter: ['style'] });
-    // Init immédiat si déjà visible
     if (panel && panel.style.display !== 'none') initSupport();
 })();
 </script>
@@ -13522,6 +13798,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-12T22:00:00Z',
+            type:  'feature',
+            title: 'Support tab — unified Top Supporters leaderboard',
+            text:  'The Support page now lists every supporter in a single table styled like Top Collections: rank, profile, source (NFT × N or Donation), and total $. NFT buyers of the CRONOS.WTF collection are fetched live from crypto.com and aggregated automatically. Manual contributions are now stored on Firebase (was localStorage) so the leaderboard is shared across everyone. Snapshot mobile banner also refined: the collection logo straddles the banner / stats boundary on the left and stat cells are more compact.'
+        },
         {
             date:  '2026-05-12T18:00:00Z',
             type:  'fix',
