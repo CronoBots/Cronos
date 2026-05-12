@@ -15,7 +15,7 @@
 <link as="image" href="icon.png?v=2" rel="preload"/>
 <!-- Preload WOFF2 quand dispo (3x plus léger), sinon le @font-face fallback OTF -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2"/>
-<link href="styles.css?v=1778100000" rel="stylesheet"/>
+<link href="styles.css?v=1778110000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -9419,14 +9419,22 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
 
         // Toggle : ajoute ou retire la réaction — utilise l'index pour sécurité
         async function toggleReaction(msgKey, idx) {
-            const sessKey = _currentSessKey;
-            if (!msgKey || !sessKey || !fbDb) {
-                console.warn('[Reactions] toggleReaction blocked — msgKey:', msgKey, 'sessKey:', sessKey, 'fbDb:', !!fbDb);
+            // Pour un utilisateur signé : on utilise une clé STABLE basée
+            // sur le username (u_<username>), pas la clé de session
+            // (s_<random>) qui change à chaque rechargement de page.
+            // Sans ça, recharger + remettre le même emoji créait une 2e
+            // entrée dans Firebase et incrémentait le compteur — alors
+            // que c'est le MÊME utilisateur. Pour les visiteurs anon,
+            // on retombe sur sessKey (1 vote par onglet, comme avant).
+            const me = getCurrentUser();
+            const reactKey = me?.username ? 'u_' + me.username : _currentSessKey;
+            if (!msgKey || !reactKey || !fbDb) {
+                console.warn('[Reactions] toggleReaction blocked — msgKey:', msgKey, 'reactKey:', reactKey, 'fbDb:', !!fbDb);
                 return;
             }
             const emojiKey = EMOJI_KEYS[idx];
             if (!emojiKey) return;
-            const path = 'chat/reactions/' + msgKey + '/' + emojiKey + '/' + sessKey;
+            const path = 'chat/reactions/' + msgKey + '/' + emojiKey + '/' + reactKey;
             // Rendu optimiste local : on update _cachedReactions et on
             // re-render IMMÉDIATEMENT la pill, sans attendre le retour
             // de Firebase. L'écoute en temps réel corrigera si l'écriture
@@ -9435,9 +9443,9 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             // pour pouvoir rollback si besoin.
             _cachedReactions[msgKey] = _cachedReactions[msgKey] || {};
             _cachedReactions[msgKey][emojiKey] = _cachedReactions[msgKey][emojiKey] || {};
-            const wasMine = !!_cachedReactions[msgKey][emojiKey][sessKey];
-            if (wasMine) delete _cachedReactions[msgKey][emojiKey][sessKey];
-            else         _cachedReactions[msgKey][emojiKey][sessKey] = true;
+            const wasMine = !!_cachedReactions[msgKey][emojiKey][reactKey];
+            if (wasMine) delete _cachedReactions[msgKey][emojiKey][reactKey];
+            else         _cachedReactions[msgKey][emojiKey][reactKey] = true;
             const div = document.querySelector('[data-msg-key="' + msgKey + '"]');
             if (div) updateReactionDisplay(div, _cachedReactions[msgKey] || {});
             try {
@@ -9449,8 +9457,8 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 // Si Firebase refuse (rules pas à jour pour les nouvelles
                 // clés 'ok'/'pray', par ex.), on rollback le cache local.
                 console.error('[Reactions] Firebase write failed for', emojiKey, '— check your DB rules allow this key. Path:', path, 'Error:', e?.message || e);
-                if (wasMine) _cachedReactions[msgKey][emojiKey][sessKey] = true;
-                else         delete _cachedReactions[msgKey][emojiKey][sessKey];
+                if (wasMine) _cachedReactions[msgKey][emojiKey][reactKey] = true;
+                else         delete _cachedReactions[msgKey][emojiKey][reactKey];
                 if (div) updateReactionDisplay(div, _cachedReactions[msgKey] || {});
             }
         }
@@ -9466,12 +9474,15 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             }
             bar.innerHTML = '';
             let hasAny = false;
+            // Clé stable pour détecter MA réaction (alignée sur toggleReaction).
+            const me = getCurrentUser();
+            const myKey = me?.username ? 'u_' + me.username : _currentSessKey;
             EMOJI_KEYS.forEach((emojiKey, idx) => {
                 const users = (reactions && reactions[emojiKey]) || {};
                 const count = Object.keys(users).length;
                 if (count === 0) return;
                 hasAny = true;
-                const mine  = !!(_currentSessKey && users[_currentSessKey]);
+                const mine  = !!(myKey && users[myKey]);
                 const emoji = QUICK_EMOJIS[idx];
                 const pill  = document.createElement('button');
                 pill.type      = 'button';
@@ -13990,6 +14001,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-13T01:30:00Z',
+            type:  'fix',
+            title: 'Chat reactions: stable count across page refreshes',
+            text:  'Emoji reactions were counted per browser session, so refreshing the page and re-reacting on the same message inflated the count each time. Reactions are now keyed by username for signed-in users, so the same person can only count once per emoji — toggle stays consistent across refreshes. System pills (connection / update) also share the exact same spacing now: vertical margins above and below are guaranteed identical via a unified base class.'
+        },
         {
             date:  '2026-05-13T01:00:00Z',
             type:  'improvement',
