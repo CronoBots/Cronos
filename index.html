@@ -15,7 +15,7 @@
 <link as="image" href="icon.png?v=2" rel="preload"/>
 <!-- Preload WOFF2 quand dispo (3x plus léger), sinon le @font-face fallback OTF -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2"/>
-<link href="styles.css?v=1778125000" rel="stylesheet"/>
+<link href="styles.css?v=1778130000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -10515,6 +10515,27 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     // positive fermeture d'un onglet parmi plusieurs).
                     _onlineUsernames.clear();
                     seenUsers.forEach(u => _onlineUsernames.add(u));
+                    // Cleanup réactif des pastilles "is disconnected" qui
+                    // traînent pour des users qui sont (revenus) en ligne :
+                    //   • Tab fermé → leave émis par onDisconnect()
+                    //   • Tab ré-ouvert juste après → la presence revient
+                    //     AVANT que l'utilisateur ne voie son propre leave
+                    //   • Le check "online ?" côté child_added peut rater
+                    //     si messages charge avant presence
+                    // Ici on rattrape : si un leave tracké correspond à un
+                    // user maintenant online, on le retire de Firebase
+                    // (child_removed cascadera le retrait du DOM partout).
+                    // Idem pour un flap WebSocket en cours de session : le
+                    // leave fire serveur-side, on le nettoie au prochain
+                    // tick presence.
+                    if (fbDb && _onlineUsernames.size > 0) {
+                        for (const [uname, info] of _latestLeaveByUser) {
+                            if (_onlineUsernames.has(uname) && info && info.key) {
+                                fbDb.ref('chat/messages/' + info.key).remove().catch(() => {});
+                                _latestLeaveByUser.delete(uname);
+                            }
+                        }
+                    }
                     // "viewers" = visiteurs anonymes uniquement (sans les membres nommés)
                     const totalConnected = anonCount;
 
@@ -14192,6 +14213,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-13T03:30:00Z',
+            type:  'fix',
+            title: 'Chat — stale "is disconnected" cleared on reconnect',
+            text:  'A leave pill fired by onDisconnect() during a brief WebSocket flap (or right before a tab is reopened) is now auto-deleted as soon as the presence listener confirms the user is back online.'
+        },
         {
             date:  '2026-05-13T03:00:00Z',
             type:  'feature',
