@@ -186,6 +186,42 @@
   <div class="topnav-indicator" id="topnavIndicator"></div>
 </header>
 
+<!-- ── Pre-paint tab highlight ──
+     Le routing complet (qui appelle showStatsView/showSupportView/etc.) vit
+     dans une IIFE positionnée ~15 000 lignes plus bas — entre la 1ʳᵉ paint
+     du navigateur et son exécution, l'onglet "collections" reste highlighté
+     (classe --active en dur dans le HTML), ce qui donne l'impression d'un
+     flash "home" au refresh sur #top, #market, etc.
+     Ce micro-script court-circuite UNIQUEMENT le visuel de la topnav (swap
+     de la classe topnav-tab--active selon location.hash). Aucun panneau
+     n'est touché — le vrai routing prend le relais plus bas. -->
+<script>
+(function () {
+    try {
+        const SLUG_TO_TAB = {
+            home: 'collections',
+            top: 'stats',
+            market: 'salesbot',
+            drops: 'drops',
+            snap: 'snapshot',
+            support: 'support',
+            me: 'myprofil'
+        };
+        const raw = (window.location.hash || '').replace(/^#/, '').trim();
+        const tabName = SLUG_TO_TAB[raw];
+        if (!tabName) return;
+        const target = document.querySelector('.topnav-tab[data-tab="' + tabName + '"]');
+        if (!target || target.classList.contains('topnav-tab--disabled')) return;
+        document.querySelectorAll('.topnav-tab--active').forEach(t => {
+            t.classList.remove('topnav-tab--active');
+            t.setAttribute('aria-selected', 'false');
+        });
+        target.classList.add('topnav-tab--active');
+        target.setAttribute('aria-selected', 'true');
+    } catch (_) { /* le routing complet plus bas reste le filet de sécurité */ }
+})();
+</script>
+
 <!-- ── CERTIFY OWNERSHIP DROPDOWN (outside topnav, full-width) ── -->
 <div class="certify-dropdown-backdrop" id="certifyDropdownBackdrop" style="display:none;" aria-hidden="true"></div>
 <div class="certify-dropdown" id="certifyDropdown" style="display:none;" role="dialog" aria-label="Certify account ownership" aria-modal="true">
