@@ -14122,36 +14122,38 @@ body.is-profile-loading #profileLoadingOverlay * {
     outline: 2px solid rgba(239,68,68,0.6);
     outline-offset: 2px;
 }
-/* Message système (erreur / config manquante) */
+/* Pastille système — base commune utilisée par .home-chat-msg--join
+   et .home-chat-msg--update. On regroupe TOUS les traits partagés
+   (taille, padding, margin, gap, font-size, align) ici, pour
+   garantir que les deux variantes ont EXACTEMENT le même footprint
+   vertical. Les sous-classes ne font qu'override les couleurs. */
 .home-chat-msg--system {
-    background: rgba(251,191,36,0.08);
-    border: 1px solid rgba(251,191,36,0.2);
-    color: rgba(251,191,36,0.85);
-    font-size: 11px;
-    text-align: center;
-    align-self: center;
-    padding: 6px 10px;
-}
-/* Annonces de connexion ("X is connected") — pastille verte compacte.
-   Vert = "présence active", code couleur cohérent avec les dots online
-   ailleurs sur le site. */
-.home-chat-msg--join {
-    background: rgba(34,197,94,0.08) !important;
-    border: 1px solid rgba(34,197,94,0.28) !important;
-    color: rgba(255,255,255,0.55) !important;
-    display: inline-flex !important;
-    /* baseline (et pas center) : tous les textes (pseudo bold UPPERCASE
-       + "is connected" + heure) s'alignent sur leur baseline typo,
-       donc plus de décalage visuel des capitales du pseudo qui semblaient
+    display: inline-flex;
+    /* baseline (et pas center) : tous les textes (label UPPERCASE
+       + état en minuscules + heure) s'alignent sur leur baseline
+       typo, donc plus de décalage visuel des capitales qui semblaient
        remonter par rapport au reste de la ligne. */
     align-items: baseline;
     gap: 6px;
-    padding: 4px 10px !important;
+    padding: 4px 10px;
     border-radius: 999px;
-    margin: 6px auto !important;
+    margin: 6px auto;
     max-width: 90%;
-    font-size: 10.5px !important;
+    font-size: 10.5px;
     line-height: 1.4;
+    text-align: center;
+    align-self: center;
+    /* Fallback couleurs/background pour le cas où aucune sous-classe
+       n'est appliquée (ex: message d'erreur "Chat not configured…"). */
+    background: rgba(251,191,36,0.08);
+    border: 1px solid rgba(251,191,36,0.2);
+    color: rgba(251,191,36,0.85);
+}
+/* Annonces de connexion ("X is connected") — vert. */
+.home-chat-msg--join {
+    background: rgba(34,197,94,0.08) !important;
+    border-color: rgba(34,197,94,0.28) !important;
+    color: rgba(255,255,255,0.55) !important;
 }
 .home-chat-msg--join .home-chat-msg-system-icon {
     width: 11px;
@@ -14191,23 +14193,14 @@ body.is-profile-loading #profileLoadingOverlay * {
     align-self: center;
 }
 
-/* Annonces d'update — même format strict que les joins mais en JAUNE.
-   Flèche jaune → "NEW UPDATE" (user-span uppercase) → "is online"
-   (text-span muté) → heure. Mêmes paddings, gap, font-size, line-height
-   et margin que les pastilles join → écarts identiques garantis. */
+/* Annonces d'update ("New update is online") — jaune. Hérite TOUT
+   le layout de .home-chat-msg--system : margin, padding, gap,
+   font-size, alignement strictement identiques aux pastilles
+   --join. On ne touche qu'aux couleurs et au curseur. */
 .home-chat-msg--update {
     background: rgba(251,191,36,0.08) !important;
-    border: 1px solid rgba(251,191,36,0.28) !important;
+    border-color: rgba(251,191,36,0.28) !important;
     color: rgba(255,255,255,0.55) !important;
-    display: inline-flex !important;
-    align-items: baseline;
-    gap: 6px;
-    padding: 4px 10px !important;
-    border-radius: 999px;
-    margin: 6px auto !important;
-    max-width: 90%;
-    font-size: 10.5px !important;
-    line-height: 1.4;
     cursor: pointer;
     transition: background 0.15s ease, border-color 0.15s ease;
 }
