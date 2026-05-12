@@ -11931,7 +11931,26 @@ body.is-profile-loading #profileLoadingOverlay * {
     height: 100%;
 }
 
-/* Médailles top 3 — forme ronde avec anneau et ruban */
+/* Top-3 emoji medals (🥇/🥈/🥉) — affichées telles quelles dans une
+   cellule rank, plus visibles et plus distinctives que des bulles
+   colorées. Pas de bordure ni de bg, on laisse le glyphe respirer.
+   Taille calibrée pour matcher la hauteur de la rangée du tableau. */
+.stats-rank--medal {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    font-size: 20px;
+    line-height: 1;
+    width: 28px;
+    height: 28px;
+    /* L'emoji n'a pas de baseline texte uniforme — center via flex. */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Anciennes médailles "bulle colorée" gardées pour compat éventuelle
+   (sup2-table etc. n'utilise pas ces classes). */
 .stats-rank--gold,
 .stats-rank--silver,
 .stats-rank--bronze {
@@ -12292,15 +12311,17 @@ body.is-profile-loading #profileLoadingOverlay * {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    /* Aligné EXACTEMENT sur le rendu des autres filtres (.stats-tr-btn,
-       .stats-cf-btn, .stats-vf-btn) : même bordure, même radius, même
-       background, même couleur de texte au repos, même font-size, même
-       letter-spacing. Le V/SVG ne grossit pas la rangée — height fixe à
-       32px et align-items: center maintient le texte centré vertical. */
+    /* Cadre aligné sur les autres filtres (.stats-tr-btn, .stats-cf-btn,
+       .stats-vf-btn) : même bordure, même radius, même background, même
+       hauteur 32px, même font-size 10px, même letter-spacing 0.1em.
+       Couleur du texte : BLANC (pas la teinte .38 des boutons inactifs)
+       — le sélecteur de colonnes est un compteur info ("11/16 columns
+       displayed"), pas un toggle on/off, donc il doit rester lisible
+       en permanence. Texte centré vertical via align-items: center. */
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 8px;
-    color: rgba(255,255,255,0.38);
+    color: #fff;
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 10px;
     letter-spacing: 0.1em;
@@ -12313,7 +12334,6 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 .stats-col-selector-btn:hover {
     background: rgba(255,255,255,0.08);
-    color: rgba(255,255,255,0.7);
 }
 .stats-col-dropdown {
     position: absolute;
@@ -28364,26 +28384,12 @@ body { box-sizing: border-box; }
         flex: 1 1 auto !important;
         display: flex;
     }
-    /* Sur mobile, on aligne EXACTEMENT le bouton "Columns displayed" sur
-       le rendu des autres filtres (24H/7D, Cronos, Verified) : même
-       bordure (rgba 0.08), même radius (8px), même background
-       (rgba 0.05), même couleur de texte au repos (rgba 0.38), même
-       font-size (10px) et même letter-spacing (0.1em). Avant on avait
-       une bordure plus opaque, un radius à 7px, un texte plus clair
-       et une police 11px — visuellement décalé des autres rangées. */
+    /* Mobile : le bouton "Columns displayed" prend toute la largeur de
+       la rangée. Le reste du style (bordure, radius, font, couleur
+       blanche) est hérité de la règle de base. */
     .stats-col-selector-btn {
         width: 100%;
         justify-content: center;
-        background: rgba(255,255,255,0.05) !important;
-        border: 1px solid rgba(255,255,255,0.08) !important;
-        border-radius: 8px !important;
-        color: rgba(255,255,255,0.38) !important;
-        font-size: 10px !important;
-        letter-spacing: 0.1em !important;
-    }
-    .stats-col-selector-btn:hover {
-        color: rgba(255,255,255,0.7) !important;
-        background: rgba(255,255,255,0.08) !important;
     }
     .stats-refresh-btn {
         flex-shrink: 0;
