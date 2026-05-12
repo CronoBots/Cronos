@@ -27800,18 +27800,36 @@ body { box-sizing: border-box; }
         padding-left: 16px !important;
         padding-right: 16px !important;
     }
+    /* Layout mobile mirror de Top Collections :
+       1) filtres en haut (sb-filters-right), wrap multi-lignes, gap 7px
+       2) barre de recherche pleine largeur (sb-search-wrap)
+       3) compteur de ventes centré sous la barre de recherche.
+       L'inversion d'ordre se fait via `order` plutôt que dans le DOM
+       pour ne pas casser le layout desktop. */
     .sb-filters-bar {
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 7px;
     }
     .sb-filters-right {
+        order: 1;
         flex-wrap: wrap;
-        gap: 6px;
+        gap: 7px;
         width: 100%;
     }
     .sb-filters-left {
+        order: 2;
         width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 7px;
     }
+    .sb-filters-left .sb-result-count {
+        order: 2;
+        width: 100%;
+        text-align: center;
+    }
+    .sb-filters-left .sb-search-wrap { order: 1; }
     /* Barres de recherche d'onglet : largeur 100% sur mobile pour
        qu'elles tiennent toute la largeur de l'écran (au lieu de
        partager la ligne avec un compteur ou un toggle). */
@@ -27873,13 +27891,13 @@ body { box-sizing: border-box; }
     }
     /* flex-wrap avec chaque groupe forcé à 100% → nouvelle ligne automatique
        sauf pour columns + refresh qui partagent la dernière ligne.
-       gap: 6px → aligné sur l'écart inter-boutons de .sb-filters-right
-       (Market Bot), pour que le rythme vertical entre les rangées de
-       filtres soit identique d'un panel à l'autre. */
+       gap: 7px → écart fin uniforme entre rangées (aligné sur le même 7px
+       utilisé côté Market Bot mobile, pour un rythme vertical identique
+       d'un panel à l'autre). */
     .stats-panel-controls {
         flex-direction: row !important;
         flex-wrap: wrap !important;
-        gap: 6px !important;
+        gap: 7px !important;
     }
     .stats-timerange,
     .stats-chain-filter,
