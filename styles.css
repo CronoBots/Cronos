@@ -13733,11 +13733,19 @@ body.is-profile-loading #profileLoadingOverlay * {
     background: rgba(0, 179, 255, 0.06);
     border-left: 2px solid rgba(0, 179, 255, 0.55);
     border-radius: 4px;
-    text-decoration: none;
+    text-decoration: none !important;
+    -webkit-tap-highlight-color: transparent;
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s;
     max-width: 100%;
     overflow: hidden;
+}
+.home-chat-msg-quote:visited,
+.home-chat-msg-quote:hover,
+.home-chat-msg-quote:focus,
+.home-chat-msg-quote:active,
+.home-chat-msg-quote * {
+    text-decoration: none !important;
 }
 .home-chat-msg-quote:hover {
     background: rgba(0, 179, 255, 0.12);
@@ -14123,6 +14131,34 @@ body.is-profile-loading #profileLoadingOverlay * {
     text-align: center;
     align-self: center;
     padding: 6px 10px;
+    /* position: relative pour permettre à .home-chat-react-bar (absolute)
+       de se positionner par rapport à la pastille. Permet aussi
+       l'apparition au hover desktop / .is-react-open mobile. */
+    position: relative;
+}
+/* Reveal du picker emoji sur les pastilles système — desktop (hover)
+   et mobile (.is-react-open posée par le double-tap). */
+@media (hover: hover) {
+    .home-chat-msg--system:hover .home-chat-react-bar {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+    }
+}
+.home-chat-msg--system.is-react-open .home-chat-react-bar {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+/* La barre de réactions cumulées (après vote) reste centrée sous la
+   pastille au lieu de coller à droite. */
+.home-chat-msg--system .home-chat-reactions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+    width: 100%;
+    margin-top: 4px;
 }
 /* Annonces de connexion ("X is connected") — pastille verte compacte.
    Vert = "présence active", code couleur cohérent avec les dots online
@@ -14183,13 +14219,14 @@ body.is-profile-loading #profileLoadingOverlay * {
     align-self: center;
 }
 
-/* Annonces d'update — même pastille compacte que les joins mais en
-   JAUNE/AMBRE. Cliquable (cursor:pointer + hover), affiche l'heure
-   comme les connexions. */
+/* Annonces d'update — même format strict que les joins mais en JAUNE.
+   Flèche jaune → "NEW UPDATE" (user-span uppercase) → "is online"
+   (text-span muté) → heure. Mêmes paddings, gap, font-size, line-height
+   et margin que les pastilles join → écarts identiques garantis. */
 .home-chat-msg--update {
-    background: rgba(251,191,36,0.10) !important;
-    border: 1px solid rgba(251,191,36,0.4) !important;
-    color: rgba(255,255,255,0.7) !important;
+    background: rgba(251,191,36,0.08) !important;
+    border: 1px solid rgba(251,191,36,0.28) !important;
+    color: rgba(255,255,255,0.55) !important;
     display: inline-flex !important;
     align-items: baseline;
     gap: 6px;
@@ -14203,15 +14240,30 @@ body.is-profile-loading #profileLoadingOverlay * {
     transition: background 0.15s ease, border-color 0.15s ease;
 }
 .home-chat-msg--update:hover {
-    background: rgba(251,191,36,0.16) !important;
-    border-color: rgba(251,191,36,0.6) !important;
+    background: rgba(251,191,36,0.14) !important;
+    border-color: rgba(251,191,36,0.5) !important;
 }
-.home-chat-msg--update .home-chat-msg-system-text {
+.home-chat-msg--update .home-chat-msg-system-icon {
+    width: 11px;
+    height: 11px;
+    color: #fbbf24;
+    flex-shrink: 0;
+    align-self: center;
+}
+.home-chat-msg--update .home-chat-msg-system-user {
     color: #fbbf24;
     font-family: 'Geomanist-Bold', sans-serif;
+    font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     line-height: 1.4;
+}
+.home-chat-msg--update .home-chat-msg-system-text {
+    color: rgba(255,255,255,0.5);
+    line-height: 1.4;
+    /* On force la mise en minuscules au cas où un futur push contiendrait
+       "Is Online" — on garde le rendu visuel cohérent ("is online"). */
+    text-transform: none;
 }
 .home-chat-msg--update .home-chat-msg-system-time {
     color: rgba(255,255,255,0.3);

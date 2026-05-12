@@ -15,7 +15,7 @@
 <link as="image" href="icon.png?v=2" rel="preload"/>
 <!-- Preload WOFF2 quand dispo (3x plus léger), sinon le @font-face fallback OTF -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2"/>
-<link href="styles.css?v=1778080000" rel="stylesheet"/>
+<link href="styles.css?v=1778090000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -9536,7 +9536,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             const canDelete = !!(key && me && msg.user && msg.user === me.username);
 
             div.innerHTML =
-                '<svg class="home-chat-msg-system-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                '<svg class="home-chat-msg-system-icon" width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
                     '<path d="M11 4l5 6-5 6"/><path d="M16 10H4"/>' +
                 '</svg>' +
                 '<span class="home-chat-msg-system-user">' + display + '</span>' +
@@ -9546,15 +9546,68 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     ? '<button class="home-chat-msg-system-delete" type="button" title="Remove this announcement" aria-label="Remove this announcement">' +
                           '<svg width="10" height="10" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>' +
                       '</button>'
-                    : '');
+                    : '') +
+                '<div class="home-chat-react-bar" aria-label="Quick reactions">' +
+                    QUICK_EMOJIS.map((e, i) => `<button class="home-chat-react-btn" type="button" data-emoji-idx="${i}" title="${e}">${e}</button>`).join('') +
+                '</div>' +
+                '<div class="home-chat-reactions" style="display:none;"></div>';
 
             if (canDelete) {
                 div.querySelector('.home-chat-msg-system-delete')
-                    ?.addEventListener('click', () => deleteMsg(key));
+                    ?.addEventListener('click', e => { e.stopPropagation(); deleteMsg(key); });
             }
+            attachSystemReactions(div, key);
 
             msgs.appendChild(div);
             _chatScrollToBottom(instant);
+        }
+
+        /* Reactions sur les pastilles système (joins + updates).
+           Double-tap (touch) ou hover (desktop) → toggle .is-react-open
+           → la react-bar absolute apparaît au-dessus. Les boutons emoji
+           appellent toggleReaction(key, idx), exactement comme sur un
+           message communautaire. Le rendu des pills réactions (en-dessous)
+           est fait par updateReactionDisplay() via le listener
+           chat/reactions, qui sélectionne tous les [data-msg-key]. */
+        function attachSystemReactions(div, key) {
+            if (!key) return;
+            // Boutons emoji de la react-bar : write reaction Firebase.
+            div.querySelectorAll('.home-chat-react-btn').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const idx = parseInt(btn.dataset.emojiIdx, 10);
+                    if (!isNaN(idx)) toggleReaction(key, idx);
+                });
+            });
+            // Double-tap pour révéler la react-bar sur mobile. Même
+            // mécanique que pour les messages communautaires.
+            let lastTap = 0, touchMoved = false, touchStart = null;
+            div.addEventListener('touchstart', e => {
+                if (e.touches.length > 1) return;
+                touchMoved = false;
+                touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }, { passive: true });
+            div.addEventListener('touchmove', e => {
+                if (!e.touches[0] || !touchStart) return;
+                if (Math.abs(e.touches[0].clientX - touchStart.x) > 8 ||
+                    Math.abs(e.touches[0].clientY - touchStart.y) > 8) {
+                    touchMoved = true;
+                    lastTap = 0;
+                }
+            }, { passive: true });
+            div.addEventListener('touchend', e => {
+                if (touchMoved) return;
+                if (e.target.closest('button') || e.target.closest('.home-chat-react-bar')) return;
+                const now = Date.now();
+                if (now - lastTap < 350) {
+                    msgs.querySelectorAll('.home-chat-msg--system.is-react-open').forEach(o => o.classList.remove('is-react-open'));
+                    div.classList.add('is-react-open');
+                    if (navigator.vibrate) navigator.vibrate(15);
+                    lastTap = 0;
+                } else {
+                    lastTap = now;
+                }
+            }, { passive: true });
         }
 
         /* Si la dernière entrée HOME_UPDATES (la newest) n'a pas encore
@@ -9594,22 +9647,34 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         }
 
         /* Rendu spécial pour les annonces d'update (event === 'update').
-           Pastille au style des joins (compact, cliquable) mais en rouge
-           pour la distinguer du vert des connexions. On garde l'heure
-           comme sur les messages de connexion. */
+           Pastille au format strictement identique aux messages de
+           connexion : flèche jaune → label en MAJUSCULES jaune → texte
+           en minuscules atténué → heure en gris discret. Cliquable
+           pour ouvrir la section Latest Updates. */
         function renderUpdateMessage(msg, key, instant) {
             const div = document.createElement('div');
             div.className = 'home-chat-msg home-chat-msg--system home-chat-msg--update';
             if (key) div.dataset.msgKey = key;
             const time = formatDateTime(msg.t);
             div.innerHTML =
-                '<span class="home-chat-msg-system-text">New update online</span>' +
-                '<span class="home-chat-msg-system-time">' + time + '</span>';
+                '<svg class="home-chat-msg-system-icon" width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                    '<path d="M11 4l5 6-5 6"/><path d="M16 10H4"/>' +
+                '</svg>' +
+                '<span class="home-chat-msg-system-user">New update</span>' +
+                '<span class="home-chat-msg-system-text">is online</span>' +
+                '<span class="home-chat-msg-system-time">' + time + '</span>' +
+                '<div class="home-chat-react-bar" aria-label="Quick reactions">' +
+                    QUICK_EMOJIS.map((e, i) => `<button class="home-chat-react-btn" type="button" data-emoji-idx="${i}" title="${e}">${e}</button>`).join('') +
+                '</div>' +
+                '<div class="home-chat-reactions" style="display:none;"></div>';
             div.title = 'Open Latest Updates';
-            div.addEventListener('click', () => {
-                // Si un panel fullscreen (Snapshot, Market Bot, etc.) est
-                // ouvert, on bascule sur la home en cliquant le tab Home,
-                // puis on scroll vers la section updates.
+            div.addEventListener('click', e => {
+                // Si on a tapé/cliqué dans la barre emoji ou un bouton emoji,
+                // on ne navigue PAS — ce sont des actions distinctes.
+                if (e.target.closest('.home-chat-react-bar') || e.target.closest('button')) return;
+                // Idem si la pastille est ouverte en mode "réactions" (le
+                // double-tap a posé la classe), on consomme le tap.
+                if (div.classList.contains('is-react-open')) return;
                 const homeTab = document.querySelector('.topnav-tab[data-tab="home"]');
                 if (homeTab) homeTab.click();
                 setTimeout(() => {
@@ -9617,6 +9682,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 80);
             });
+            attachSystemReactions(div, key);
             msgs.appendChild(div);
             _chatScrollToBottom(instant);
         }
@@ -10499,8 +10565,10 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // double-tap (~50ms après).
         document.addEventListener('click', e => {
             if (!window.matchMedia('(hover: none)').matches) return;
-            const open = msgs?.querySelector('.home-chat-msg--community.is-react-open');
-            if (!open) return;
+            // Inclut désormais les pastilles système (--join, --update) en
+            // plus des messages communautaires.
+            const openList = msgs?.querySelectorAll('.home-chat-msg--community.is-react-open, .home-chat-msg--system.is-react-open');
+            if (!openList || !openList.length) return;
             // Click trop proche du moment d'ouverture → c'est le click
             // synthétique du double-tap, on l'ignore.
             if (Date.now() - _chatOpenAt < 400) return;
@@ -10509,8 +10577,8 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             if (e.target.closest('.home-chat-react-bar')) return;
             if (e.target.closest('.home-chat-msg-actions')) return;
             // Sinon : tap ailleurs (autre message, body du message ouvert,
-            // hors chat) → on ferme.
-            open.classList.remove('is-react-open');
+            // hors chat) → on ferme tous les ouverts.
+            openList.forEach(open => open.classList.remove('is-react-open'));
         });
 
         // Chat inline — toujours visible, init immédiat
@@ -10544,13 +10612,35 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             // "@THE PHOTOGRAPH " et non "@snipe13". Le rendu côté formatChatBody
             // gère le matching sur les display names connus (incluant les
             // espaces) via le _chatNameCache.
-            const label = (dname && String(dname).trim()) || uname;
-            const at = '@' + label + ' ';
-            const cur = input.value || '';
-            if (!cur.endsWith(at)) {
-                const sep = (cur && !cur.endsWith(' ')) ? ' ' : '';
-                input.value = cur + sep + at;
+            const label   = (dname && String(dname).trim()) || uname;
+            const mention = '@' + label + ' ';
+            const cur     = input.value || '';
+
+            // Insertion à la position du curseur (selectionStart) — si
+            // l'utilisateur écrit déjà et clique sur un membre à mentionner,
+            // le tag apparaît à l'endroit où il était en train d'écrire, pas
+            // à la fin du message. Sans focus précédent, selectionStart
+            // vaut souvent 0 (= début) ou null ; on retombe alors sur la fin.
+            const isFocused = (document.activeElement === input);
+            let start = isFocused ? input.selectionStart : null;
+            let end   = isFocused ? input.selectionEnd   : null;
+            if (start === null || start === undefined) start = cur.length;
+            if (end   === null || end   === undefined) end   = start;
+
+            const before = cur.slice(0, start);
+            const after  = cur.slice(end);
+
+            // Espace devant si on accolait du texte non séparé.
+            const needLeadSpace = before && !/\s$/.test(before) && !before.endsWith('@');
+            const lead = needLeadSpace ? ' ' : '';
+            // Pas de doublon si le texte commence déjà par le même @ juste avant.
+            if (before.endsWith(mention)) {
+                input.focus();
+                return;
             }
+            input.value = before + lead + mention + after;
+            const newPos = (before + lead + mention).length;
+            try { input.setSelectionRange(newPos, newPos); } catch (_) { /* no-op */ }
             input.focus();
             // Close the mobile modal so the user goes back to the input.
             if (modal && modal.classList.contains('is-open')) {
@@ -13966,6 +14056,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-13T00:30:00Z',
+            type:  'improvement',
+            title: 'Chat polish: emoji reactions on system pills, sharper layout',
+            text:  'Connection and update pills now show a yellow / green arrow icon and share the exact same layout (NEW UPDATE · is online · HH:MM matches USERNAME · is connected · HH:MM). Emoji reactions can now be added to both via double-tap on mobile / hover on desktop. Reply quotes no longer underline on click. Mentioning someone via the members list now inserts the @tag at the cursor position instead of always appending at the end. Chat & Pulse no longer overflow the viewport on mobile.'
+        },
         {
             date:  '2026-05-12T23:30:00Z',
             type:  'improvement',
