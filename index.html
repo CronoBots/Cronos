@@ -15,7 +15,7 @@
 <link as="image" href="icon.png?v=2" rel="preload"/>
 <!-- Preload WOFF2 quand dispo (3x plus léger), sinon le @font-face fallback OTF -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2"/>
-<link href="styles.css?v=1778200000" rel="stylesheet"/>
+<link href="styles.css?v=1778205000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -2040,6 +2040,9 @@
         </div>
         <div class="stats-col-selector-wrap">
           <button class="stats-col-selector-btn" id="statsColSelectorBtn" type="button" title="Columns">
+            <svg class="stats-col-selector-icon" width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="3" width="4" height="14" rx="1"/><rect x="8" y="3" width="4" height="14" rx="1"/><rect x="13" y="3" width="4" height="14" rx="1"/>
+            </svg>
             <span id="statsColSelectorLabel">Columns displayed</span>
           </button>
           <div class="stats-col-dropdown" id="statsColDropdown" style="display:none;">
@@ -11720,21 +11723,6 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 label = collCount + ' Collection' + (collCount > 1 ? 's' : '');
             }
             lbl.textContent = label;
-            // Force la typo en dur via inline style — voir commentaire
-            // équivalent dans le statsColSelectorLabel updater (Top
-            // Collections). Battre toute règle CSS qui résisterait.
-            lbl.style.setProperty('font-family', "'Geomanist-Bold', sans-serif", 'important');
-            lbl.style.setProperty('font-size', '10px', 'important');
-            lbl.style.setProperty('font-weight', 'normal', 'important');
-            lbl.style.setProperty('letter-spacing', '0.08em', 'important');
-            lbl.style.setProperty('text-transform', 'uppercase', 'important');
-            lbl.style.setProperty('line-height', '1', 'important');
-            const btn = document.getElementById('sbColSelectorBtn');
-            if (btn) {
-                btn.style.setProperty('font-size', '10px', 'important');
-                btn.style.setProperty('letter-spacing', '0.08em', 'important');
-                btn.style.setProperty('line-height', '1', 'important');
-            }
         }
 
         // Checkboxes multi-sélection
@@ -16394,23 +16382,6 @@ fragment CollectionStatsData on Collection {
             const visible = COLUMNS.filter(c => c.always || colVisibility[c.key]).length;
             const total   = COLUMNS.length;
             lbl.textContent = visible + '/' + total + ' Columns displayed';
-            // Force la typo EN DUR via inline style — battu absolument toute
-            // règle CSS, même !important (cf. le user qui voit toujours le
-            // texte plus petit que les autres filtres malgré ID-level
-            // !important). Aligné sur .stats-cf-btn / .stats-vf-btn.
-            lbl.style.setProperty('font-family', "'Geomanist-Bold', sans-serif", 'important');
-            lbl.style.setProperty('font-size', '10px', 'important');
-            lbl.style.setProperty('font-weight', 'normal', 'important');
-            lbl.style.setProperty('letter-spacing', '0.08em', 'important');
-            lbl.style.setProperty('text-transform', 'uppercase', 'important');
-            lbl.style.setProperty('line-height', '1', 'important');
-            // Le bouton parent aussi, pour blinder.
-            const btn = document.getElementById('statsColSelectorBtn');
-            if (btn) {
-                btn.style.setProperty('font-size', '10px', 'important');
-                btn.style.setProperty('letter-spacing', '0.08em', 'important');
-                btn.style.setProperty('line-height', '1', 'important');
-            }
         }
     }
 
