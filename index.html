@@ -15,7 +15,7 @@
 <link as="image" href="icon.png?v=2" rel="preload"/>
 <!-- Preload WOFF2 quand dispo (3x plus léger), sinon le @font-face fallback OTF -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2"/>
-<link href="styles.css?v=1778110000" rel="stylesheet"/>
+<link href="styles.css?v=1778115000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -9417,6 +9417,88 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         let _reactionsListener = null;
         let _cachedReactions   = {};   // cache local pour les updates rapides
 
+        // ── Reactor popover (qui a réagi avec cet emoji) ────────────────────
+        // Sur desktop le `title=""` natif au hover suffit. Sur mobile (et pour
+        // qui veut une vue plus lisible sur desktop), un appui long sur la
+        // pill ouvre un petit popover avec la liste des pseudos. Le popover
+        // se ferme au prochain tap/click en dehors.
+        let _reactorPopoverEl = null;
+        function _ensureReactorPopover() {
+            if (_reactorPopoverEl) return _reactorPopoverEl;
+            _reactorPopoverEl = document.createElement('div');
+            _reactorPopoverEl.className = 'home-chat-reactors-popover';
+            _reactorPopoverEl.style.display = 'none';
+            document.body.appendChild(_reactorPopoverEl);
+            document.addEventListener('pointerdown', e => {
+                if (_reactorPopoverEl.style.display === 'none') return;
+                if (_reactorPopoverEl.contains(e.target)) return;
+                if (e.target.closest('.home-chat-reaction-pill')) return;
+                _reactorPopoverEl.style.display = 'none';
+            }, true);
+            return _reactorPopoverEl;
+        }
+        function _showReactorPopover(pill) {
+            let names = [];
+            try { names = JSON.parse(pill.dataset.reactors || '[]'); } catch(_) {}
+            if (!names.length) return;
+            const pop = _ensureReactorPopover();
+            pop.innerHTML = '';
+            const head = document.createElement('div');
+            head.className = 'home-chat-reactors-popover-head';
+            const emoji = pill.querySelector('.home-chat-reaction-emoji')?.textContent || '';
+            head.textContent = emoji + '  ·  ' + names.length + (names.length === 1 ? ' reactor' : ' reactors');
+            pop.appendChild(head);
+            names.forEach(n => {
+                const item = document.createElement('div');
+                item.className = 'home-chat-reactors-popover-item';
+                item.textContent = n;
+                pop.appendChild(item);
+            });
+            // Affiche d'abord (display:block) pour avoir des dimensions
+            // mesurables, puis positionne au-dessus de la pill, recadré
+            // à l'intérieur du viewport.
+            pop.style.display = 'block';
+            pop.style.left = '0px';
+            pop.style.top  = '0px';
+            const pillRect = pill.getBoundingClientRect();
+            const popRect  = pop.getBoundingClientRect();
+            const margin   = 6;
+            let left = pillRect.left + (pillRect.width - popRect.width) / 2;
+            left = Math.max(margin, Math.min(left, window.innerWidth - popRect.width - margin));
+            let top  = pillRect.top - popRect.height - 6;
+            if (top < margin) top = pillRect.bottom + 6;  // bascule en dessous si pas la place
+            pop.style.left = (left + window.scrollX) + 'px';
+            pop.style.top  = (top  + window.scrollY) + 'px';
+        }
+
+        // Attache la détection d'appui long sur une pill de réaction.
+        // 500ms d'appui sans bouger de plus de 8px ⇒ on ouvre le popover et
+        // on demande au handler de click suivant de ne PAS toggler.
+        function wireReactionPillReveal(pill) {
+            let timer = null, fired = false, start = { x: 0, y: 0 };
+            const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+            pill.addEventListener('pointerdown', e => {
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+                fired = false;
+                start = { x: e.clientX, y: e.clientY };
+                cancel();
+                timer = setTimeout(() => {
+                    fired = true;
+                    pill._suppressNextClick = true;
+                    _showReactorPopover(pill);
+                    if (navigator.vibrate) navigator.vibrate(15);
+                }, 500);
+            });
+            pill.addEventListener('pointermove', e => {
+                if (!timer) return;
+                if (Math.abs(e.clientX - start.x) > 8 || Math.abs(e.clientY - start.y) > 8) cancel();
+            });
+            ['pointerup','pointercancel','pointerleave'].forEach(ev =>
+                pill.addEventListener(ev, cancel)
+            );
+        }
+
+
         // Toggle : ajoute ou retire la réaction — utilise l'index pour sécurité
         async function toggleReaction(msgKey, idx) {
             // Pour un utilisateur signé : on utilise une clé STABLE basée
@@ -9489,7 +9571,28 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 pill.className = 'home-chat-reaction-pill' + (mine ? ' home-chat-reaction-pill--mine' : '');
                 pill.innerHTML = '<span class="home-chat-reaction-emoji">' + emoji + '</span>'
                                + '<span class="home-chat-reaction-count">' + count + '</span>';
-                pill.addEventListener('click', () => toggleReaction(div.dataset.msgKey, idx));
+                // Reactor list — decode "u_<name>" keys to usernames, "s_*"
+                // (visiteurs non signés) deviennent "Anonymous". Sert au
+                // tooltip natif (hover desktop) ET au popover long-press
+                // mobile (cf. wireReactionPillReveal plus bas).
+                const reactorNames = Object.keys(users).map(k =>
+                    k.startsWith('u_') ? k.slice(2) : 'Anonymous'
+                );
+                pill.title = reactorNames.join(', ');
+                pill.dataset.reactors = JSON.stringify(reactorNames);
+                pill.dataset.emojiKey = emojiKey;
+                pill.addEventListener('click', e => {
+                    // Si un long-press a ouvert le popover juste avant, le
+                    // click "synthétique" qui suit le pointerup est annulé
+                    // pour ne pas toggler la réaction par accident.
+                    if (pill._suppressNextClick) {
+                        pill._suppressNextClick = false;
+                        e.preventDefault(); e.stopPropagation();
+                        return;
+                    }
+                    toggleReaction(div.dataset.msgKey, idx);
+                });
+                wireReactionPillReveal(pill);
                 bar.appendChild(pill);
             });
             bar.style.display = hasAny ? 'flex' : 'none';
@@ -14001,6 +14104,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-13T02:00:00Z',
+            type:  'improvement',
+            title: 'Chat polish: who reacted, equal spacing, verified badge aligned',
+            text:  'Long-press (or hover on desktop) any emoji-reaction pill to see exactly who reacted — names appear in a small popover above the pill. Vertical spacing is now uniform across the chat: pill↔pill, pill↔message and message↔message all share the same 8px gap. The blue verified ✓ badge next to authenticated usernames is now optically centered on the username caps (was sitting slightly low). Input placeholder also got a WTF-themed refresh.'
+        },
         {
             date:  '2026-05-13T01:30:00Z',
             type:  'fix',
