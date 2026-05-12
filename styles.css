@@ -13825,6 +13825,15 @@ body.is-profile-loading #profileLoadingOverlay * {
     min-width: 0;
     overflow: hidden;
 }
+/* Geomanist-Bold caps : font à descender généreux mais caps anchored
+   haut — center-align flex met le badge au milieu de la line-box,
+   donc visuellement ~1.5px sous le centre optique des capitales.
+   Compensation explicite pour aligner le pastille-✓ sur le centre
+   visuel du pseudo. Scoped au wrapper, pas global, parce que le
+   même badge sert ailleurs (modal membres) avec un contexte différent. */
+.home-chat-msg-user-wrap .chat-verified-badge {
+    transform: translateY(-1.5px);
+}
 /* ── Certified badge in community chat ── */
 .chat-verified-badge {
     display: inline-flex;
@@ -14137,7 +14146,12 @@ body.is-profile-loading #profileLoadingOverlay * {
     gap: 6px;
     padding: 4px 10px;
     border-radius: 999px;
-    margin: 6px auto;
+    /* margin 0 : on laisse le `gap: 8px` du parent .home-chat-messages
+       gérer l'espacement. Avec margin: 6px on créait un écart asymétrique
+       (pill↔pill = 20px, pill↔msg = 14px, msg↔msg = 8px). À margin: 0,
+       tout retombe sur 8px, partout pareil. align-self: center (plus bas)
+       gère le centrage horizontal, donc plus besoin de margin auto. */
+    margin: 0;
     max-width: 90%;
     font-size: 10.5px;
     line-height: 1.4;
@@ -27906,6 +27920,47 @@ body { box-sizing: border-box; }
     font-weight: 700;
     font-size: 11px;
     letter-spacing: 0.02em;
+}
+
+/* Popover qui révèle la liste des pseudos ayant réagi avec un emoji
+   donné. Affiché par un appui long (500ms) sur une pill — desktop ET
+   tactile. Sur desktop le `title=""` natif au hover reste également
+   actif comme tooltip rapide. Positionné en absolute par JS. */
+.home-chat-reactors-popover {
+    position: absolute;
+    z-index: 1000;
+    background: #0d1829;
+    border: 1px solid rgba(0, 179, 255, 0.35);
+    border-radius: 10px;
+    padding: 8px 12px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+    min-width: 140px;
+    max-width: 240px;
+    max-height: 260px;
+    overflow-y: auto;
+    font-family: sans-serif;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 12px;
+    line-height: 1.45;
+    pointer-events: auto;
+}
+.home-chat-reactors-popover-head {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #00B3FF;
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.home-chat-reactors-popover-item {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.85);
+    padding: 2px 0;
 }
 
 /* ── Chat — Message d'erreur de validation ── */
