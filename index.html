@@ -9951,6 +9951,15 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                        <svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg>
                    </span>`
                 : '';
+            /* Badge "WTF PATRON" : affiché si l'auteur figure dans
+               window._patronsCache (alimenté par renderTable côté Support).
+               Le cache peut ne pas encore être chargé au 1er rendu — on
+               pose data-patron-username sur le wrapper pour permettre un
+               re-patch quand l'event cronos:patrons-updated est émis. */
+            const isPatron = !!(window._patronsCache && window._patronsCache.has(userKey));
+            const patronBadgeHtml = isPatron
+                ? '<span class="chat-patron-badge" title="Official Patron — supporter of CRONOS.WTF">WTF PATRON</span>'
+                : '';
             const div = document.createElement('div');
             div.className = 'home-chat-msg home-chat-msg--community' + (isMine ? ' home-chat-msg--mine' : '');
             if (key) div.dataset.msgKey = key;
@@ -9993,8 +10002,8 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             div.innerHTML = `
                 ${reactBarHtml}
                 <div class="home-chat-msg-meta">
-                    <span class="home-chat-msg-user-wrap">
-                        <span class="home-chat-msg-user">${_fcEsc(msg.display || msg.user || 'Anonymous')}</span>${verifiedBadgeHtml}
+                    <span class="home-chat-msg-user-wrap" data-patron-username="${_fcEsc(userKey)}">
+                        <span class="home-chat-msg-user">${_fcEsc(msg.display || msg.user || 'Anonymous')}</span>${verifiedBadgeHtml}${patronBadgeHtml}
                     </span>
                     <span class="home-chat-msg-meta-right">
                         <span class="home-chat-msg-time">${formatDateTime(msg.t)}</span>
@@ -10284,6 +10293,14 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                               '<svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg>' +
                           '</span>'
                         : '';
+                    // Badge "WTF PATRON" : même source de vérité que dans
+                    // renderMessage — window._patronsCache (alimenté par le
+                    // module Support). Re-patché en live via l'event
+                    // cronos:patrons-updated si le cache arrive après.
+                    const isPatron = !!(window._patronsCache && window._patronsCache.has(String(uname).toLowerCase()));
+                    const patronHtml = isPatron
+                        ? '<span class="chat-patron-badge chat-patron-badge--member" title="Official Patron — supporter of CRONOS.WTF">WTF PATRON</span>'
+                        : '';
                     // data-mention-display = ce qu'on insère dans le chat
                     // quand on clique (ex. "THE PHOTOGRAPH"). data-mention-
                     // username = identifiant technique pour la résolution
@@ -10294,7 +10311,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                             ? `<img class="home-chat-member-avatar" src="${_fcEsc(m.avatar)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><span class="home-chat-member-initial" style="display:none">${_fcEsc(dname[0].toUpperCase())}</span>`
                             : `<span class="home-chat-member-initial">${_fcEsc(dname[0].toUpperCase())}</span>`
                         }
-                        <span class="home-chat-member-name">${_fcEsc(dname)}</span>${verifiedHtml}
+                        <span class="home-chat-member-name">${_fcEsc(dname)}</span>${verifiedHtml}${patronHtml}
                     </div>`;
                 }).join('') +
                 (extra > 0 ? `<div class="home-chat-member home-chat-member--more">+${extra} more</div>` : '');
@@ -13509,6 +13526,57 @@ async function sha256hex(str) {
         if (supWrap)  supWrap.innerHTML  = tableHtml(supporters.slice(0, 100));
         // Home : top 10 uniquement pour ne pas noyer la page
         if (homeWrap) homeWrap.innerHTML = tableHtml(supporters.slice(0, 10));
+
+        /* Cache global des "patrons" — utilisé par le chat pour afficher le
+           badge jaune "WTF PATRON" à côté du pseudo. On stocke uniquement
+           les usernames Crypto.com (lowercase) qui sont la clé d'identité
+           dans le chat. Les manual donations sans username ne peuvent pas
+           être matchées à un compte chat de façon fiable, donc on les
+           exclut. */
+        const patrons = new Set();
+        supporters.forEach(s => {
+            if (s.username) patrons.add(String(s.username).toLowerCase());
+        });
+        window._patronsCache = patrons;
+        /* Patch des éléments chat DÉJÀ rendus avant l'arrivée du cache
+           (cas du 1er load : les messages s'affichent souvent avant que
+           le module Support ait fini de fetch les ventes NFT). */
+        _patchPatronBadges();
+    }
+
+    function _patchPatronBadges() {
+        const cache = window._patronsCache;
+        if (!cache) return;
+        // Messages du chat : data-patron-username sur .home-chat-msg-user-wrap
+        document.querySelectorAll('.home-chat-msg-user-wrap[data-patron-username]').forEach(wrap => {
+            const uname = wrap.dataset.patronUsername || '';
+            const should = cache.has(uname);
+            const existing = wrap.querySelector('.chat-patron-badge');
+            if (should && !existing) {
+                const span = document.createElement('span');
+                span.className = 'chat-patron-badge';
+                span.title = 'Official Patron — supporter of CRONOS.WTF';
+                span.textContent = 'WTF PATRON';
+                wrap.appendChild(span);
+            } else if (!should && existing) {
+                existing.remove();
+            }
+        });
+        // Liste des membres (sidebar + modal mobile)
+        document.querySelectorAll('.home-chat-member[data-mention-username]').forEach(el => {
+            const uname = (el.dataset.mentionUsername || '').toLowerCase();
+            const should = cache.has(uname);
+            const existing = el.querySelector('.chat-patron-badge');
+            if (should && !existing) {
+                const span = document.createElement('span');
+                span.className = 'chat-patron-badge chat-patron-badge--member';
+                span.title = 'Official Patron — supporter of CRONOS.WTF';
+                span.textContent = 'WTF PATRON';
+                el.appendChild(span);
+            } else if (!should && existing) {
+                existing.remove();
+            }
+        });
     }
 
     let _refreshTimer  = null;
