@@ -12318,41 +12318,61 @@ body.is-profile-loading #profileLoadingOverlay * {
 .stats-col-selector-wrap {
     position: relative;
 }
+/* ── Bouton sélecteur de colonnes ──────────────────────────────────────────
+   Réécriture complète : on copie LITTÉRALEMENT les propriétés typo de
+   .stats-vf-btn (qui sert de référence visuelle au user pour « la même
+   taille que les autres filtres »). Le cadre du bouton (background +
+   border + border-radius) reproduit celui de la BARRE parent qui
+   contient les filtres segmentés (.stats-chain-filter / .stats-verified-
+   filter — display: flex, height: 32px, etc.), pas celui d'un bouton
+   segment individuel. */
 .stats-col-selector-btn {
+    /* ─ Layout : flex pour aligner l'icône et le label sur la même
+       baseline horizontale, hauteur fixe identique au container des
+       autres filtres (32px). */
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    /* Cadre + typo strictement alignés sur .stats-cf-btn / .stats-vf-btn
-       (les boutons Cronos / Verified juste au-dessus dans la pile mobile) :
-       même hauteur 32px, même font-family Geomanist-Bold, MÊME font-size
-       10px, MÊME letter-spacing 0.08em (et non 0.1em qui faisait paraître
-       le texte plus aéré donc visuellement plus gros), même padding 0
-       11px. Couleur BLANC car c'est un compteur info en permanence (pas
-       un toggle on/off). */
+    height: 32px;
+    padding: 0 11px;
+    box-sizing: border-box;
+    /* ─ Cadre : copie de .stats-chain-filter / .stats-verified-filter. */
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 8px;
-    color: #fff;
+    /* ─ Typo : COPIE EXACTE de .stats-vf-btn ligne par ligne.
+       Si demain on change vf-btn, on change ici aussi. */
+    color: rgba(255,255,255,0.38);
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 10px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    padding: 0 11px;
-    height: 32px;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
     white-space: nowrap;
+    /* ─ Interactivité. */
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
 }
-/* L'icône colonnes était à 14×14 — plus grosse que la hauteur du
-   texte 10px (~7px de cap-height), ce qui rendait le bouton plus
-   imposant que les autres. Réduit à 12×12 pour matcher le poids
-   visuel des labels texte-only. */
-.stats-col-selector-btn svg {
+/* L'icône reprend la couleur du texte (currentColor) et reste petite
+   pour ne pas dominer visuellement le label. */
+.stats-col-selector-icon {
     width: 12px;
     height: 12px;
+    flex-shrink: 0;
+    color: currentColor;
+}
+/* Le span enfant n'a aucun style propre — il hérite tout du bouton.
+   On lui réaffirme néanmoins font-size/letter-spacing pour blinder
+   contre tout reset CSS global qui mettrait font-size:100% sur les
+   <span>. */
+.stats-col-selector-btn > span {
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
 }
 .stats-col-selector-btn:hover {
+    color: rgba(255,255,255,0.7);
     background: rgba(255,255,255,0.08);
 }
 .stats-col-dropdown {
@@ -28405,27 +28425,11 @@ body { box-sizing: border-box; }
         display: flex;
     }
     /* Mobile : le bouton "Columns displayed" prend toute la largeur de
-       la rangée. Font-size forcé à 10px (= .stats-cf-btn / .stats-vf-btn,
-       les boutons CRONOS POS / UNVERIFIED juste au-dessus). !important
-       pour blinder contre toute règle plus spécifique cachée. */
+       sa rangée. Pas d'override typo : la règle de base copie déjà
+       .stats-vf-btn ligne par ligne (font-size 10px, letter-spacing
+       0.08em). */
     .stats-col-selector-btn {
         width: 100%;
-        justify-content: center;
-        font-size: 10px !important;
-        letter-spacing: 0.08em !important;
-        padding: 0 11px !important;
-    }
-    .stats-col-selector-btn span {
-        font-size: 10px !important;
-        letter-spacing: 0.08em !important;
-    }
-    /* L'icône SVG des colonnes est cachée sur mobile. Sa présence à
-       côté du texte (vs filtres cf/vf-btn qui sont 100% texte) faisait
-       que le texte paraissait visuellement plus petit car partageait
-       l'espace du bouton avec l'icône. Mobile pur texte = même rendu
-       que ses voisins. */
-    .stats-col-selector-btn svg {
-        display: none !important;
     }
     .stats-refresh-btn {
         flex-shrink: 0;
@@ -31012,30 +31016,3 @@ body { box-sizing: border-box; }
     }
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   COLUMNS SELECTOR — typo strictement identique aux .stats-cf-btn /
-   .stats-vf-btn. Sélecteurs par ID pour battre toute règle plus
-   spécifique cachée (specificity 0,1,0,0 vs 0,0,1,0 du .stats-col-...).
-   Appliqué globalement (desktop + mobile) — c'est le rendu attendu.
-   Shorthand `font` pour reset font-style/variant/weight aussi, au cas
-   où ça serait override quelque part.
-   ══════════════════════════════════════════════════════════════════════════ */
-#statsColSelectorBtn,
-#sbColSelectorBtn,
-#statsColSelectorLabel,
-#sbColSelectorLabel {
-    font-family: 'Geomanist-Bold', sans-serif !important;
-    font-size: 10px !important;
-    font-weight: normal !important;
-    font-style: normal !important;
-    letter-spacing: 0.08em !important;
-    text-transform: uppercase !important;
-    line-height: 1 !important;
-}
-/* Pour être absolument certain que le span hérite — au cas où le
-   reset CSS global poserait un font-size sur tous les <span>. */
-#statsColSelectorBtn > *,
-#sbColSelectorBtn > * {
-    font-size: 10px !important;
-    letter-spacing: 0.08em !important;
-}
