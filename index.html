@@ -109,7 +109,10 @@
         <h3 class="login-modal-title">Sign in to CRONOS.WTF</h3>
         <p class="login-modal-sub">Enter your Crypto.com NFT username to access your profile directly.</p>
         <div class="login-modal-input-wrap">
-          <input class="login-modal-input" id="loginModalInput" type="text" placeholder="Your username…" autocomplete="off" spellcheck="false" autocorrect="off"/>
+          <input class="login-modal-input" id="loginModalInput" type="text" placeholder="Search your Crypto.com NFT username…" autocomplete="off" spellcheck="false" autocorrect="off"/>
+          <!-- Suggestions live (mêmes data que la search-bar — fetchDropDown).
+               Clic sur une ligne = sélection définitive du profil → login direct. -->
+          <div class="login-modal-suggestions" id="loginModalSuggestions" style="display:none;"></div>
         </div>
         <div class="login-modal-error" id="loginModalError" style="display:none;"></div>
         <button class="login-modal-btn" id="loginModalBtn" type="button">
@@ -9745,17 +9748,16 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
 
         // Toggle : ajoute ou retire la réaction — utilise l'index pour sécurité
         async function toggleReaction(msgKey, idx) {
-            // Pour un utilisateur signé : on utilise une clé STABLE basée
-            // sur le username (u_<username>), pas la clé de session
-            // (s_<random>) qui change à chaque rechargement de page.
-            // Sans ça, recharger + remettre le même emoji créait une 2e
-            // entrée dans Firebase et incrémentait le compteur — alors
-            // que c'est le MÊME utilisateur. Pour les visiteurs anon,
-            // on retombe sur sessKey (1 vote par onglet, comme avant).
+            // SEULS les membres signés peuvent réagir : sans username
+            // stable, les votes anonymes ne survivent pas à un reload et
+            // ouvraient une porte au spam d'un même onglet. On no-op
+            // silencieusement (la barre emoji reste visible mais le clic
+            // ne fait rien — UX volontaire pour éviter le pop-up).
             const me = getCurrentUser();
-            const reactKey = me?.username ? 'u_' + me.username : _currentSessKey;
-            if (!msgKey || !reactKey || !fbDb) {
-                console.warn('[Reactions] toggleReaction blocked — msgKey:', msgKey, 'reactKey:', reactKey, 'fbDb:', !!fbDb);
+            if (!me?.username) return;
+            const reactKey = 'u_' + me.username;
+            if (!msgKey || !fbDb) {
+                console.warn('[Reactions] toggleReaction blocked — msgKey:', msgKey, 'fbDb:', !!fbDb);
                 return;
             }
             const emojiKey = EMOJI_KEYS[idx];
@@ -9846,13 +9848,40 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         function startReactionsListener() {
             if (!fbDb || _reactionsListener) return;
             _reactionsListener = fbDb.ref('chat/reactions').on('value', snap => {
-                _cachedReactions = snap.val() || {};
-                // Vérifie si on est déjà en bas avant la mise à jour
+                const raw = snap.val() || {};
+                // On ignore les votes anonymes (clés commençant par "s_" —
+                // legacy d'avant le verrouillage). Seuls les votes "u_<username>"
+                // sont retenus. Les anciens votes anonymes restent en DB mais
+                // ne sont plus comptés ni affichés. Best-effort GC en arrière-
+                // plan pour libérer la place côté serveur.
+                const filtered = {};
+                const anonPaths = [];
+                Object.keys(raw).forEach(msgKey => {
+                    const emojiMap = raw[msgKey] || {};
+                    Object.keys(emojiMap).forEach(emoji => {
+                        const voteMap = emojiMap[emoji] || {};
+                        Object.keys(voteMap).forEach(voter => {
+                            if (voter.startsWith('u_')) {
+                                filtered[msgKey] = filtered[msgKey] || {};
+                                filtered[msgKey][emoji] = filtered[msgKey][emoji] || {};
+                                filtered[msgKey][emoji][voter] = voteMap[voter];
+                            } else {
+                                anonPaths.push('chat/reactions/' + msgKey + '/' + emoji + '/' + voter);
+                            }
+                        });
+                    });
+                });
+                _cachedReactions = filtered;
+                // GC : retire les votes anonymes côté serveur, max 50 par
+                // batch pour pas saturer la WebSocket si on a beaucoup
+                // d'historique.
+                anonPaths.slice(0, 50).forEach(p => {
+                    try { fbDb.ref(p).remove().catch(() => {}); } catch (_) {}
+                });
                 const atBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 40;
                 msgs.querySelectorAll('[data-msg-key]').forEach(div => {
                     updateReactionDisplay(div, _cachedReactions[div.dataset.msgKey] || {});
                 });
-                // Re-scroll après que les pills de réaction ont été rendues
                 if (atBottom) { _chatScrollToBottom(); }
             });
         }
@@ -13289,6 +13318,79 @@ async function sha256hex(str) {
     submitBtn?.addEventListener('click', () => doLogin(input?.value?.trim() || ''));
     input?.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(input.value.trim()); });
 
+    /* ── Suggestions live dans la modal sign-in ──
+       Même source que la search bar (fetchDropDown) → l'utilisateur tape et
+       voit les profils correspondants. Un clic sur une suggestion remplit
+       l'input ET déclenche le login immédiatement (plus besoin de cliquer
+       sur "Go to my profile"). Le bouton reste comme fallback texte libre. */
+    (function wireLoginSuggestions() {
+        const sugBox = document.getElementById('loginModalSuggestions');
+        if (!input || !sugBox) return;
+        let abort = null;
+        let lastQ = '';
+        let debTimer = null;
+
+        function hide() { sugBox.style.display = 'none'; sugBox.innerHTML = ''; }
+        function escapeHtml(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+
+        function render(users) {
+            if (!users || !users.length) { hide(); return; }
+            sugBox.innerHTML = users.slice(0, 6).map(u => {
+                const dn   = u.displayName || u.username || '';
+                const av   = u.avatar?.url || '';
+                const vbdg = u.verified ? '<span class="login-modal-sug-verified" title="Verified">✓</span>' : '';
+                return `
+                    <button type="button" class="login-modal-sug-item" data-username="${escapeHtml(u.username)}">
+                        ${av
+                            ? `<img class="login-modal-sug-avatar" src="${escapeHtml(av)}" alt="" loading="lazy"/>`
+                            : `<span class="login-modal-sug-avatar login-modal-sug-avatar--initial">${escapeHtml((dn[0] || '?').toUpperCase())}</span>`}
+                        <span class="login-modal-sug-text">
+                            <span class="login-modal-sug-display">${escapeHtml(dn)}${vbdg}</span>
+                            <span class="login-modal-sug-username">@${escapeHtml(u.username)}</span>
+                        </span>
+                    </button>`;
+            }).join('');
+            sugBox.style.display = 'block';
+        }
+
+        async function runSearch(q) {
+            if (typeof window.fetchDropDown !== 'function') { hide(); return; }
+            if (abort) abort.abort();
+            abort = new AbortController();
+            try {
+                const dd = await window.fetchDropDown(q, abort.signal);
+                if (lastQ !== q) return; // une frappe plus récente est arrivée
+                render(dd?.users || []);
+            } catch (e) { if (e?.name !== 'AbortError') hide(); }
+        }
+
+        input.addEventListener('input', () => {
+            const q = input.value.trim();
+            lastQ  = q;
+            clearTimeout(debTimer);
+            if (q.length < 2) { hide(); return; }
+            debTimer = setTimeout(() => runSearch(q), 220);
+        });
+
+        sugBox.addEventListener('click', e => {
+            const btn = e.target.closest('.login-modal-sug-item');
+            if (!btn) return;
+            const uname = btn.dataset.username || '';
+            if (!uname) return;
+            input.value = uname;
+            hide();
+            doLogin(uname);
+        });
+
+        // Réinitialise les suggestions à chaque ouverture/fermeture pour ne
+        // pas afficher d'anciens résultats au prochain affichage.
+        closeBtn?.addEventListener('click', hide);
+        backdrop?.addEventListener('click', e => { if (e.target === backdrop) hide(); });
+        loginBtn?.addEventListener('click', hide);
+    })();
+
     /* ── Boot verification section listeners ── */
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initVerifySection);
@@ -14518,6 +14620,12 @@ async function sha256hex(str) {
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
         {
+            date:  '2026-05-13T20:00:00Z',
+            type:  'improvement',
+            title: 'Home polish + anon visitors live + Sign-in suggestions',
+            text:  'Featured Collections and Featured Artists now span the full width (no more 2-column split). Volumes ≥ $1M render with the "M" suffix. Pulse "Online now" finally counts anonymous visitors so you see the real crowd. Anonymous visitors can read the chat but no longer post emoji reactions — existing anon reactions are filtered out. Sign-in modal: the input now shows live profile suggestions as you type (same matcher as the search bar) — click a result to log in directly. Pulse Top Snapshots resolves collection IDs to names via a Firebase-shared registry (analytics/collection_names), populated by trackEvent and back-filled via GraphQL at render time.'
+        },
+        {
             date:  '2026-05-13T07:30:00Z',
             type:  'fix',
             title: 'Top Collections — columns button visual weight matches filters',
@@ -15417,22 +15525,28 @@ async function sha256hex(str) {
         _pulseLivePresenceBound = true;
         const STALE_MS = 3 * 60 * 1000;
         window.fbDb.ref('chat/presence').on('value', snap => {
-            // Dédup par username + filtre stale (zombies). Aligné sur la
-            // logique du listener chat principal pour éviter d'afficher
-            // 5 personnes online alors qu'il n'y a qu'un membre actif.
-            const seen = new Set();
+            // "Online now" = membres signés (dédupés par username pour
+            // éviter de double-compter les multi-onglets) + visiteurs
+            // anonymes (chaque onglet = 1 visiteur — pas de username
+            // pour dédupliquer, c'est la seule signal qu'on ait pour
+            // estimer combien de personnes lisent le site en direct).
+            const seenUsers = new Set();
             const now  = Date.now();
-            let count = 0;
+            let signedIn = 0, anon = 0;
             snap.forEach(c => {
                 const v = c.val();
-                if (!v || v.anon) return;
+                if (!v) return;
                 if (v.t && now - Number(v.t) > STALE_MS) return;
-                if (!v.username || seen.has(v.username)) return;
-                seen.add(v.username);
-                count++;
+                if (v.anon) {
+                    anon++;
+                } else if (v.username && !seenUsers.has(v.username)) {
+                    seenUsers.add(v.username);
+                    signedIn++;
+                }
             });
+            const total = signedIn + anon;
             const el = document.getElementById('pulseKpiOnline');
-            if (el) el.textContent = count >= 1000 ? (count / 1000).toFixed(1) + 'k' : String(count);
+            if (el) el.textContent = total >= 1000 ? (total / 1000).toFixed(1) + 'k' : String(total);
         });
     }
 
