@@ -13776,6 +13776,16 @@ body.is-profile-loading #profileLoadingOverlay * {
     gap: 10px;
     margin-bottom: 3px;
 }
+/* Cluster gauche : avatar + pseudo collés (gap fin), puis l'heure
+   pushed à droite par le space-between du parent. Sans ce wrapper,
+   space-between distribuait sur 3 enfants → pseudo loin de l'avatar. */
+.home-chat-msg-meta-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    flex: 1 1 auto;
+}
 /* Avatar à gauche du pseudo — la slot accueille soit une <img>, soit
    le fallback initial (lettre majuscule sur fond cyan). 22px pile pour
    matcher la hauteur visuelle d'une ligne de pseudo Geomanist-Bold à
@@ -13955,19 +13965,21 @@ body.is-profile-loading #profileLoadingOverlay * {
     color: #00B3FF;
     font-family: 'Geomanist-Bold', sans-serif;
     font-weight: 800;
+    /* Clampé à 11px pour ne pas dépasser la taille du pseudo en haut
+       du message (.home-chat-msg-user est à 11px). Sans ce clamp la
+       pill hérite de la taille du body et apparaît plus grosse que le
+       pseudo, ce qui inverse la hiérarchie visuelle. */
+    font-size: 11px;
     background: rgba(0, 179, 255, 0.20);
     border: 1px solid rgba(0, 179, 255, 0.55);
     border-radius: 6px;
-    padding: 1px 7px 2px;
-    line-height: 1.2;
+    padding: 0 6px 1px;
+    line-height: 1.3;
     text-decoration: none;
-    /* MAJUSCULES — même traitement que les autres labels de la home,
-       et ressort très clairement comme un tag de mention. */
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    /* whiten on hover even though the pill is not currently a link —
-       reads as "interactive label" rather than text. */
     transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+    vertical-align: 1px;
 }
 .home-chat-mention:hover {
     background: rgba(0, 179, 255, 0.32);
