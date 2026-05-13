@@ -1438,47 +1438,35 @@
          cards are still rendered into #homeFeaturedGrid by buildFeatured() —
          the spotlight effect is achieved by stacking them and toggling
          .is-active on one at a time. ── -->
-    <!-- ── 2 COLONNES : Featured Collections (gauche) | Featured Artists (droite) ── -->
-    <div class="home-two-col home-two-col--featured">
+    <!-- ── Featured Collections + Featured Artists — chacune prend toute
+         la largeur, empilées verticalement (plus de grid 2 colonnes). ── -->
+    <section class="home-section home-section--featured">
+      <div class="home-section-header">
+        <h2 class="home-section-title">Featured Collections</h2>
+      </div>
+      <div class="home-fc-spotlight" id="homeFeaturedSpotlight" data-active="0">
+        <div class="home-featured-grid" id="homeFeaturedGrid"><!-- cards injected by JS --></div>
+        <div class="home-fc-controls">
+          <button class="home-fc-arrow home-fc-arrow--prev" id="homeFeaturedPrev" type="button" aria-label="Previous collection">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="12,4 6,10 12,16"/></svg>
+          </button>
+          <div class="home-fc-progress"><div class="home-fc-progress-fill" id="homeFeaturedProgress"></div></div>
+          <div class="home-fc-dots" id="homeFeaturedDots"><!-- dots injected by JS --></div>
+          <button class="home-fc-arrow home-fc-arrow--next" id="homeFeaturedNext" type="button" aria-label="Next collection">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="8,4 14,10 8,16"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
 
-      <!-- ── Featured Collections — single-card spotlight (auto-rotates every
-           FC_CYCLE_MS, paused on hover, manual nav via dots / arrows). The
-           cards are still rendered into #homeFeaturedGrid by buildFeatured() —
-           the spotlight effect is achieved by stacking them and toggling
-           .is-active on one at a time. ── -->
-      <section class="home-section home-section--featured">
-        <div class="home-section-header">
-          <h2 class="home-section-title">Featured Collections</h2>
-        </div>
-        <div class="home-fc-spotlight" id="homeFeaturedSpotlight" data-active="0">
-          <div class="home-featured-grid" id="homeFeaturedGrid"><!-- cards injected by JS --></div>
-          <!-- Controls bar : prev arrow · progress · dots · next arrow.
-               Toutes les commandes de navigation regroupées sous la card pour
-               ne pas la surcharger ni en réduire la largeur. -->
-          <div class="home-fc-controls">
-            <button class="home-fc-arrow home-fc-arrow--prev" id="homeFeaturedPrev" type="button" aria-label="Previous collection">
-              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="12,4 6,10 12,16"/></svg>
-            </button>
-            <div class="home-fc-progress"><div class="home-fc-progress-fill" id="homeFeaturedProgress"></div></div>
-            <div class="home-fc-dots" id="homeFeaturedDots"><!-- dots injected by JS --></div>
-            <button class="home-fc-arrow home-fc-arrow--next" id="homeFeaturedNext" type="button" aria-label="Next collection">
-              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="8,4 14,10 8,16"/></svg>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- ── Featured Artists — colonne droite, même hauteur que Featured Collections ── -->
-      <section class="home-section home-section--featured-artists">
-        <div class="home-section-header">
-          <h2 class="home-section-title">Featured Artists</h2>
-        </div>
-        <div class="home-creators-grid" id="homeFeaturedCreatorsGrid">
-          <div class="home-top-loading"><span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span></div>
-        </div>
-      </section>
-
-    </div>
+    <section class="home-section home-section--featured-artists">
+      <div class="home-section-header">
+        <h2 class="home-section-title">Featured Artists</h2>
+      </div>
+      <div class="home-creators-grid" id="homeFeaturedCreatorsGrid">
+        <div class="home-top-loading"><span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span></div>
+      </div>
+    </section>
 
     <!-- ── Featured Drops — collections en cours mises en avant + ta CRONOS.WTF ── -->
     <section class="home-section home-fd-section">
@@ -9071,7 +9059,16 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         const bio    = data?.bio || '';
         const verified = data?.verified || false;
         const profileUrl = cfg.url || `https://crypto.com/nft/profile/${cfg.username}?tab=created`;
-        const fmt = n => { const v=Number(n)||0; if(!v) return '—'; return v>=1000?'$'+(v/1000).toFixed(1)+'K':'$'+v.toFixed(0); };
+        const fmt = n => {
+            const v = Number(n) || 0;
+            if (!v) return '—';
+            // ≥ 1M → on bascule sur la notation "M" pour éviter d'avoir
+            // "1500K" qui se lit mal. Un seul chiffre après la virgule,
+            // strip du .0 superflu (ex. "1M" plutôt que "1.0M").
+            if (v >= 1_000_000) return '$' + (v / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+            if (v >= 1_000)     return '$' + (v / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+            return '$' + v.toFixed(0);
+        };
         const fmtNum = n => { const v=Number(n)||0; return v.toLocaleString('en-US'); };
 
         const collections = bundle?.collections || [];
@@ -10546,6 +10543,18 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     // on retombera sur PERMISSION_DENIED.
                     console.warn('[Pulse trackEvent] write failed for', type, '→', e?.code || e?.message || e);
                 });
+                // Registry centralisé id→nom pour les events à clé
+                // collection. Permet d'afficher "MyCollection" au lieu de
+                // "abc123…" dans Pulse, même quand le label de l'event
+                // initial est manquant (ex: snapshot lancé depuis l'URL
+                // avant que la bannière n'ait chargé le nom).
+                const COL_EVENTS = new Set(['snapshot_run', 'collection_view', 'marketbot_add']);
+                if (label && COL_EVENTS.has(type)) {
+                    fbDb.ref(`analytics/collection_names/${String(target)}`).set({
+                        name: String(label).slice(0, 120),
+                        ts:   firebase.database.ServerValue.TIMESTAMP
+                    }).catch(() => {});
+                }
             } catch (_) {}
         }
         window.trackEvent = trackEvent;
@@ -13648,8 +13657,9 @@ async function sha256hex(str) {
     }
 
     function fmtAmount(n) {
-        if (n >= 1000) return '$' + (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-        if (n >= 100)  return '$' + Math.round(n);
+        if (n >= 1_000_000) return '$' + (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+        if (n >= 1_000)     return '$' + (n / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+        if (n >= 100)       return '$' + Math.round(n);
         return '$' + n.toFixed(2);
     }
 
@@ -14929,9 +14939,25 @@ async function sha256hex(str) {
             } catch (e) { /* perm denied / vide → ignore */ }
         }));
 
+        // ── Registry id→nom (analytics/collection_names) — alimenté par
+        // trackEvent à chaque snapshot/collection_view/marketbot_add avec
+        // un label. Permet à Pulse d'afficher les vrais noms même quand
+        // les events historiques ont été loggués sans label. ────────────
+        const colNameFetch = window.fbDb.ref('analytics/collection_names').once('value')
+            .then(snap => {
+                const map = {};
+                snap?.forEach?.(child => {
+                    const v = child.val();
+                    if (v?.name) map[child.key] = v.name;
+                });
+                return map;
+            })
+            .catch(() => ({}));
+
         await sessionFetches;
         await eventFetches;
         const [membersSnap, presenceSnap, messagesSnap] = await sideFetches;
+        const collectionNames = await colNameFetch;
 
         const members = [];
         if (membersSnap) membersSnap.forEach(c => members.push(Object.assign({ _key: c.key }, c.val())));
@@ -14948,10 +14974,10 @@ async function sha256hex(str) {
             });
         }
 
-        return { dates, dayCounts, sessions: allSessions, members, presence, messages, events: allEvents, cutoffMs };
+        return { dates, dayCounts, sessions: allSessions, members, presence, messages, events: allEvents, collectionNames, cutoffMs };
     }
 
-    function renderPulseCharts({ dates, dayCounts, sessions, members, presence, messages, events, cutoffMs }) {
+    function renderPulseCharts({ dates, dayCounts, sessions, members, presence, messages, events, collectionNames, cutoffMs }) {
         // Défensifs : si les fetches "side" ont échoué, on traite comme vide.
         members  = members  || [];
         presence = presence || [];
@@ -15279,26 +15305,57 @@ async function sha256hex(str) {
         renderList('pulseTopContributors', topContrib);
 
         // ── Listes basées sur analytics/events ──────────────────────────
-        // On group-by sur `target` (id/clé stable), et on prend le meilleur
-        // `label` rencontré (le nom lisible) pour l'affichage.
-        const eventTally = (eventType, max) => {
+        // On group-by sur `target` (id/clé stable). Pour l'affichage on
+        // résout le nom dans cet ordre :
+        //   1) label le plus complet trouvé dans les events
+        //   2) analytics/collection_names/{id} (registry Firebase
+        //      partagé entre tous les visiteurs)
+        //   3) l'id brut en fallback — sera enrichi en arrière-plan via
+        //      _resolveCollectionNames pour les events de type collection.
+        const nameRegistry = collectionNames || {};
+        const eventTally = (eventType, max, opts) => {
             const counts = new Map();
             const labels = new Map();
             events.forEach(e => {
                 if (!e || e.type !== eventType || !e.target) return;
                 counts.set(e.target, (counts.get(e.target) || 0) + 1);
-                if (e.label && !labels.has(e.target)) labels.set(e.target, e.label);
+                if (e.label) {
+                    const prev = labels.get(e.target);
+                    if (!prev || String(e.label).length > String(prev).length) {
+                        labels.set(e.target, e.label);
+                    }
+                }
             });
+            const resolve = opts?.isCollection
+                ? (id) => labels.get(id) || nameRegistry[id] || id
+                : (id) => labels.get(id) || id;
             return Array.from(counts.entries())
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, max || 8)
-                .map(([target, n]) => [labels.get(target) || target, n]);
+                .map(([target, n]) => [resolve(target), n, target]);
         };
-        renderList('pulseTopCollections', eventTally('collection_view', 10));
+        const topCols      = eventTally('collection_view', 10, { isCollection: true });
+        const topSnapshots = eventTally('snapshot_run',     8, { isCollection: true });
+        const topMarketBot = eventTally('marketbot_add',    8, { isCollection: true });
+        renderList('pulseTopCollections', topCols);
         renderList('pulseTopProfiles',    eventTally('profile_view'));
-        renderList('pulseTopSnapshots',   eventTally('snapshot_run'));
-        renderList('pulseTopMarketBot',   eventTally('marketbot_add'));
+        renderList('pulseTopSnapshots',   topSnapshots);
+        renderList('pulseTopMarketBot',   topMarketBot);
         renderList('pulseTopCryptos',     eventTally('crypto_track'));
+
+        // Backfill des IDs encore non résolus : on déclenche une lookup
+        // GraphQL et on écrit le nom dans analytics/collection_names pour
+        // que le prochain visiteur (et le prochain refresh) bénéficie du
+        // nom directement depuis le registry, sans rejouer la query.
+        const unresolved = new Set();
+        [topCols, topSnapshots, topMarketBot].forEach(rows => {
+            rows.forEach(([_label, _n, id]) => {
+                if (id && !nameRegistry[id] && /^[0-9a-f]{16,}$/i.test(id)) {
+                    unresolved.add(id);
+                }
+            });
+        });
+        if (unresolved.size) _resolveCollectionNames([...unresolved]);
 
         // ── Live "Online now" — listener Firebase pour mise à jour temps
         // réel. Sans ça, le KPI peut être stale 60s à cause du cache pulse,
@@ -15306,6 +15363,51 @@ async function sha256hex(str) {
         // online dans chat/presence mais Pulse continue d'afficher l'ancien
         // count tant que le cache n'expire pas).
         attachPulseLivePresence();
+    }
+
+    /* Backfill du registry analytics/collection_names : pour chaque ID
+       de collection qui apparaît dans Pulse sans nom (event historique
+       loggué sans label + pas encore enregistré dans le registry), on
+       résout via GraphQL puis on écrit le résultat sur Firebase. Au
+       prochain rendu (n'importe quel visiteur), Pulse affichera
+       directement le nom — c'est l'aspect "centralisé sur Firebase"
+       (rien n'est stocké côté navigateur). */
+    const _resolvingCollectionNames = new Set();
+    async function _resolveCollectionNames(ids) {
+        if (!window.fbDb || !Array.isArray(ids) || !ids.length) return;
+        const Q = `query GetCollectionName($id:ID!){public{collection(id:$id){id name}}}`;
+        await Promise.all(ids.map(async id => {
+            if (_resolvingCollectionNames.has(id)) return;
+            _resolvingCollectionNames.add(id);
+            try {
+                const res = await fetch(graphqlEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        operationName: 'GetCollectionName',
+                        query: Q,
+                        variables: { id }
+                    })
+                });
+                const json = await res.json();
+                const name = json?.data?.public?.collection?.name;
+                if (!name) return;
+                await window.fbDb.ref(`analytics/collection_names/${id}`).set({
+                    name: String(name).slice(0, 120),
+                    ts:   firebase.database.ServerValue.TIMESTAMP
+                });
+                // Patch en place : remplace l'ID brut par le nom dans
+                // les listes Pulse déjà rendues, sans attendre un refresh
+                // (lookup en string match — les IDs sont uniques donc
+                // sûrs à substituer).
+                document.querySelectorAll('.pulse-list-label').forEach(el => {
+                    if ((el.textContent || '').trim() === id) {
+                        el.textContent = name;
+                        el.setAttribute('title', name);
+                    }
+                });
+            } catch (_) { /* best effort */ }
+        }));
     }
 
     let _pulseLivePresenceBound = false;
@@ -20969,9 +21071,30 @@ window._snapshotRun = () => {
   if (id) {
     if (typeof window.trackEvent === 'function') {
       // Pulse analytics : snapshot lancé (target = collection id,
-      // label = nom affiché dans la bannière si déjà chargé).
+      // label = nom affiché dans la bannière si déjà chargé). Si la
+      // bannière n'est pas encore peuplée, on déclenche une lookup
+      // GraphQL puis on relogue avec le bon label, pour que Pulse
+      // affiche le nom de la collection plutôt que l'ID dès le 1er
+      // rendu.
       const label = document.getElementById('snapshotCollectionTitle')?.textContent?.trim() || null;
       window.trackEvent('snapshot_run', id, label);
+      if (!label) {
+        fetch('https://crypto.com/nft-api/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            operationName: 'GetCollectionName',
+            query: 'query GetCollectionName($id:ID!){public{collection(id:$id){name}}}',
+            variables: { id }
+          })
+        })
+        .then(r => r.json())
+        .then(j => {
+          const n = j?.data?.public?.collection?.name;
+          if (n) window.trackEvent('snapshot_run', id, n);
+        })
+        .catch(() => {});
+      }
     }
     runSnapshot(id);
   } else alert('Please paste a collection ID to snapshot.');
