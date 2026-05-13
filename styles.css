@@ -26989,20 +26989,15 @@ body { box-sizing: border-box; }
    FEATURED ARTISTS — spotlight 1 artiste à la fois
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* Wrapper pleine largeur */
+/* Wrapper pleine largeur. height: auto + min-height assez généreux pour
+   que le top 3 soit visible SANS scroll interne (le user voulait voir
+   les 3 medals + CTA d'un coup, plus de overflow-y auto sur le content). */
 .home-fa-spotlight {
     position: relative;
     width: 100%;
     flex: 1;
-    min-height: 520px;
+    min-height: 720px;
     overflow: hidden;
-    /* Halo retiré : c'est désormais le parent .home-creators-grid qui
-       porte le halo (border + box-shadow), pour englober le spotlight
-       + la nav dans un seul cadre. flex:1 pour remplir la hauteur du
-       wrap (qui se cale sur la hauteur de Featured Collections à côté).
-       min-height bumpé à 520px depuis 340px car le nouveau layout
-       vertical centré (avatar 96 + identity + stats + CTA + 3 cols)
-       a besoin de plus de place qu'avant. */
 }
 
 /* Slides empilées */
@@ -27042,7 +27037,9 @@ body { box-sizing: border-box; }
 
 /* Contenu par-dessus — layout vertical, tout centré horizontalement.
    Avatar en haut avec un écart au cadre, puis pseudo+role+bio (centrés),
-   stats agrégées, CTA, et enfin la liste des 3 top collections. */
+   stats agrégées, top 3 collections et enfin la CTA tout en bas. PAS
+   de overflow-y auto — le min-height du spotlight est calibré pour que
+   tout tienne sans scroll interne. */
 .home-fa-content {
     position: relative;
     z-index: 1;
@@ -27054,7 +27051,7 @@ body { box-sizing: border-box; }
     gap: 14px;
     align-items: center;
     text-align: center;
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 /* ── Header : avatar + pseudo + role + bio, tout centré ── */
@@ -27071,24 +27068,32 @@ body { box-sizing: border-box; }
     height: 96px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2.5px solid rgba(0,179,255,0.5);
-    box-shadow: 0 0 24px rgba(0,179,255,0.3), 0 4px 16px rgba(0,0,0,0.5);
+    /* Bordure blanche douce + halo blanc léger autour du portrait. La
+       teinte cyan/glow noir reste en dessous pour conserver la lisibilité
+       sur les avatars sombres. */
+    border: 2px solid rgba(255,255,255,0.85);
+    box-shadow: 0 0 0 4px rgba(255,255,255,0.12),
+                0 0 18px rgba(255,255,255,0.25),
+                0 0 24px rgba(0,179,255,0.25),
+                0 4px 16px rgba(0,0,0,0.5);
     display: block;
-    /* Écart explicite avec le haut du cadre — le padding-top de .home-fa-
-       content + ce margin-top donnent un breathing room cohérent. */
     margin-top: 4px;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
 }
 .home-fa-avatar--fallback {
     width: 96px; height: 96px;
     border-radius: 50%;
     background: rgba(0,179,255,0.15);
-    border: 2.5px solid rgba(0,179,255,0.35);
+    border: 2px solid rgba(255,255,255,0.85);
+    box-shadow: 0 0 0 4px rgba(255,255,255,0.12),
+                0 0 18px rgba(255,255,255,0.25),
+                0 0 24px rgba(0,179,255,0.25),
+                0 4px 16px rgba(0,0,0,0.5);
     display: flex; align-items: center; justify-content: center;
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 36px; color: #00B3FF;
     margin-top: 4px;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
 }
 .home-fa-name-row {
     display: flex; align-items: center; justify-content: center;
@@ -27127,6 +27132,11 @@ body { box-sizing: border-box; }
     letter-spacing: 0.08em; text-transform: uppercase;
     text-decoration: none;
     transition: background 0.2s, border-color 0.2s;
+    /* Posée tout en bas du slide (sous les top 3 collections), pas
+       collée à la dernière col. margin-top:auto pousse le bouton vers
+       le bas de .home-fa-content (flex column), sans dépendre d'un
+       gap supplémentaire. */
+    margin-top: auto;
 }
 .home-fa-cta:hover { background: rgba(0,179,255,0.22); border-color: rgba(0,179,255,0.65); }
 
@@ -27158,22 +27168,32 @@ body { box-sizing: border-box; }
     border-radius: 12px;
     background: rgba(255,255,255,0.04);
     border: 1px solid rgba(255,255,255,0.06);
+    /* text-decoration:none scoped global pour TOUS les descendants — sinon
+       le tap mobile (focus / -webkit-tap state) ajoute un souligné par
+       défaut sur les <span> dans la ligne (nom, vol, floor, items). */
     text-decoration: none; color: inherit;
-    transition: background 0.18s, border-color 0.18s, transform 0.18s;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.18s, border-color 0.18s;
     min-width: 0;
 }
-.home-fa-col-rank {
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 11px; font-weight: 800;
-    color: rgba(0,179,255,0.6);
-    min-width: 22px; text-align: center;
-    flex-shrink: 0;
-    letter-spacing: 0.02em;
-}
-.home-fa-col:hover {
+.home-fa-col,
+.home-fa-col * { text-decoration: none !important; }
+/* Pas de translateX au hover : sur mobile, le tap state combiné au
+   parent overflow:hidden coupait le bord droit de la pill. On garde
+   uniquement un changement de couleur/bord pour le feedback. */
+.home-fa-col:hover,
+.home-fa-col:focus-visible,
+.home-fa-col:active {
     background: rgba(0,179,255,0.08);
     border-color: rgba(0,179,255,0.28);
-    transform: translateX(4px);
+}
+.home-fa-col-rank {
+    /* Médailles emoji 🥇🥈🥉 → on a besoin de plus de place et d'une
+       font-size un peu plus grosse pour qu'elles soient lisibles. */
+    font-size: 18px;
+    line-height: 1;
+    min-width: 26px; text-align: center;
+    flex-shrink: 0;
 }
 .home-fa-col-logo {
     width: 44px; height: 44px;
