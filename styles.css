@@ -13164,22 +13164,22 @@ body.is-profile-loading #profileLoadingOverlay * {
 /* ── Badge "WTF PATRON" — pour les membres figurant dans la table des
    Official Patrons (cf. window._patronsCache alimenté par renderTable).
    Pill jaune compacte, posée à droite du pseudo (et après le ✓ cyan si
-   le membre est aussi certifié). */
+   le membre est aussi certifié). Hauteur totale ~13px pour matcher la
+   pastille .chat-verified-badge — sinon le wrapper .home-chat-msg-user-
+   wrap (overflow:hidden) coupe le bord supérieur du pill. */
 .chat-patron-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    /* Geomanist-Bold a ses caps ancrées en haut de la line-box (pas de
-       descender pour les caps), ce qui décale visuellement le texte vers
-       le HAUT du pill avec un padding symétrique. On compense en posant
-       plus de padding-top que padding-bottom pour centrer optiquement. */
-    padding: 4px 7px 2px;
-    border-radius: 9px;
+    /* 2/1 vertical : compense les caps Geomanist-Bold ancrées en haut
+       de la line-box. Total ≈ 13px (2 + 8 + 1 + 2 de border). */
+    padding: 2px 7px 1px;
+    border-radius: 8px;
     background: rgba(255, 200, 0, 0.16);
     color: #FFC800;
     border: 1px solid rgba(255, 200, 0, 0.55);
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 8.5px;
+    font-size: 8px;
     font-weight: 800;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -13192,8 +13192,8 @@ body.is-profile-loading #profileLoadingOverlay * {
 /* Variant pour la liste des membres : un peu plus tassé pour ne pas
    pousser la ligne au-delà de la largeur de la sidebar. */
 .chat-patron-badge--member {
-    padding: 4px 6px 2px;
-    font-size: 8px;
+    padding: 2px 6px 1px;
+    font-size: 7.5px;
     margin-left: 2px;
 }
 
@@ -26925,12 +26925,15 @@ body { box-sizing: border-box; }
     position: relative;
     width: 100%;
     flex: 1;
-    min-height: 340px;
+    min-height: 520px;
     overflow: hidden;
     /* Halo retiré : c'est désormais le parent .home-creators-grid qui
        porte le halo (border + box-shadow), pour englober le spotlight
        + la nav dans un seul cadre. flex:1 pour remplir la hauteur du
-       wrap (qui se cale sur la hauteur de Featured Collections à côté). */
+       wrap (qui se cale sur la hauteur de Featured Collections à côté).
+       min-height bumpé à 520px depuis 340px car le nouveau layout
+       vertical centré (avatar 96 + identity + stats + CTA + 3 cols)
+       a besoin de plus de place qu'avant. */
 }
 
 /* Slides empilées */
@@ -26968,51 +26971,63 @@ body { box-sizing: border-box; }
     );
 }
 
-/* Contenu par-dessus */
+/* Contenu par-dessus — layout vertical, tout centré horizontalement.
+   Avatar en haut avec un écart au cadre, puis pseudo+role+bio (centrés),
+   stats agrégées, CTA, et enfin la liste des 3 top collections. */
 .home-fa-content {
     position: relative;
     z-index: 1;
     display: flex;
+    flex-direction: column;
     width: 100%;
     height: 100%;
-    padding: 28px 32px 56px;
-    gap: 36px;
+    padding: 28px 24px 56px;
+    gap: 14px;
     align-items: center;
+    text-align: center;
+    overflow-y: auto;
 }
 
-/* ── Identité (gauche) ── */
-.home-fa-identity {
+/* ── Header : avatar + pseudo + role + bio, tout centré ── */
+.home-fa-header {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    min-width: 240px;
-    max-width: 260px;
-    flex-shrink: 0;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 480px;
 }
 .home-fa-avatar {
-    width: 80px;
-    height: 80px;
+    width: 96px;
+    height: 96px;
     border-radius: 50%;
     object-fit: cover;
     border: 2.5px solid rgba(0,179,255,0.5);
     box-shadow: 0 0 24px rgba(0,179,255,0.3), 0 4px 16px rgba(0,0,0,0.5);
     display: block;
+    /* Écart explicite avec le haut du cadre — le padding-top de .home-fa-
+       content + ce margin-top donnent un breathing room cohérent. */
+    margin-top: 4px;
+    margin-bottom: 4px;
 }
 .home-fa-avatar--fallback {
-    width: 80px; height: 80px;
+    width: 96px; height: 96px;
     border-radius: 50%;
     background: rgba(0,179,255,0.15);
     border: 2.5px solid rgba(0,179,255,0.35);
     display: flex; align-items: center; justify-content: center;
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 30px; color: #00B3FF;
+    font-size: 36px; color: #00B3FF;
+    margin-top: 4px;
+    margin-bottom: 4px;
 }
 .home-fa-name-row {
-    display: flex; align-items: center; gap: 7px; margin-top: 4px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 7px;
 }
 .home-fa-name {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 20px; font-weight: 800;
+    font-size: 22px; font-weight: 800;
     color: #fff; letter-spacing: 0.02em; line-height: 1.1;
 }
 .home-fa-verified { width: 16px; height: 16px; flex-shrink: 0; }
@@ -27023,16 +27038,17 @@ body { box-sizing: border-box; }
 }
 .home-fa-bio {
     font-family: sans-serif;
-    font-size: 12px; color: rgba(255,255,255,0.55);
-    line-height: 1.6; margin: 0;
+    font-size: 12.5px; color: rgba(255,255,255,0.6);
+    line-height: 1.55; margin: 4px auto 0;
+    max-width: 460px;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
 .home-fa-cta {
-    display: inline-flex; align-items: center;
-    padding: 7px 16px;
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 8px 22px;
     background: rgba(0,179,255,0.12);
     border: 1px solid rgba(0,179,255,0.38);
     border-radius: 8px;
@@ -27041,36 +27057,34 @@ body { box-sizing: border-box; }
     font-size: 10px; font-weight: 800;
     letter-spacing: 0.08em; text-transform: uppercase;
     text-decoration: none;
-    width: fit-content;
     transition: background 0.2s, border-color 0.2s;
-    margin-top: 4px;
 }
 .home-fa-cta:hover { background: rgba(0,179,255,0.22); border-color: rgba(0,179,255,0.65); }
 
-/* Séparateur vertical */
-.home-fa-divider {
-    width: 1px;
-    align-self: stretch;
-    background: rgba(255,255,255,0.08);
-    flex-shrink: 0;
-}
-
-/* ── Collections (droite) ── */
+/* ── Top 3 collections — sur toute la largeur sous la CTA ── */
 .home-fa-cols-wrap {
-    flex: 1; min-width: 0;
-    display: flex; flex-direction: column; gap: 10px;
+    width: 100%; max-width: 560px;
+    display: flex; flex-direction: column; gap: 8px;
+    margin-top: 6px;
+    /* Sépare visuellement le bloc identity du bloc collections sans
+       avoir besoin d'un divider explicite. */
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.06);
 }
 .home-fa-cols-label {
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 9px; letter-spacing: 0.14em;
-    text-transform: uppercase; color: rgba(255,255,255,0.3);
+    text-transform: uppercase; color: rgba(255,255,255,0.35);
+    text-align: center;
+    margin-bottom: 2px;
 }
 .home-fa-cols {
     display: flex; flex-direction: column; gap: 8px;
     overflow: hidden;
+    text-align: left;
 }
 .home-fa-col {
-    display: flex; align-items: center; gap: 12px;
+    display: flex; align-items: center; gap: 10px;
     padding: 8px 12px;
     border-radius: 12px;
     background: rgba(255,255,255,0.04);
@@ -27078,6 +27092,14 @@ body { box-sizing: border-box; }
     text-decoration: none; color: inherit;
     transition: background 0.18s, border-color 0.18s, transform 0.18s;
     min-width: 0;
+}
+.home-fa-col-rank {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px; font-weight: 800;
+    color: rgba(0,179,255,0.6);
+    min-width: 22px; text-align: center;
+    flex-shrink: 0;
+    letter-spacing: 0.02em;
 }
 .home-fa-col:hover {
     background: rgba(0,179,255,0.08);
@@ -30119,22 +30141,24 @@ body { box-sizing: border-box; }
 .home-live-table .cb-ticker-price { color: #fff; font-weight: 700; font-family: 'Geomanist-Bold', sans-serif; }
 .home-live-table .cb-ticker-time  { color: rgba(255,255,255,0.4); font-size: 11px; }
 
-/* ── Featured Artists : stats agrégées sous la bio ── */
-.home-fa-identity .home-fa-stats {
+/* ── Featured Artists : stats agrégées centrées sous la bio ── */
+.home-fa-stats {
     display: flex;
-    gap: 14px;
-    margin: 10px 0 4px;
+    gap: 28px;
+    margin: 4px 0 2px;
     flex-wrap: wrap;
+    justify-content: center;
 }
 .home-fa-stat {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    align-items: center;
+    gap: 3px;
 }
 .home-fa-stat-val {
     font-family: 'Geomanist-Bold', sans-serif;
     font-weight: 800;
-    font-size: 16px;
+    font-size: 18px;
     color: #fff;
     line-height: 1;
     font-variant-numeric: tabular-nums;
