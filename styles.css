@@ -27109,9 +27109,9 @@ body { box-sizing: border-box; }
 
 /* Contenu par-dessus — layout vertical, tout centré horizontalement.
    Avatar en haut, puis pseudo+role, stats, top 3 collections, et
-   enfin la CTA juste en dessous. Padding-bottom calé à 12px pour
-   matcher exactement la margin-top:12px du .home-fa-cta — écart
-   identique au-dessus et en dessous du bouton. */
+   enfin la CTA juste en dessous. Padding-bottom = gap (14px) → l'écart
+   entre la 3e collection et le bouton est égal à l'écart entre le
+   bouton et le bas du cadre. */
 .home-fa-content {
     position: relative;
     z-index: 1;
@@ -27119,7 +27119,7 @@ body { box-sizing: border-box; }
     flex-direction: column;
     width: 100%;
     height: 100%;
-    padding: 28px 24px 12px;
+    padding: 28px 24px 14px;
     gap: 14px;
     align-items: center;
     text-align: center;
@@ -27140,14 +27140,10 @@ body { box-sizing: border-box; }
     height: 96px;
     border-radius: 50%;
     object-fit: cover;
-    /* Plus de border solide ni de shadow noire — c'est ce qui formait
-       l'anneau gris autour du portrait. Halo blanc uniquement, plus
-       intense pour qu'il soit clairement visible sur fond sombre. */
-    border: 0;
-    box-shadow:
-        0 0 0 3px rgba(255, 255, 255, 0.35),
-        0 0 24px rgba(255, 255, 255, 0.45),
-        0 0 40px rgba(255, 255, 255, 0.18);
+    /* Fin contour blanc — pas de halo, pas de drop-shadow noire. Le
+       layered glow précédent rendait un anneau gris pas net. */
+    border: 1.5px solid rgba(255, 255, 255, 0.9);
+    box-shadow: none;
     display: block;
     margin-top: 4px;
     margin-bottom: 8px;
@@ -27156,11 +27152,8 @@ body { box-sizing: border-box; }
     width: 96px; height: 96px;
     border-radius: 50%;
     background: rgba(0,179,255,0.15);
-    border: 0;
-    box-shadow:
-        0 0 0 3px rgba(255, 255, 255, 0.35),
-        0 0 24px rgba(255, 255, 255, 0.45),
-        0 0 40px rgba(255, 255, 255, 0.18);
+    border: 1.5px solid rgba(255, 255, 255, 0.9);
+    box-shadow: none;
     display: flex; align-items: center; justify-content: center;
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 36px; color: #00B3FF;
@@ -27204,12 +27197,10 @@ body { box-sizing: border-box; }
     letter-spacing: 0.08em; text-transform: uppercase;
     text-decoration: none;
     transition: background 0.2s, border-color 0.2s;
-    /* Espace symétrique haut/bas : on annule le gap du flex parent
-       (qui ajouterait 14px supplémentaires au-dessus) et on pose une
-       marge fixe de 12px. Combiné au padding-bottom: 12px de
-       .home-fa-content, on a 12/12 — exactement le même écart au-dessus
-       et en dessous du bouton. */
-    margin-top: 12px;
+    /* Espace au-dessus = gap du parent (14px). Pas de margin-top
+       supplémentaire pour que l'écart entre la 3e collection et le
+       bouton matche exactement le padding-bottom: 14px de
+       .home-fa-content (= l'écart sous le bouton). */
 }
 .home-fa-cta:hover { background: rgba(0,179,255,0.22); border-color: rgba(0,179,255,0.65); }
 
@@ -27271,18 +27262,19 @@ body { box-sizing: border-box; }
 .home-fa-col-logo {
     width: 44px; height: 44px;
     border-radius: 10px; object-fit: cover;
-    /* Petit contour cyan identique au .home-chat-msg-avatar — donne
-       une identité visuelle commune aux logos sur la home. */
-    border: 1px solid rgba(0, 179, 255, 0.45);
-    box-shadow: 0 0 6px rgba(0, 179, 255, 0.15);
+    /* Fin contour blanc, même look que la photo de profil de l'artiste
+       au-dessus. Plus de tint cyan ici — l'unité visuelle se fait par
+       le blanc partout. */
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    box-shadow: none;
     flex-shrink: 0;
     background: rgba(255,255,255,0.04);
 }
 .home-fa-col-logo--empty {
     width: 44px; height: 44px; border-radius: 10px;
     background: linear-gradient(135deg, rgba(0,179,255,0.1), rgba(0,0,0,0.2));
-    border: 1px solid rgba(0, 179, 255, 0.45);
-    box-shadow: 0 0 6px rgba(0, 179, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    box-shadow: none;
     flex-shrink: 0;
 }
 .home-fa-col-info {
@@ -27305,11 +27297,16 @@ body { box-sizing: border-box; }
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 12px; color: #4ade80; font-weight: 700;
 }
-.home-fa-col-floor {
-    font-size: 11px; color: rgba(255,255,255,0.35); font-family: sans-serif;
-}
+/* Floor et items partagent strictement le même style — même selector
+   groupé pour qu'aucune divergence ne puisse s'introduire à l'avenir. */
+.home-fa-col-floor,
 .home-fa-col-items {
-    font-size: 11px; color: rgba(255,255,255,0.35); font-family: sans-serif;
+    font-family: sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 0;
+    line-height: 1.2;
     flex-shrink: 0;
 }
 .home-fa-no-cols {
