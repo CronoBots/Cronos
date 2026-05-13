@@ -15023,7 +15023,7 @@ body.is-profile-loading #profileLoadingOverlay * {
     margin: 0 0 24px;
     font-family: sans-serif; font-weight: normal;
 }
-.login-modal-input-wrap { margin-bottom: 12px; }
+.login-modal-input-wrap { margin-bottom: 12px; position: relative; }
 .login-modal-input {
     width: 100%; box-sizing: border-box;
     background: rgba(255,255,255,0.06);
@@ -15035,6 +15035,96 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 .login-modal-input:focus { border-color: rgba(0,179,255,0.5); }
 .login-modal-input::placeholder { color: rgba(255,255,255,0.25); }
+
+/* ── Suggestions live dans la modal sign-in ──
+   Liste flottante sous l'input. Mêmes data que la search-bar du site
+   (fetchDropDown). Clic = login direct. */
+.login-modal-suggestions {
+    margin-top: 6px;
+    background: rgba(7, 14, 28, 0.95);
+    border: 1px solid rgba(0, 179, 255, 0.25);
+    border-radius: 10px;
+    max-height: 260px;
+    overflow-y: auto;
+    padding: 4px;
+}
+.login-modal-sug-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    text-align: left;
+    font-family: sans-serif;
+    transition: background 0.15s, border-color 0.15s;
+}
+.login-modal-sug-item:hover,
+.login-modal-sug-item:focus-visible {
+    background: rgba(0, 179, 255, 0.08);
+    border-color: rgba(0, 179, 255, 0.35);
+    outline: none;
+}
+.login-modal-sug-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.05);
+}
+.login-modal-sug-avatar--initial {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    color: #00B3FF;
+    background: rgba(0, 179, 255, 0.12);
+}
+.login-modal-sug-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+.login-modal-sug-display {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    color: #fff;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.login-modal-sug-username {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.45);
+    font-family: sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.login-modal-sug-verified {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    background: #00B3FF;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    flex-shrink: 0;
+}
 .login-modal-error {
     font-size: 11px; color: #f87171;
     text-align: center; margin-bottom: 8px;
@@ -26323,69 +26413,48 @@ a.snap-holder-username:hover {
    GRILLE FEATURED COLLECTIONS + FEATURED ARTISTS — 2 colonnes
    moitié-moitié, mêmes hauteurs forcées via flex stretch.
    ══════════════════════════════════════════════════════════ */
-.home-two-col--featured {
-    grid-template-columns: 1fr 1fr;
-    align-items: stretch;
-}
-.home-two-col--featured > .home-section {
+/* ── Featured Collections + Featured Artists ──
+   Chaque section prend désormais toute la largeur (plus de grid 2
+   colonnes). Le wrapper .home-two-col--featured a été retiré du HTML —
+   les heights/spotlight sont scopés directement sur les sections. */
+.home-section--featured,
+.home-section--featured-artists {
     display: flex;
     flex-direction: column;
     min-height: 0;
     min-width: 0;
 }
-.home-two-col--featured > .home-section > .home-section-header {
+.home-section--featured > .home-section-header,
+.home-section--featured-artists > .home-section-header {
     flex-shrink: 0;
 }
-/* Heights matching Collections vs Artists :
-   - Section Collections : header + .home-fc-spotlight (620px : cards
-     halo'd + controls bar) → total ~650px.
-   - Section Artists     : header + .home-creators-grid (~590px,
-     halo'd) + .home-fa-nav (~30px) → total ~650px.
-   Bump à 620 (avant 540) pour caser banner + identity overlay + 4
-   stats + showcase 160px sans clipping/scroll interne. */
-.home-two-col--featured .home-fc-spotlight {
+.home-section--featured .home-fc-spotlight {
     flex: 1 1 0;
     min-height: 620px;
     min-width: 0;
 }
-.home-two-col--featured .home-creators-grid {
+.home-section--featured-artists .home-creators-grid {
     flex: 1 1 0;
     min-height: 590px;            /* nav 30px en sibling = 620 total */
     min-width: 0;
 }
-/* La carte interne (.home-feat-v3) doit elle aussi prendre toute la
-   hauteur du wrapper spotlight pour que la grille montre la même
-   hauteur que les Featured Artists à côté. */
-.home-two-col--featured .home-fc-spotlight .home-featured-grid {
+.home-section--featured .home-fc-spotlight .home-featured-grid {
     flex: 1;
     min-height: 0;
 }
-.home-two-col--featured .home-fc-spotlight .home-feat-v3 {
+.home-section--featured .home-fc-spotlight .home-feat-v3 {
     height: 100%;
 }
 @media (max-width: 860px) {
-    /* Stack vertical : on bascule en flex column (au lieu de grid 1fr)
-       pour garantir que Featured Collections et Featured Artists soient
-       réellement l'un AU-DESSUS de l'autre, jamais superposés dans la
-       même cellule grid. Les sections grandissent avec leur contenu. */
-    .home-two-col--featured {
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
-    }
-    .home-two-col--featured > .home-section {
-        width: 100%;
-        min-height: 0;
-    }
-    .home-two-col--featured .home-fc-spotlight,
-    .home-two-col--featured .home-creators-grid {
+    .home-section--featured .home-fc-spotlight,
+    .home-section--featured-artists .home-creators-grid {
         flex: none;
         min-height: 0;
     }
-    .home-two-col--featured .home-fc-spotlight .home-feat-v3 {
+    .home-section--featured .home-fc-spotlight .home-feat-v3 {
         height: auto;
     }
-    .home-two-col--featured .home-fc-spotlight .home-featured-grid {
+    .home-section--featured .home-fc-spotlight .home-featured-grid {
         flex: none;
     }
 }

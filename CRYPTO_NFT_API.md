@@ -2024,6 +2024,66 @@ query GetProfileCollections($cacheId: ID, $search: String, $first: Int, $skip: I
 }
 ```
 
+#### 🎯 Recipe — Featured Artist card (mirrors `/nft/profile/<user>?tab=created`)
+
+To populate the full Featured-Artist card (avatar, bio, `collections / NFTs / all-time vol` stats and top-N collections by volume), Crypto.com fires three operations on the `?tab=created` page. Replicate them in this order:
+
+**1. List the artist's collections** — `GetProfileCollections` with `creatorId` set to the username:
+
+```js
+{
+  operationName: 'GetProfileCollections',
+  variables: {
+    cacheId: `profile-cols-${username}`,
+    first: 50,
+    sort: { field: 'createdAt', order: 'DESC' },
+    creatorId: username,           // ← username string, not uuid
+    verifiedOnly: false,
+    isSortFieldZeroLast: false
+  }
+}
+```
+
+Returns `{ id, name, logo, banner, verified }` for every collection the artist is credited as creator on — including small/unverified ones a top-N scan would miss (e.g. `aabff17f9874020416137984b9d2b8db` for `cabezaenlasnubes`).
+
+**2. Per-collection lifetime stats** — fire `GetCollectionMetric` for **every** collection returned in step 1, in parallel:
+
+```js
+{
+  operationName: 'GetCollectionMetric',
+  variables: { collectionId: '<id from step 1>' }
+}
+```
+
+Each call returns `{ totalSalesDecimal, totalSalesCount, totalSupply, owners, minSaleListingPriceDecimal, minAuctionListingPriceDecimal }`. The fields you want:
+
+| Card field | Source |
+|---|---|
+| Per-collection all-time vol | `totalSalesDecimal` |
+| Items in the collection | `totalSupply` |
+| Current floor | `minSaleListingPriceDecimal` |
+
+Sort the enriched list by `totalSalesDecimal` desc → that's your top-N ranking.
+
+**3. Artist-level counters** — one call to `UserMetrics`:
+
+```js
+{ operationName: 'UserMetrics', variables: { id: username } }
+```
+
+Returns `{ likes, views, created, minted }`. The card's `NFTs` stat is `created` (this is the canonical counter Crypto.com displays on the profile header — for `cabezaenlasnubes` it's `2036`).
+
+**Final aggregation**:
+
+```js
+const totalCollections = profileCollections.length;
+const totalNFTs        = userMetrics.created;
+const totalVolume      = Σ collectionMetric.totalSalesDecimal;
+const top3             = sortedCollections.slice(0, 3);  // by .totalSalesDecimal desc
+```
+
+Implementation lives in `index.html` → `fetchCreatorBundle()` (see `fetchCreatorCollections` + `fetchCollectionMetric` + `fetchUserMetrics`).
+
 ### `GetProfileAssets`
 
 Assets owned/created/liked by a user. Three exclusive variables: `ownerId`, `creatorId`, `likedById`.
