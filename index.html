@@ -1374,41 +1374,9 @@
 
     </div><!-- fin home-two-col--chat-pulse -->
 
-    <!-- ── MARKET BOT LIVE FEED — pleine largeur ──
-         La carte Top Collections a été retirée de la home : son contenu
-         est déjà disponible 1:1 dans l'onglet Top Collections de la
-         topnav. On garde uniquement le live feed ici. ── -->
-    <section class="home-section home-live-section">
-      <div class="home-section-header">
-        <div>
-          <h2 class="home-section-title">Market Bot <span class="home-live-title-sep">·</span> Live Feed</h2>
-        </div>
-        <span class="home-live-badge">LIVE</span>
-      </div>
-      <div id="cbTicker" class="home-live-card sb-table-wrap home-live-table-wrap">
-        <table class="sb-table home-live-table">
-          <thead>
-            <tr>
-              <th class="sb-th sb-th--center">Event</th>
-              <th class="sb-th">Item</th>
-              <th class="sb-th sb-th--center">Price</th>
-              <th class="sb-th sb-th--center">Time</th>
-            </tr>
-          </thead>
-          <tbody class="cb-ticker-track" id="cbTickerTrack">
-            <tr><td colspan="4" class="cb-ticker-empty">Loading live activity…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- ── Featured Collections — single-card spotlight (auto-rotates every
-         FC_CYCLE_MS, paused on hover, manual nav via dots / arrows). The
-         cards are still rendered into #homeFeaturedGrid by buildFeatured() —
-         the spotlight effect is achieved by stacking them and toggling
-         .is-active on one at a time. ── -->
-    <!-- ── Featured Collections + Featured Artists — chacune prend toute
-         la largeur, empilées verticalement (plus de grid 2 colonnes). ── -->
+    <!-- Featured Collections — single-card spotlight (auto-rotate +
+         hover-pause + manual nav). Cartes injectées dans
+         #homeFeaturedGrid par buildFeatured(). -->
     <section class="home-section home-section--featured">
       <div class="home-section-header">
         <h2 class="home-section-title">Featured Collections</h2>
@@ -1435,13 +1403,37 @@
       <div class="home-creators-grid" id="homeFeaturedCreatorsGrid">
         <div class="home-top-loading"><span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span></div>
       </div>
-      <!-- Bandeau "Get featured" — même pattern que Featured Drops. -->
       <div class="home-fd-cta home-fa-cta-banner">
         <div class="home-fd-cta-text">
           <span class="home-fd-cta-title">Want your artist profile featured here?</span>
           <span class="home-fd-cta-sub">Reach out and we'll spotlight you on the home alongside Crypto.com NFT.</span>
         </div>
         <a class="home-fd-cta-btn" href="https://x.com/cronoswtf" target="_blank" rel="noopener">Contact us</a>
+      </div>
+    </section>
+
+    <!-- Market Bot Live Feed — pleine largeur, sous les Featured. -->
+    <section class="home-section home-live-section">
+      <div class="home-section-header">
+        <div>
+          <h2 class="home-section-title">Market Bot <span class="home-live-title-sep">·</span> Live Feed</h2>
+        </div>
+        <span class="home-live-badge">LIVE</span>
+      </div>
+      <div id="cbTicker" class="home-live-card sb-table-wrap home-live-table-wrap">
+        <table class="sb-table home-live-table">
+          <thead>
+            <tr>
+              <th class="sb-th sb-th--center">Event</th>
+              <th class="sb-th">Item</th>
+              <th class="sb-th sb-th--center">Price</th>
+              <th class="sb-th sb-th--center">Time</th>
+            </tr>
+          </thead>
+          <tbody class="cb-ticker-track" id="cbTickerTrack">
+            <tr><td colspan="4" class="cb-ticker-empty">Loading live activity…</td></tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
@@ -10212,9 +10204,11 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             div.innerHTML = `
                 ${reactBarHtml}
                 <div class="home-chat-msg-meta">
-                    <span class="home-chat-msg-avatar-slot" data-user="${_fcEsc(userKey)}" data-initial="${_fcEsc(displayInitial)}">${avatarHtml}</span>
-                    <span class="home-chat-msg-user-wrap" data-patron-username="${_fcEsc(userKey)}">
-                        <span class="home-chat-msg-user">${_fcEsc(msg.display || msg.user || 'Anonymous')}</span>${verifiedBadgeHtml}${creatorBadgeHtml}${patronBadgeHtml}
+                    <span class="home-chat-msg-meta-left">
+                        <span class="home-chat-msg-avatar-slot" data-user="${_fcEsc(userKey)}" data-initial="${_fcEsc(displayInitial)}">${avatarHtml}</span>
+                        <span class="home-chat-msg-user-wrap" data-patron-username="${_fcEsc(userKey)}">
+                            <span class="home-chat-msg-user">${_fcEsc(msg.display || msg.user || 'Anonymous')}</span>${verifiedBadgeHtml}${creatorBadgeHtml}${patronBadgeHtml}
+                        </span>
                     </span>
                     <span class="home-chat-msg-meta-right">
                         <span class="home-chat-msg-time">${formatDateTime(msg.t)}</span>
@@ -10317,6 +10311,11 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             }
 
             msgs.appendChild(div);
+            // Si _patronsCache est arrivé après le render initial du message
+            // (race courante : le module Support fetch après initChat), on
+            // re-patche pour que le pill WTF PATRON apparaisse sans attendre
+            // un refresh.
+            if (typeof window._patchPatronBadges === 'function') window._patchPatronBadges();
             _chatScrollToBottom(instant);
         }
 
@@ -13876,6 +13875,7 @@ async function sha256hex(str) {
         _patchPatronBadges();
     }
 
+    window._patchPatronBadges = _patchPatronBadges;
     function _patchPatronBadges() {
         const cache = window._patronsCache;
         if (!cache) return;
@@ -14656,262 +14656,106 @@ async function sha256hex(str) {
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
         {
+            date:  '2026-05-13T21:30:00Z',
+            type:  'improvement',
+            title: 'Chat polish + Featured order',
+            text:  'Avatars sit closer to the pseudo now. Mention pills no longer look bigger than the username. Featured Collections + Artists moved above Market Bot.'
+        },
+        {
+            date:  '2026-05-13T20:30:00Z',
+            type:  'feature',
+            title: 'Chat avatars + WTF Creator badge',
+            text:  'Profile picture next to every chat message. Red WTF CREATOR pill on my own messages. Anonymous visitors get their own group in the sidebar.'
+        },
+        {
             date:  '2026-05-13T20:00:00Z',
             type:  'improvement',
-            title: 'Home polish + anon visitors live + Sign-in suggestions',
-            text:  'Featured Collections and Featured Artists now span the full width (no more 2-column split). Volumes ≥ $1M render with the "M" suffix. Pulse "Online now" finally counts anonymous visitors so you see the real crowd. Anonymous visitors can read the chat but no longer post emoji reactions — existing anon reactions are filtered out. Sign-in modal: the input now shows live profile suggestions as you type (same matcher as the search bar) — click a result to log in directly. Pulse Top Snapshots resolves collection IDs to names via a Firebase-shared registry (analytics/collection_names), populated by trackEvent and back-filled via GraphQL at render time.'
+            title: 'Featured Artists — medals + bigger card',
+            text:  '🥇🥈🥉 on the top 3 collections, white halo around the avatar, View Profile button at the bottom, and a Get-featured banner under the carousel.'
         },
         {
-            date:  '2026-05-13T07:30:00Z',
-            type:  'fix',
-            title: 'Top Collections — columns button visual weight matches filters',
-            text:  'Letter-spacing dropped from 0.1em to 0.08em (the Cronos / Verified rows use 0.08em — 0.1em made the columns text feel more aérated and visually bigger). Icon SVG shrunk from 14×14 to 12×12 to match the 10px text scale. Padding aligned to 0 11px. Search-bar placeholders reverted from 9px to their default size — 9px was too small next to the 10px filter labels.'
-        },
-        {
-            date:  '2026-05-13T07:00:00Z',
+            date:  '2026-05-13T19:30:00Z',
             type:  'improvement',
-            title: 'Top Collections — row separators',
-            text:  'Top Collections table now shows the same subtle horizontal separator between rows as the Market Bot live feed (the border was set on <tr> but invisible due to border-collapse: separate — moved to <td>).'
+            title: 'Pulse — names, anon count, layout',
+            text:  'Top Snapshots shows real collection names. Online now counts anonymous tabs. New members per week moved back to the bottom Pulse.'
         },
         {
-            date:  '2026-05-13T06:30:00Z',
+            date:  '2026-05-13T19:00:00Z',
             type:  'improvement',
-            title: 'Top tables — emoji medals + clearer column counter',
-            text:  'Top Collections and Top Patrons tables now show 🥇/🥈/🥉 emoji medals for ranks 1-3 (same look as the Snapshot holders table) instead of the colored bubbles. Columns selector label reads "11/16 Columns displayed" with current/total counts, in white for full legibility.'
+            title: 'Sign-in: search as you type',
+            text:  'The sign-in input shows live profile suggestions like the search bar. Pick one and you’re in — no more big button.'
         },
         {
-            date:  '2026-05-13T06:00:00Z',
+            date:  '2026-05-13T18:30:00Z',
             type:  'improvement',
-            title: 'Top Collections — columns filter matches other filters everywhere',
-            text:  'Base style of the "Columns displayed" button now matches the 24H/7D, Cronos and Verified filters on EVERY viewport (was previously aligned only on mobile via media-query override). Same font-size, color, letter-spacing, border, radius and background. Text stays vertically centered next to the columns icon.'
-        },
-        {
-            date:  '2026-05-13T05:30:00Z',
-            type:  'improvement',
-            title: 'Top Collections — columns filter aligned with other filter rows',
-            text:  'Mobile: the "Columns displayed" button now shares the exact same border, radius, font size, letter-spacing and text color as the 24H/7D, Cronos and Verified filters. Vertical gap between every filter row AND the search bar is unified at 7px.'
-        },
-        {
-            date:  '2026-05-13T05:00:00Z',
-            type:  'fix',
-            title: 'Chat — connect + disconnect both visible, cleared on reconnect',
-            text:  'A disconnected member shows both their "is connected" and "is disconnected" pills (so you see they were here, then left). On reconnect, both old pills are removed and only the fresh "is connected" appears. Stale leave events from a delayed onDisconnect are silently dropped when the user is already back online.'
-        },
-        {
-            date:  '2026-05-13T04:30:00Z',
-            type:  'fix',
-            title: 'Chat — only 1 pill per member at a time (latest state)',
-            text:  'Reconnecting now properly clears the old "is disconnected" and shows the fresh "is connected" pill. At any moment a member shows at most 1 pill: their most recent join/leave. A stale leave that arrives for a user already back online is silently dropped.'
-        },
-        {
-            date:  '2026-05-13T04:00:00Z',
-            type:  'fix',
-            title: 'Chat — re-announce on every (re)connect, keep 1 join + 1 leave',
-            text:  'Reconnecting now always shows a fresh "is connected" pill (10-min throttle removed). A connection and a disconnection can coexist per member — what is enforced is at most 1 of each type, never 2 of the same.'
-        },
-        {
-            date:  '2026-05-13T03:30:00Z',
-            type:  'fix',
-            title: 'Chat — stale "is disconnected" cleared on reconnect',
-            text:  'A leave pill fired by onDisconnect() during a brief WebSocket flap (or right before a tab is reopened) is now auto-deleted as soon as the presence listener confirms the user is back online.'
-        },
-        {
-            date:  '2026-05-13T03:00:00Z',
-            type:  'feature',
-            title: 'Chat — disconnect pills + members badge aligned',
-            text:  'Red "X is disconnected" pills now appear when a member leaves the chat (only the latest one per member is kept). The verified ✓ badge in the members list now sits right next to the username with a white V and the same vertical alignment as in chat messages.'
-        },
-        {
-            date:  '2026-05-13T02:30:00Z',
-            type:  'improvement',
-            title: 'Chat polish — placeholder, badge, time, who reacted',
-            text:  'Input placeholder shortened to "WTF is up?". Verified ✓ is now white on cyan for better contrast. Message timestamps now match the connection-pill format. Long-press a reaction pill to see who reacted.'
-        },
-        {
-            date:  '2026-05-13T02:00:00Z',
-            type:  'improvement',
-            title: 'Chat — equal spacing + badge optical alignment',
-            text:  'Pill↔pill, pill↔message and message↔message share the same 8px gap. The verified ✓ badge is now optically centered on username caps.'
-        },
-        {
-            date:  '2026-05-13T01:30:00Z',
-            type:  'fix',
-            title: 'Chat reactions — stable count across refreshes',
-            text:  'Reactions are now keyed by username for signed-in users, so refreshing then re-clicking the same emoji toggles instead of inflating the counter.'
-        },
-        {
-            date:  '2026-05-13T01:00:00Z',
-            type:  'improvement',
-            title: 'Chat — unified system pills + mention-at-cursor',
-            text:  'Connection (green) and update (yellow) pills share the exact same layout. Mentioning a member inserts @tag at the cursor, not at the end.'
-        },
-        {
-            date:  '2026-05-12T23:30:00Z',
-            type:  'improvement',
-            title: 'Top Patrons on home + chat update pings',
-            text:  'Read-only top-10 patrons table on the home. New clickable yellow "NEW UPDATE" pill in chat for every entry here. "Online now" stops counting stale tabs.'
+            title: 'Home cleanup + $M volumes',
+            text:  'Top Collections card removed from the home (already in the Top Collections tab). Volumes ≥ $1M show as $X.XM.'
         },
         {
             date:  '2026-05-12T22:00:00Z',
             type:  'feature',
-            title: 'Support — unified Top Patrons leaderboard',
-            text:  'CRONOS.WTF NFT buyers (live) + manual donations merged into one shared leaderboard, synced across all visitors.'
+            title: 'Top Patrons leaderboard',
+            text:  'NFT buyers and manual donations merged into one shared leaderboard, synced for everyone.'
         },
         {
             date:  '2026-05-12T18:00:00Z',
             type:  'fix',
-            title: 'Chat — reliable online status',
-            text:  'Each tab now keeps its own presence entry, so reopening the browser no longer wipes your online state. Only the latest join announce per member is kept.'
-        },
-        {
-            date:  '2026-05-12T17:30:00Z',
-            type:  'improvement',
-            title: 'Market Bot mobile matches Top Collections',
-            text:  '7px filter gap, full-width search bar on its own line, sales count centered below — the two panels look identical at a glance.'
+            title: 'Reliable online status in chat',
+            text:  'Each tab keeps its own presence so reopening the browser doesn’t wipe you offline. One join announce per member, max.'
         },
         {
             date:  '2026-05-11T18:00:00Z',
             type:  'improvement',
-            title: 'Top Collections — tighter filters + column counter',
-            text:  'Subtitle trimmed, mobile filter rows match Market Bot, columns selector now reads "11 Columns displayed".'
+            title: 'Top Collections + Market Bot polish',
+            text:  'Filters use the same gap, search bar fits on its own line on mobile, sales count centered, columns selector shows N/Total.'
         },
         {
             date:  '2026-05-11T17:00:00Z',
             type:  'improvement',
-            title: 'Snapshot — direct Add Collection + mobile table fix',
-            text:  'Preset dropdown replaced by an "Add a Collection" button + suggest-a-collection link. Holders table now scrolls inside its frame on mobile.'
-        },
-        {
-            date:  '2026-05-08T18:00:00Z',
-            type:  'improvement',
-            title: 'Filter buttons — clearer gaps + centered labels',
-            text:  '24H/7D/30D, ALL/Verified, Cronos/POS… now have a visible gap between options and the labels are horizontally centered.'
-        },
-        {
-            date:  '2026-05-08T17:30:00Z',
-            type:  'fix',
-            title: 'Chat — 👌 / 🙏 reactions + instant feedback',
-            text:  'The 2 new emoji keys are now registered. Pill updates immediately on click and rolls back if the server rejects.'
+            title: 'Snapshot — Add Collection button',
+            text:  'Preset dropdown replaced by a direct Add a Collection button. Holders table scrolls inside its frame on mobile.'
         },
         {
             date:  '2026-05-08T17:00:00Z',
             type:  'fix',
-            title: 'Mobile featured swipe no longer hijacks scroll',
-            text:  'A diagonal swipe now locks horizontal intent early and blocks page scroll until the gesture completes.'
-        },
-        {
-            date:  '2026-05-08T16:00:00Z',
-            type:  'fix',
-            title: 'Featured samples show on every collection',
-            text:  'Sample-NFT fetch tries tokenId / mintedAt / totalSales / rarityRank in cascade, so rarity-less collections also display samples.'
-        },
-        {
-            date:  '2026-05-08T16:00:00Z',
-            type:  'fix',
-            title: 'Featured controls aligned inside cyan frame',
-            text:  'Mobile spotlight arrows + progress + dots are now tucked inside the frame.'
-        },
-        {
-            date:  '2026-05-08T15:30:00Z',
-            type:  'improvement',
-            title: 'Featured — random samples + swipe nav',
-            text:  'Samples picked randomly across the whole collection. Controls integrated at the bottom of the frame. Swipe left/right on mobile to navigate.'
-        },
-        {
-            date:  '2026-05-08T15:30:00Z',
-            type:  'improvement',
-            title: 'Featured showcase — Top rank shows "1 / total"',
-            text:  'Top Rank tile now displays "1 / 10000" instead of "#1" so you can see the collection size at a glance. "Floor" tile renamed to "Floor Price" for clarity.'
+            title: 'Mobile gestures',
+            text:  'Featured swipe locks horizontal early and stops hijacking page scroll. Phantom taps on chat actions are gone.'
         },
         {
             date:  '2026-05-08T14:30:00Z',
             type:  'improvement',
-            title: 'Featured showcase — cleaner 2×2 layout',
-            text:  'The 4 highlight tiles (Top Rank, Most Viewed, Most Liked, Floor) are now a 2×2 grid with NFT image on the left and value on the right. Unified cyan accent, no more redundant collection name on every tile.'
-        },
-        {
-            date:  '2026-05-08T14:30:00Z',
-            type:  'improvement',
-            title: 'Featured stats bar tidied up',
-            text:  '"Volume traded" renamed to "Total" so the 4 labels (Floor / Owners / 24H Vol / Total) stay on a single line and aligned at the same height.'
-        },
-        {
-            date:  '2026-05-08T13:30:00Z',
-            type:  'fix',
-            title: 'Mobile — Featured Collections / Artists stack cleanly',
-            text:  'The two sections are now flex-column on phones instead of painting in the same area.'
-        },
-        {
-            date:  '2026-05-08T13:30:00Z',
-            type:  'improvement',
-            title: 'Featured — 8 samples on a single row',
-            text:  'Single horizontal strip without the "Sample NFTs" label; hover for the NFT name.'
-        },
-        {
-            date:  '2026-05-08T12:30:00Z',
-            type:  'fix',
-            title: 'Chat — phantom mobile taps fixed',
-            text:  'Reply / Edit / Delete no longer trigger from a tap before the double-tap that reveals them.'
-        },
-        {
-            date:  '2026-05-08T12:00:00Z',
-            type:  'improvement',
-            title: 'Featured — 8 sample NFTs + mobile fix',
-            text:  '2 rows of 4 under the highlights; section no longer overlaps Featured Artists on mobile.'
+            title: 'Featured showcase redesign',
+            text:  'Highlight tiles in a clean 2×2 (Top Rank / Most Viewed / Most Liked / Floor), 8 sample NFTs on one row, swipe nav on mobile.'
         },
         {
             date:  '2026-05-08T11:30:00Z',
             type:  'improvement',
-            title: 'Home layout reorganised',
-            text:  'Community Pulse next to chat, Market Bot paired with Top Collections, Crypto Prices below Featured, "Latest from X" removed.'
-        },
-        {
-            date:  '2026-05-08T11:30:00Z',
-            type:  'improvement',
-            title: 'Featured showcase tiles redesigned',
-            text:  'Vertical centered layout — category label on top, larger NFT image, name and main value (rank / views / likes / floor) all centered.'
+            title: 'Home layout reshuffled',
+            text:  'Community Pulse next to chat, Market Bot paired with the live feed, Crypto Prices below Featured, “Latest from X” dropped.'
         },
         {
             date:  '2026-05-07T22:00:00Z',
-            type:  'improvement',
+            type:  'feature',
             title: 'Featured Collections spotlight',
-            text:  'One collection at a time, larger card, auto-rotates every few seconds — hover to pause.'
-        },
-        {
-            date:  '2026-05-07T22:00:00Z',
-            type:  'fix',
-            title: 'Top Collections halo on narrow screens',
-            text:  'The cyan glow around the Top Collections card now stays visible on smaller windows and on mobile.'
-        },
-        {
-            date:  '2026-05-07T16:55:00Z',
-            type:  'fix',
-            title: 'Top Collections — mobile frame fix',
-            text:  'Card edges no longer get clipped on small screens; the cyan halo is back on every side.'
+            text:  'One collection at a time, larger card, auto-rotates every few seconds. Hover to pause.'
         },
         {
             date:  '2026-05-07T13:30:00Z',
             type:  'feature',
-            title: 'Pulse — site activity dashboard',
-            text:  '30 days of traffic, community and feature stats at the bottom of the home, grouped into 5 clear sub-sections.'
-        },
-        {
-            date:  '2026-05-07T13:30:00Z',
-            type:  'improvement',
-            title: 'Latest Updates above Pulse',
-            text:  'Quick changelog so you can see what’s new at a glance, without digging through the site.'
+            title: 'Pulse dashboard',
+            text:  '30 days of traffic, community and feature stats at the bottom of the home, grouped into clean sub-sections.'
         },
         {
             date:  '2026-05-07T04:47:00Z',
             type:  'feature',
             title: 'Welcome message in chat',
-            text:  'When you sign in, the chat shows a small welcome — throttled to once every 10 minutes, dismissible.'
+            text:  'Small welcome pill on sign-in. Throttled to once every 10 minutes, dismissible.'
         },
         {
             date:  '2026-05-07T04:36:00Z',
             type:  'fix',
-            title: 'Top Collections table fits on mobile',
-            text:  'Long names truncate cleanly and the table now sits edge-to-edge inside its card.'
+            title: 'Top Collections fits on mobile',
+            text:  'Long names truncate cleanly and the table sits edge-to-edge inside its card.'
         }
     ];
     // Exposé pour que le chat puisse pousser une annonce "New update" liée
