@@ -8915,21 +8915,25 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         } catch(e) { return null; }
     }
 
-    async function fetchCreatorCollections(userId) {
+    async function fetchCreatorCollections(username) {
         try {
             const res = await fetch(graphqlEndpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     operationName: 'GetUserCollections',
-                    variables: { id: userId, first: 50 },
+                    variables: { id: username, first: 50 },
                     query: `query GetUserCollections($id:ID!,$first:Int!){public{user(id:$id){collections(first:$first){id name logo{url} metrics{items totalSalesDecimal} stats{totalVolumeDecimal oneDayFloorPriceDecimal}}}}}`
                 })
             });
             const json = await res.json();
+            if (json?.errors) console.warn('[FeaturedArtists] GetUserCollections errors:', json.errors);
             const cols = json?.data?.public?.user?.collections || [];
             return cols.sort((a,b) => (_creatorVol(b)) - (_creatorVol(a)));
-        } catch(e) { return []; }
+        } catch(e) {
+            console.warn('[FeaturedArtists] GetUserCollections fetch failed:', e);
+            return [];
+        }
     }
 
     /* Volume reference for a collection : on prend la valeur la plus fiable
@@ -8944,40 +8948,67 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
 
     /* Fallback : certains comptes (ex: cryptocomnft, plateformes) renvoient
        user.collections vide. On bascule alors sur un scan des top collections
-       all-time filtré côté client par creator.username. */
+       all-time filtré côté client par creator.username. Cette query est
+       construite à l'identique de Q_TOP_COLS (qui marche déjà ailleurs sur
+       le site) — directive @include(if:$withStats) obligatoire, verifiedOnly
+       passé explicitement, cacheId pour le edge cache. */
     async function fetchCollectionsByCreator(username) {
-        try {
-            const Q = `query GetCollectionsByCreator($first:Int!,$sort:SingleFieldSort,$isSortFieldZeroLast:Boolean!,$timeRange:TimeRange,$networks:[SupportedNetwork!],$hideEmpty:Boolean){
-                public{collections(first:$first,sort:$sort,isSortFieldZeroLast:$isSortFieldZeroLast,timeRange:$timeRange,networks:$networks,hideEmpty:$hideEmpty){
-                    id name logo{url} verified
-                    creator{username displayName}
-                    metrics{items totalSalesDecimal}
-                    stats{totalVolumeDecimal oneDayFloorPriceDecimal}
-                }}}`;
-            const networks = ['CRO', 'CRONOS'];
-            const calls = networks.map(n => fetch(graphqlEndpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    operationName: 'GetCollectionsByCreator',
-                    variables: {
-                        first: 200,
-                        sort: { field: 'totalSalesDecimalAllTime', order: 'DESC' },
-                        isSortFieldZeroLast: true,
-                        timeRange: 'ALL',
-                        networks: [n],
-                        hideEmpty: true
-                    },
-                    query: Q
-                })
-            }).then(r => r.json()).then(j => j?.data?.public?.collections || []).catch(() => []));
-            const lists = await Promise.all(calls);
-            const flat = [].concat(...lists);
-            const u = String(username || '').toLowerCase();
-            return flat
-                .filter(c => String(c?.creator?.username || '').toLowerCase() === u)
-                .sort((a,b) => _creatorVol(b) - _creatorVol(a));
-        } catch(e) { return []; }
+        const u = String(username || '').toLowerCase();
+        if (!u) return [];
+        const Q = `query GetCreatorAllCollections(
+            $cacheId: ID, $first: Int, $sort: SingleFieldSort,
+            $networks: [SupportedNetwork!], $isSortFieldZeroLast: Boolean!,
+            $timeRange: TimeRange, $hideEmpty: Boolean, $verifiedOnly: Boolean,
+            $withStats: Boolean!
+        ) {
+            public(cacheId: $cacheId) {
+                collections(
+                    first: $first, sort: $sort, networks: $networks,
+                    isSortFieldZeroLast: $isSortFieldZeroLast, timeRange: $timeRange,
+                    hideEmpty: $hideEmpty, verifiedOnly: $verifiedOnly
+                ) {
+                    id name verified
+                    logo { url }
+                    creator { username displayName }
+                    metrics { items totalSalesDecimal }
+                    stats @include(if: $withStats) {
+                        totalVolumeDecimal
+                        oneDayFloorPriceDecimal
+                    }
+                }
+            }
+        }`;
+        const networks = ['CRO', 'CRONOS'];
+        const calls = networks.map(n => fetch(graphqlEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                operationName: 'GetCreatorAllCollections',
+                query: Q,
+                variables: {
+                    cacheId: `creator-cols-${u}-${n}`,
+                    first: 200,
+                    sort: { field: 'totalSalesDecimalAllTime', order: 'DESC' },
+                    isSortFieldZeroLast: true,
+                    timeRange: 'ALL',
+                    hideEmpty: true,
+                    verifiedOnly: false,
+                    withStats: true,
+                    networks: [n]
+                }
+            })
+        }).then(r => r.json()).then(j => {
+            if (j?.errors) console.warn('[FeaturedArtists] GetCreatorAllCollections errors:', j.errors);
+            return j?.data?.public?.collections || [];
+        }).catch(e => {
+            console.warn('[FeaturedArtists] GetCreatorAllCollections fetch failed:', e);
+            return [];
+        }));
+        const lists = await Promise.all(calls);
+        const flat = [].concat(...lists);
+        return flat
+            .filter(c => String(c?.creator?.username || '').toLowerCase() === u)
+            .sort((a,b) => _creatorVol(b) - _creatorVol(a));
     }
 
     function buildArtistSlide(cfg, data, collections) {
@@ -9049,15 +9080,17 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // halo qui englobe désormais le spotlight ET la nav (pour que les
         // flèches + progress + dots soient intégrées au bas du cadre).
         const profiles = await Promise.all(FEATURED_CREATORS.map(c => fetchCreatorProfile(c.username)));
-        const colsList = await Promise.all(profiles.map(async (p, i) => {
-            if (!p?.uuid) return [];
-            // 1ère tentative : user.collections (rapide, 1 call).
-            let cols = await fetchCreatorCollections(p.uuid);
-            // Fallback : si user.collections renvoie vide (cas plateformes
-            // type cryptocomnft), on scanne les top collections par creator
-            // pour trouver toutes les collections où l'artiste est créateur.
+        const colsList = await Promise.all(FEATURED_CREATORS.map(async (cfg) => {
+            // 1ère tentative : user.collections via username (l'API
+            // Crypto.com prend le username comme ID, pas l'uuid). Rapide
+            // (1 call) — peut renvoyer vide pour les comptes plateforme.
+            let cols = await fetchCreatorCollections(cfg.username);
+            // Fallback : scan ALL-time top collections sur CRO + CRONOS,
+            // filtré côté client par creator.username. Récupère bien les
+            // collections dont l'artiste est crédité créateur même si
+            // user.collections est vide.
             if (!cols.length) {
-                cols = await fetchCollectionsByCreator(FEATURED_CREATORS[i].username);
+                cols = await fetchCollectionsByCreator(cfg.username);
             }
             return cols;
         }));
