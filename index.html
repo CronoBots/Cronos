@@ -8899,6 +8899,26 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         { username: 'cabezaenlasnubes',    displayName: 'cabezaenlasnubes',   role: 'NFT Artist',            url: 'https://crypto.com/nft/profile/cabezaenlasnubes?tab=created' }
     ];
 
+    /* ──────────────────────────────────────────────────────────────────
+       Fetch des collections d'un créateur — on mime exactement les calls
+       que crypto.com/nft/profile/<user>?tab=created fait :
+
+         GetProfileCollections(creatorId, sort by createdAt DESC, first:50)
+            → liste TOUTES les collections créées (id, name, logo, banner,
+              verified). Cas idéal — c'est cette query qui ramène les
+              petites collections type aabff17f9874020416137984b9d2b8db.
+
+         GetCollectionMetric(collectionId) — pour CHAQUE collection
+            → owners, totalSalesDecimal (= all-time vol), totalSupply,
+              minSaleListingPriceDecimal (= floor). Appelé en parallèle
+              sur tout le set retourné par profileCollections.
+
+         UserMetrics(id)
+            → likes, views, created (= nb total de NFTs créés par
+              l'artiste), minted. On utilise `created` pour la stat
+              "NFTs" de la card.
+       ────────────────────────────────────────────────────────────────── */
+
     async function fetchCreatorProfile(username) {
         try {
             const res = await fetch(graphqlEndpoint, {
@@ -8915,159 +8935,135 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         } catch(e) { return null; }
     }
 
+    /* Liste les collections créées par username — réplique exacte de
+       l'opération GetProfileCollections appelée par Crypto.com. */
     async function fetchCreatorCollections(username) {
+        const u = String(username || '').trim();
+        if (!u) return [];
+        const Q = `query GetProfileCollections($cacheId: ID, $first: Int, $sort: SingleFieldSort, $creatorId: ID, $verifiedOnly: Boolean, $isSortFieldZeroLast: Boolean!) {
+            public(cacheId: $cacheId) {
+                profileCollections(
+                    first: $first, sort: $sort, creatorId: $creatorId,
+                    verifiedOnly: $verifiedOnly, isSortFieldZeroLast: $isSortFieldZeroLast
+                ) {
+                    id name verified
+                    logo { url }
+                    banner { url }
+                }
+            }
+        }`;
         try {
             const res = await fetch(graphqlEndpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    operationName: 'GetUserCollections',
-                    variables: { id: username, first: 50 },
-                    query: `query GetUserCollections($id:ID!,$first:Int!){public{user(id:$id){collections(first:$first){id name logo{url} metrics{items totalSalesDecimal} stats{totalVolumeDecimal oneDayFloorPriceDecimal}}}}}`
+                    operationName: 'GetProfileCollections',
+                    query: Q,
+                    variables: {
+                        cacheId: `profile-cols-${u}`,
+                        first: 50,
+                        sort: { field: 'createdAt', order: 'DESC' },
+                        creatorId: u,
+                        verifiedOnly: false,
+                        isSortFieldZeroLast: false
+                    }
                 })
             });
             const json = await res.json();
-            if (json?.errors) console.warn('[FeaturedArtists] GetUserCollections errors:', json.errors);
-            const cols = json?.data?.public?.user?.collections || [];
-            return cols.sort((a,b) => (_creatorVol(b)) - (_creatorVol(a)));
+            if (json?.errors) console.warn('[FeaturedArtists] GetProfileCollections errors:', json.errors);
+            return json?.data?.public?.profileCollections || [];
         } catch(e) {
-            console.warn('[FeaturedArtists] GetUserCollections fetch failed:', e);
+            console.warn('[FeaturedArtists] GetProfileCollections fetch failed:', e);
             return [];
         }
     }
 
-    /* Volume reference for a collection : on prend la valeur la plus fiable
-       disponible (stats.totalVolumeDecimal d'abord — c'est le all-time vol
-       affiché sur Crypto.com — sinon metrics.totalSalesDecimal en fallback
-       quand le user-level renvoie stats=null). */
+    /* All-time stats pour UNE collection — clone exact de la query que
+       /nft/collection/<id>?tab=items fait. Donne owners,
+       totalSalesDecimal (= all-time vol en USD), totalSupply, floor. */
+    async function fetchCollectionMetric(collectionId) {
+        if (!collectionId) return null;
+        const Q = `query GetCollectionMetric($collectionId: ID!) {
+            public {
+                collectionMetric(id: $collectionId) {
+                    minSaleListingPriceDecimal
+                    owners
+                    totalSalesDecimal
+                    totalSalesCount
+                    totalSupply
+                }
+            }
+        }`;
+        try {
+            const res = await fetch(graphqlEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    operationName: 'GetCollectionMetric',
+                    query: Q,
+                    variables: { collectionId }
+                })
+            });
+            const json = await res.json();
+            if (json?.errors) console.warn('[FeaturedArtists] GetCollectionMetric errors:', json.errors);
+            return json?.data?.public?.collectionMetric || null;
+        } catch(e) {
+            console.warn('[FeaturedArtists] GetCollectionMetric fetch failed:', e);
+            return null;
+        }
+    }
+
+    /* Compteurs au niveau utilisateur — la valeur `created` est ce que
+       Crypto.com affiche comme nombre de NFTs créés par l'artiste. */
+    async function fetchUserMetrics(username) {
+        try {
+            const res = await fetch(graphqlEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    operationName: 'UserMetrics',
+                    query: `query UserMetrics($id:ID!){userMetrics(id:$id){likes views created minted}}`,
+                    variables: { id: username }
+                })
+            });
+            const json = await res.json();
+            if (json?.errors) console.warn('[FeaturedArtists] UserMetrics errors:', json.errors);
+            return json?.data?.userMetrics || null;
+        } catch(e) {
+            console.warn('[FeaturedArtists] UserMetrics fetch failed:', e);
+            return null;
+        }
+    }
+
+    /* Volume all-time d'une collection — totalSalesDecimal de
+       collectionMetric, déjà résolu et stocké sur l'objet par
+       fetchCollectorBundle. Fallback à 0 si pas encore chargé. */
     function _creatorVol(c) {
-        return Number(c?.stats?.totalVolumeDecimal)
+        return Number(c?.metric?.totalSalesDecimal)
+            || Number(c?.stats?.totalVolumeDecimal)
             || Number(c?.metrics?.totalSalesDecimal)
             || 0;
     }
 
-    /* Source la plus fiable : mime ce que fait Crypto.com sur la page
-       /nft/profile/<user>?tab=created — on liste les NFTs créés par
-       l'artiste (profileCreatedAssets / profileAssets avec creatorId),
-       puis on dédoublonne par collection.id pour obtenir l'ensemble
-       des collections où l'artiste est crédité créateur. Ça récupère
-       même les petites collections que le scan top-200 raterait
-       (ex: aabff17f9874020416137984b9d2b8db pour cabezaenlasnubes). */
-    async function fetchCreatorCollectionsViaAssets(username) {
-        const u = String(username || '').trim();
-        if (!u) return [];
-        const COL_FRAG = `id name verified logo{url} creator{username displayName}
-                          metrics{items totalSalesDecimal}
-                          stats{totalVolumeDecimal oneDayFloorPriceDecimal}`;
-        // Le schéma Crypto.com n'est pas documenté publiquement — on tente
-        // plusieurs noms de field, du plus probable au moins probable.
-        const candidates = [
-            { field: 'profileCreatedAssets', arg: 'creatorId' },
-            { field: 'profileAssets',        arg: 'creatorId' },
-            { field: 'createdAssets',        arg: 'creatorId' }
-        ];
-        for (const cand of candidates) {
-            const Q = `query GetCreatedAssetsList($id:ID!,$first:Int!,$skip:Int!){
-                public{${cand.field}(${cand.arg}:$id,first:$first,skip:$skip){
-                    id collection{${COL_FRAG}}
-                }}}`;
-            try {
-                const res = await fetch(graphqlEndpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        operationName: 'GetCreatedAssetsList',
-                        query: Q,
-                        variables: { id: u, first: 100, skip: 0 }
-                    })
-                });
-                const json = await res.json();
-                if (json?.errors) {
-                    console.warn('[FeaturedArtists] ' + cand.field + ' errors:', json.errors);
-                    continue;
-                }
-                const assets = json?.data?.public?.[cand.field];
-                if (!Array.isArray(assets) || !assets.length) continue;
-                const byId = new Map();
-                assets.forEach(a => {
-                    const c = a?.collection;
-                    if (c?.id && !byId.has(c.id)) byId.set(c.id, c);
-                });
-                if (!byId.size) continue;
-                return [...byId.values()].sort((a,b) => _creatorVol(b) - _creatorVol(a));
-            } catch (e) {
-                console.warn('[FeaturedArtists] ' + cand.field + ' fetch failed:', e);
-            }
-        }
-        return [];
-    }
-
-    /* Fallback : certains comptes (ex: cryptocomnft, plateformes) renvoient
-       user.collections vide. On bascule alors sur un scan des top collections
-       all-time filtré côté client par creator.username. Cette query est
-       construite à l'identique de Q_TOP_COLS (qui marche déjà ailleurs sur
-       le site) — directive @include(if:$withStats) obligatoire, verifiedOnly
-       passé explicitement, cacheId pour le edge cache. */
-    async function fetchCollectionsByCreator(username) {
-        const u = String(username || '').toLowerCase();
-        if (!u) return [];
-        const Q = `query GetCreatorAllCollections(
-            $cacheId: ID, $first: Int, $sort: SingleFieldSort,
-            $networks: [SupportedNetwork!], $isSortFieldZeroLast: Boolean!,
-            $timeRange: TimeRange, $hideEmpty: Boolean, $verifiedOnly: Boolean,
-            $withStats: Boolean!
-        ) {
-            public(cacheId: $cacheId) {
-                collections(
-                    first: $first, sort: $sort, networks: $networks,
-                    isSortFieldZeroLast: $isSortFieldZeroLast, timeRange: $timeRange,
-                    hideEmpty: $hideEmpty, verifiedOnly: $verifiedOnly
-                ) {
-                    id name verified
-                    logo { url }
-                    creator { username displayName }
-                    metrics { items totalSalesDecimal }
-                    stats @include(if: $withStats) {
-                        totalVolumeDecimal
-                        oneDayFloorPriceDecimal
-                    }
-                }
-            }
-        }`;
-        const networks = ['CRO', 'CRONOS'];
-        const calls = networks.map(n => fetch(graphqlEndpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                operationName: 'GetCreatorAllCollections',
-                query: Q,
-                variables: {
-                    cacheId: `creator-cols-${u}-${n}`,
-                    first: 200,
-                    sort: { field: 'totalSalesDecimalAllTime', order: 'DESC' },
-                    isSortFieldZeroLast: true,
-                    timeRange: 'ALL',
-                    hideEmpty: true,
-                    verifiedOnly: false,
-                    withStats: true,
-                    networks: [n]
-                }
-            })
-        }).then(r => r.json()).then(j => {
-            if (j?.errors) console.warn('[FeaturedArtists] GetCreatorAllCollections errors:', j.errors);
-            return j?.data?.public?.collections || [];
-        }).catch(e => {
-            console.warn('[FeaturedArtists] GetCreatorAllCollections fetch failed:', e);
-            return [];
+    /* Récupère le bundle complet pour un artiste : profile collections
+       + per-collection metrics (en parallèle) + user metrics. Sort la
+       liste par all-time vol descendant. */
+    async function fetchCreatorBundle(username) {
+        const [cols, metrics] = await Promise.all([
+            fetchCreatorCollections(username),
+            fetchUserMetrics(username)
+        ]);
+        // Per-collection metrics en parallèle — on enrichit chaque entrée
+        // avec son `metric` (totalSalesDecimal, owners, totalSupply…).
+        const enriched = await Promise.all(cols.map(async c => {
+            const m = await fetchCollectionMetric(c.id);
+            return Object.assign({}, c, { metric: m });
         }));
-        const lists = await Promise.all(calls);
-        const flat = [].concat(...lists);
-        return flat
-            .filter(c => String(c?.creator?.username || '').toLowerCase() === u)
-            .sort((a,b) => _creatorVol(b) - _creatorVol(a));
+        enriched.sort((a, b) => _creatorVol(b) - _creatorVol(a));
+        return { collections: enriched, userMetrics: metrics };
     }
 
-    function buildArtistSlide(cfg, data, collections) {
+    function buildArtistSlide(cfg, data, bundle) {
         const slide = document.createElement('div');
         slide.className = 'home-fa-slide';
         const avatar = data?.avatar?.url || '';
@@ -9078,14 +9074,26 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         const fmt = n => { const v=Number(n)||0; if(!v) return '—'; return v>=1000?'$'+(v/1000).toFixed(1)+'K':'$'+v.toFixed(0); };
         const fmtNum = n => { const v=Number(n)||0; return v.toLocaleString('en-US'); };
 
-        /* Stats agrégées sur TOUTES les collections crées de l'artiste */
-        const totalVol    = collections.reduce((s,c) => s + _creatorVol(c), 0);
-        const totalItems  = collections.reduce((s,c) => s + (Number(c.metrics?.items)||0), 0);
-        const totalCols   = collections.length;
+        const collections = bundle?.collections || [];
+        const userMetrics = bundle?.userMetrics || null;
 
-        /* Top 3 collections par volume — déjà triées par fetchCreator */
+        /* Stats agrégées :
+            • collections = nb d'entrées renvoyées par profileCollections
+            • NFTs        = userMetrics.created (le compteur officiel
+                            que Crypto.com expose sur la page profil)
+            • all-time vol = somme des totalSalesDecimal de chaque
+                            collectionMetric (= vol all-time par
+                            collection, additionné) */
+        const totalCols  = collections.length;
+        const totalNfts  = Number(userMetrics?.created) || 0;
+        const totalVol   = collections.reduce((s,c) => s + _creatorVol(c), 0);
+
+        /* Top 3 collections par all-time vol — déjà triées par fetchCreatorBundle */
         const top3 = collections.slice(0, 3);
-        const colsHtml = top3.map((c,i) => `
+        const colsHtml = top3.map((c,i) => {
+            const floor = Number(c.metric?.minSaleListingPriceDecimal) || 0;
+            const items = Number(c.metric?.totalSupply) || 0;
+            return `
             <a class="home-fa-col" href="https://crypto.com/nft/collection/${c.id}" target="_blank" rel="noopener">
                 <span class="home-fa-col-rank">#${i+1}</span>
                 ${c.logo?.url?`<img class="home-fa-col-logo" src="${_fcEsc(c.logo.url)}" alt="" loading="lazy"/>`:`<div class="home-fa-col-logo--empty"></div>`}
@@ -9093,11 +9101,12 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     <span class="home-fa-col-name">${_fcEsc(c.name||'—')}</span>
                     <div class="home-fa-col-stats">
                         <span class="home-fa-col-vol">${fmt(_creatorVol(c))} vol.</span>
-                        ${c.stats?.oneDayFloorPriceDecimal ? `<span class="home-fa-col-floor">${fmt(c.stats.oneDayFloorPriceDecimal)} floor</span>` : ''}
+                        ${floor ? `<span class="home-fa-col-floor">${fmt(floor)} floor</span>` : ''}
                     </div>
                 </div>
-                <span class="home-fa-col-items">${fmtNum(c.metrics?.items||0)} items</span>
-            </a>`).join('') || `<span class="home-fa-no-cols">No public collections yet</span>`;
+                ${items ? `<span class="home-fa-col-items">${fmtNum(items)} items</span>` : ''}
+            </a>`;
+        }).join('') || `<span class="home-fa-no-cols">No public collections yet</span>`;
 
         /* Layout vertical centré : avatar en haut avec un écart, puis
            pseudo + role + bio centrés, puis stats, CTA, et enfin les 3
@@ -9116,7 +9125,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 </div>
                 <div class="home-fa-stats">
                     <span class="home-fa-stat"><span class="home-fa-stat-val">${totalCols}</span><span class="home-fa-stat-label">collections</span></span>
-                    <span class="home-fa-stat"><span class="home-fa-stat-val">${fmtNum(totalItems)}</span><span class="home-fa-stat-label">NFTs</span></span>
+                    <span class="home-fa-stat"><span class="home-fa-stat-val">${fmtNum(totalNfts)}</span><span class="home-fa-stat-label">NFTs</span></span>
                     <span class="home-fa-stat"><span class="home-fa-stat-val">${fmt(totalVol)}</span><span class="home-fa-stat-label">all-time vol</span></span>
                 </div>
                 <a class="home-fa-cta" href="${_fcEsc(profileUrl)}" target="_blank" rel="noopener">View Profile →</a>
@@ -9135,31 +9144,14 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // On GARDE la className `home-creators-grid` — c'est le wrapper
         // halo qui englobe désormais le spotlight ET la nav (pour que les
         // flèches + progress + dots soient intégrées au bas du cadre).
-        const profiles = await Promise.all(FEATURED_CREATORS.map(c => fetchCreatorProfile(c.username)));
-        const colsList = await Promise.all(FEATURED_CREATORS.map(async (cfg) => {
-            // 1ère tentative : user.collections via username (l'API
-            // Crypto.com prend le username comme ID, pas l'uuid). Rapide
-            // (1 call) — peut renvoyer vide pour les comptes plateforme.
-            let cols = await fetchCreatorCollections(cfg.username);
-            // 2ème : on liste les NFTs CREÉS par l'artiste (creatorId),
-            // puis on dédoublonne par collection.id. C'est exactement ce
-            // que fait Crypto.com sur ?tab=created, donc on récupère même
-            // les petites collections absentes du top all-time.
-            if (!cols.length) {
-                cols = await fetchCreatorCollectionsViaAssets(cfg.username);
-            }
-            // 3ème : scan ALL-time top collections filtré côté client par
-            // creator.username. Dernier filet pour les comptes type
-            // cryptocomnft où aucune des 2 méthodes au-dessus ne marche.
-            if (!cols.length) {
-                cols = await fetchCollectionsByCreator(cfg.username);
-            }
-            return cols;
-        }));
+        const [profiles, bundles] = await Promise.all([
+            Promise.all(FEATURED_CREATORS.map(c => fetchCreatorProfile(c.username))),
+            Promise.all(FEATURED_CREATORS.map(c => fetchCreatorBundle(c.username)))
+        ]);
         const spotlight = document.createElement('div');
         spotlight.className = 'home-fa-spotlight';
         FEATURED_CREATORS.forEach((cfg,i) => {
-            const slide = buildArtistSlide(cfg, profiles[i], colsList[i]);
+            const slide = buildArtistSlide(cfg, profiles[i], bundles[i]);
             if (i===0) slide.classList.add('is-active');
             spotlight.appendChild(slide);
         });
