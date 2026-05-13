@@ -8946,6 +8946,62 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             || 0;
     }
 
+    /* Source la plus fiable : mime ce que fait Crypto.com sur la page
+       /nft/profile/<user>?tab=created — on liste les NFTs créés par
+       l'artiste (profileCreatedAssets / profileAssets avec creatorId),
+       puis on dédoublonne par collection.id pour obtenir l'ensemble
+       des collections où l'artiste est crédité créateur. Ça récupère
+       même les petites collections que le scan top-200 raterait
+       (ex: aabff17f9874020416137984b9d2b8db pour cabezaenlasnubes). */
+    async function fetchCreatorCollectionsViaAssets(username) {
+        const u = String(username || '').trim();
+        if (!u) return [];
+        const COL_FRAG = `id name verified logo{url} creator{username displayName}
+                          metrics{items totalSalesDecimal}
+                          stats{totalVolumeDecimal oneDayFloorPriceDecimal}`;
+        // Le schéma Crypto.com n'est pas documenté publiquement — on tente
+        // plusieurs noms de field, du plus probable au moins probable.
+        const candidates = [
+            { field: 'profileCreatedAssets', arg: 'creatorId' },
+            { field: 'profileAssets',        arg: 'creatorId' },
+            { field: 'createdAssets',        arg: 'creatorId' }
+        ];
+        for (const cand of candidates) {
+            const Q = `query GetCreatedAssetsList($id:ID!,$first:Int!,$skip:Int!){
+                public{${cand.field}(${cand.arg}:$id,first:$first,skip:$skip){
+                    id collection{${COL_FRAG}}
+                }}}`;
+            try {
+                const res = await fetch(graphqlEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        operationName: 'GetCreatedAssetsList',
+                        query: Q,
+                        variables: { id: u, first: 100, skip: 0 }
+                    })
+                });
+                const json = await res.json();
+                if (json?.errors) {
+                    console.warn('[FeaturedArtists] ' + cand.field + ' errors:', json.errors);
+                    continue;
+                }
+                const assets = json?.data?.public?.[cand.field];
+                if (!Array.isArray(assets) || !assets.length) continue;
+                const byId = new Map();
+                assets.forEach(a => {
+                    const c = a?.collection;
+                    if (c?.id && !byId.has(c.id)) byId.set(c.id, c);
+                });
+                if (!byId.size) continue;
+                return [...byId.values()].sort((a,b) => _creatorVol(b) - _creatorVol(a));
+            } catch (e) {
+                console.warn('[FeaturedArtists] ' + cand.field + ' fetch failed:', e);
+            }
+        }
+        return [];
+    }
+
     /* Fallback : certains comptes (ex: cryptocomnft, plateformes) renvoient
        user.collections vide. On bascule alors sur un scan des top collections
        all-time filtré côté client par creator.username. Cette query est
@@ -9085,10 +9141,16 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             // Crypto.com prend le username comme ID, pas l'uuid). Rapide
             // (1 call) — peut renvoyer vide pour les comptes plateforme.
             let cols = await fetchCreatorCollections(cfg.username);
-            // Fallback : scan ALL-time top collections sur CRO + CRONOS,
-            // filtré côté client par creator.username. Récupère bien les
-            // collections dont l'artiste est crédité créateur même si
-            // user.collections est vide.
+            // 2ème : on liste les NFTs CREÉS par l'artiste (creatorId),
+            // puis on dédoublonne par collection.id. C'est exactement ce
+            // que fait Crypto.com sur ?tab=created, donc on récupère même
+            // les petites collections absentes du top all-time.
+            if (!cols.length) {
+                cols = await fetchCreatorCollectionsViaAssets(cfg.username);
+            }
+            // 3ème : scan ALL-time top collections filtré côté client par
+            // creator.username. Dernier filet pour les comptes type
+            // cryptocomnft où aucune des 2 méthodes au-dessus ne marche.
             if (!cols.length) {
                 cols = await fetchCollectionsByCreator(cfg.username);
             }
