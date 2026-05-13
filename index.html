@@ -1314,6 +1314,12 @@
             </div>
             <div class="home-chat-members-list" id="homeChatModalAvatars"></div>
           </div>
+          <div class="home-chat-members-section home-chat-members-section--modal" id="homeChatModalAnon" style="display:none;">
+            <div class="home-chat-members-label">
+              <span class="home-chat-stat-dot home-chat-stat-dot--anon"></span>
+              Anonymous — <span id="homeChatModalAnonCount">0</span>
+            </div>
+          </div>
           <div class="home-chat-members-section home-chat-members-section--modal" id="homeChatModalOffline" style="display:none;">
             <div class="home-chat-members-label">
               <span class="home-chat-stat-dot home-chat-stat-dot--offline"></span>
@@ -9082,9 +9088,10 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         }).join('') || `<span class="home-fa-no-cols">No public collections yet</span>`;
 
         /* Layout vertical centré : avatar en haut avec un écart, puis
-           pseudo + role + bio centrés, puis stats, top 3 collections, et
-           enfin la CTA "View Profile" tout en bas (sous les collections,
-           pas sous la description). */
+           pseudo + role centrés, puis stats, top 3 collections, et
+           enfin la CTA "View Profile" tout en bas. Plus de bio :
+           sa longueur variable changeait la hauteur de chaque slide,
+           ce qui faisait sauter le carousel d'un artiste à l'autre. */
         slide.innerHTML = `
             <div class="home-fa-bg" style="background:linear-gradient(135deg,rgba(0,179,255,0.07),rgba(7,14,28,0.95))"></div>
             <div class="home-fa-content">
@@ -9095,7 +9102,6 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                         ${verified?'<svg class="home-fa-verified" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
                     </div>
                     <span class="home-fa-role">${_fcEsc(cfg.role)}</span>
-                    ${bio?`<p class="home-fa-bio">${_fcEsc(bio.slice(0,220))}${bio.length>220?'…':''}</p>`:''}
                 </div>
                 <div class="home-fa-stats">
                     <span class="home-fa-stat"><span class="home-fa-stat-val">${totalCols}</span><span class="home-fa-stat-label">collections</span></span>
@@ -10893,15 +10899,19 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                         renderAvatarStack(avatarsOffEl, namedOffline, 6, true);
 
                         // ── Sync modal mobile ────────────────────────────────
-                        const modalOnline  = document.getElementById('homeChatModalOnline');
-                        const modalOffline = document.getElementById('homeChatModalOffline');
-                        const modalOnlineCount  = document.getElementById('homeChatModalOnlineCount');
-                        const modalOfflineCount = document.getElementById('homeChatModalOfflineCount');
-                        const modalAvatars    = document.getElementById('homeChatModalAvatars');
-                        const modalAvatarsOff = document.getElementById('homeChatModalAvatarsOffline');
+                        const modalOnline   = document.getElementById('homeChatModalOnline');
+                        const modalAnon     = document.getElementById('homeChatModalAnon');
+                        const modalOffline  = document.getElementById('homeChatModalOffline');
+                        const modalOnlineCount   = document.getElementById('homeChatModalOnlineCount');
+                        const modalAnonCount     = document.getElementById('homeChatModalAnonCount');
+                        const modalOfflineCount  = document.getElementById('homeChatModalOfflineCount');
+                        const modalAvatars       = document.getElementById('homeChatModalAvatars');
+                        const modalAvatarsOff    = document.getElementById('homeChatModalAvatarsOffline');
                         if (modalOnlineCount)  modalOnlineCount.textContent  = onlineCount;
+                        if (modalAnonCount)    modalAnonCount.textContent    = anonCount;
                         if (modalOfflineCount) modalOfflineCount.textContent = offlineCount;
                         if (modalOnline)  modalOnline.style.display  = onlineCount  > 0 ? 'flex' : 'none';
+                        if (modalAnon)    modalAnon.style.display    = anonCount    > 0 ? 'flex' : 'none';
                         if (modalOffline) modalOffline.style.display = offlineCount > 0 ? 'flex' : 'none';
                         renderAvatarStack(modalAvatars,    namedOnline,  20, false);
                         renderAvatarStack(modalAvatarsOff, namedOffline, 20, true);
