@@ -26499,14 +26499,21 @@ a.snap-holder-username:hover {
 .home-section--featured-artists > .home-section-header {
     flex-shrink: 0;
 }
+/* Featured Collections : la card interne a son propre min-height
+   réaliste (banner + identity + stats + samples). 600 suffit pour
+   éviter qu'elle paraisse vide sur desktop tout en se laissant
+   shrink à 0 sur mobile (override plus bas). */
 .home-section--featured .home-fc-spotlight {
     flex: 1 1 0;
-    min-height: 620px;
+    min-height: 600px;
     min-width: 0;
 }
+/* Featured Artists : plus de min-height fixe — le slide actif est
+   maintenant en position:relative et dicte la hauteur du wrapper.
+   Plus de grand vide sous le bouton View Profile. */
 .home-section--featured-artists .home-creators-grid {
     flex: 1 1 0;
-    min-height: 590px;            /* nav 30px en sibling = 620 total */
+    min-height: 0;
     min-width: 0;
 }
 .home-section--featured .home-fc-spotlight .home-featured-grid {
@@ -27060,19 +27067,24 @@ body { box-sizing: border-box; }
    FEATURED ARTISTS — spotlight 1 artiste à la fois
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* Wrapper pleine largeur. min-height calibré pour que le top 3 + la
-   CTA tiennent SANS scroll. La bio a été retirée du slide : chaque
-   artiste a maintenant exactement la même hauteur (le carousel ne saute
-   plus). 640px suffit sans bio. */
+/* Wrapper pleine largeur. La hauteur est désormais dictée par la
+   slide active (position: relative ci-dessous) — plus de min-height
+   en dur qui laissait un grand vide en dessous du bouton sur mobile.
+   On garde un min-height de sécurité pour éviter que le wrapper
+   collapse complètement pendant un transition entre slides de
+   structures différentes. */
 .home-fa-spotlight {
     position: relative;
     width: 100%;
     flex: 1;
-    min-height: 640px;
+    min-height: 0;
     overflow: hidden;
 }
 
-/* Slides empilées */
+/* Slides empilées : les inactives sont absolutes (overlay invisible),
+   l'active est en relative pour DICTER la hauteur du spotlight. Ça
+   supprime l'espace vide en dessous de la CTA quand le contenu est
+   plus court que le min-height historique. */
 .home-fa-slide {
     position: absolute;
     inset: 0;
@@ -27082,6 +27094,8 @@ body { box-sizing: border-box; }
     transition: opacity 0.55s cubic-bezier(0.2,0.8,0.2,1);
 }
 .home-fa-slide.is-active {
+    position: relative;
+    inset: auto;
     opacity: 1;
     pointer-events: auto;
 }
@@ -27118,7 +27132,10 @@ body { box-sizing: border-box; }
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 100%;
+    /* height: 100% retiré : le slide actif est maintenant en
+       position:relative et c'est ce content qui dicte la hauteur du
+       wrapper. height:100% sur un parent en auto-height collapse à 0
+       sur certains navigateurs. */
     padding: 28px 24px 14px;
     gap: 14px;
     align-items: center;
@@ -27140,10 +27157,12 @@ body { box-sizing: border-box; }
     height: 96px;
     border-radius: 50%;
     object-fit: cover;
-    /* Fin contour blanc — pas de halo, pas de drop-shadow noire. Le
-       layered glow précédent rendait un anneau gris pas net. */
+    /* Fin contour blanc + halo blanc diffus autour. Le halo est en
+       box-shadow simple (pas d'inset ring) → pas d'effet "anneau gris"
+       sur les bords du portrait. */
     border: 1.5px solid rgba(255, 255, 255, 0.9);
-    box-shadow: none;
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.45),
+                0 0 30px rgba(255, 255, 255, 0.18);
     display: block;
     margin-top: 4px;
     margin-bottom: 8px;
@@ -27153,7 +27172,8 @@ body { box-sizing: border-box; }
     border-radius: 50%;
     background: rgba(0,179,255,0.15);
     border: 1.5px solid rgba(255, 255, 255, 0.9);
-    box-shadow: none;
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.45),
+                0 0 30px rgba(255, 255, 255, 0.18);
     display: flex; align-items: center; justify-content: center;
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 36px; color: #00B3FF;
@@ -27289,9 +27309,9 @@ body { box-sizing: border-box; }
 }
 .home-fa-col-stats {
     display: flex; gap: 10px; align-items: center;
-    flex-wrap: wrap;
-    /* vol + floor + items sur la même ligne maintenant. flex-wrap pour
-       les écrans très étroits où ça pourrait déborder. */
+    width: 100%;
+    /* Vol + floor groupés à gauche, items poussés à droite via
+       margin-left:auto sur .home-fa-col-items. Même ligne pour les 3. */
 }
 .home-fa-col-vol {
     font-family: 'Geomanist-Bold', sans-serif;
@@ -27308,6 +27328,9 @@ body { box-sizing: border-box; }
     letter-spacing: 0;
     line-height: 1.2;
     flex-shrink: 0;
+}
+.home-fa-col-items {
+    margin-left: auto;   /* push à droite, sur la même ligne que floor */
 }
 .home-fa-no-cols {
     font-size: 12px; color: rgba(255,255,255,0.25);
