@@ -1406,15 +1406,12 @@
       <div class="home-section-header">
         <h2 class="home-section-title">Featured Artists</h2>
       </div>
+      <!-- "Get featured" est désormais une slide promo À L'INTÉRIEUR du
+           carousel (cf. buildPromoSlide), plus un bandeau séparé en
+           dessous, pour montrer concrètement à un artiste à quoi son
+           slot ressemblerait. -->
       <div class="home-creators-grid" id="homeFeaturedCreatorsGrid">
         <div class="home-top-loading"><span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span></div>
-      </div>
-      <div class="home-fd-cta home-fa-cta-banner">
-        <div class="home-fd-cta-text">
-          <span class="home-fd-cta-title">Want your artist profile featured here?</span>
-          <span class="home-fd-cta-sub">Reach out and we'll spotlight you on the home alongside Crypto.com NFT.</span>
-        </div>
-        <a class="home-fd-cta-btn" href="https://x.com/cronoswtf" target="_blank" rel="noopener">Contact us</a>
       </div>
     </section>
 
@@ -9117,6 +9114,62 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         return slide;
     }
 
+    /* Slide promo "Your profile here" — affichée comme une 4e carte du
+       carrousel Featured Artists, au lieu d'un bandeau séparé en dessous.
+       Pour qu'un artiste qui passe sur la home se projette dans le slot
+       et comprenne à quoi son profil ressemblerait s'il nous contactait. */
+    function buildPromoSlide() {
+        const slide = document.createElement('div');
+        slide.className = 'home-fa-slide home-fa-slide--promo';
+        slide.innerHTML = `
+            <div class="home-fa-bg" style="background:linear-gradient(135deg,rgba(0,179,255,0.07),rgba(7,14,28,0.95))"></div>
+            <div class="home-fa-content">
+                <div class="home-fa-header">
+                    <div class="home-fa-avatar--fallback home-fa-avatar--promo" aria-hidden="true">+</div>
+                    <div class="home-fa-name-row">
+                        <span class="home-fa-name">Your profile here</span>
+                    </div>
+                    <span class="home-fa-role">Featured artist · open slot</span>
+                </div>
+                <div class="home-fa-stats home-fa-stats--promo">
+                    <span class="home-fa-stat"><span class="home-fa-stat-val">—</span><span class="home-fa-stat-label">collections</span></span>
+                    <span class="home-fa-stat"><span class="home-fa-stat-val">—</span><span class="home-fa-stat-label">NFTs</span></span>
+                    <span class="home-fa-stat"><span class="home-fa-stat-val">—</span><span class="home-fa-stat-label">all-time vol</span></span>
+                </div>
+                <div class="home-fa-cols-wrap">
+                    <span class="home-fa-cols-label">Top collections · by volume</span>
+                    <div class="home-fa-cols">
+                        <div class="home-fa-col home-fa-col--promo">
+                            <span class="home-fa-col-rank" aria-hidden="true">🥇</span>
+                            <div class="home-fa-col-logo--empty"></div>
+                            <div class="home-fa-col-info">
+                                <span class="home-fa-col-name">Your top collection</span>
+                                <div class="home-fa-col-stats"><span class="home-fa-col-vol">$— vol.</span><span class="home-fa-col-floor">$— floor</span><span class="home-fa-col-items">— items</span></div>
+                            </div>
+                        </div>
+                        <div class="home-fa-col home-fa-col--promo">
+                            <span class="home-fa-col-rank" aria-hidden="true">🥈</span>
+                            <div class="home-fa-col-logo--empty"></div>
+                            <div class="home-fa-col-info">
+                                <span class="home-fa-col-name">Your #2 collection</span>
+                                <div class="home-fa-col-stats"><span class="home-fa-col-vol">$— vol.</span><span class="home-fa-col-floor">$— floor</span><span class="home-fa-col-items">— items</span></div>
+                            </div>
+                        </div>
+                        <div class="home-fa-col home-fa-col--promo">
+                            <span class="home-fa-col-rank" aria-hidden="true">🥉</span>
+                            <div class="home-fa-col-logo--empty"></div>
+                            <div class="home-fa-col-info">
+                                <span class="home-fa-col-name">Your #3 collection</span>
+                                <div class="home-fa-col-stats"><span class="home-fa-col-vol">$— vol.</span><span class="home-fa-col-floor">$— floor</span><span class="home-fa-col-items">— items</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <a class="home-fa-cta home-fa-cta--promo" href="https://x.com/cronoswtf" target="_blank" rel="noopener">Contact us to get featured →</a>
+            </div>`;
+        return slide;
+    }
+
     async function buildFeaturedCreators() {
         const wrap = document.getElementById('homeFeaturedCreatorsGrid');
         if (!wrap || wrap.querySelector('.home-fa-spotlight')) return;
@@ -9135,7 +9188,12 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             if (i===0) slide.classList.add('is-active');
             spotlight.appendChild(slide);
         });
-        const n = FEATURED_CREATORS.length;
+        // Slide promo "Your profile here" en fin de carrousel — l'idée est
+        // qu'un artiste qui voit défiler les Featured Artists tombe sur un
+        // slot vide à son nom et se projette dedans.
+        const promoSlide = buildPromoSlide();
+        spotlight.appendChild(promoSlide);
+        const n = FEATURED_CREATORS.length + 1; // +1 pour la promo
         let current = 0;
         // Nav row : prev arrow · progress bar · dots · next arrow.
         // MÊME pattern visuel que Featured Collections (home-fc-controls)
@@ -9143,10 +9201,14 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // mimic exactement initFeaturedSpotlight().
         const nav = document.createElement('div');
         nav.className = 'home-fa-nav';
+        const dotsHtml = [].concat(
+            FEATURED_CREATORS.map((_,i) => `<button class="home-fa-dot${i===0?' is-active':''}" data-idx="${i}" type="button"></button>`),
+            [`<button class="home-fa-dot home-fa-dot--promo" data-idx="${FEATURED_CREATORS.length}" type="button" aria-label="Featured artist — open slot"></button>`]
+        ).join('');
         nav.innerHTML = `
             <button class="home-fa-prev" type="button" aria-label="Previous"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="12,4 6,10 12,16"/></svg></button>
             <div class="home-fa-progress"><div class="home-fa-progress-fill"></div></div>
-            <div class="home-fa-dots">${FEATURED_CREATORS.map((_,i)=>`<button class="home-fa-dot${i===0?' is-active':''}" data-idx="${i}" type="button"></button>`).join('')}</div>
+            <div class="home-fa-dots">${dotsHtml}</div>
             <button class="home-fa-next" type="button" aria-label="Next"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="8,4 14,10 8,16"/></svg></button>`;
         spotlight.appendChild(nav);
         const fill = nav.querySelector('.home-fa-progress-fill');
