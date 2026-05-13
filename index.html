@@ -115,9 +115,6 @@
           <div class="login-modal-suggestions" id="loginModalSuggestions" style="display:none;"></div>
         </div>
         <div class="login-modal-error" id="loginModalError" style="display:none;"></div>
-        <button class="login-modal-btn" id="loginModalBtn" type="button">
-          <span id="loginModalBtnText">Go to my profile</span>
-        </button>
         <p class="login-modal-note">No password needed — your profile is public on Crypto.com NFT.</p>
 
       </div>
@@ -1468,6 +1465,14 @@
       </div>
       <div class="home-creators-grid" id="homeFeaturedCreatorsGrid">
         <div class="home-top-loading"><span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span></div>
+      </div>
+      <!-- Bandeau "Get featured" — même pattern que Featured Drops. -->
+      <div class="home-fd-cta home-fa-cta-banner">
+        <div class="home-fd-cta-text">
+          <span class="home-fd-cta-title">Want your artist profile featured here?</span>
+          <span class="home-fd-cta-sub">Reach out and we'll spotlight you on the home alongside Crypto.com NFT.</span>
+        </div>
+        <a class="home-fd-cta-btn" href="https://x.com/cronoswtf" target="_blank" rel="noopener">Contact us</a>
       </div>
     </section>
 
@@ -9088,14 +9093,17 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         const totalNfts  = Number(userMetrics?.created) || 0;
         const totalVol   = collections.reduce((s,c) => s + _creatorVol(c), 0);
 
-        /* Top 3 collections par all-time vol — déjà triées par fetchCreatorBundle */
+        /* Top 3 collections par all-time vol — déjà triées par
+           fetchCreatorBundle. Rangs affichés avec les médailles emoji
+           🥇🥈🥉 (cohérent avec les Top Collections / Top Patrons). */
+        const MEDALS = ['🥇', '🥈', '🥉'];
         const top3 = collections.slice(0, 3);
         const colsHtml = top3.map((c,i) => {
             const floor = Number(c.metric?.minSaleListingPriceDecimal) || 0;
             const items = Number(c.metric?.totalSupply) || 0;
             return `
             <a class="home-fa-col" href="https://crypto.com/nft/collection/${c.id}" target="_blank" rel="noopener">
-                <span class="home-fa-col-rank">#${i+1}</span>
+                <span class="home-fa-col-rank" aria-label="Rank ${i+1}">${MEDALS[i]}</span>
                 ${c.logo?.url?`<img class="home-fa-col-logo" src="${_fcEsc(c.logo.url)}" alt="" loading="lazy"/>`:`<div class="home-fa-col-logo--empty"></div>`}
                 <div class="home-fa-col-info">
                     <span class="home-fa-col-name">${_fcEsc(c.name||'—')}</span>
@@ -9109,8 +9117,9 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         }).join('') || `<span class="home-fa-no-cols">No public collections yet</span>`;
 
         /* Layout vertical centré : avatar en haut avec un écart, puis
-           pseudo + role + bio centrés, puis stats, CTA, et enfin les 3
-           top collections en pleine largeur. */
+           pseudo + role + bio centrés, puis stats, top 3 collections, et
+           enfin la CTA "View Profile" tout en bas (sous les collections,
+           pas sous la description). */
         slide.innerHTML = `
             <div class="home-fa-bg" style="background:linear-gradient(135deg,rgba(0,179,255,0.07),rgba(7,14,28,0.95))"></div>
             <div class="home-fa-content">
@@ -9128,11 +9137,11 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     <span class="home-fa-stat"><span class="home-fa-stat-val">${fmtNum(totalNfts)}</span><span class="home-fa-stat-label">NFTs</span></span>
                     <span class="home-fa-stat"><span class="home-fa-stat-val">${fmt(totalVol)}</span><span class="home-fa-stat-label">all-time vol</span></span>
                 </div>
-                <a class="home-fa-cta" href="${_fcEsc(profileUrl)}" target="_blank" rel="noopener">View Profile →</a>
                 <div class="home-fa-cols-wrap">
                     <span class="home-fa-cols-label">Top collections · by volume</span>
                     <div class="home-fa-cols">${colsHtml}</div>
                 </div>
+                <a class="home-fa-cta" href="${_fcEsc(profileUrl)}" target="_blank" rel="noopener">View Profile →</a>
             </div>`;
         return slide;
     }
@@ -12896,8 +12905,11 @@ async function sha256hex(str) {
     const modal       = document.getElementById('loginModal');
     const closeBtn    = document.getElementById('loginModalClose');
     const input       = document.getElementById('loginModalInput');
-    const submitBtn   = document.getElementById('loginModalBtn');
-    const submitText  = document.getElementById('loginModalBtnText');
+    /* Le bouton "Go to my profile" a été retiré — la sélection d'un
+       résultat dans .login-modal-suggestions déclenche le login direct.
+       On garde des refs no-op pour ne pas casser le code qui les touchait. */
+    const submitBtn   = null;
+    const submitText  = null;
     const errorEl     = document.getElementById('loginModalError');
     const avatarEl    = document.getElementById('topnavUserAvatar');
     const nameEl      = document.getElementById('topnavUserName');
