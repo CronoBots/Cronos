@@ -1267,6 +1267,12 @@
               </div>
               <div class="home-chat-members-list" id="homeChatStatAvatars"></div>
             </div>
+            <div class="home-chat-members-section" id="homeChatStatAnon" style="display:none;">
+              <div class="home-chat-members-label">
+                <span class="home-chat-stat-dot home-chat-stat-dot--anon"></span>
+                Anonymous — <span id="homeChatAnonCount">0</span>
+              </div>
+            </div>
             <div class="home-chat-members-section" id="homeChatStatOffline" style="display:none;">
               <div class="home-chat-members-label">
                 <span class="home-chat-stat-dot home-chat-stat-dot--offline"></span>
@@ -1348,15 +1354,14 @@
                 <div class="pulse-kpi" title="Share of sessions from visitors who were signed in to a Crypto.com NFT account."><span class="pulse-kpi-label">Signed-in share</span><span class="pulse-kpi-value" id="pulseKpiSigned">—</span></div>
               </div>
             </div>
-            <!-- Charts + top contributors. En full-width vu la place dispo. -->
+            <!-- Charts + top contributors. En full-width vu la place dispo.
+                 "New members per week" est déplacée dans le Pulse du bas
+                 (sub-section Audience) pour ne pas dupliquer un même
+                 chart deux fois dans la home. -->
             <div class="pulse-grid home-cp-grid">
               <div class="pulse-card pulse-card--full">
                 <h3 class="pulse-card-title">Chat activity</h3>
                 <div class="pulse-card-body"><canvas id="pulseChartChat"></canvas></div>
-              </div>
-              <div class="pulse-card pulse-card--full">
-                <h3 class="pulse-card-title">New members per week</h3>
-                <div class="pulse-card-body"><canvas id="pulseChartGrowth"></canvas></div>
               </div>
               <div class="pulse-card pulse-card--full">
                 <h3 class="pulse-card-title">Top contributors</h3>
@@ -1369,69 +1374,33 @@
 
     </div><!-- fin home-two-col--chat-pulse -->
 
-    <!-- ══ 2 COLONNES : Market Bot Live Feed (gauche) | Top Collections (droite) ══
-         Sous le chat, les 2 vues "live data" du site : ce qui se passe
-         en ce moment sur le marché (Live Feed) et le classement actuel
-         des collections (Top Collections home). ── -->
-    <div class="home-two-col home-two-col--market-top">
-
-      <!-- MARKET BOT LIVE FEED — colonne gauche -->
-      <section class="home-section home-live-section">
-        <div class="home-section-header">
-          <div>
-            <h2 class="home-section-title">Market Bot <span class="home-live-title-sep">·</span> Live Feed</h2>
-          </div>
-          <span class="home-live-badge">LIVE</span>
+    <!-- ── MARKET BOT LIVE FEED — pleine largeur ──
+         La carte Top Collections a été retirée de la home : son contenu
+         est déjà disponible 1:1 dans l'onglet Top Collections de la
+         topnav. On garde uniquement le live feed ici. ── -->
+    <section class="home-section home-live-section">
+      <div class="home-section-header">
+        <div>
+          <h2 class="home-section-title">Market Bot <span class="home-live-title-sep">·</span> Live Feed</h2>
         </div>
-        <div id="cbTicker" class="home-live-card sb-table-wrap home-live-table-wrap">
-          <table class="sb-table home-live-table">
-            <thead>
-              <tr>
-                <th class="sb-th sb-th--center">Event</th>
-                <th class="sb-th">Item</th>
-                <th class="sb-th sb-th--center">Price</th>
-                <th class="sb-th sb-th--center">Time</th>
-              </tr>
-            </thead>
-            <tbody class="cb-ticker-track" id="cbTickerTrack">
-              <tr><td colspan="4" class="cb-ticker-empty">Loading live activity…</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- TOP COLLECTIONS — colonne droite -->
-      <section class="home-section">
-        <div class="home-section-header">
-          <h2 class="home-section-title">Top Collections</h2>
-        </div>
-        <div class="home-top-table-wrap" id="homeTopList">
-          <table class="stats-table home-top-table" id="homeTopTable">
-            <colgroup>
-              <col style="width:44px">
-              <col>
-              <col style="width:80px">
-              <col style="width:90px">
-            </colgroup>
-            <thead>
-              <tr>
-                <th class="stats-th stats-th--center home-top-th">#</th>
-                <th class="stats-th stats-th--left home-top-th">Collection</th>
-                <th class="stats-th stats-th--center home-top-th">Floor</th>
-                <th class="stats-th stats-th--center home-top-th">VOL.</th>
-                <th class="stats-th stats-th--center home-top-th">VOL. %</th>
-              </tr>
-            </thead>
-            <tbody id="homeTopTableBody">
-              <tr><td colspan="6" class="home-top-loading-cell">
-                <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
-              </td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-    </div><!-- fin home-two-col--market-top -->
+        <span class="home-live-badge">LIVE</span>
+      </div>
+      <div id="cbTicker" class="home-live-card sb-table-wrap home-live-table-wrap">
+        <table class="sb-table home-live-table">
+          <thead>
+            <tr>
+              <th class="sb-th sb-th--center">Event</th>
+              <th class="sb-th">Item</th>
+              <th class="sb-th sb-th--center">Price</th>
+              <th class="sb-th sb-th--center">Time</th>
+            </tr>
+          </thead>
+          <tbody class="cb-ticker-track" id="cbTickerTrack">
+            <tr><td colspan="4" class="cb-ticker-empty">Loading live activity…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
     <!-- ── Featured Collections — single-card spotlight (auto-rotates every
          FC_CYCLE_MS, paused on hover, manual nav via dots / arrows). The
@@ -1623,6 +1592,10 @@
               <div class="pulse-card">
                 <h3 class="pulse-card-title">Signed-in vs anonymous</h3>
                 <div class="pulse-card-body"><canvas id="pulseChartAuth"></canvas></div>
+              </div>
+              <div class="pulse-card pulse-card--full">
+                <h3 class="pulse-card-title">New members per week</h3>
+                <div class="pulse-card-body"><canvas id="pulseChartGrowth"></canvas></div>
               </div>
             </div>
           </div>
@@ -9277,6 +9250,8 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
 
         let fbDb          = null;
         let _certsCache   = {};   /* { username_lower: tokenHash } — populated from Firebase /certs */
+        let _memberAvatars = {};  /* { username_lower: avatarUrl } — populated from Firebase /chat/members */
+        window._memberAvatars = _memberAvatars;
         window._certsCache = _certsCache;
         let fbInitialized = false;
         let lastSendAt    = 0;
@@ -10179,6 +10154,22 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             const patronBadgeHtml = isPatron
                 ? '<span class="chat-patron-badge" title="Official Patron — supporter of CRONOS.WTF">WTF PATRON</span>'
                 : '';
+            /* Badge "WTF CREATOR" en rouge — réservé aux fondateurs (unscoop).
+               Identifiant case-insensitive contre le username brut. */
+            const CREATORS = new Set(['unscoop']);
+            const isCreator = CREATORS.has(userKey);
+            const creatorBadgeHtml = isCreator
+                ? '<span class="chat-creator-badge" title="Founder / Creator of CRONOS.WTF">WTF CREATOR</span>'
+                : '';
+            /* Avatar à gauche du pseudo. msg.avatar peut être absent (le
+               payload chat/messages ne l'embarque pas pour l'instant), on
+               retombe alors sur _memberAvatars peuplé par /chat/members.
+               Le slot reste patché en live quand l'avatar arrive plus tard. */
+            const displayInitial = ((msg.display || msg.user || '?')[0] || '?').toUpperCase();
+            const avatarUrl = msg.avatar || _memberAvatars[userKey] || null;
+            const avatarHtml = avatarUrl
+                ? `<img class="home-chat-msg-avatar" src="${_fcEsc(avatarUrl)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'home-chat-msg-avatar home-chat-msg-avatar--initial',textContent:'${_fcEsc(displayInitial)}'}))"/>`
+                : `<span class="home-chat-msg-avatar home-chat-msg-avatar--initial">${_fcEsc(displayInitial)}</span>`;
             const div = document.createElement('div');
             div.className = 'home-chat-msg home-chat-msg--community' + (isMine ? ' home-chat-msg--mine' : '');
             if (key) div.dataset.msgKey = key;
@@ -10221,8 +10212,9 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             div.innerHTML = `
                 ${reactBarHtml}
                 <div class="home-chat-msg-meta">
+                    <span class="home-chat-msg-avatar-slot" data-user="${_fcEsc(userKey)}" data-initial="${_fcEsc(displayInitial)}">${avatarHtml}</span>
                     <span class="home-chat-msg-user-wrap" data-patron-username="${_fcEsc(userKey)}">
-                        <span class="home-chat-msg-user">${_fcEsc(msg.display || msg.user || 'Anonymous')}</span>${verifiedBadgeHtml}${patronBadgeHtml}
+                        <span class="home-chat-msg-user">${_fcEsc(msg.display || msg.user || 'Anonymous')}</span>${verifiedBadgeHtml}${creatorBadgeHtml}${patronBadgeHtml}
                     </span>
                     <span class="home-chat-msg-meta-right">
                         <span class="home-chat-msg-time">${formatDateTime(msg.t)}</span>
@@ -10654,6 +10646,30 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                    (chaque ouverture d'onglet = 1 session). */
                 trackSiteVisit();
 
+                /* Subscribe to /chat/members — builds local username→avatar
+                   cache so we can render the artist's profile picture to the
+                   left of each chat message even when the message itself was
+                   pushed without an avatar field. Patche aussi les messages
+                   déjà rendus dès que l'avatar arrive. */
+                fbDb.ref('chat/members').on('value', snap => {
+                    _memberAvatars = {};
+                    snap.forEach(child => {
+                        const v = child.val() || {};
+                        const u = String(v.username || '').toLowerCase();
+                        if (u && v.avatar) _memberAvatars[u] = v.avatar;
+                    });
+                    window._memberAvatars = _memberAvatars;
+                    // Patch existing avatar slots in place.
+                    document.querySelectorAll('.home-chat-msg-avatar-slot[data-user]').forEach(slot => {
+                        const u = slot.dataset.user || '';
+                        const url = _memberAvatars[u];
+                        if (url && !slot.querySelector('img')) {
+                            const initial = slot.dataset.initial || '?';
+                            slot.innerHTML = `<img class="home-chat-msg-avatar" src="${_fcEsc(url)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'home-chat-msg-avatar home-chat-msg-avatar--initial',textContent:'${_fcEsc(initial)}'}))"/>`;
+                        }
+                    });
+                });
+
                 /* Subscribe to /certs — builds local cache of verified tokens.
                    Badge is only shown when msg.certToken matches this cache. */
                 fbDb.ref('certs').on('value', snap => {
@@ -10844,18 +10860,26 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                         // ── Stats bar ──
                         const statConnected   = document.getElementById('homeChatStatConnected');
                         const statOnlineEl    = document.getElementById('homeChatStatOnline');
+                        const statAnonEl      = document.getElementById('homeChatStatAnon');
                         const statOfflineEl   = document.getElementById('homeChatStatOffline');
                         const statSep1        = document.getElementById('homeChatStatSep1');
                         const statSep2        = document.getElementById('homeChatStatSep2');
                         const connectedCount  = document.getElementById('homeChatConnectedCount');
                         const countEl         = document.getElementById('homeChatOnlineCount');
+                        const anonCountEl     = document.getElementById('homeChatAnonCount');
                         const offlineCountEl  = document.getElementById('homeChatOfflineCount');
                         const avatarsEl       = document.getElementById('homeChatStatAvatars');
                         const avatarsOffEl    = document.getElementById('homeChatStatAvatarsOffline');
 
                         if (connectedCount) connectedCount.textContent = totalConnected;
                         if (countEl)        countEl.textContent        = onlineCount;
+                        if (anonCountEl)    anonCountEl.textContent    = anonCount;
                         if (offlineCountEl) offlineCountEl.textContent = offlineCount;
+
+                        // Section "Anonymous" : visible dès qu'on a au
+                        // moins un visiteur anonyme connecté (sans
+                        // avatar — on affiche juste le count).
+                        if (statAnonEl) statAnonEl.style.display = anonCount > 0 ? 'flex' : 'none';
 
                         // Sep1 : visible uniquement si viewers > 0 ET online > 0
                         if (statConnected) statConnected.style.display = totalConnected > 0  ? 'flex'  : 'none';
@@ -15488,17 +15512,18 @@ async function sha256hex(str) {
     /* Backfill du registry analytics/collection_names : pour chaque ID
        de collection qui apparaît dans Pulse sans nom (event historique
        loggué sans label + pas encore enregistré dans le registry), on
-       résout via GraphQL puis on écrit le résultat sur Firebase. Au
-       prochain rendu (n'importe quel visiteur), Pulse affichera
-       directement le nom — c'est l'aspect "centralisé sur Firebase"
-       (rien n'est stocké côté navigateur). */
+       résout via GraphQL puis on patche le DOM IMMÉDIATEMENT. L'écriture
+       Firebase est best-effort et arrive après — si la rule n'est pas
+       encore déployée, le visiteur courant voit quand même le nom (le
+       prochain refresh refera le lookup sans le bénéfice du cache). */
     const _resolvingCollectionNames = new Set();
     async function _resolveCollectionNames(ids) {
-        if (!window.fbDb || !Array.isArray(ids) || !ids.length) return;
+        if (!Array.isArray(ids) || !ids.length) return;
         const Q = `query GetCollectionName($id:ID!){public{collection(id:$id){id name}}}`;
         await Promise.all(ids.map(async id => {
             if (_resolvingCollectionNames.has(id)) return;
             _resolvingCollectionNames.add(id);
+            let name = null;
             try {
                 const res = await fetch(graphqlEndpoint, {
                     method: 'POST',
@@ -15510,23 +15535,26 @@ async function sha256hex(str) {
                     })
                 });
                 const json = await res.json();
-                const name = json?.data?.public?.collection?.name;
-                if (!name) return;
-                await window.fbDb.ref(`analytics/collection_names/${id}`).set({
+                name = json?.data?.public?.collection?.name || null;
+            } catch (_) { /* GraphQL HS → on retombe sur l'id brut */ }
+            if (!name) return;
+            // 1) Patch DOM EN PREMIER — même si l'écriture Firebase
+            //    plante derrière (rule pas encore déployée, offline…),
+            //    le visiteur courant verra le nom.
+            document.querySelectorAll('.pulse-list-label').forEach(el => {
+                if ((el.textContent || '').trim() === id) {
+                    el.textContent = name;
+                    el.setAttribute('title', name);
+                }
+            });
+            // 2) Best-effort : pousse dans le registry pour les
+            //    prochains visiteurs. Silencieux en cas d'échec.
+            if (window.fbDb) {
+                window.fbDb.ref(`analytics/collection_names/${id}`).set({
                     name: String(name).slice(0, 120),
                     ts:   firebase.database.ServerValue.TIMESTAMP
-                });
-                // Patch en place : remplace l'ID brut par le nom dans
-                // les listes Pulse déjà rendues, sans attendre un refresh
-                // (lookup en string match — les IDs sont uniques donc
-                // sûrs à substituer).
-                document.querySelectorAll('.pulse-list-label').forEach(el => {
-                    if ((el.textContent || '').trim() === id) {
-                        el.textContent = name;
-                        el.setAttribute('title', name);
-                    }
-                });
-            } catch (_) { /* best effort */ }
+                }).catch(() => {});
+            }
         }));
     }
 
