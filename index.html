@@ -10339,16 +10339,34 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     });
                 });
 
-                // Mobile : DOUBLE-TAP sur un message → toggle l'état
-                // .is-react-open (barre emoji + boutons reply/edit/delete).
-                // Le simple tap ne fait rien (laisse passer le scroll), un
-                // mouvement >8px annule la séquence (même chose). Du coup
-                // le scroll ne déclenche jamais l'ouverture par accident.
+                // Mobile : DOUBLE-TAP ou LONG-PRESS (~450ms) sur un
+                // message → toggle l'état .is-react-open (barre emoji +
+                // boutons reply/edit/delete). Le simple tap ne fait
+                // rien, un mouvement >8px annule la séquence.
                 if (key) {
+                    let _longPressTimer = null;
+                    const _openActions = (now) => {
+                        const wasOpen = div.classList.contains('is-react-open');
+                        msgs.querySelectorAll('.home-chat-msg--community.is-react-open').forEach(o => o.classList.remove('is-react-open'));
+                        if (!wasOpen) {
+                            div.classList.add('is-react-open');
+                            _chatOpenAt = now;
+                            if (navigator.vibrate) navigator.vibrate(20);
+                        }
+                        _chatLastTap = { ts: 0, target: null };
+                    };
+
                     div.addEventListener('touchstart', e => {
                         if (e.touches.length > 1) return;
                         _chatTouchMoved = false;
                         _chatTouchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                        // Long-press : si le doigt reste posé 450ms sans
+                        // bouger >8px, on ouvre les actions comme un
+                        // double-tap.
+                        clearTimeout(_longPressTimer);
+                        _longPressTimer = setTimeout(() => {
+                            if (!_chatTouchMoved) _openActions(Date.now());
+                        }, 450);
                     }, { passive: true });
 
                     div.addEventListener('touchmove', e => {
@@ -10356,36 +10374,34 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                         const dx = Math.abs(e.touches[0].clientX - _chatTouchStart.x);
                         const dy = Math.abs(e.touches[0].clientY - _chatTouchStart.y);
                         // 8px de tolérance — au-delà on considère que c'est
-                        // un scroll et on annule la séquence de double-tap
-                        // en cours.
+                        // un scroll et on annule la séquence (double-tap
+                        // ET long-press).
                         if (dx > 8 || dy > 8) {
                             _chatTouchMoved = true;
                             _chatLastTap = { ts: 0, target: null };
+                            clearTimeout(_longPressTimer);
                         }
                     }, { passive: true });
 
                     div.addEventListener('touchend', e => {
+                        clearTimeout(_longPressTimer);
                         if (_chatTouchMoved) return;                  // c'était un scroll
                         if (e.target.closest('button')) return;        // tap d'un bouton (emoji/reply…)
                         const now = Date.now();
+                        // Si le long-press a déjà ouvert les actions
+                        // (is-react-open posée par _openActions), on ne
+                        // refait pas la séquence double-tap.
+                        if (div.classList.contains('is-react-open') && _chatOpenAt && now - _chatOpenAt < 500) return;
                         const isDouble = (_chatLastTap.target === div && now - _chatLastTap.ts < 350);
                         if (isDouble) {
-                            const wasOpen = div.classList.contains('is-react-open');
-                            // Ferme tout, puis ré-ouvre seulement le bon
-                            // message (toggle si déjà ouvert).
-                            msgs.querySelectorAll('.home-chat-msg--community.is-react-open').forEach(o => o.classList.remove('is-react-open'));
-                            if (!wasOpen) {
-                                div.classList.add('is-react-open');
-                                _chatOpenAt = now;
-                                if (navigator.vibrate) navigator.vibrate(20);
-                            }
-                            _chatLastTap = { ts: 0, target: null };
+                            _openActions(now);
                         } else {
                             _chatLastTap = { ts: now, target: div };
                         }
                     }, { passive: true });
 
                     div.addEventListener('touchcancel', () => {
+                        clearTimeout(_longPressTimer);
                         _chatTouchMoved = true;
                         _chatLastTap = { ts: 0, target: null };
                     }, { passive: true });
@@ -11238,6 +11254,152 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         }
         card?.addEventListener('click', onMentionClick);
         modal?.addEventListener('click', onMentionClick);
+
+        /* ──────────────────────────────────────────────────────────────
+           Autocomplétion @mentions dans l'input du chat
+           ──────────────────────────────────────────────────────────────
+           Quand l'utilisateur tape "@" suivi d'une portion de pseudo, on
+           affiche un petit popover au-dessus de l'input avec les membres
+           dont le pseudo (username OU display) commence par cette
+           portion. Click sur une suggestion → on remplace "@partial" par
+           "@DisplayName " via mentionUser, déjà testé et qui gère le
+           cursor + l'espace devant. */
+        (function wireMentionAutocomplete() {
+            if (!input) return;
+            // Container popover — append dans la carte chat pour qu'il soit
+            // au-dessus de l'input et non du modal mobile.
+            const inputRow = document.getElementById('homeChatInputRow');
+            if (!inputRow) return;
+            const pop = document.createElement('div');
+            pop.className = 'home-chat-mention-pop';
+            pop.style.display = 'none';
+            inputRow.style.position = inputRow.style.position || 'relative';
+            inputRow.appendChild(pop);
+
+            let activeIdx = 0;
+            let activeMatches = [];
+
+            function _allMembers() {
+                // Source : _chatNameCache (peuplé à chaque message ET
+                // par renderAvatarStack pour les membres listés). Donne
+                // username → displayName.
+                const list = [];
+                _chatNameCache.forEach((display, username) => {
+                    list.push({ username, display });
+                });
+                // Dédup déjà géré par la Map. Tri alphabétique sur display.
+                list.sort((a, b) => a.display.localeCompare(b.display));
+                return list;
+            }
+
+            function _readMentionContext() {
+                // Renvoie { partial, start, end } si le curseur est dans
+                // un token @… non terminé, sinon null.
+                const cur = input.value || '';
+                const pos = input.selectionStart ?? cur.length;
+                const upto = cur.slice(0, pos);
+                // Recherche le dernier @ qui n'est pas suivi d'un espace
+                // entre lui et le curseur. Le @ doit être en début de
+                // string OU précédé d'un séparateur (espace, début, etc.).
+                const m = upto.match(/(^|\s)@([^\s@]{0,32})$/);
+                if (!m) return null;
+                const partial = m[2];
+                const atIndex = upto.length - (partial.length + 1); // position du "@"
+                return { partial, start: atIndex, end: pos };
+            }
+
+            function _esc(s) {
+                return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+            }
+
+            function _hide() {
+                pop.style.display = 'none';
+                pop.innerHTML = '';
+                activeMatches = [];
+                activeIdx = 0;
+            }
+
+            function _render(matches) {
+                if (!matches.length) { _hide(); return; }
+                activeMatches = matches;
+                activeIdx = Math.min(activeIdx, matches.length - 1);
+                pop.innerHTML = matches.slice(0, 6).map((m, i) => `
+                    <button type="button" class="home-chat-mention-pop-item${i === activeIdx ? ' is-active' : ''}" data-username="${_esc(m.username)}" data-display="${_esc(m.display)}">
+                        <span class="home-chat-mention-pop-at">@</span><span class="home-chat-mention-pop-name">${_esc(m.display)}</span>
+                    </button>
+                `).join('');
+                pop.style.display = 'block';
+            }
+
+            function _refresh() {
+                const ctx = _readMentionContext();
+                if (!ctx) { _hide(); return; }
+                const q = ctx.partial.toLowerCase();
+                const all = _allMembers();
+                const me = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+                const matches = all.filter(m => {
+                    if (me?.username && m.username.toLowerCase() === me.username.toLowerCase()) return false;
+                    if (!q) return true;
+                    return m.username.toLowerCase().includes(q) ||
+                           m.display.toLowerCase().includes(q);
+                });
+                _render(matches);
+            }
+
+            function _pick(idx) {
+                const m = activeMatches[idx];
+                if (!m) return;
+                const ctx = _readMentionContext();
+                if (!ctx) { _hide(); return; }
+                // On retire le "@partial" déjà tapé puis on laisse
+                // mentionUser ré-insérer "@DisplayName " proprement.
+                const before = (input.value || '').slice(0, ctx.start);
+                const after  = (input.value || '').slice(ctx.end);
+                input.value = before + after;
+                try { input.setSelectionRange(before.length, before.length); } catch (_) {}
+                mentionUser(m.username, m.display);
+                _hide();
+            }
+
+            input.addEventListener('input', _refresh);
+            input.addEventListener('keyup', e => {
+                // Refresh aussi sur les déplacements curseur (flèches /
+                // home / end) — sinon le popover reste collé après un
+                // simple changement de caret.
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Home' || e.key === 'End') _refresh();
+            });
+            input.addEventListener('blur', () => setTimeout(_hide, 120));
+
+            input.addEventListener('keydown', e => {
+                if (pop.style.display === 'none' || !activeMatches.length) return;
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    activeIdx = (activeIdx + 1) % Math.min(activeMatches.length, 6);
+                    _render(activeMatches);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    activeIdx = (activeIdx - 1 + Math.min(activeMatches.length, 6)) % Math.min(activeMatches.length, 6);
+                    _render(activeMatches);
+                } else if (e.key === 'Enter' || e.key === 'Tab') {
+                    e.preventDefault();
+                    _pick(activeIdx);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    _hide();
+                }
+            });
+
+            pop.addEventListener('mousedown', e => {
+                // mousedown plutôt que click pour éviter que le blur de
+                // l'input ne ferme le popover avant que le click ne soit
+                // traité.
+                const btn = e.target.closest('.home-chat-mention-pop-item');
+                if (!btn) return;
+                e.preventDefault();
+                const idx = Array.from(pop.querySelectorAll('.home-chat-mention-pop-item')).indexOf(btn);
+                _pick(idx);
+            });
+        })();
     }
 
     // ── Boutons nav ───────────────────────────────────────────────────────
@@ -14753,6 +14915,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-14T15:00:00Z',
+            type:  'improvement',
+            title: 'Chat: @-mentions + long-press + spacing',
+            text:  'Type "@" in the chat input → live list of members to pick. Long-press a message on mobile opens emoji + reply/edit/delete (double-tap still works). 10px gap between bubbles, quoted reply text reads as solid white.'
+        },
         {
             date:  '2026-05-13T21:30:00Z',
             type:  'improvement',
