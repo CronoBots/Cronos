@@ -10042,8 +10042,10 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
 
             const display = _fcEsc(msg.display || msg.user || 'Anonymous');
             const time    = formatDateTime(msg.t);
-            const me      = getCurrentUser();
-            const canDelete = !!(key && me && msg.user && msg.user === me.username);
+            // Les pastilles "is connected" / "is disconnected" sont
+            // immutables : ni l'auteur ni personne ne peut les retirer.
+            // Empêche un user de blanchir son historique de connexions.
+            const canDelete = false;
 
             // Flèche → pour les join (entrée), ← pour les leave (sortie).
             const arrowSvg = isLeave
@@ -11516,8 +11518,16 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         }
 
         // Pause sur hover (et reprise smooth — on garde la position du cycle)
+        const resumeCycle = () => {
+            paused = false;
+            cycleStart = performance.now() - (parseFloat(fill?.style.width || '0') / 100) * CYCLE_MS;
+        };
         root.addEventListener('mouseenter', () => { paused = true;  });
-        root.addEventListener('mouseleave', () => { paused = false; cycleStart = performance.now() - (parseFloat(fill?.style.width || '0') / 100) * CYCLE_MS; });
+        root.addEventListener('mouseleave', resumeCycle);
+        // Pause aussi pendant un touch (mobile) : dès que le doigt
+        // pose, on bloque l'auto-cycle pour ne pas changer de slide
+        // sous les doigts pendant que le user lit. Reprise au lift.
+        // touchcancel couvre les cas où l'OS interrompt le geste.
 
         prev?.addEventListener('click', (e) => { e.stopPropagation(); show(active - 1, true); });
         next?.addEventListener('click', (e) => { e.stopPropagation(); show(active + 1, true); });
@@ -11538,6 +11548,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             touchStartY = t.clientY;
             touchActive = true;
             touchLocked = false;
+            paused = true;
         }, { passive: true });
         root.addEventListener('touchmove', (e) => {
             if (!touchActive) return;
@@ -11552,10 +11563,13 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             // swipe horizontal soit fluide (pas de drift sur la page).
             if (touchLocked && e.cancelable) e.preventDefault();
         }, { passive: false });
-        root.addEventListener('touchend', (e) => {
+        const onTouchEnd = (e) => {
             if (!touchActive) return;
             const t = e.changedTouches?.[0];
             touchActive = false;
+            // Reprise du cycle dès que le doigt quitte la carte —
+            // que ce soit un tap, un swipe ou un touchcancel.
+            resumeCycle();
             if (!t || !touchLocked) return;
             const dx = t.clientX - touchStartX;
             if (Math.abs(dx) < SWIPE_MIN) return;
@@ -11566,7 +11580,9 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             // click sont émis successivement) d'ouvrir l'onglet.
             swipedRecently = true;
             setTimeout(() => { swipedRecently = false; }, 350);
-        }, { passive: true });
+        };
+        root.addEventListener('touchend',    onTouchEnd, { passive: true });
+        root.addEventListener('touchcancel', onTouchEnd, { passive: true });
 
         // Click sur le slide actif → ouvre l'onglet (on délègue au handler
         // existant `[data-tab-target]` qui est wired plus haut). On
