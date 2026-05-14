@@ -7654,15 +7654,14 @@ document.addEventListener('DOMContentLoaded', initialize);
     function updateCpGrid() {
         const grid = document.getElementById('cpNftGrid');
         if (!grid) return;
-        // Tailles décalées d'un cran vers le bas : le médium et le large
-        // produisaient la même grille sur mobile (1 colonne dans les deux
-        // cas) parce que 180px et 280px tombaient tous deux sous la
-        // largeur viewport ≈ 328px. On garde 3 paliers visuellement
-        // distincts sur tous les viewports :
-        //   - small  →  ~4 cols mobile / dense desktop
-        //   - medium →  ~2 cols mobile
-        //   - large  →  1 col mobile (carte pleine largeur)
-        const baseW = _cpSize === 'small' ? 75 : _cpSize === 'medium' ? 110 : 180;
+        // Tailles calibrées pour viser 3 / 2 / 1 colonnes sur mobile
+        // (~320-400px de largeur intérieure). 100 / 150 / 220 donnent
+        // exactement small=3, medium=2, large=1 sur la majorité des
+        // téléphones. Desktop reste fluide (≈9 / 6 / 4 cols à 1000px
+        // d'intérieur). L'ancienne mapping 75/110/180 produisait 4/3/2
+        // sur les phones les plus larges, ce que le user voulait
+        // resserrer.
+        const baseW = _cpSize === 'small' ? 100 : _cpSize === 'medium' ? 150 : 220;
         const gap = 4;
         const available = grid.getBoundingClientRect().width || grid.offsetWidth;
         if (!available) return;
