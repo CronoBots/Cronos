@@ -2210,14 +2210,12 @@
       if (isDragging) { isDragging = false; wrap.classList.remove('is-dragging'); }
     });
 
-    let touchStartX = 0, touchStartScroll = 0;
-    wrap.addEventListener('touchstart', function (e) {
-      touchStartX = e.touches[0].clientX;
-      touchStartScroll = wrap.scrollLeft;
-    }, { passive: true });
-    wrap.addEventListener('touchmove', function (e) {
-      wrap.scrollLeft = touchStartScroll - (e.touches[0].clientX - touchStartX);
-    }, { passive: true });
+    // Mobile : on laisse le scroll horizontal natif faire son travail
+    // (overflow-x:auto + -webkit-overflow-scrolling:touch). Les anciens
+    // touchstart/touchmove qui ajustaient manuellement scrollLeft
+    // entraient en conflit avec le scroll natif → la timeline ne
+    // glissait plus du tout sous le doigt. Le drag souris (lignes
+    // au-dessus) reste pour desktop.
   }
 
   function tryInit() {
@@ -9162,8 +9160,8 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                         </div>
                     </div>
                 </div>
-                <a class="home-fa-cta home-fa-cta--promo" href="https://twitter.com/Cronos_WTF" target="_blank" rel="noopener">Contact me to get featured →</a>
-                <div class="home-fa-promo-socials" aria-label="Reach out on">
+                <a class="home-fa-cta home-fa-cta--promo" href="https://twitter.com/Cronos_WTF" target="_blank" rel="noopener" data-fa-promo-cta>Contact me to get featured →</a>
+                <div class="home-fa-promo-socials" aria-label="Reach out on" hidden>
                     <a class="home-fa-promo-social home-fa-promo-social--x" href="https://twitter.com/Cronos_WTF" target="_blank" rel="noopener" title="Reach me on X">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.901 1.153h3.68l-8.038 9.19 9.45 12.504h-7.4l-5.8-7.586-6.64 7.586H.47l8.6-9.83L0 1.153h7.59l5.24 6.93L18.901 1.153Zm-1.29 19.5h2.04L6.49 3.22H4.3l13.31 17.433Z"/></svg>
                         <span>@Cronos_WTF</span>
@@ -9200,6 +9198,26 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // slot vide à son nom et se projette dedans.
         const promoSlide = buildPromoSlide();
         spotlight.appendChild(promoSlide);
+        // 1er tap sur la CTA jaune = on déplie les pills X/Discord en
+        // dessous (au lieu d'ouvrir twitter directement). 2e tap = on
+        // suit le lien comme un anchor normal. L'utilisateur voit donc
+        // d'abord le slot épuré (pas de pills par défaut), et a le
+        // choix entre X et Discord après le 1er tap.
+        const promoCta = promoSlide.querySelector('[data-fa-promo-cta]');
+        const promoSocials = promoSlide.querySelector('.home-fa-promo-socials');
+        if (promoCta && promoSocials) {
+            promoCta.addEventListener('click', (e) => {
+                if (promoSocials.hasAttribute('hidden')) {
+                    e.preventDefault();
+                    promoSocials.removeAttribute('hidden');
+                    promoCta.setAttribute('aria-expanded', 'true');
+                }
+                // 2e tap : pas de preventDefault → on laisse l'anchor
+                // ouvrir twitter.com/Cronos_WTF en nouvel onglet (le
+                // user a choisi X plutôt que Discord).
+            });
+            promoCta.setAttribute('aria-expanded', 'false');
+        }
         const n = FEATURED_CREATORS.length + 1; // +1 pour la promo
         let current = 0;
         // Nav row : prev arrow · progress bar · dots · next arrow.
