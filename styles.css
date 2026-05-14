@@ -26270,13 +26270,27 @@ a.snap-holder-username:hover {
    ══════════════════════════════════════════════════════════ */
 .home-spotlight-section { padding: 0; }
 
+/* ══════════════════════════════════════════════════════════
+   SPOTLIGHT — premium polish (sans média)
+   ──────────────────────────────────────────────────────────
+   Chaque slide porte sa propre couleur d'accent via --accent /
+   --accent-strong / --accent-soft (posés inline en HTML). Le cadre,
+   le halo, le titre, la barre de progression et le dot actif se
+   teintent automatiquement de cette couleur quand la slide devient
+   active — la grille visuelle suit la feature au lieu d'être figée
+   en cyan.
+   ══════════════════════════════════════════════════════════ */
 .home-spotlight {
+    --accent: #00B3FF;
+    --accent-strong: #4dccff;
+    --accent-soft: rgba(0,179,255,0.18);
     position: relative;
     display: flex;
     flex-direction: column;
     height: 340px;
     background:
-        linear-gradient(120deg, rgba(0,179,255,0.08) 0%, rgba(0,179,255,0.02) 45%, rgba(11,20,38,0.55) 100%);
+        radial-gradient(120% 80% at 85% -10%, var(--accent-soft) 0%, transparent 55%),
+        linear-gradient(120deg, rgba(11,20,38,0.85) 0%, rgba(7,14,28,0.95) 60%, rgba(7,14,28,1) 100%);
     /* Halo : recette de référence pour toutes les frames du home,
        exposée via les variables --home-halo-* dans :root. */
     border: 1px solid var(--home-halo-border);
@@ -26285,18 +26299,40 @@ a.snap-holder-username:hover {
     isolation: isolate;
     box-shadow: var(--home-halo-shadow);
     cursor: pointer;
+    transition: border-color 0.6s ease, background 0.6s ease, box-shadow 0.6s ease;
+}
+.home-spotlight:hover {
+    border-color: color-mix(in srgb, var(--accent) 40%, var(--home-halo-border));
 }
 
-/* Halo radial en arrière-plan de chaque slide */
+/* Halo radial coloré (suit l'accent actif), positionné en haut à droite. */
 .home-spotlight::before {
     content: '';
     position: absolute;
-    top: -40%; right: 5%;
-    width: 700px; height: 700px;
-    background: radial-gradient(circle, rgba(0,179,255,0.11) 0%, transparent 65%);
+    top: -45%; right: -10%;
+    width: 720px; height: 720px;
+    background: radial-gradient(circle, var(--accent-soft) 0%, transparent 62%);
     pointer-events: none;
     z-index: 0;
-    transition: opacity 0.6s ease;
+    transition: background 0.6s ease, opacity 0.6s ease;
+    opacity: 0.95;
+}
+/* Aurore animée : second blob, lent, en bas-gauche, qui dérive
+   doucement — donne du "vivant" sans bouger le contenu. */
+.home-spotlight::after {
+    content: '';
+    position: absolute;
+    bottom: -55%; left: -8%;
+    width: 520px; height: 520px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--accent) 22%, transparent) 0%, transparent 65%);
+    pointer-events: none;
+    z-index: 0;
+    transition: background 0.6s ease;
+    animation: spotlightAuroraDrift 14s ease-in-out infinite;
+}
+@keyframes spotlightAuroraDrift {
+    0%, 100% { transform: translate(0, 0); opacity: 0.7; }
+    50%      { transform: translate(40px, -30px); opacity: 1; }
 }
 
 /* ── Slides container ── */
@@ -26308,6 +26344,9 @@ a.snap-holder-username:hover {
 }
 
 .home-spotlight-slide {
+    --accent: #00B3FF;
+    --accent-strong: #4dccff;
+    --accent-soft: rgba(0,179,255,0.18);
     position: absolute;
     inset: 0;
     padding: 0 72px 72px 60px;
@@ -26327,6 +26366,26 @@ a.snap-holder-username:hover {
     transform: translateX(0);
     pointer-events: auto;
 }
+
+/* Quand une slide devient active, on remonte son --accent au niveau
+   du cadre parent pour qu'il pilote halo + border + barre + dots. */
+.home-spotlight:has(.home-spotlight-slide.is-active[data-accent="#ff6b6b"]) { --accent: #ff6b6b; --accent-strong: #ff8585; --accent-soft: rgba(255,107,107,0.18); }
+.home-spotlight:has(.home-spotlight-slide.is-active[data-accent="#00B3FF"]) { --accent: #00B3FF; --accent-strong: #4dccff; --accent-soft: rgba(0,179,255,0.20); }
+.home-spotlight:has(.home-spotlight-slide.is-active[data-accent="#a78bfa"]) { --accent: #a78bfa; --accent-strong: #c4b5fd; --accent-soft: rgba(167,139,250,0.18); }
+.home-spotlight:has(.home-spotlight-slide.is-active[data-accent="#34d399"]) { --accent: #34d399; --accent-strong: #6ee7b7; --accent-soft: rgba(52,211,153,0.16); }
+.home-spotlight:has(.home-spotlight-slide.is-active[data-accent="#fbbf24"]) { --accent: #fbbf24; --accent-strong: #fcd34d; --accent-soft: rgba(251,191,36,0.16); }
+.home-spotlight:has(.home-spotlight-slide.is-active[data-accent="#38bdf8"]) { --accent: #38bdf8; --accent-strong: #7dd3fc; --accent-soft: rgba(56,189,248,0.18); }
+
+/* ── Entrance staggered : badge → index → icône → titre → desc ── */
+.home-spotlight-slide.is-active .home-spotlight-badge          { animation: spotlightFadeDown 0.5s cubic-bezier(0.2,0.8,0.2,1) both;   animation-delay: 60ms;  }
+.home-spotlight-slide.is-active .home-spotlight-index          { animation: spotlightFadeIn   0.55s cubic-bezier(0.2,0.8,0.2,1) both;  animation-delay: 120ms; }
+.home-spotlight-slide.is-active .home-spotlight-icon-stack     { animation: spotlightPopIn    0.6s cubic-bezier(0.2,0.8,0.2,1) both;   animation-delay: 90ms;  }
+.home-spotlight-slide.is-active .home-spotlight-title          { animation: spotlightFadeUp   0.55s cubic-bezier(0.2,0.8,0.2,1) both;  animation-delay: 200ms; }
+.home-spotlight-slide.is-active .home-spotlight-desc           { animation: spotlightFadeUp   0.55s cubic-bezier(0.2,0.8,0.2,1) both;  animation-delay: 320ms; }
+@keyframes spotlightFadeIn   { from { opacity: 0; }                              to { opacity: 1; } }
+@keyframes spotlightFadeUp   { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes spotlightFadeDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes spotlightPopIn    { from { opacity: 0; transform: scale(0.88); }      to { opacity: 1; transform: scale(1); } }
 
 /* ── Inner : icône (gauche) + texte (droite) ── */
 .home-spotlight-slide-inner {
@@ -26354,12 +26413,32 @@ a.snap-holder-username:hover {
 .home-spotlight-slide-bottom .home-spotlight-desc { margin: 0; }
 .home-spotlight-slide-bottom .home-spotlight-cta  { margin-top: 0; align-self: flex-start; }
 
+/* ── Index magazine (01 / 06) en haut à gauche ── */
+.home-spotlight-index {
+    position: absolute;
+    top: 22px; left: 32px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    color: color-mix(in srgb, var(--accent) 80%, white 20%);
+    text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 35%, transparent);
+    opacity: 0.85;
+    z-index: 2;
+    pointer-events: none;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 2px;
+}
+.home-spotlight-index-sep   { opacity: 0.45; margin: 0 2px; }
+.home-spotlight-index-total { color: rgba(255,255,255,0.32); font-weight: 700; }
+
 /* ── Badge ── */
 .home-spotlight-badge {
     position: absolute;
-    top: 26px; right: 32px;
+    top: 18px; right: 24px;
     padding: 4px 12px;
-    border-radius: 5px;
+    border-radius: 999px;
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 9px; font-weight: 800;
     letter-spacing: 0.18em; text-transform: uppercase;
@@ -26367,6 +26446,8 @@ a.snap-holder-username:hover {
     color: #4ade80;
     background: rgba(74,222,128,0.10);
     border: 1px solid rgba(74,222,128,0.35);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 [data-tab-target="snapshot"] .home-spotlight-badge {
     color: #fbbf24;
@@ -26374,41 +26455,115 @@ a.snap-holder-username:hover {
     border-color: rgba(251,191,36,0.35);
 }
 
-/* ── Icône ── */
-.home-spotlight-icon {
+/* ── Icon stack : orbites + halo + icône au centre ── */
+.home-spotlight-icon-stack {
+    position: relative;
     width: 140px; height: 140px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+/* Orbites : 2 cercles concentriques en conic-gradient, l'un tourne
+   doucement, l'autre en sens inverse. Restent visibles uniquement
+   quand la slide est active (sinon le carrousel a trop de mouvement). */
+.home-spotlight-orbit {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+.home-spotlight-orbit--outer {
+    inset: -20px;
+    background:
+        conic-gradient(from 90deg,
+            transparent 0deg,
+            color-mix(in srgb, var(--accent) 70%, transparent) 50deg,
+            transparent 150deg,
+            color-mix(in srgb, var(--accent) 45%, transparent) 220deg,
+            transparent 320deg);
+    /* Anneau feathered ~6-8px large : 0→62% transparent, 64-78% opaque,
+       80-100% transparent — bords flous pour un effet "lueur diffuse"
+       plutôt qu'un cerclage tracé net. */
+    mask: radial-gradient(circle, transparent 0%, transparent 62%, #000 70%, #000 76%, transparent 86%, transparent 100%);
+    -webkit-mask: radial-gradient(circle, transparent 0%, transparent 62%, #000 70%, #000 76%, transparent 86%, transparent 100%);
+    filter: blur(0.4px);
+}
+.home-spotlight-orbit--inner {
+    inset: -6px;
+    background:
+        conic-gradient(from 270deg,
+            transparent 0deg,
+            color-mix(in srgb, var(--accent) 85%, transparent) 30deg,
+            color-mix(in srgb, var(--accent) 50%, transparent) 80deg,
+            transparent 160deg);
+    mask: radial-gradient(circle, transparent 0%, transparent 60%, #000 68%, #000 74%, transparent 84%, transparent 100%);
+    -webkit-mask: radial-gradient(circle, transparent 0%, transparent 60%, #000 68%, #000 74%, transparent 84%, transparent 100%);
+}
+.home-spotlight-slide.is-active .home-spotlight-orbit--outer {
+    opacity: 0.9;
+    animation: spotlightOrbitSpin 14s linear infinite;
+}
+.home-spotlight-slide.is-active .home-spotlight-orbit--inner {
+    opacity: 0.7;
+    animation: spotlightOrbitSpinReverse 11s linear infinite;
+}
+@keyframes spotlightOrbitSpin        { from { transform: rotate(0deg); }   to { transform: rotate(360deg); } }
+@keyframes spotlightOrbitSpinReverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+
+/* ── Icône proprement dite ── */
+.home-spotlight-icon {
+    --icon-color: var(--accent);
+    position: relative;
+    width: 116px; height: 116px;
     border-radius: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, rgba(0,179,255,0.20), rgba(0,179,255,0.05));
-    border: 1.5px solid rgba(0,179,255,0.30);
-    color: #00B3FF;
+    background:
+        radial-gradient(120% 120% at 30% 20%, color-mix(in srgb, var(--icon-color) 24%, transparent) 0%, transparent 60%),
+        linear-gradient(135deg, color-mix(in srgb, var(--icon-color) 18%, transparent), color-mix(in srgb, var(--icon-color) 5%, transparent));
+    border: 1.5px solid color-mix(in srgb, var(--icon-color) 32%, transparent);
+    color: color-mix(in srgb, var(--icon-color) 70%, #fff 30%);
     flex-shrink: 0;
     box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.08),
-        0 0 50px rgba(0,179,255,0.20),
+        inset 0 1px 0 rgba(255,255,255,0.10),
+        inset 0 0 24px color-mix(in srgb, var(--icon-color) 15%, transparent),
+        0 0 50px color-mix(in srgb, var(--icon-color) 22%, transparent),
         0 8px 32px rgba(0,0,0,0.35);
-    transition: box-shadow 0.3s ease, transform 0.3s ease;
+    transition: box-shadow 0.4s ease, transform 0.4s ease;
 }
 .home-spotlight-slide.is-active .home-spotlight-icon {
     box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.12),
-        0 0 70px rgba(0,179,255,0.32),
-        0 8px 40px rgba(0,0,0,0.4);
+        inset 0 1px 0 rgba(255,255,255,0.14),
+        inset 0 0 32px color-mix(in srgb, var(--icon-color) 22%, transparent),
+        0 0 80px color-mix(in srgb, var(--icon-color) 38%, transparent),
+        0 12px 48px rgba(0,0,0,0.45);
+    animation: spotlightIconBreathe 6s ease-in-out infinite;
+}
+@keyframes spotlightIconBreathe {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.025); }
+}
+.home-spotlight:hover .home-spotlight-slide.is-active .home-spotlight-icon {
+    transform: scale(1.04);
+    animation-play-state: paused;
 }
 .home-spotlight-icon svg {
-    width: 72px !important;
-    height: 72px !important;
+    width: 64px !important;
+    height: 64px !important;
+    filter: drop-shadow(0 0 12px color-mix(in srgb, var(--icon-color) 60%, transparent));
 }
 
-/* Couleurs d'accent par feature */
-.home-spotlight-icon--drops   { --accent: #ff6b6b; border-color: rgba(255,107,107,0.28); color: #ff9090; background: linear-gradient(135deg, rgba(255,107,107,0.16), rgba(255,107,107,0.04)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 0 50px rgba(255,107,107,0.15), 0 8px 32px rgba(0,0,0,0.35); }
-.home-spotlight-icon--bot     { --accent: #00B3FF; }
-.home-spotlight-icon--profile { --accent: #a78bfa; border-color: rgba(167,139,250,0.28); color: #c4b5fd; background: linear-gradient(135deg, rgba(167,139,250,0.16), rgba(167,139,250,0.04)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 0 50px rgba(167,139,250,0.15), 0 8px 32px rgba(0,0,0,0.35); }
-.home-spotlight-icon--explorer{ --accent: #34d399; border-color: rgba(52,211,153,0.28); color: #6ee7b7; background: linear-gradient(135deg, rgba(52,211,153,0.16), rgba(52,211,153,0.04)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 0 50px rgba(52,211,153,0.14), 0 8px 32px rgba(0,0,0,0.35); }
-.home-spotlight-icon--stats   { --accent: #fbbf24; border-color: rgba(251,191,36,0.28); color: #fcd34d; background: linear-gradient(135deg, rgba(251,191,36,0.14), rgba(251,191,36,0.03)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 0 50px rgba(251,191,36,0.13), 0 8px 32px rgba(0,0,0,0.35); }
-.home-spotlight-icon--snapshot{ --accent: #38bdf8; }
+/* Couleurs d'accent par feature — héritées via --accent / --icon-color */
+.home-spotlight-icon--drops    { --icon-color: #ff6b6b; }
+.home-spotlight-icon--bot      { --icon-color: #00B3FF; }
+.home-spotlight-icon--profile  { --icon-color: #a78bfa; }
+.home-spotlight-icon--explorer { --icon-color: #34d399; }
+.home-spotlight-icon--stats    { --icon-color: #fbbf24; }
+.home-spotlight-icon--snapshot { --icon-color: #38bdf8; }
 
 /* ── Titre ── */
 .home-spotlight-title {
@@ -26420,13 +26575,19 @@ a.snap-holder-username:hover {
     letter-spacing: 0.01em;
     line-height: 1.0;
     text-transform: uppercase;
+    background: linear-gradient(135deg, #fff 0%, color-mix(in srgb, var(--accent) 35%, #fff 65%) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 30px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 /* ── Description ── */
 .home-spotlight-desc {
     font-family: sans-serif;
     font-size: clamp(13.5px, 1.1vw, 15.5px);
-    color: rgba(255,255,255,0.60);
+    color: rgba(255,255,255,0.62);
     line-height: 1.6;
     margin: 0;
     max-width: 600px;
@@ -26439,26 +26600,30 @@ a.snap-holder-username:hover {
 /* ── CTA — masqué, slide entière est cliquable ── */
 .home-spotlight-cta { display: none !important; }
 
-/* ── Progress bar ── */
+/* ── Progress bar ── teinte à l'accent actif ── */
 .home-spotlight-progress {
     width: 100%;
     height: 2px;
-    background: rgba(0,179,255,0.10);
+    background: rgba(255,255,255,0.08);
     border-radius: 2px;
     overflow: hidden;
 }
 .home-spotlight-progress-fill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, rgba(0,179,255,0.5), #00B3FF);
+    background: linear-gradient(90deg,
+        color-mix(in srgb, var(--accent) 50%, transparent),
+        var(--accent),
+        var(--accent-strong));
     border-radius: 2px;
-    transition: width 0.1s linear;
+    box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 60%, transparent);
+    transition: width 0.1s linear, background 0.5s ease, box-shadow 0.5s ease;
 }
 
 /* ── Controls ── */
 .home-spotlight-controls {
     position: absolute;
-    bottom: 20px; left: 0; right: 0;
+    bottom: 18px; left: 0; right: 0;
     padding: 0 32px;
     display: flex;
     align-items: center;
@@ -26470,65 +26635,100 @@ a.snap-holder-username:hover {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 9px;
     flex: 1;
-    max-width: 420px;
+    max-width: 460px;
 }
 .home-spotlight-arrow {
     width: 38px; height: 38px;
     border-radius: 50%;
     background: rgba(7,15,30,0.65);
-    border: 1px solid rgba(0,179,255,0.22);
-    color: rgba(255,255,255,0.65);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: rgba(255,255,255,0.7);
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: background 0.25s, border-color 0.25s, color 0.25s, transform 0.25s, box-shadow 0.25s;
     flex-shrink: 0;
 }
 .home-spotlight-arrow:hover {
-    background: rgba(0,179,255,0.18);
-    border-color: rgba(0,179,255,0.55);
-    color: #00B3FF;
-    transform: scale(1.1);
+    background: color-mix(in srgb, var(--accent) 16%, rgba(7,15,30,0.85));
+    border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+    color: var(--accent-strong);
+    transform: scale(1.08);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.home-spotlight-arrow:active {
+    transform: scale(0.96);
 }
 .home-spotlight-dots {
-    display: flex; align-items: center; gap: 10px;
+    display: flex; align-items: center; gap: 9px;
 }
 .home-spotlight-dot {
-    width: 8px; height: 8px;
+    width: 7px; height: 7px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.22);
     border: none; cursor: pointer; padding: 0;
-    transition: background 0.25s, transform 0.25s, width 0.3s;
+    transition: background 0.3s, transform 0.3s, width 0.35s cubic-bezier(0.2,0.8,0.2,1);
 }
-.home-spotlight-dot:hover { background: rgba(0,179,255,0.55); transform: scale(1.2); }
+.home-spotlight-dot:hover {
+    background: color-mix(in srgb, var(--accent) 55%, white 45%);
+    transform: scale(1.25);
+}
 .home-spotlight-dot.is-active {
-    background: #00B3FF;
-    width: 24px;
-    border-radius: 4px;
-    box-shadow: 0 0 14px rgba(0,179,255,0.65);
+    background: var(--accent);
+    width: 28px;
+    border-radius: 999px;
+    box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 70%, transparent);
 }
 .home-spotlight.is-userbumped .home-spotlight-dot.is-active { transform: scaleY(1.4); }
+
+/* ── Reduced motion : on coupe les animations infinies ── */
+@media (prefers-reduced-motion: reduce) {
+    .home-spotlight::after,
+    .home-spotlight-slide.is-active .home-spotlight-orbit--outer,
+    .home-spotlight-slide.is-active .home-spotlight-orbit--inner,
+    .home-spotlight-slide.is-active .home-spotlight-icon {
+        animation: none !important;
+    }
+    .home-spotlight-slide.is-active .home-spotlight-badge,
+    .home-spotlight-slide.is-active .home-spotlight-index,
+    .home-spotlight-slide.is-active .home-spotlight-icon-stack,
+    .home-spotlight-slide.is-active .home-spotlight-title,
+    .home-spotlight-slide.is-active .home-spotlight-desc {
+        animation-duration: 0.01ms !important;
+        animation-delay: 0ms !important;
+    }
+}
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
     .home-spotlight { height: 280px; }
-    .home-spotlight-slide { padding: 0 48px 72px 40px; }
+    .home-spotlight-slide { padding: 0 48px 70px 40px; }
     .home-spotlight-slide-inner { gap: 28px; max-width: none; }
-    .home-spotlight-icon { width: 100px; height: 100px; border-radius: 20px; }
-    .home-spotlight-icon svg { width: 52px !important; height: 52px !important; }
+    .home-spotlight-icon-stack { width: 104px; height: 104px; }
+    .home-spotlight-icon { width: 90px; height: 90px; border-radius: 22px; }
+    .home-spotlight-icon svg { width: 50px !important; height: 50px !important; }
     .home-spotlight-title { font-size: clamp(22px, 3vw, 32px); }
+    .home-spotlight-index { top: 16px; left: 24px; font-size: 10px; }
+    .home-spotlight-badge { top: 14px; right: 18px; }
 }
 @media (max-width: 600px) {
-    .home-spotlight { height: 240px; }
-    .home-spotlight-slide { padding: 0 24px 64px; }
+    .home-spotlight-slide { padding: 0 24px 60px; }
     .home-spotlight-slide-inner { gap: 18px; }
-    .home-spotlight-icon { width: 72px; height: 72px; border-radius: 14px; }
-    .home-spotlight-icon svg { width: 38px !important; height: 38px !important; }
-    .home-spotlight-controls { padding: 0 16px; }
-    .home-spotlight-badge { top: 14px; right: 16px; }
+    .home-spotlight-icon-stack { width: 84px; height: 84px; }
+    .home-spotlight-icon { width: 72px; height: 72px; border-radius: 18px; }
+    .home-spotlight-icon svg { width: 40px !important; height: 40px !important; }
+    /* Orbites resserrées sur mobile : on garde l'effet mais avec moins
+       d'écart pour ne pas accrocher le bord du cadre. */
+    .home-spotlight-orbit--outer { inset: -12px; }
+    .home-spotlight-orbit--inner { inset: -4px; }
+    .home-spotlight-controls { padding: 0 16px; gap: 10px; }
+    .home-spotlight-index { top: 12px; left: 18px; font-size: 9.5px; letter-spacing: 0.2em; }
+    .home-spotlight-badge { top: 12px; right: 14px; font-size: 8.5px; padding: 3px 10px; }
+    .home-spotlight-arrow { width: 34px; height: 34px; }
+    .home-spotlight-dot.is-active { width: 22px; }
 }
 
 /* ══════════════════════════════════════════════════════════
