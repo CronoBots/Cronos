@@ -13938,10 +13938,12 @@ body.is-profile-loading #profileLoadingOverlay * {
 .home-chat-msg-quote {
     display: flex;
     flex-direction: column;
+    /* Centré verticalement dans son cadre : si la pill grandit au-delà
+       de son contenu naturel (alignée sur la hauteur du body cited),
+       l'auteur + texte restent au milieu plutôt que collés en haut. */
+    justify-content: center;
     gap: 2px;
     padding: 6px 10px;
-    /* margin-bottom 6px pour aérer un peu entre la citation et le
-       nouveau message dessous (l'utilisateur voyait les deux collés). */
     margin: 4px 0 6px;
     background: rgba(0, 179, 255, 0.06);
     border-left: 2px solid rgba(0, 179, 255, 0.55);
@@ -13952,10 +13954,19 @@ body.is-profile-loading #profileLoadingOverlay * {
     transition: background 0.15s, border-color 0.15s;
     max-width: 100%;
     overflow: hidden;
-    /* Color set sur le <a> directement : sans ça, le var(--color1)
-       du a {} global laissait fuiter une teinte cyan sur le texte
-       de la citation. Le span auteur est ensuite repassé en cyan
-       explicitement. */
+}
+/* TOUS les états du <a> reset vers blanc + l'auteur span re-coloré en
+   cyan via une règle plus spécifique en-dessous. Sans le sélecteur
+   :visited, les navigateurs (Safari surtout) appliquaient leur color
+   visited par-dessus le var(--color1) hérité, et la citation
+   continuait à s'afficher en cyan/gris. */
+.home-chat-msg-quote,
+.home-chat-msg-quote:link,
+.home-chat-msg-quote:visited,
+.home-chat-msg-quote:hover,
+.home-chat-msg-quote:focus,
+.home-chat-msg-quote:active,
+.home-chat-msg-quote .home-chat-msg-quote-text {
     color: #fff !important;
 }
 .home-chat-msg-quote:visited,
@@ -13969,7 +13980,8 @@ body.is-profile-loading #profileLoadingOverlay * {
     background: rgba(0, 179, 255, 0.12);
     border-left-color: #00B3FF;
 }
-.home-chat-msg-quote-author {
+.home-chat-msg-quote-author,
+.home-chat-msg-quote .home-chat-msg-quote-author {
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 10px;
     font-weight: 800;
@@ -13981,9 +13993,6 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 .home-chat-msg-quote-text {
     font-size: 11.5px;
-    /* !important pour court-circuiter d'éventuels overrides cascade
-       (var(--color1) hérité du a {...} global). */
-    color: #fff !important;
     font-style: italic;
     overflow: hidden;
     text-overflow: ellipsis;
