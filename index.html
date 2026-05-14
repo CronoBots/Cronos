@@ -11335,11 +11335,15 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 const ctx = _readMentionContext();
                 if (!ctx) { _hide(); return; }
                 const q = ctx.partial.toLowerCase();
+                // On n'affiche la liste qu'à partir d'1 caractère après le
+                // "@" — sinon le popover s'ouvre dès la frappe du @ et
+                // propose tous les membres, ce que l'utilisateur trouve
+                // intrusif. Il faut au moins 1 lettre pour filtrer.
+                if (!q) { _hide(); return; }
                 const all = _allMembers();
                 const me = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
                 const matches = all.filter(m => {
                     if (me?.username && m.username.toLowerCase() === me.username.toLowerCase()) return false;
-                    if (!q) return true;
                     return m.username.toLowerCase().includes(q) ||
                            m.display.toLowerCase().includes(q);
                 });

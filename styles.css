@@ -13953,24 +13953,35 @@ body.is-profile-loading #profileLoadingOverlay * {
     transition: background 0.15s, border-color 0.15s;
     max-width: 100%;
     overflow: hidden;
-    color: #fff;
+}
+/* Couleur explicite sur TOUS les descendants, avec
+   -webkit-text-fill-color qui beat `color` côté WebKit (iOS Safari,
+   iOS Edge). Le user voyait la citation cyan tant qu'il n'avait pas
+   appuyé dessus — c'était le user-agent qui appliquait sa propre
+   teinte sur le texte avant le tap. */
+.home-chat-msg-quote,
+.home-chat-msg-quote * {
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
 }
 .home-chat-msg-quote:hover {
     background: rgba(0, 179, 255, 0.12);
     border-left-color: #00B3FF;
 }
-.home-chat-msg-quote-author {
+/* Auteur ré-attribué en cyan APRÈS la règle catch-all ci-dessus —
+   sélecteur descendant pour gagner en spécificité. */
+.home-chat-msg-quote .home-chat-msg-quote-author {
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 10px;
     font-weight: 800;
-    color: #00B3FF;
+    color: #00B3FF !important;
+    -webkit-text-fill-color: #00B3FF !important;
     text-transform: uppercase;
     letter-spacing: 0.06em;
 }
 .home-chat-msg-quote-text {
     font-size: 11.5px;
     font-style: italic;
-    color: #fff;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
