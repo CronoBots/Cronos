@@ -9168,17 +9168,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                         </div>
                     </div>
                 </div>
-                <a class="home-fa-cta home-fa-cta--promo" href="https://twitter.com/Cronos_WTF" target="_blank" rel="noopener" data-fa-promo-cta>Contact me to get featured →</a>
-                <div class="home-fa-promo-socials" aria-label="Reach out on" hidden>
-                    <a class="home-fa-promo-social home-fa-promo-social--x" href="https://twitter.com/Cronos_WTF" target="_blank" rel="noopener" title="Reach me on X">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.901 1.153h3.68l-8.038 9.19 9.45 12.504h-7.4l-5.8-7.586-6.64 7.586H.47l8.6-9.83L0 1.153h7.59l5.24 6.93L18.901 1.153Zm-1.29 19.5h2.04L6.49 3.22H4.3l13.31 17.433Z"/></svg>
-                        <span>@Cronos_WTF</span>
-                    </a>
-                    <a class="home-fa-promo-social home-fa-promo-social--discord" href="https://discord.gg/Cronos_WTF" target="_blank" rel="noopener" title="Reach me on Discord">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.369A19.79 19.79 0 0 0 16.558 3a14.4 14.4 0 0 0-.617 1.249 18.27 18.27 0 0 0-5.487 0A12.7 12.7 0 0 0 9.83 3a19.74 19.74 0 0 0-3.76 1.369C2.49 9.66 1.5 14.81 1.989 19.881a19.91 19.91 0 0 0 6.084 3.05c.487-.659.92-1.36 1.293-2.097a12.83 12.83 0 0 1-2.04-.974c.171-.125.337-.255.5-.39a14.21 14.21 0 0 0 12.348 0c.163.135.328.265.5.39a12.86 12.86 0 0 1-2.043.975c.373.737.806 1.437 1.293 2.097a19.84 19.84 0 0 0 6.087-3.05c.546-5.857-.79-10.96-3.694-15.513ZM8.683 16.715c-1.21 0-2.207-1.116-2.207-2.49 0-1.373.978-2.49 2.207-2.49 1.228 0 2.226 1.117 2.206 2.49 0 1.374-.978 2.49-2.206 2.49Zm6.634 0c-1.21 0-2.206-1.116-2.206-2.49 0-1.373.977-2.49 2.206-2.49 1.229 0 2.226 1.117 2.206 2.49 0 1.374-.977 2.49-2.206 2.49Z"/></svg>
-                        <span>discord.gg/Cronos_WTF</span>
-                    </a>
-                </div>
+                <a class="home-fa-cta home-fa-cta--promo" href="https://twitter.com/Cronos_WTF" target="_blank" rel="noopener">Contact me to get featured →</a>
             </div>`;
         return slide;
     }
@@ -9203,29 +9193,10 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         });
         // Slide promo "Your profile here" en fin de carrousel — l'idée est
         // qu'un artiste qui voit défiler les Featured Artists tombe sur un
-        // slot vide à son nom et se projette dedans.
+        // slot vide à son nom et se projette dedans. La CTA jaune ouvre
+        // directement twitter.com/Cronos_WTF (anchor natif, pas de JS).
         const promoSlide = buildPromoSlide();
         spotlight.appendChild(promoSlide);
-        // 1er tap sur la CTA jaune = on déplie les pills X/Discord en
-        // dessous (au lieu d'ouvrir twitter directement). 2e tap = on
-        // suit le lien comme un anchor normal. L'utilisateur voit donc
-        // d'abord le slot épuré (pas de pills par défaut), et a le
-        // choix entre X et Discord après le 1er tap.
-        const promoCta = promoSlide.querySelector('[data-fa-promo-cta]');
-        const promoSocials = promoSlide.querySelector('.home-fa-promo-socials');
-        if (promoCta && promoSocials) {
-            promoCta.addEventListener('click', (e) => {
-                if (promoSocials.hasAttribute('hidden')) {
-                    e.preventDefault();
-                    promoSocials.removeAttribute('hidden');
-                    promoCta.setAttribute('aria-expanded', 'true');
-                }
-                // 2e tap : pas de preventDefault → on laisse l'anchor
-                // ouvrir twitter.com/Cronos_WTF en nouvel onglet (le
-                // user a choisi X plutôt que Discord).
-            });
-            promoCta.setAttribute('aria-expanded', 'false');
-        }
         const n = FEATURED_CREATORS.length + 1; // +1 pour la promo
         let current = 0;
         // Nav row : prev arrow · progress bar · dots · next arrow.
