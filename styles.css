@@ -26287,7 +26287,10 @@ a.snap-holder-username:hover {
     position: relative;
     display: flex;
     flex-direction: column;
-    height: 340px;
+    /* Poster layout : carte plus haute pour laisser respirer la composition
+       verticale centrée (icône → eyebrow → titre display → desc → CTA).
+       340 → 420 desktop. */
+    height: 420px;
     background:
         radial-gradient(120% 80% at 85% -10%, var(--accent-soft) 0%, transparent 55%),
         linear-gradient(120deg, rgba(11,20,38,0.85) 0%, rgba(7,14,28,0.95) 60%, rgba(7,14,28,1) 100%);
@@ -26349,13 +26352,15 @@ a.snap-holder-username:hover {
     --accent-soft: rgba(0,179,255,0.18);
     position: absolute;
     inset: 0;
-    padding: 0 72px 72px 60px;
+    /* Poster : padding bas augmenté pour laisser de la place aux controls
+       absolument positionnés à 24px du bas. */
+    padding: 28px 32px 84px;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
     opacity: 0;
-    transform: translateX(32px);
+    transform: translateY(16px);
     pointer-events: none;
     transition:
         opacity 0.55s cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -26363,7 +26368,7 @@ a.snap-holder-username:hover {
 }
 .home-spotlight-slide.is-active {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0);
     pointer-events: auto;
 }
 
@@ -26376,73 +26381,86 @@ a.snap-holder-username:hover {
 .home-spotlight:has(.home-spotlight-slide.is-active[data-accent="#fbbf24"]) { --accent: #fbbf24; --accent-strong: #fcd34d; --accent-soft: rgba(251,191,36,0.16); }
 .home-spotlight:has(.home-spotlight-slide.is-active[data-accent="#38bdf8"]) { --accent: #38bdf8; --accent-strong: #7dd3fc; --accent-soft: rgba(56,189,248,0.18); }
 
-/* ── Entrance staggered : badge → index → icône → titre → desc ── */
-.home-spotlight-slide.is-active .home-spotlight-badge          { animation: spotlightFadeDown 0.5s cubic-bezier(0.2,0.8,0.2,1) both;   animation-delay: 60ms;  }
-.home-spotlight-slide.is-active .home-spotlight-index          { animation: spotlightFadeIn   0.55s cubic-bezier(0.2,0.8,0.2,1) both;  animation-delay: 120ms; }
-.home-spotlight-slide.is-active .home-spotlight-icon-stack     { animation: spotlightPopIn    0.6s cubic-bezier(0.2,0.8,0.2,1) both;   animation-delay: 90ms;  }
-.home-spotlight-slide.is-active .home-spotlight-title          { animation: spotlightFadeUp   0.55s cubic-bezier(0.2,0.8,0.2,1) both;  animation-delay: 200ms; }
-.home-spotlight-slide.is-active .home-spotlight-desc           { animation: spotlightFadeUp   0.55s cubic-bezier(0.2,0.8,0.2,1) both;  animation-delay: 320ms; }
-@keyframes spotlightFadeIn   { from { opacity: 0; }                              to { opacity: 1; } }
-@keyframes spotlightFadeUp   { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes spotlightFadeDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes spotlightPopIn    { from { opacity: 0; transform: scale(0.88); }      to { opacity: 1; transform: scale(1); } }
+/* ── Entrance staggered : watermark → icône → eyebrow → titre → desc → CTA ── */
+.home-spotlight-slide.is-active .home-spotlight-watermark      { animation: spotlightWatermarkIn 0.7s cubic-bezier(0.2,0.8,0.2,1) both; animation-delay: 0ms;   }
+.home-spotlight-slide.is-active .home-spotlight-icon-stack     { animation: spotlightPopIn    0.6s cubic-bezier(0.2,0.8,0.2,1) both;   animation-delay: 80ms;  }
+.home-spotlight-slide.is-active .home-spotlight-eyebrow        { animation: spotlightFadeUp   0.5s cubic-bezier(0.2,0.8,0.2,1) both;   animation-delay: 180ms; }
+.home-spotlight-slide.is-active .home-spotlight-title          { animation: spotlightFadeUp   0.6s cubic-bezier(0.2,0.8,0.2,1) both;   animation-delay: 240ms; }
+.home-spotlight-slide.is-active .home-spotlight-desc           { animation: spotlightFadeUp   0.55s cubic-bezier(0.2,0.8,0.2,1) both;  animation-delay: 340ms; }
+.home-spotlight-slide.is-active .home-spotlight-cta            { animation: spotlightFadeUp   0.5s cubic-bezier(0.2,0.8,0.2,1) both;   animation-delay: 440ms; }
+@keyframes spotlightFadeIn      { from { opacity: 0; }                              to { opacity: 1; } }
+@keyframes spotlightFadeUp      { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes spotlightFadeDown    { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes spotlightPopIn       { from { opacity: 0; transform: scale(0.88); }      to { opacity: 1; transform: scale(1); } }
+@keyframes spotlightWatermarkIn { from { opacity: 0; transform: translate(-50%, -50%) scale(1.15); } to { opacity: var(--watermark-opacity, 0.06); transform: translate(-50%, -50%) scale(1); } }
 
-/* ── Inner : icône (gauche) + texte (droite) ── */
+/* ── Inner : composition verticale centrée (poster) ── */
 .home-spotlight-slide-inner {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
-    gap: 44px;
+    gap: 14px;
     width: 100%;
-    max-width: 860px;
+    max-width: 720px;
+    position: relative;
+    z-index: 1;
 }
 
-.home-spotlight-slide-text {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    flex: 1;
-    min-width: 0;
-}
-
-.home-spotlight-slide-bottom {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-}
-.home-spotlight-slide-bottom .home-spotlight-desc { margin: 0; }
-.home-spotlight-slide-bottom .home-spotlight-cta  { margin-top: 0; align-self: flex-start; }
-
-/* ── Index magazine (01 / 06) en haut à gauche ── */
-.home-spotlight-index {
+/* ── Watermark : chiffre géant en filigrane derrière la composition ── */
+.home-spotlight-watermark {
+    --watermark-opacity: 0.07;
     position: absolute;
-    top: 22px; left: 32px;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: clamp(220px, 28vw, 380px);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: color-mix(in srgb, var(--accent) 60%, #fff 40%);
+    opacity: var(--watermark-opacity);
+    text-shadow: 0 0 60px color-mix(in srgb, var(--accent) 40%, transparent);
+    z-index: 0;
+    pointer-events: none;
+    user-select: none;
+    white-space: nowrap;
+}
+
+/* ── Eyebrow line (01 / 06 · NEW) ── */
+.home-spotlight-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 4px;
+}
+.home-spotlight-index {
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 11px;
     font-weight: 800;
-    letter-spacing: 0.22em;
-    color: color-mix(in srgb, var(--accent) 80%, white 20%);
+    letter-spacing: 0.24em;
+    color: color-mix(in srgb, var(--accent) 78%, white 22%);
     text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 35%, transparent);
-    opacity: 0.85;
-    z-index: 2;
-    pointer-events: none;
     display: inline-flex;
     align-items: baseline;
     gap: 2px;
 }
 .home-spotlight-index-sep   { opacity: 0.45; margin: 0 2px; }
 .home-spotlight-index-total { color: rgba(255,255,255,0.32); font-weight: 700; }
+.home-spotlight-eyebrow-sep {
+    color: rgba(255,255,255,0.25);
+    font-weight: 800;
+    font-size: 12px;
+    line-height: 1;
+    user-select: none;
+}
 
 /* ── Badge ── */
 .home-spotlight-badge {
-    position: absolute;
-    top: 18px; right: 24px;
     padding: 4px 12px;
     border-radius: 999px;
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 9px; font-weight: 800;
     letter-spacing: 0.18em; text-transform: uppercase;
-    z-index: 2;
     color: #4ade80;
     background: rgba(74,222,128,0.10);
     border: 1px solid rgba(74,222,128,0.35);
@@ -26458,7 +26476,7 @@ a.snap-holder-username:hover {
 /* ── Icon stack : orbites + halo + icône au centre ── */
 .home-spotlight-icon-stack {
     position: relative;
-    width: 140px; height: 140px;
+    width: 104px; height: 104px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -26517,8 +26535,8 @@ a.snap-holder-username:hover {
 .home-spotlight-icon {
     --icon-color: var(--accent);
     position: relative;
-    width: 116px; height: 116px;
-    border-radius: 28px;
+    width: 84px; height: 84px;
+    border-radius: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -26552,8 +26570,8 @@ a.snap-holder-username:hover {
     animation-play-state: paused;
 }
 .home-spotlight-icon svg {
-    width: 64px !important;
-    height: 64px !important;
+    width: 48px !important;
+    height: 48px !important;
     filter: drop-shadow(0 0 12px color-mix(in srgb, var(--icon-color) 60%, transparent));
 }
 
@@ -26565,40 +26583,79 @@ a.snap-holder-username:hover {
 .home-spotlight-icon--stats    { --icon-color: #fbbf24; }
 .home-spotlight-icon--snapshot { --icon-color: #38bdf8; }
 
-/* ── Titre ── */
+/* ── Titre display centré ── */
 .home-spotlight-title {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: clamp(28px, 3.2vw, 46px);
+    font-size: clamp(30px, 4.4vw, 58px);
     font-weight: 800;
     color: #fff;
-    margin: 0;
-    letter-spacing: 0.01em;
-    line-height: 1.0;
+    margin: 6px 0 0;
+    letter-spacing: 0.005em;
+    line-height: 1.02;
     text-transform: uppercase;
-    background: linear-gradient(135deg, #fff 0%, color-mix(in srgb, var(--accent) 35%, #fff 65%) 100%);
+    text-align: center;
+    background: linear-gradient(135deg, #fff 0%, color-mix(in srgb, var(--accent) 40%, #fff 60%) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 30px color-mix(in srgb, var(--accent) 18%, transparent);
+    text-shadow: 0 0 30px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
-/* ── Description ── */
+/* ── Description centrée et lisible ── */
 .home-spotlight-desc {
     font-family: sans-serif;
-    font-size: clamp(13.5px, 1.1vw, 15.5px);
-    color: rgba(255,255,255,0.62);
+    font-size: clamp(13px, 1.05vw, 15px);
+    color: rgba(255,255,255,0.65);
     line-height: 1.6;
-    margin: 0;
-    max-width: 600px;
+    margin: 4px 0 0;
+    max-width: 560px;
+    text-align: center;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
 
-/* ── CTA — masqué, slide entière est cliquable ── */
-.home-spotlight-cta { display: none !important; }
+/* ── CTA pill visible : intégrée au poster, teintée à l'accent. ── */
+.home-spotlight-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 9px 18px;
+    border-radius: 999px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--accent) 60%, #fff 40%);
+    background: color-mix(in srgb, var(--accent) 10%, rgba(7,15,30,0.6));
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        0 0 24px color-mix(in srgb, var(--accent) 18%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: background 0.25s, border-color 0.25s, color 0.25s, transform 0.25s, box-shadow 0.25s;
+    user-select: none;
+}
+.home-spotlight-cta-arrow {
+    display: inline-block;
+    transition: transform 0.25s cubic-bezier(0.2,0.8,0.2,1);
+}
+.home-spotlight:hover .home-spotlight-slide.is-active .home-spotlight-cta {
+    background: color-mix(in srgb, var(--accent) 20%, rgba(7,15,30,0.75));
+    border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+    color: #fff;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.12),
+        0 0 32px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.home-spotlight:hover .home-spotlight-slide.is-active .home-spotlight-cta-arrow {
+    transform: translateX(4px);
+}
 
 /* ── Progress bar ── teinte à l'accent actif ── */
 .home-spotlight-progress {
@@ -26702,32 +26759,38 @@ a.snap-holder-username:hover {
     }
 }
 
-/* ── Responsive ── */
+/* ── Responsive ──
+   Poster layout = même composition verticale centrée à toutes les tailles,
+   on ajuste uniquement les paddings et l'échelle. */
 @media (max-width: 900px) {
-    .home-spotlight { height: 280px; }
-    .home-spotlight-slide { padding: 0 48px 70px 40px; }
-    .home-spotlight-slide-inner { gap: 28px; max-width: none; }
-    .home-spotlight-icon-stack { width: 104px; height: 104px; }
-    .home-spotlight-icon { width: 90px; height: 90px; border-radius: 22px; }
-    .home-spotlight-icon svg { width: 50px !important; height: 50px !important; }
-    .home-spotlight-title { font-size: clamp(22px, 3vw, 32px); }
-    .home-spotlight-index { top: 16px; left: 24px; font-size: 10px; }
-    .home-spotlight-badge { top: 14px; right: 18px; }
+    .home-spotlight { height: 380px; }
+    .home-spotlight-slide { padding: 24px 28px 78px; }
+    .home-spotlight-slide-inner { gap: 12px; max-width: 640px; }
+    .home-spotlight-icon-stack { width: 96px; height: 96px; }
+    .home-spotlight-icon { width: 78px; height: 78px; border-radius: 20px; }
+    .home-spotlight-icon svg { width: 44px !important; height: 44px !important; }
+    .home-spotlight-title { font-size: clamp(24px, 4.6vw, 38px); }
+    .home-spotlight-desc { font-size: 13px; max-width: 480px; }
 }
 @media (max-width: 600px) {
-    .home-spotlight-slide { padding: 0 24px 60px; }
-    .home-spotlight-slide-inner { gap: 18px; }
+    .home-spotlight-slide { padding: 22px 20px 70px; }
+    .home-spotlight-slide-inner { gap: 10px; max-width: 100%; }
     .home-spotlight-icon-stack { width: 84px; height: 84px; }
-    .home-spotlight-icon { width: 72px; height: 72px; border-radius: 18px; }
-    .home-spotlight-icon svg { width: 40px !important; height: 40px !important; }
-    /* Orbites resserrées sur mobile : on garde l'effet mais avec moins
-       d'écart pour ne pas accrocher le bord du cadre. */
+    .home-spotlight-icon { width: 68px; height: 68px; border-radius: 18px; }
+    .home-spotlight-icon svg { width: 38px !important; height: 38px !important; }
+    /* Orbites resserrées : on garde l'effet mais avec moins d'écart. */
     .home-spotlight-orbit--outer { inset: -12px; }
     .home-spotlight-orbit--inner { inset: -4px; }
-    .home-spotlight-controls { padding: 0 16px; gap: 10px; }
-    .home-spotlight-index { top: 12px; left: 18px; font-size: 9.5px; letter-spacing: 0.2em; }
-    .home-spotlight-badge { top: 12px; right: 14px; font-size: 8.5px; padding: 3px 10px; }
-    .home-spotlight-arrow { width: 34px; height: 34px; }
+    .home-spotlight-eyebrow { gap: 9px; }
+    .home-spotlight-eyebrow-sep { font-size: 11px; }
+    .home-spotlight-index { font-size: 10px; letter-spacing: 0.2em; }
+    .home-spotlight-badge { font-size: 8.5px; padding: 3px 10px; }
+    .home-spotlight-title { font-size: clamp(22px, 6.4vw, 28px); line-height: 1.04; }
+    .home-spotlight-desc { font-size: 12.5px; line-height: 1.5; max-width: 320px; -webkit-line-clamp: 3; }
+    .home-spotlight-cta { font-size: 10.5px; padding: 8px 16px; letter-spacing: 0.12em; }
+    .home-spotlight-watermark { font-size: clamp(180px, 56vw, 240px); --watermark-opacity: 0.055; }
+    .home-spotlight-controls { padding: 0 14px; gap: 8px; }
+    .home-spotlight-arrow { width: 32px; height: 32px; }
     .home-spotlight-dot.is-active { width: 22px; }
 }
 
@@ -26990,18 +27053,6 @@ a.snap-holder-username:hover {
 
 /* Ticker bas de page supprimé — le padding-bottom n'est plus nécessaire */
 body { box-sizing: border-box; }
-
-/* Spotlight CTA pill — caché : toute la slide est déjà un bouton cliquable */
-.home-spotlight-cta { display: none !important; }
-/* Slide bottom — description sans CTA */
-.home-spotlight-slide-bottom {
-    display: flex;
-    flex-direction: column;
-}
-.home-spotlight-slide-bottom .home-spotlight-desc {
-    margin: 0;
-    max-width: none;
-}
 
 /* ── LIVE ACTIVITY card — Market Bot · Live Feed ── */
 .home-live-section { display: flex; flex-direction: column; }
@@ -28324,11 +28375,12 @@ body { box-sizing: border-box; }
         height: auto !important;
     }
 
-    /* Spotlight card : hauteur DIRECTE (pas flex-basis) */
+    /* Spotlight card : hauteur DIRECTE (pas flex-basis). Poster layout =
+       compo verticale centrée, hauteur fixe pour respecter le rythme. */
     .home-spotlight {
-        height: 220px !important;
+        height: 380px !important;
         flex: none !important;
-        min-height: 220px !important;
+        min-height: 380px !important;
     }
 
     /* Live subsection sous le spotlight : hauteur auto */
@@ -28355,70 +28407,9 @@ body { box-sizing: border-box; }
 /* Smartphone (≤600px) ─────────────────────────────────────────────────── */
 @media (max-width: 600px) {
 
-    /* ── SPOTLIGHT : flow normal, taille confortable ───────────────────── */
-    .home-spotlight {
-        height: auto !important;
-        min-height: 160px !important;
-        flex: none !important;
-        overflow: visible !important;
-    }
-    .home-spotlight-slides {
-        position: relative !important;
-        height: auto !important;
-        flex: none !important;
-    }
-    /* Slides inactives masquées */
-    .home-spotlight-slide {
-        position: relative !important;
-        inset: auto !important;
-        opacity: 0 !important;
-        height: 0 !important;
-        overflow: hidden !important;
-        padding: 0 !important;
-        pointer-events: none !important;
-        transform: none !important;
-        transition: none !important;
-    }
-    /* Slide active visible en flux normal */
-    .home-spotlight-slide.is-active {
-        opacity: 1 !important;
-        height: auto !important;
-        min-height: 200px !important;
-        overflow: visible !important;
-        pointer-events: auto !important;
-        padding: 24px 18px 28px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: center !important;
-    }
-    .home-spotlight-slide-inner {
-        flex-direction: row !important;
-        gap: 16px !important;
-        align-items: center !important;
-    }
-    .home-spotlight-icon {
-        width: 72px !important;
-        height: 72px !important;
-        min-width: 72px !important;
-        flex-shrink: 0 !important;
-        border-radius: 16px !important;
-    }
-    .home-spotlight-icon svg {
-        width: 36px !important;
-        height: 36px !important;
-    }
-    .home-spotlight-title {
-        font-size: 17px !important;
-        margin-bottom: 4px !important;
-    }
-    .home-spotlight-desc {
-        font-size: 12px !important;
-        line-height: 1.5 !important;
-        display: -webkit-box !important;
-        -webkit-line-clamp: 3 !important;
-        -webkit-box-orient: vertical !important;
-        overflow: hidden !important;
-    }
+    /* Le Spotlight garde son layout "poster centré" (cf. règles du bloc
+       Spotlight principal) — pas d'override de structure ici. Juste les
+       autres sections qui ont besoin d'ajustements mobile. */
     /* Nav intégrée au bas du cadre Featured Artists — on garde le
        border-top + bg sombre + padding latéral du style desktop, juste
        un peu plus tassé verticalement et le tout sur 1 ligne centrée. */
@@ -28452,15 +28443,17 @@ body { box-sizing: border-box; }
 
 /* Très petits écrans (≤390px) ─────────────────────────────────────────── */
 @media (max-width: 390px) {
-    /* Spotlight : même approche flow que ≤600px */
+    /* Spotlight : on tasse un poil la hauteur sur très petit écran tout
+       en gardant le poster layout (compo verticale centrée). */
     .home-spotlight {
-        height: auto !important;
-        min-height: 0 !important;
+        height: 360px !important;
+        min-height: 360px !important;
         flex: none !important;
     }
-    .home-spotlight-slide.is-active {
-        padding: 14px 14px 16px !important;
-    }
+    .home-spotlight-slide { padding: 18px 16px 64px !important; }
+    .home-spotlight-title { font-size: 22px !important; }
+    .home-spotlight-desc  { max-width: 260px !important; -webkit-line-clamp: 3 !important; }
+    .home-spotlight-watermark { font-size: 200px !important; --watermark-opacity: 0.05 !important; }
     .home-community-card {
         flex: none !important;
         height: 380px !important;
