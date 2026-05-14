@@ -26381,18 +26381,16 @@ a.snap-holder-username:hover {
 .home-spotlight:has(.home-spotlight-slide.is-active[data-accent="#fbbf24"]) { --accent: #fbbf24; --accent-strong: #fcd34d; --accent-soft: rgba(251,191,36,0.16); }
 .home-spotlight:has(.home-spotlight-slide.is-active[data-accent="#38bdf8"]) { --accent: #38bdf8; --accent-strong: #7dd3fc; --accent-soft: rgba(56,189,248,0.18); }
 
-/* ── Entrance staggered : watermark → icône → eyebrow → titre → desc → CTA ── */
-.home-spotlight-slide.is-active .home-spotlight-watermark      { animation: spotlightWatermarkIn 0.7s cubic-bezier(0.2,0.8,0.2,1) both; animation-delay: 0ms;   }
-.home-spotlight-slide.is-active .home-spotlight-icon-stack     { animation: spotlightPopIn    0.6s cubic-bezier(0.2,0.8,0.2,1) both;   animation-delay: 80ms;  }
-.home-spotlight-slide.is-active .home-spotlight-eyebrow        { animation: spotlightFadeUp   0.5s cubic-bezier(0.2,0.8,0.2,1) both;   animation-delay: 180ms; }
-.home-spotlight-slide.is-active .home-spotlight-title          { animation: spotlightFadeUp   0.6s cubic-bezier(0.2,0.8,0.2,1) both;   animation-delay: 240ms; }
-.home-spotlight-slide.is-active .home-spotlight-desc           { animation: spotlightFadeUp   0.55s cubic-bezier(0.2,0.8,0.2,1) both;  animation-delay: 340ms; }
-.home-spotlight-slide.is-active .home-spotlight-cta            { animation: spotlightFadeUp   0.5s cubic-bezier(0.2,0.8,0.2,1) both;   animation-delay: 440ms; }
+/* ── Entrance staggered : watermark SVG → eyebrow → titre → desc → CTA ── */
+.home-spotlight-slide.is-active .home-spotlight-watermark      { animation: spotlightWatermarkIn 0.85s cubic-bezier(0.2,0.8,0.2,1) both; animation-delay: 0ms;   }
+.home-spotlight-slide.is-active .home-spotlight-eyebrow        { animation: spotlightFadeUp   0.5s cubic-bezier(0.2,0.8,0.2,1) both;   animation-delay: 160ms; }
+.home-spotlight-slide.is-active .home-spotlight-title          { animation: spotlightFadeUp   0.6s cubic-bezier(0.2,0.8,0.2,1) both;   animation-delay: 220ms; }
+.home-spotlight-slide.is-active .home-spotlight-desc           { animation: spotlightFadeUp   0.55s cubic-bezier(0.2,0.8,0.2,1) both;  animation-delay: 320ms; }
+.home-spotlight-slide.is-active .home-spotlight-cta            { animation: spotlightFadeUp   0.5s cubic-bezier(0.2,0.8,0.2,1) both;   animation-delay: 420ms; }
 @keyframes spotlightFadeIn      { from { opacity: 0; }                              to { opacity: 1; } }
 @keyframes spotlightFadeUp      { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes spotlightFadeDown    { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes spotlightPopIn       { from { opacity: 0; transform: scale(0.88); }      to { opacity: 1; transform: scale(1); } }
-@keyframes spotlightWatermarkIn { from { opacity: 0; transform: translate(-50%, -50%) scale(1.15); } to { opacity: var(--watermark-opacity, 0.06); transform: translate(-50%, -50%) scale(1); } }
+@keyframes spotlightWatermarkIn { from { opacity: 0; transform: translate(-50%, -50%) scale(1.18) rotate(-3deg); } to { opacity: var(--watermark-opacity, 0.11); transform: translate(-50%, -50%) scale(1) rotate(0deg); } }
 
 /* ── Inner : composition verticale centrée (poster) ── */
 .home-spotlight-slide-inner {
@@ -26406,25 +26404,29 @@ a.snap-holder-username:hover {
     z-index: 1;
 }
 
-/* ── Watermark : chiffre géant en filigrane derrière la composition ── */
+/* ── Watermark SVG : icône géante en filigrane, teintée à l'accent.
+   Remplace l'ancien chiffre — l'icône de la feature elle-même devient
+   l'élément graphique de fond, ce qui donne une signature visuelle plus
+   forte que des numéros génériques. Pas d'orbites, pas d'icône
+   secondaire en premier plan : la compo est typographique. */
 .home-spotlight-watermark {
-    --watermark-opacity: 0.07;
+    --watermark-opacity: 0.18;
     position: absolute;
     top: 50%; left: 50%;
+    width: clamp(280px, 36vw, 420px);
+    height: clamp(280px, 36vw, 420px);
     transform: translate(-50%, -50%);
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: clamp(220px, 28vw, 380px);
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: -0.04em;
-    color: color-mix(in srgb, var(--accent) 60%, #fff 40%);
+    color: color-mix(in srgb, var(--accent) 78%, #fff 22%);
     opacity: var(--watermark-opacity);
-    text-shadow: 0 0 60px color-mix(in srgb, var(--accent) 40%, transparent);
+    filter: drop-shadow(0 0 50px color-mix(in srgb, var(--accent) 45%, transparent));
     z-index: 0;
     pointer-events: none;
     user-select: none;
-    white-space: nowrap;
+    overflow: visible;
 }
+/* L'épaisseur du trait scale naturellement avec la taille du SVG —
+   pas de vector-effect:non-scaling-stroke (qui rendrait l'icône
+   filiforme à grande échelle). */
 
 /* ── Eyebrow line (01 / 06 · NEW) ── */
 .home-spotlight-eyebrow {
@@ -26473,115 +26475,9 @@ a.snap-holder-username:hover {
     border-color: rgba(251,191,36,0.35);
 }
 
-/* ── Icon stack : orbites + halo + icône au centre ── */
-.home-spotlight-icon-stack {
-    position: relative;
-    width: 104px; height: 104px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-/* Orbites : 2 cercles concentriques en conic-gradient, l'un tourne
-   doucement, l'autre en sens inverse. Restent visibles uniquement
-   quand la slide est active (sinon le carrousel a trop de mouvement). */
-.home-spotlight-orbit {
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.5s ease;
-}
-.home-spotlight-orbit--outer {
-    inset: -20px;
-    background:
-        conic-gradient(from 90deg,
-            transparent 0deg,
-            color-mix(in srgb, var(--accent) 70%, transparent) 50deg,
-            transparent 150deg,
-            color-mix(in srgb, var(--accent) 45%, transparent) 220deg,
-            transparent 320deg);
-    /* Anneau feathered ~6-8px large : 0→62% transparent, 64-78% opaque,
-       80-100% transparent — bords flous pour un effet "lueur diffuse"
-       plutôt qu'un cerclage tracé net. */
-    mask: radial-gradient(circle, transparent 0%, transparent 62%, #000 70%, #000 76%, transparent 86%, transparent 100%);
-    -webkit-mask: radial-gradient(circle, transparent 0%, transparent 62%, #000 70%, #000 76%, transparent 86%, transparent 100%);
-    filter: blur(0.4px);
-}
-.home-spotlight-orbit--inner {
-    inset: -6px;
-    background:
-        conic-gradient(from 270deg,
-            transparent 0deg,
-            color-mix(in srgb, var(--accent) 85%, transparent) 30deg,
-            color-mix(in srgb, var(--accent) 50%, transparent) 80deg,
-            transparent 160deg);
-    mask: radial-gradient(circle, transparent 0%, transparent 60%, #000 68%, #000 74%, transparent 84%, transparent 100%);
-    -webkit-mask: radial-gradient(circle, transparent 0%, transparent 60%, #000 68%, #000 74%, transparent 84%, transparent 100%);
-}
-.home-spotlight-slide.is-active .home-spotlight-orbit--outer {
-    opacity: 0.9;
-    animation: spotlightOrbitSpin 14s linear infinite;
-}
-.home-spotlight-slide.is-active .home-spotlight-orbit--inner {
-    opacity: 0.7;
-    animation: spotlightOrbitSpinReverse 11s linear infinite;
-}
-@keyframes spotlightOrbitSpin        { from { transform: rotate(0deg); }   to { transform: rotate(360deg); } }
-@keyframes spotlightOrbitSpinReverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
-
-/* ── Icône proprement dite ── */
-.home-spotlight-icon {
-    --icon-color: var(--accent);
-    position: relative;
-    width: 84px; height: 84px;
-    border-radius: 22px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background:
-        radial-gradient(120% 120% at 30% 20%, color-mix(in srgb, var(--icon-color) 24%, transparent) 0%, transparent 60%),
-        linear-gradient(135deg, color-mix(in srgb, var(--icon-color) 18%, transparent), color-mix(in srgb, var(--icon-color) 5%, transparent));
-    border: 1.5px solid color-mix(in srgb, var(--icon-color) 32%, transparent);
-    color: color-mix(in srgb, var(--icon-color) 70%, #fff 30%);
-    flex-shrink: 0;
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.10),
-        inset 0 0 24px color-mix(in srgb, var(--icon-color) 15%, transparent),
-        0 0 50px color-mix(in srgb, var(--icon-color) 22%, transparent),
-        0 8px 32px rgba(0,0,0,0.35);
-    transition: box-shadow 0.4s ease, transform 0.4s ease;
-}
-.home-spotlight-slide.is-active .home-spotlight-icon {
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.14),
-        inset 0 0 32px color-mix(in srgb, var(--icon-color) 22%, transparent),
-        0 0 80px color-mix(in srgb, var(--icon-color) 38%, transparent),
-        0 12px 48px rgba(0,0,0,0.45);
-    animation: spotlightIconBreathe 6s ease-in-out infinite;
-}
-@keyframes spotlightIconBreathe {
-    0%, 100% { transform: scale(1); }
-    50%      { transform: scale(1.025); }
-}
-.home-spotlight:hover .home-spotlight-slide.is-active .home-spotlight-icon {
-    transform: scale(1.04);
-    animation-play-state: paused;
-}
-.home-spotlight-icon svg {
-    width: 48px !important;
-    height: 48px !important;
-    filter: drop-shadow(0 0 12px color-mix(in srgb, var(--icon-color) 60%, transparent));
-}
-
-/* Couleurs d'accent par feature — héritées via --accent / --icon-color */
-.home-spotlight-icon--drops    { --icon-color: #ff6b6b; }
-.home-spotlight-icon--bot      { --icon-color: #00B3FF; }
-.home-spotlight-icon--profile  { --icon-color: #a78bfa; }
-.home-spotlight-icon--explorer { --icon-color: #34d399; }
-.home-spotlight-icon--stats    { --icon-color: #fbbf24; }
-.home-spotlight-icon--snapshot { --icon-color: #38bdf8; }
+/* (icon-stack + orbites + tuile icône ont été retirés : l'icône de la
+   feature vit désormais comme watermark SVG en fond — la compo
+   premier plan est purement typographique.) */
 
 /* ── Titre display centré ── */
 .home-spotlight-title {
@@ -26743,17 +26639,14 @@ a.snap-holder-username:hover {
 
 /* ── Reduced motion : on coupe les animations infinies ── */
 @media (prefers-reduced-motion: reduce) {
-    .home-spotlight::after,
-    .home-spotlight-slide.is-active .home-spotlight-orbit--outer,
-    .home-spotlight-slide.is-active .home-spotlight-orbit--inner,
-    .home-spotlight-slide.is-active .home-spotlight-icon {
+    .home-spotlight::after {
         animation: none !important;
     }
-    .home-spotlight-slide.is-active .home-spotlight-badge,
-    .home-spotlight-slide.is-active .home-spotlight-index,
-    .home-spotlight-slide.is-active .home-spotlight-icon-stack,
+    .home-spotlight-slide.is-active .home-spotlight-watermark,
+    .home-spotlight-slide.is-active .home-spotlight-eyebrow,
     .home-spotlight-slide.is-active .home-spotlight-title,
-    .home-spotlight-slide.is-active .home-spotlight-desc {
+    .home-spotlight-slide.is-active .home-spotlight-desc,
+    .home-spotlight-slide.is-active .home-spotlight-cta {
         animation-duration: 0.01ms !important;
         animation-delay: 0ms !important;
     }
@@ -26763,35 +26656,32 @@ a.snap-holder-username:hover {
    Poster layout = même composition verticale centrée à toutes les tailles,
    on ajuste uniquement les paddings et l'échelle. */
 @media (max-width: 900px) {
-    .home-spotlight { height: 380px; }
+    .home-spotlight { height: 360px; }
     .home-spotlight-slide { padding: 24px 28px 78px; }
     .home-spotlight-slide-inner { gap: 12px; max-width: 640px; }
-    .home-spotlight-icon-stack { width: 96px; height: 96px; }
-    .home-spotlight-icon { width: 78px; height: 78px; border-radius: 20px; }
-    .home-spotlight-icon svg { width: 44px !important; height: 44px !important; }
-    .home-spotlight-title { font-size: clamp(24px, 4.6vw, 38px); }
+    .home-spotlight-title { font-size: clamp(26px, 5vw, 40px); }
     .home-spotlight-desc { font-size: 13px; max-width: 480px; }
+    .home-spotlight-watermark { width: clamp(240px, 36vw, 340px); height: clamp(240px, 36vw, 340px); }
 }
 @media (max-width: 600px) {
-    .home-spotlight-slide { padding: 22px 20px 70px; }
-    .home-spotlight-slide-inner { gap: 10px; max-width: 100%; }
-    .home-spotlight-icon-stack { width: 84px; height: 84px; }
-    .home-spotlight-icon { width: 68px; height: 68px; border-radius: 18px; }
-    .home-spotlight-icon svg { width: 38px !important; height: 38px !important; }
-    /* Orbites resserrées : on garde l'effet mais avec moins d'écart. */
-    .home-spotlight-orbit--outer { inset: -12px; }
-    .home-spotlight-orbit--inner { inset: -4px; }
+    .home-spotlight-slide { padding: 24px 20px 72px; }
+    .home-spotlight-slide-inner { gap: 12px; max-width: 100%; }
     .home-spotlight-eyebrow { gap: 9px; }
     .home-spotlight-eyebrow-sep { font-size: 11px; }
     .home-spotlight-index { font-size: 10px; letter-spacing: 0.2em; }
     .home-spotlight-badge { font-size: 8.5px; padding: 3px 10px; }
-    .home-spotlight-title { font-size: clamp(22px, 6.4vw, 28px); line-height: 1.04; }
+    .home-spotlight-title { font-size: clamp(24px, 7vw, 32px); line-height: 1.04; }
     .home-spotlight-desc { font-size: 12.5px; line-height: 1.5; max-width: 320px; -webkit-line-clamp: 3; }
     .home-spotlight-cta { font-size: 10.5px; padding: 8px 16px; letter-spacing: 0.12em; }
-    .home-spotlight-watermark { font-size: clamp(180px, 56vw, 240px); --watermark-opacity: 0.055; }
+    .home-spotlight-watermark { width: 260px; height: 260px; --watermark-opacity: 0.10; }
     .home-spotlight-controls { padding: 0 14px; gap: 8px; }
     .home-spotlight-arrow { width: 32px; height: 32px; }
     .home-spotlight-dot.is-active { width: 22px; }
+    /* Curseur "grab" pour bien indiquer la swipe-zone sur les devices
+       hybrides (laptop tactile). Le pointer:cursor de la carte reste
+       en priorité pour les souris classiques. */
+    .home-spotlight { cursor: grab; }
+    .home-spotlight:active { cursor: grabbing; }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -28375,12 +28265,12 @@ body { box-sizing: border-box; }
         height: auto !important;
     }
 
-    /* Spotlight card : hauteur DIRECTE (pas flex-basis). Poster layout =
-       compo verticale centrée, hauteur fixe pour respecter le rythme. */
+    /* Spotlight card : hauteur DIRECTE (pas flex-basis). Poster layout
+       sans icône au premier plan = compo plus aérée verticalement. */
     .home-spotlight {
-        height: 380px !important;
+        height: 360px !important;
         flex: none !important;
-        min-height: 380px !important;
+        min-height: 360px !important;
     }
 
     /* Live subsection sous le spotlight : hauteur auto */
@@ -28450,10 +28340,10 @@ body { box-sizing: border-box; }
         min-height: 360px !important;
         flex: none !important;
     }
-    .home-spotlight-slide { padding: 18px 16px 64px !important; }
-    .home-spotlight-title { font-size: 22px !important; }
+    .home-spotlight-slide { padding: 20px 16px 64px !important; }
+    .home-spotlight-title { font-size: 24px !important; }
     .home-spotlight-desc  { max-width: 260px !important; -webkit-line-clamp: 3 !important; }
-    .home-spotlight-watermark { font-size: 200px !important; --watermark-opacity: 0.05 !important; }
+    .home-spotlight-watermark { width: 220px !important; height: 220px !important; --watermark-opacity: 0.10 !important; }
     .home-community-card {
         flex: none !important;
         height: 380px !important;
