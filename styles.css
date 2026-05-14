@@ -17331,12 +17331,14 @@ code.sup-card-address {
 }
 
 /* ── En-tête ── */
+/* Header drops aligné sur le rythme des autres panels (Stats, Sales,
+   Snapshot) : titre full-width + texte centré. Le wrapper droit
+   (`.drops-header-right` qui ancre le dropdown "Get Featured" et le
+   lien "View all") sort du flow et passe en absolu pour ne pas
+   décaler le centrage du titre. */
 .drops-page-header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 16px;
-    flex-wrap: wrap;
+    position: relative;
+    text-align: center;
     margin-bottom: -24px;
 }
 .drops-page-header-left {
@@ -18987,8 +18989,12 @@ code.sup-card-address {
     margin-top: 49px;
 }
 
-/* ── Drops : bouton Get Featured (même style que sales bot) ── */
+/* ── Drops : bouton Get Featured (même style que sales bot) ──
+   Sorti du flow pour ne pas décaler le centrage du titre du panel. */
 .drops-header-right {
+    position: absolute;
+    right: 0;
+    bottom: 0;
     display: flex;
     align-items: center;
     gap: 16px;
@@ -25443,13 +25449,17 @@ a.snap-holder-username:hover {
     overflow: hidden;
     position: relative;
 }
-/* Bannière : ratio 3:1, full-width. L'identité (logo + nom + artiste)
-   est positionnée en absolute par-dessus le coin bas-gauche, avec un
-   dégradé sombre au bas pour la lisibilité. */
+/* Bannière : ratio 4:1 (au lieu de 3:1) + max-height 280px pour
+   ne pas exploser en hauteur sur des écrans larges (à 1920px le
+   3:1 donnait 590px, ce qui clippait le reste de la carte sous
+   l'overflow:hidden du spotlight). Avec 4:1 + cap, la bannière
+   reste contenue et le contenu sous-jacent (identity, stats,
+   showcase) reste toujours visible. */
 .home-fc-spotlight .home-feat-v3-hero {
     position: relative;
-    aspect-ratio: 3 / 1;
+    aspect-ratio: 4 / 1;
     width: 100%;
+    max-height: 280px;
     flex-shrink: 0;
     overflow: hidden;
 }
@@ -26866,13 +26876,14 @@ a.snap-holder-username:hover {
 .home-section--featured-artists > .home-section-header {
     flex-shrink: 0;
 }
-/* Featured Collections : la card interne a son propre min-height
-   réaliste (banner + identity + stats + samples). 600 suffit pour
-   éviter qu'elle paraisse vide sur desktop tout en se laissant
-   shrink à 0 sur mobile (override plus bas). */
+/* Featured Collections : la card s'adapte à sa hauteur réelle
+   (banner cappée + identity + stats + showcase) — on retire le
+   flex: 1 1 0 qui imposait la base à 0px et obligeait à clipper le
+   contenu derrière l'overflow:hidden du spotlight sur les écrans
+   larges. min-height: 480 reste comme floor de sûreté. */
 .home-section--featured .home-fc-spotlight {
-    flex: 1 1 0;
-    min-height: 600px;
+    flex: none;
+    min-height: 480px;
     min-width: 0;
 }
 /* Featured Artists : plus de min-height fixe — le slide actif est
@@ -27504,7 +27515,7 @@ body { box-sizing: border-box; }
     align-items: center;
     gap: 8px;
     width: 100%;
-    max-width: 480px;
+    max-width: 640px;
 }
 .home-fa-avatar {
     width: 96px;
@@ -27553,7 +27564,7 @@ body { box-sizing: border-box; }
     font-family: sans-serif;
     font-size: 12.5px; color: rgba(255,255,255,0.6);
     line-height: 1.55; margin: 4px auto 0;
-    max-width: 460px;
+    max-width: 620px;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
@@ -27580,7 +27591,7 @@ body { box-sizing: border-box; }
 
 /* ── Top 3 collections — sur toute la largeur sous la CTA ── */
 .home-fa-cols-wrap {
-    width: 100%; max-width: 560px;
+    width: 100%; max-width: 760px;
     display: flex; flex-direction: column; gap: 8px;
     margin-top: 6px;
     /* Sépare visuellement le bloc identity du bloc collections sans
