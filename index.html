@@ -1768,14 +1768,6 @@
     </div>
 
         <div class="cp-filters-bar" id="cpFiltersBar" style="display:none;">
-      <div class="cp-filters-left">
-        <div class="stats-search-wrap cp-search-wrap">
-          <svg class="stats-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="5.5"/><line x1="13" y1="13" x2="17" y2="17"/></svg>
-          <input class="stats-search-input" id="cpSearchInput" type="text" placeholder="Search NFT…" autocomplete="off" spellcheck="false"/>
-          <button class="stats-search-clear" id="cpSearchClear" type="button" style="display:none;">×</button>
-        </div>
-        <span class="cp-count" id="cpCount"></span>
-      </div>
       <div class="cp-filters-right">
         <!-- Tri -->
         <!-- Tri : Name par défaut, Price toggle ↑/↓ sur un seul bouton -->
@@ -1808,6 +1800,17 @@
           <button class="stats-tr-btn cp-size-btn" data-cpsize="large" title="Large" type="button">
             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect height="16" rx="2" width="16" x="4" y="4"/></svg>
           </button>
+        </div>
+      </div>
+      <!-- Search bar : posée SOUS la rangée de filtres, full width. Le
+           compteur "X NFTs" qui était à droite a été retiré — le user
+           le trouvait redondant avec l'info déjà visible dans la
+           bannière (stats-bar). -->
+      <div class="cp-filters-search-row">
+        <div class="stats-search-wrap cp-search-wrap">
+          <svg class="stats-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="5.5"/><line x1="13" y1="13" x2="17" y2="17"/></svg>
+          <input class="stats-search-input" id="cpSearchInput" type="text" placeholder="Search NFT…" autocomplete="off" spellcheck="false"/>
+          <button class="stats-search-clear" id="cpSearchClear" type="button" style="display:none;">×</button>
         </div>
       </div>
     </div>
@@ -7651,7 +7654,15 @@ document.addEventListener('DOMContentLoaded', initialize);
     function updateCpGrid() {
         const grid = document.getElementById('cpNftGrid');
         if (!grid) return;
-        const baseW = _cpSize === 'small' ? 110 : _cpSize === 'medium' ? 180 : 280;
+        // Tailles décalées d'un cran vers le bas : le médium et le large
+        // produisaient la même grille sur mobile (1 colonne dans les deux
+        // cas) parce que 180px et 280px tombaient tous deux sous la
+        // largeur viewport ≈ 328px. On garde 3 paliers visuellement
+        // distincts sur tous les viewports :
+        //   - small  →  ~4 cols mobile / dense desktop
+        //   - medium →  ~2 cols mobile
+        //   - large  →  1 col mobile (carte pleine largeur)
+        const baseW = _cpSize === 'small' ? 75 : _cpSize === 'medium' ? 110 : 180;
         const gap = 4;
         const available = grid.getBoundingClientRect().width || grid.offsetWidth;
         if (!available) return;
@@ -7660,8 +7671,6 @@ document.addEventListener('DOMContentLoaded', initialize);
         grid.style.gridTemplateColumns = `repeat(${cols}, ${colW}px)`;
         grid.style.gap = gap + 'px';
         // Activer bouton
-        document.querySelectorAll('#cpSizeToggle [data-cpsize]').forEach(b =>
-            b.classList.toggle('stats-tr-btn--active', b.dataset.cpsize === _cpSize));
         document.querySelectorAll('#cpSizeToggle [data-cpsize]').forEach(b =>
             b.classList.toggle('stats-tr-btn--active', b.dataset.cpsize === _cpSize));
     }

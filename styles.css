@@ -12496,6 +12496,15 @@ body.is-profile-loading #profileLoadingOverlay * {
     overflow: hidden;
     flex-shrink: 0;
 }
+/* Sur mobile : bannière dans le ratio 3:1 attendu par Crypto.com pour
+   les covers (1500×500) — affichage propre des bannières uploadées
+   sans crop trop agressif comme avec clamp(180,23vw,340). */
+@media (max-width: 768px) {
+    .cp-banner-full {
+        height: auto;
+        aspect-ratio: 3 / 1;
+    }
+}
 .cp-hero-banner {
     position: absolute;
     inset: 0;
@@ -12638,9 +12647,9 @@ body.is-profile-loading #profileLoadingOverlay * {
 /* ── BARRE DE FILTRES sticky ── */
 .cp-filters-bar {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
     flex-wrap: wrap;
     padding: 8px 0;
     /* Fond légèrement opaque qui matche le halo wrapper — quand la barre
@@ -12653,28 +12662,20 @@ body.is-profile-loading #profileLoadingOverlay * {
     top: 0;
     z-index: 100;
 }
-.cp-filters-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-    min-width: 0;
-}
 .cp-filters-right {
     display: flex;
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
 }
-.cp-search-wrap {
-    min-width: 160px;
-    max-width: 240px;
+/* Ligne search posée SOUS la rangée de filtres, full width. */
+.cp-filters-search-row {
+    width: 100%;
 }
-.cp-count {
-    font-size: 11px;
-    color: rgba(255,255,255,0.3);
-    letter-spacing: 0.06em;
-    white-space: nowrap;
+.cp-search-wrap {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
 }
 .cp-sort-group { margin: 0; }
 .cp-listed-group { margin: 0; }
@@ -29085,10 +29086,22 @@ body { box-sizing: border-box; }
         flex-direction: column !important;
         align-items: flex-start !important;
         gap: 8px !important;
+        /* Le logo overlap la bannière (moitié dedans / moitié dehors) —
+           même pattern que les Featured Collections (home). 72px de logo
+           → -36px pour aligner pile-poil sur le bord bas du hero. */
+        margin-top: -36px !important;
+        position: relative;
+        z-index: 3;
     }
     .cp-hero-logo {
-        width: 48px !important;
-        height: 48px !important;
+        width: 72px !important;
+        height: 72px !important;
+        /* Cadre cyan + ombre pour faire ressortir le logo posé sur la
+           bannière (sinon il se mélange au fond). */
+        border: 3px solid rgba(11, 20, 38, 0.95) !important;
+        border-radius: 14px !important;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.65) !important;
+        background: rgba(11, 20, 38, 0.85) !important;
     }
 
     /* Support : cartes donate en une colonne (override grid auto-fill 320px) */
