@@ -26360,18 +26360,26 @@ a.snap-holder-username:hover {
     background:
         radial-gradient(120% 80% at 85% -10%, var(--accent-soft) 0%, transparent 55%),
         linear-gradient(120deg, rgba(11,20,38,0.85) 0%, rgba(7,14,28,0.95) 60%, rgba(7,14,28,1) 100%);
-    /* Halo : recette de référence pour toutes les frames du home,
-       exposée via les variables --home-halo-* dans :root. */
-    border: 1px solid var(--home-halo-border);
+    /* Halo : base = recette de référence du home (cyan unifié),
+       mais on infuse ~32% de l'accent actif dans le contour et
+       on ajoute un glow extérieur subtil teinté à l'accent. Le
+       cadre garde son identité cyan tout en suivant la lumière
+       du Spotlight quand le user cycle entre les features. */
+    border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--home-halo-border));
     border-radius: 24px;
     overflow: hidden;
     isolation: isolate;
-    box-shadow: var(--home-halo-shadow);
+    box-shadow:
+        var(--home-halo-shadow),
+        0 0 32px color-mix(in srgb, var(--accent) 18%, transparent);
     cursor: pointer;
     transition: border-color 0.6s ease, background 0.6s ease, box-shadow 0.6s ease;
 }
 .home-spotlight:hover {
-    border-color: color-mix(in srgb, var(--accent) 40%, var(--home-halo-border));
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--home-halo-border));
+    box-shadow:
+        var(--home-halo-shadow),
+        0 0 44px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 /* Halo radial coloré (suit l'accent actif), positionné en haut à droite. */
@@ -26449,6 +26457,7 @@ a.snap-holder-username:hover {
 .home-spotlight:has(.home-spotlight-slide.is-active[data-accent="#4dccff"]) { --accent: #4dccff; --accent-strong: #80dcff; --accent-soft: rgba(77,204,255,0.18); }
 .home-spotlight:has(.home-spotlight-slide.is-active[data-accent="#818cf8"]) { --accent: #818cf8; --accent-strong: #a5acfc; --accent-soft: rgba(129,140,248,0.18); }
 .home-spotlight:has(.home-spotlight-slide.is-active[data-accent="#06b6d4"]) { --accent: #06b6d4; --accent-strong: #38c9e3; --accent-soft: rgba(6,182,212,0.18); }
+.home-spotlight:has(.home-spotlight-slide.is-active[data-accent="#c084fc"]) { --accent: #c084fc; --accent-strong: #d8b4fe; --accent-soft: rgba(192,132,252,0.20); }
 
 /* ── Entrance staggered : watermark SVG → eyebrow → titre → desc → CTA ── */
 .home-spotlight-slide.is-active .home-spotlight-watermark      { animation: spotlightWatermarkIn 0.85s cubic-bezier(0.2,0.8,0.2,1) both; animation-delay: 0ms;   }
