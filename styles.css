@@ -13040,6 +13040,7 @@ body.is-profile-loading #profileLoadingOverlay * {
 .home-chat-stats-bar { display: none !important; }
 
 .home-community-card {
+    position: relative;
     display: flex;
     flex-direction: row;     /* messages + sidebar côte à côte */
     /* Halo : recette du top spotlight (.home-spotlight) — toutes les
@@ -13452,6 +13453,71 @@ body.is-profile-loading #profileLoadingOverlay * {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 12px;
+}
+
+/* ── Eyebrow chip — remplace le titre flottant au-dessus du cadre.
+   Posé en absolu dans le coin haut-gauche du cadre, avec backdrop
+   blur pour rester lisible même au-dessus du contenu qui scroll. */
+.home-card-eyebrow {
+    position: absolute;
+    top: 12px; left: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 11px 5px 11px;
+    border-radius: 999px;
+    background: rgba(11, 20, 38, 0.72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 179, 255, 0.22);
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    color: rgba(255, 255, 255, 0.88);
+    text-transform: uppercase;
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.35),
+        0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+    z-index: 5;
+    pointer-events: none;
+    user-select: none;
+    /* Petit point cyan en pseudo-élément avant le label — signature
+       visuelle pour repérer le chip de loin et marquer "card live". */
+}
+.home-card-eyebrow::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #00B3FF;
+    box-shadow: 0 0 8px rgba(0, 179, 255, 0.8);
+    flex-shrink: 0;
+}
+.home-card-eyebrow-label {
+    color: rgba(255, 255, 255, 0.92);
+}
+@media (max-width: 600px) {
+    .home-card-eyebrow {
+        top: 10px; left: 12px;
+        padding: 4px 9px;
+        font-size: 9px;
+        gap: 6px;
+        letter-spacing: 0.18em;
+    }
+    .home-card-eyebrow::before { width: 5px; height: 5px; }
+}
+
+/* Card meta dans le coin haut-droite (chat members, status, etc.) */
+.home-chat-card-meta {
+    position: absolute;
+    top: 10px; right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 5;
+}
+@media (max-width: 600px) {
+    .home-chat-card-meta { top: 8px; right: 10px; }
 }
 /* Spotlight section header — visible, marge réduite */
 .home-spotlight-section .home-section-header {
