@@ -13247,22 +13247,22 @@ body.is-profile-loading #profileLoadingOverlay * {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    /* 2/1 vertical : compense les caps Geomanist-Bold ancrées en haut
-       de la line-box. Total ≈ 13px (2 + 8 + 1 + 2 de border). */
-    padding: 2px 7px 1px;
+    /* Padding aéré pour scaler avec la font 9.5px (bumpée depuis 8px)
+       en lock-step avec le pseudo passé à 13px. */
+    padding: 2px 8px 1px;
     border-radius: 8px;
     background: rgba(255, 200, 0, 0.16);
     color: #FFC800;
     border: 1px solid rgba(255, 200, 0, 0.55);
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 8px;
+    font-size: 9.5px;
     font-weight: 800;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     white-space: nowrap;
     flex-shrink: 0;
     cursor: default;
-    transform: translateY(-1.5px);
+    transform: translateY(-2px);
     line-height: 1;
 }
 /* Variant pour la liste des membres : un peu plus tassé pour ne pas
@@ -13280,20 +13280,20 @@ body.is-profile-loading #profileLoadingOverlay * {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 2px 7px 1px;
+    padding: 2px 8px 1px;
     border-radius: 8px;
     background: rgba(239, 68, 68, 0.18);
     color: #fca5a5;
     border: 1px solid rgba(239, 68, 68, 0.6);
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 8px;
+    font-size: 9.5px;
     font-weight: 800;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     white-space: nowrap;
     flex-shrink: 0;
     cursor: default;
-    transform: translateY(-1.5px);
+    transform: translateY(-2px);
     line-height: 1;
 }
 
@@ -13303,20 +13303,20 @@ body.is-profile-loading #profileLoadingOverlay * {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 2px 7px 1px;
+    padding: 2px 8px 1px;
     border-radius: 8px;
     background: rgba(74, 222, 128, 0.18);
     color: #86efac;
     border: 1px solid rgba(74, 222, 128, 0.6);
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 8px;
+    font-size: 9.5px;
     font-weight: 800;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     white-space: nowrap;
     flex-shrink: 0;
     cursor: default;
-    transform: translateY(-1.5px);
+    transform: translateY(-2px);
     line-height: 1;
 }
 
@@ -14024,18 +14024,18 @@ body.is-profile-loading #profileLoadingOverlay * {
     flex: 1 1 auto;
 }
 /* Avatar à gauche du pseudo — la slot accueille soit une <img>, soit
-   le fallback initial (lettre majuscule sur fond cyan). 22px pile pour
-   matcher la hauteur visuelle d'une ligne de pseudo Geomanist-Bold à
-   11px sans grossir la ligne de méta. */
+   le fallback initial (lettre majuscule sur fond cyan). 26px pour
+   matcher la hauteur visuelle de la ligne pseudo Geomanist-Bold 13px
+   (bumpée depuis 11px), tout en gardant la ligne de méta compacte. */
 .home-chat-msg-avatar-slot {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    width: 22px; height: 22px;
+    width: 26px; height: 26px;
 }
 .home-chat-msg-avatar {
-    width: 22px; height: 22px;
+    width: 26px; height: 26px;
     border-radius: 50%;
     object-fit: cover;
     border: 1px solid rgba(0, 179, 255, 0.35);
@@ -14047,16 +14047,19 @@ body.is-profile-loading #profileLoadingOverlay * {
     align-items: center;
     justify-content: center;
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 10px;
+    font-size: 12px;
     color: #00B3FF;
     background: rgba(0, 179, 255, 0.12);
 }
 .home-chat-msg-user {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 11px;
+    /* Pseudo passé de 11px → 13px et de cyan → blanc. La couleur
+       d'auteur est désormais portée par le badge de rôle / le liseré
+       gauche de la bulle, pas par le pseudo lui-même. */
+    font-size: 13px;
     font-weight: 800;
     letter-spacing: 0.06em;
-    color: #00B3FF;
+    color: #fff;
     text-transform: uppercase;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -14064,11 +14067,14 @@ body.is-profile-loading #profileLoadingOverlay * {
     /* Cliquable : un clic sur le pseudo d'un message le mentionne dans
        l'input chat (cf. onMentionClick dans initChat). */
     cursor: pointer;
-    transition: color 0.12s, text-shadow 0.12s;
+    transition: text-shadow 0.12s;
 }
-.home-chat-msg-user:hover {
-    color: #fff;
-    text-shadow: 0 0 8px rgba(0, 179, 255, 0.55);
+@media (hover: hover) and (pointer: fine) {
+    .home-chat-msg-user:hover {
+        /* Glow cyan au hover — la couleur de base étant déjà blanche,
+           seul le halo signale l'état interactif. */
+        text-shadow: 0 0 8px rgba(0, 179, 255, 0.55);
+    }
 }
 
 /* ── Reply : banner au-dessus de l'input + bloc quote dans le message ── */
@@ -14234,11 +14240,11 @@ body.is-profile-loading #profileLoadingOverlay * {
     color: #00B3FF;
     font-family: 'Geomanist-Bold', sans-serif;
     font-weight: 800;
-    /* Clampé à 11px pour ne pas dépasser la taille du pseudo en haut
-       du message (.home-chat-msg-user est à 11px). Sans ce clamp la
-       pill hérite de la taille du body et apparaît plus grosse que le
-       pseudo, ce qui inverse la hiérarchie visuelle. */
-    font-size: 11px;
+    /* Clampé à 13px pour matcher la taille du pseudo en haut du message
+       (.home-chat-msg-user est à 13px). Sans ce clamp la pill hérite
+       de la taille du body et apparaît disproportionnée par rapport
+       au pseudo, ce qui inverse la hiérarchie visuelle. */
+    font-size: 13px;
     background: rgba(0, 179, 255, 0.20);
     border: 1px solid rgba(0, 179, 255, 0.55);
     border-radius: 6px;
@@ -14275,21 +14281,23 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 /* Geomanist-Bold caps : font à descender généreux mais caps anchored
    haut — center-align flex met le badge au milieu de la line-box,
-   donc visuellement ~1.5px sous le centre optique des capitales.
-   Compensation explicite pour aligner le pastille-✓ sur le centre
-   visuel du pseudo. Scoped au wrapper, pas global, parce que le
-   même badge sert ailleurs (modal membres) avec un contexte différent. */
+   donc visuellement ~2px sous le centre optique des capitales sur la
+   nouvelle taille de pseudo (13px). Compensation explicite pour
+   aligner le pastille-✓ sur le centre visuel du pseudo. Scoped au
+   wrapper, pas global, parce que le même badge sert ailleurs (modal
+   membres) avec un contexte différent. */
 .home-chat-msg-user-wrap .chat-verified-badge {
-    transform: translateY(-1.5px);
+    transform: translateY(-2px);
 }
 /* ── Certified badge in community chat ── */
 .chat-verified-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 13px;
-    height: 13px;
-    min-width: 13px;
+    /* 15px pour scaler avec la nouvelle taille de pseudo (13px). */
+    width: 15px;
+    height: 15px;
+    min-width: 15px;
     /* CYAN — c'est désormais la couleur unifiée de tous les badges
        "compte certifié" du chat (membres dans la sidebar/modal ET
        auteurs des messages). Avant on avait du vert, l'utilisateur
