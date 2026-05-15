@@ -14896,62 +14896,52 @@ body.is-profile-loading #profileLoadingOverlay * {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.05) 100%);
     border-color: rgba(255, 255, 255, 0.32);
 }
-/* Premium banner layout : carte pleine largeur du message, logo collection
-   chevauche le bord gauche (moitié dedans / moitié dehors), stats alignées
-   sur une rangée propre en dessous, CTA en bas à droite. */
+/* Carte coll-share : reste dans les marges normales du message (pas de
+   bannière débordante), logo entièrement à l'intérieur sur la gauche,
+   nom + stats à droite. Pas de CTA — un clic sur la carte ouvre la
+   collection directement. */
 .home-chat-coll-share {
-    position: relative;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-        "header header"
-        "stats  cta";
-    column-gap: 14px;
-    row-gap: 12px;
+    display: flex;
     align-items: center;
-    /* margin négatif pour casser le padding 10px de la bulle parent et
-       prendre toute la largeur du message — d'où "bannière complète". */
-    margin: 10px -10px 2px;
-    padding: 14px 16px 14px 50px;
+    gap: 12px;
+    padding: 12px 14px;
+    margin-top: 8px;
     background:
-        radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0) 55%),
-        linear-gradient(135deg, rgba(7, 14, 28, 0.48) 0%, rgba(7, 14, 28, 0.30) 100%);
+        radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 55%),
+        linear-gradient(135deg, rgba(7, 14, 28, 0.42) 0%, rgba(7, 14, 28, 0.26) 100%);
     border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 14px;
+    border-radius: 12px;
     cursor: pointer;
-    transition: background 0.18s, border-color 0.18s, transform 0.18s;
+    transition: background 0.18s, border-color 0.18s;
     -webkit-tap-highlight-color: transparent;
-    overflow: visible;
 }
 .home-chat-coll-share:hover,
 .home-chat-coll-share:focus-visible {
     border-color: rgba(255, 255, 255, 0.36);
     outline: none;
-    transform: translateY(-1px);
 }
 .home-chat-coll-share-logo {
-    /* moitié dedans / moitié dehors : 64px logo, -32px à gauche */
-    position: absolute;
-    left: -32px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 64px; height: 64px;
-    border-radius: 14px;
+    width: 56px; height: 56px;
+    border-radius: 12px;
     object-fit: cover;
     background: rgba(255, 255, 255, 0.06);
-    /* 1px comme l'avatar user — demande PR #96 préservée. Le halo doux
-       autour assure la lisibilité du logo qui dépasse hors carte. */
+    /* 1px blanc uniquement, comme l'avatar user — pas de halo / ring
+       sombre autour (demande user). */
     border: 1px solid rgba(255, 255, 255, 0.55);
-    box-shadow:
-        0 0 0 3px rgba(7, 14, 28, 0.55),
-        0 6px 18px rgba(0, 0, 0, 0.45);
-    z-index: 2;
+    flex-shrink: 0;
+    align-self: flex-start;
 }
 .home-chat-coll-share-logo--empty {
     background: rgba(255, 255, 255, 0.10);
 }
+.home-chat-coll-share-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+}
 .home-chat-coll-share-header {
-    grid-area: header;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -14959,7 +14949,7 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 .home-chat-coll-share-name {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 800;
     color: #fff;
     letter-spacing: 0.01em;
@@ -14972,7 +14962,6 @@ body.is-profile-loading #profileLoadingOverlay * {
     flex-shrink: 0;
 }
 .home-chat-coll-share-stats {
-    grid-area: stats;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -14983,7 +14972,7 @@ body.is-profile-loading #profileLoadingOverlay * {
     display: flex;
     flex-direction: column;
     gap: 3px;
-    padding: 0 16px;
+    padding: 0 12px;
     border-left: 1px solid rgba(255, 255, 255, 0.10);
     min-width: 0;
 }
@@ -14995,14 +14984,14 @@ body.is-profile-loading #profileLoadingOverlay * {
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 8.5px;
     font-weight: 800;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.55);
     line-height: 1;
 }
 .home-chat-coll-share-stat-val {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 800;
     color: #fff;
     line-height: 1.1;
@@ -15011,52 +15000,18 @@ body.is-profile-loading #profileLoadingOverlay * {
     color: rgba(255, 255, 255, 0.45);
     font-weight: 600;
 }
-.home-chat-coll-share-cta {
-    grid-area: cta;
-    align-self: center;
-    justify-self: end;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 7px 14px;
-    background: rgba(255, 255, 255, 0.10);
-    border: 1px solid rgba(255, 255, 255, 0.45);
-    border-radius: 999px;
-    color: #fff;
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.10em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
-    white-space: nowrap;
-}
-.home-chat-coll-share-cta:hover {
-    background: rgba(255, 255, 255, 0.20);
-    border-color: rgba(255, 255, 255, 0.85);
-    color: #fff;
-}
 @media (max-width: 600px) {
     .home-chat-coll-share {
-        grid-template-columns: 1fr;
-        grid-template-areas:
-            "header"
-            "stats"
-            "cta";
-        row-gap: 10px;
-        padding: 12px 12px 12px 42px;
-        margin: 10px -8px 2px;
+        gap: 10px;
+        padding: 10px 12px;
     }
     .home-chat-coll-share-logo {
-        left: -24px;
-        width: 52px; height: 52px;
-        border-radius: 12px;
+        width: 48px; height: 48px;
+        border-radius: 10px;
     }
-    .home-chat-coll-share-name { font-size: 14px; }
-    .home-chat-coll-share-stat { padding: 0 12px; }
-    .home-chat-coll-share-stat-val { font-size: 13px; }
-    .home-chat-coll-share-cta { justify-self: start; }
+    .home-chat-coll-share-name { font-size: 13px; }
+    .home-chat-coll-share-stat { padding: 0 10px; }
+    .home-chat-coll-share-stat-val { font-size: 12px; }
 }
 
 /* ── Pinned message ── Bannière en haut du chat (hors scroll des
