@@ -13886,9 +13886,11 @@ body.is-profile-loading #profileLoadingOverlay * {
     padding: 12px 14px;
     display: flex;
     flex-direction: column;
-    /* 10px entre les bulles — testé en mobile, c'est le compromis
-       entre "messages collés" (6/8) et "trop d'air" (12). */
-    gap: 10px;
+    /* 6px entre les bulles distinctes (groupes d'auteurs différents).
+       Resserré depuis 10px pour densifier le feed sans coller les
+       messages. La continuation utilise margin-top:-6px (cf. plus bas)
+       pour annuler exactement ce gap et fusionner avec la bulle parent. */
+    gap: 6px;
     min-height: 0;
 }
 .home-chat-msg {
@@ -13950,7 +13952,9 @@ body.is-profile-loading #profileLoadingOverlay * {
    précédente (type Discord : une seule bulle continue par auteur). */
 .home-chat-msg--continuation .home-chat-msg-meta { display: none; }
 .home-chat-msg--continuation {
-    margin-top: -10px;
+    /* Annule exactement le gap parent (6px) pour que la continuation
+       touche la bulle précédente et fusionne avec elle. */
+    margin-top: -6px;
     padding-top: 6px;
     border-top: 0;
     border-top-left-radius: 0;
@@ -29200,6 +29204,39 @@ body { box-sizing: border-box; }
     display: flex;
     align-items: center;
     justify-content: center;
+}
+/* Emojis secondaires (index ≥ 5) : cachés par défaut, révélés
+   lorsque la barre porte la classe .is-expanded (toggle via "+"). */
+.home-chat-react-btn--secondary { display: none; }
+.home-chat-react-bar.is-expanded .home-chat-react-btn--secondary { display: flex; }
+/* Bouton "+" — même look que les emoji-btn, ouvre/ferme la zone
+   secondaire. Devient cyan quand expanded pour signaler l'état actif. */
+.home-chat-react-more {
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.55);
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background 0.12s ease, color 0.12s ease, transform 0.15s ease;
+    flex-shrink: 0;
+}
+.home-chat-react-more:hover {
+    background: rgba(0, 179, 255, 0.15);
+    color: #00B3FF;
+}
+.home-chat-react-bar.is-expanded .home-chat-react-more {
+    color: #00B3FF;
+    transform: rotate(45deg); /* "+" → "x" visuel pour close */
 }
 .home-chat-react-btn:hover {
     transform: scale(1.3);
