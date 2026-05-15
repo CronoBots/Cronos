@@ -9391,6 +9391,15 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // à un re-connect plus récent — sans ce filtre la déconnexion
         // fantôme effacerait la connexion fraîche).
         const _onlineUsernames   = new Set();
+        // Pour chaque user en ligne, la dernière timestamp `t` de son
+        // entrée de présence. Sert au filtre des leaves : un leave dont
+        // le `t` est POSTÉRIEUR à `_onlinePresenceT.get(user)` est plus
+        // récent que la presence connue → c'est une vraie déconnexion
+        // qui vient de se produire mais que le listener presence n'a
+        // pas encore vue (race onDisconnect : push leave + remove
+        // presence émis simultanément côté serveur, mais reçus dans
+        // l'ordre indéterminé côté client).
+        const _onlinePresenceT   = new Map();
         // Flag : true dès que le listener chat/presence a fire au moins
         // une fois. Avant ça, _onlineUsernames est non fiable (vide).
         // Les leaves reçus pendant cette fenêtre sont mis en queue et
@@ -9988,10 +9997,23 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         function _processLeaveEvent(msg, key, ts, instant) {
             const uname = msg.user;
             if (!uname) return true;
-            // Filtre stale : user actuellement en présence → leave périmé.
+            // Filtre stale : user en présence ET son leave est plus
+            // ancien que sa dernière entrée presence connue → leave
+            // périmé (onDisconnect serveur retardé après un re-connect
+            // rapide). Si le leave est plus récent que la presence,
+            // c'est une vraie déconnexion qui vient juste d'arriver
+            // mais que le listener presence n'a pas encore intégrée
+            // (race : push leave + remove presence côté serveur sont
+            // émis simultanément mais reçus en ordre indéfini côté
+            // client). Dans ce cas on laisse passer.
             if (_onlineUsernames.size > 0 && _onlineUsernames.has(uname)) {
-                if (fbDb && key) fbDb.ref('chat/messages/' + key).remove().catch(() => {});
-                return false;
+                const presT = _onlinePresenceT.get(uname) || 0;
+                const newT  = ts || 0;
+                if (newT <= presT) {
+                    if (fbDb && key) fbDb.ref('chat/messages/' + key).remove().catch(() => {});
+                    return false;
+                }
+                // sinon : fall through → on traite normalement.
             }
             // Race au chargement : presence pas encore prête → queue, on
             // re-traitera quand le listener chat/presence aura fire.
@@ -10934,6 +10956,11 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     const seenUsers   = new Set();
                     const nowTs       = Date.now();
                     let   anonCount   = 0;
+                    // Map temporaire username → max t parmi ses entrées
+                    // de présence. Utilisé en aval pour décider si un
+                    // leave reçu est plus récent ou plus ancien que la
+                    // dernière présence connue de ce user.
+                    const presenceTByUser = new Map();
                     snap.forEach(child => {
                         const v = child.val();
                         if (!v) return;
@@ -10945,22 +10972,37 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                         }
                         if (v.anon) {
                             anonCount++;
-                        } else if (v.username && !seenUsers.has(v.username)) {
-                            seenUsers.add(v.username);
-                            onlineKeys.add('u_' + v.username);
-                            namedOnline.push(v);
+                        } else if (v.username) {
+                            const t = Number(v.t) || 0;
+                            const prev = presenceTByUser.get(v.username) || 0;
+                            if (t > prev) presenceTByUser.set(v.username, t);
+                            if (!seenUsers.has(v.username)) {
+                                seenUsers.add(v.username);
+                                onlineKeys.add('u_' + v.username);
+                                namedOnline.push(v);
+                            }
                         }
                     });
-                    // Snapshot live des usernames présents.
+                    // Snapshot live des usernames présents + leur dernier
+                    // timestamp de présence (sert au filtre des leaves stale).
                     _onlineUsernames.clear();
+                    _onlinePresenceT.clear();
                     seenUsers.forEach(u => _onlineUsernames.add(u));
+                    presenceTByUser.forEach((t, u) => _onlinePresenceT.set(u, t));
                     _presenceReady = true;
                     // Cleanup réactif : les leaves trackés pour un user
-                    // actuellement online sont stale (re-connect rapide,
-                    // multi-onglets…) → retirés de Firebase.
+                    // actuellement online ET plus anciens que sa dernière
+                    // entrée de présence sont stale (re-connect rapide,
+                    // multi-onglets…) → retirés de Firebase. Un leave
+                    // plus récent que la presence est une vraie
+                    // déconnexion en cours d'arrivée → on le garde.
                     if (fbDb && _onlineUsernames.size > 0) {
                         for (const [uname, info] of _latestLeaveByUser) {
-                            if (info && info.key && _onlineUsernames.has(uname)) {
+                            if (!info || !info.key) continue;
+                            if (!_onlineUsernames.has(uname)) continue;
+                            const presT  = _onlinePresenceT.get(uname) || 0;
+                            const leaveT = info.t || 0;
+                            if (leaveT <= presT) {
                                 fbDb.ref('chat/messages/' + info.key).remove().catch(() => {});
                                 _latestLeaveByUser.delete(uname);
                             }
