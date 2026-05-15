@@ -10461,12 +10461,31 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                         text:    msg.text || ''
                     });
                 });
-                // Click sur le quote → scroll vers le message original
-                // (msgKey est déjà posé en dataset plus haut).
-                div.querySelector('.home-chat-msg-quote')?.addEventListener('click', e => {
-                    e.preventDefault();
-                    const k = e.currentTarget.dataset.replyKey;
-                    if (k) scrollToMessage(k);
+                // Click / Enter / Space sur la pastille de citation →
+                // scroll vers le message original avec un flash de
+                // surlignage cyan. stopPropagation pour ne pas
+                // déclencher les handlers parents (open reactions /
+                // long-press sur le message).
+                const quoteEl = div.querySelector('.home-chat-msg-quote');
+                const activateQuote = (ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    const k = quoteEl.dataset.replyKey;
+                    if (!k) return;
+                    const target = msgs.querySelector('.home-chat-msg[data-msg-key="' + (window.CSS && CSS.escape ? CSS.escape(k) : k) + '"]');
+                    if (target) {
+                        scrollToMessage(k);
+                    } else {
+                        // Message hors fenêtre courante (chargement
+                        // limitToLast 50 ou supprimé). Feedback visuel
+                        // sur la pastille pour signaler "rien à scroll".
+                        quoteEl.classList.add('home-chat-msg-quote--miss');
+                        setTimeout(() => quoteEl.classList.remove('home-chat-msg-quote--miss'), 600);
+                    }
+                };
+                quoteEl?.addEventListener('click', activateQuote);
+                quoteEl?.addEventListener('keydown', (ev) => {
+                    if (ev.key === 'Enter' || ev.key === ' ') activateQuote(ev);
                 });
             }
 
