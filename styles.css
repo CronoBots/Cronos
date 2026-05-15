@@ -13315,6 +13315,16 @@ body.is-profile-loading #profileLoadingOverlay * {
     line-height: 1;
 }
 
+/* Badges role compactés dans la liste des membres — sinon, combinés au
+   badge ✓ verified, ils poussent les pseudos longs (ex. "THE PHOTOGRAPH")
+   en ellipsis. Même recette que .chat-patron-badge--member. */
+.home-chat-member .chat-og-badge,
+.home-chat-member .chat-creator-badge {
+    padding: 2px 6px 1px;
+    font-size: 7.5px;
+    margin-left: 2px;
+}
+
 /* ── Header droit du chat ── */
 .home-chat-header-right {
     display: flex; align-items: center; gap: 8px;
@@ -13916,11 +13926,38 @@ body.is-profile-loading #profileLoadingOverlay * {
     align-self: stretch;
     max-width: 100%;
     padding: 6px 10px 8px;
-    transition: background 0.15s, border-color 0.15s;
+    /* Espace réservé pour le liseré gauche des messages avec rôle (cf.
+       .home-chat-msg--role-*). Sur les messages neutres, c'est un padding
+       régulier — pas de saut visuel. */
+    border-left-width: 3px;
+    transition: background 0.15s, border-color 0.15s, border-left-color 0.15s;
 }
 .home-chat-msg--community:hover {
     background: rgba(255,255,255,0.055);
     border-color: rgba(255,255,255,0.11);
+}
+/* Liserés colorés par rôle — la bordure gauche (3px réservée par
+   .home-chat-msg--community) prend la teinte du badge correspondant
+   pour identifier le rôle d'un coup d'œil sans relire le pill.
+   Priorité gérée côté JS : creator > og > patron. */
+.home-chat-msg--role-creator { border-left-color: rgba(239, 68, 68, 0.7); }
+.home-chat-msg--role-creator:hover { border-left-color: rgba(239, 68, 68, 0.9); }
+.home-chat-msg--role-og      { border-left-color: rgba(74, 222, 128, 0.7); }
+.home-chat-msg--role-og:hover      { border-left-color: rgba(74, 222, 128, 0.9); }
+.home-chat-msg--role-patron  { border-left-color: rgba(255, 200, 0, 0.7); }
+.home-chat-msg--role-patron:hover  { border-left-color: rgba(255, 200, 0, 0.9); }
+
+/* Message "continuation" — suite d'un message du même auteur posté < 5 min
+   auparavant. On masque le header (avatar/pseudo/heure), on compense le
+   gap parent (10px) par un margin-top négatif pour visuellement coller
+   les bulles, et on aplatit les coins du haut pour qu'elles forment un
+   bloc continu type Discord. */
+.home-chat-msg--continuation .home-chat-msg-meta { display: none; }
+.home-chat-msg--continuation {
+    margin-top: -7px;
+    padding-top: 4px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
 }
 .home-chat-msg--mine {
     background: rgba(0,179,255,0.07) !important;
@@ -14237,11 +14274,11 @@ body.is-profile-loading #profileLoadingOverlay * {
     color: #fff;
 }
 .home-chat-msg-time {
-    /* Affichage discret : caché par défaut, révélé au hover du message
-       sur desktop (ou quand la pill d'actions est ouverte sur tactile).
-       Évite le bruit visuel d'une heure répétée sur chaque message tout
-       en gardant l'info accessible. min-width réservé pour éviter le
-       layout shift au survol. */
+    /* Aligné sur le rendu de .home-chat-msg--join .home-chat-msg-system-time
+       (l'heure dans les pastilles de connexion) — même font-family
+       sans-serif, même couleur, même taille, même tabular-nums.
+       L'heure des messages et celle des pastilles partagent donc
+       maintenant exactement le même look. */
     font-size: 9.5px;
     color: rgba(255,255,255,0.3);
     flex-shrink: 0;
@@ -14250,13 +14287,7 @@ body.is-profile-loading #profileLoadingOverlay * {
     text-align: right;
     font-variant-numeric: tabular-nums;
     line-height: 1.4;
-    opacity: 0;
-    transition: opacity 0.18s ease;
 }
-@media (hover: hover) {
-    .home-chat-msg--community:hover .home-chat-msg-time { opacity: 1; }
-}
-.home-chat-msg--community.is-react-open .home-chat-msg-time { opacity: 1; }
 /* Bloc droit du méta-header : heure + (edited) + actions edit/delete.
    On groupe pour avoir un alignement stable même quand un message est édité
    ou que les boutons apparaissent sur les messages "à moi". */
@@ -29178,38 +29209,47 @@ body { box-sizing: border-box; }
 .home-chat-reaction-pill {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
+    gap: 5px;
+    /* Contraste relevé : fond plus opaque + léger soft-glow cyan pour
+       que les pills soient lisibles d'un coup d'œil sans crier autant
+       que la pill --mine. */
+    background: rgba(0, 179, 255, 0.07);
+    border: 1px solid rgba(0, 179, 255, 0.22);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15) inset;
     border-radius: 12px;
-    padding: 2px 8px 2px 6px;
+    padding: 2px 9px 2px 7px;
     cursor: pointer;
     font-family: sans-serif;
     font-size: 11px;
-    color: rgba(255,255,255,0.7);
-    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    color: rgba(255, 255, 255, 0.92);
+    transition: background 0.15s, border-color 0.15s, transform 0.1s, box-shadow 0.15s;
     line-height: 1.4;
 }
 .home-chat-reaction-pill:hover {
-    background: rgba(255,255,255,0.1);
-    border-color: rgba(255,255,255,0.2);
+    background: rgba(0, 179, 255, 0.16);
+    border-color: rgba(0, 179, 255, 0.45);
+    box-shadow: 0 0 10px rgba(0, 179, 255, 0.18);
     transform: scale(1.05);
 }
 .home-chat-reaction-pill:active {
     transform: scale(0.97);
 }
-/* Pill avec ma propre réaction — mise en évidence bleue */
+/* Pill avec ma propre réaction — mise en évidence bleue plus tranchée
+   pour rester distincte maintenant que la pill de base est elle aussi
+   teintée cyan. */
 .home-chat-reaction-pill--mine {
-    background: rgba(0,179,255,0.15);
-    border-color: rgba(0,179,255,0.4);
-    color: #00B3FF;
+    background: rgba(0, 179, 255, 0.22);
+    border-color: rgba(0, 179, 255, 0.7);
+    color: #4dccff;
+    box-shadow: 0 0 12px rgba(0, 179, 255, 0.22);
 }
 .home-chat-reaction-pill--mine:hover {
-    background: rgba(0,179,255,0.22);
-    border-color: rgba(0,179,255,0.6);
+    background: rgba(0, 179, 255, 0.3);
+    border-color: rgba(0, 179, 255, 0.85);
+    box-shadow: 0 0 14px rgba(0, 179, 255, 0.32);
 }
 .home-chat-reaction-emoji {
-    font-size: 13px;
+    font-size: 13.5px;
     line-height: 1;
 }
 .home-chat-reaction-count {

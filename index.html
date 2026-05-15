@@ -10235,6 +10235,32 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             container.prepend(div);
         }
 
+        /* Détermine si un message communautaire est la "suite" directe du
+         * précédent (même auteur, < 5 min) — auquel cas on masque le header
+         * avatar/pseudo/heure pour densifier le feed type Discord. À appeler
+         * après chaque insertion (sur le div inséré ET son nouveau next
+         * sibling) et après chaque suppression (sur l'ancien next sibling).
+         */
+        const _CONTINUATION_WINDOW_MS = 5 * 60 * 1000;
+        function _reevalContinuation(div) {
+            if (!div || !div.classList) return;
+            if (!div.classList.contains('home-chat-msg--community')) return;
+            div.classList.remove('home-chat-msg--continuation');
+            // Les coll-shares et les replies ont besoin de leur header.
+            if (div.classList.contains('home-chat-msg--coll-share')) return;
+            if (div.querySelector(':scope > .home-chat-msg-quote')) return;
+            const prev = div.previousElementSibling;
+            if (!prev || !prev.classList.contains('home-chat-msg--community')) return;
+            if (prev.classList.contains('home-chat-msg--coll-share')) return;
+            const u1 = div.dataset.msgUser;
+            const u2 = prev.dataset.msgUser;
+            if (!u1 || u1 !== u2) return;
+            const t1 = Number(div.dataset.msgT) || 0;
+            const t2 = Number(prev.dataset.msgT) || 0;
+            if (!t1 || !t2 || t1 - t2 > _CONTINUATION_WINDOW_MS) return;
+            div.classList.add('home-chat-msg--continuation');
+        }
+
         /* ------------------------------------------------------------------ *
          * Message système (join). Pas d'actions edit/delete, pas de réactions,
          * pas de badge cert. Layout centré et compact, distinct des messages
@@ -10440,7 +10466,14 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 ? `<img class="home-chat-msg-avatar" src="${_fcEsc(avatarUrl)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'home-chat-msg-avatar home-chat-msg-avatar--initial',textContent:'${_fcEsc(displayInitial)}'}))"/>`
                 : `<span class="home-chat-msg-avatar home-chat-msg-avatar--initial">${_fcEsc(displayInitial)}</span>`;
             const div = document.createElement('div');
-            div.className = 'home-chat-msg home-chat-msg--community' + (isMine ? ' home-chat-msg--mine' : '');
+            // Classes role — drivent la teinte du liseré gauche (cf. CSS
+           // .home-chat-msg--role-creator / --role-og / --role-patron).
+           // Priorité creator > og > patron si plusieurs rôles cumulés.
+           let _roleClass = '';
+           if      (isCreator) _roleClass = ' home-chat-msg--role-creator';
+           else if (isOg)      _roleClass = ' home-chat-msg--role-og';
+           else if (isPatron)  _roleClass = ' home-chat-msg--role-patron';
+           div.className = 'home-chat-msg home-chat-msg--community' + (isMine ? ' home-chat-msg--mine' : '') + _roleClass;
             if (key) div.dataset.msgKey = key;
             if (msg.user) div.dataset.msgUser = msg.user;
             if (tokenPending) { div.dataset.certPending = userKey; div.dataset.certToken = msg.certToken; }
@@ -10695,6 +10728,12 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             }
 
             _insertChrono(msgs, div, msg.t);
+            // Groupe les messages consécutifs du même auteur (header masqué).
+            // On évalue le nouveau div + son next sibling (qui peut avoir
+            // perdu son statut de continuation si on s'insère entre lui et
+            // son ancien parent de groupe).
+            _reevalContinuation(div);
+            _reevalContinuation(div.nextElementSibling);
             // Si _patronsCache est arrivé après le render initial du message
             // (race courante : le module Support fetch après initChat), on
             // re-patche pour que le pill WTF PATRON apparaisse sans attendre
@@ -10741,7 +10780,12 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
 
         function removeMessageById(key) {
             const el = msgs.querySelector(`[data-msg-key="${key}"]`);
-            if (el) el.remove();
+            if (!el) return;
+            const next = el.nextElementSibling;
+            el.remove();
+            // L'ex-next sibling peut devenir / cesser d'être une continuation
+            // après la suppression — on ré-évalue.
+            _reevalContinuation(next);
         }
 
         function loadFirebase() {
