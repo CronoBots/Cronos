@@ -14312,62 +14312,72 @@ body.is-profile-loading #profileLoadingOverlay * {
     color: rgba(255,255,255,0.25);
     font-style: italic;
 }
-/* Actions (reply / edit / delete) : groupées au COIN INFÉRIEUR-DROIT du
-   message, alignées avec la dernière ligne du body. Visibles au hover de
-   n'importe quel message community (pas juste les nôtres) — Reply est
-   disponible pour tout le monde. */
-.home-chat-msg-actions {
+/* Toolbar unifié — wrapper qui contient à la fois les actions
+   (reply/pin/edit/delete) ET la barre quick-emoji. Positionné en
+   overlay au-dessus du message (style Discord), ancré au coin
+   top-right. La visibilité (hover desktop / .is-react-open tactile)
+   est gérée ici sur le wrapper : les enfants n'ont plus leurs propres
+   règles de position/visibility. Pill compacte glass-blur. */
+.home-chat-msg-toolbar {
     position: absolute;
+    top: -16px;
     right: 8px;
-    bottom: 6px;
     display: flex;
     align-items: center;
-    gap: 3px;
-    padding: 3px 6px;
-    background: rgba(8, 14, 28, 0.85);
-    border: 1px solid rgba(0, 179, 255, 0.25);
+    gap: 4px;
+    padding: 3px 5px;
+    background: rgba(8, 14, 28, 0.92);
+    border: 1px solid rgba(0, 179, 255, 0.22);
     border-radius: 999px;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
     opacity: 0;
-    /* pointer-events: none par défaut — sinon sur mobile les boutons
-       reply/edit/delete sont cliquables même invisibles, et un tap
-       dans le coin inférieur-droit du message déclenche une action
-       fantôme avant le double-tap qui devrait révéler la pill. */
     pointer-events: none;
-    transition: opacity 0.15s;
+    transform: translateY(4px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
     white-space: nowrap;
-    z-index: 3;
-    /* On garantit que la pill ne se rétrécit pas et reste assez large
-       pour les 3 boutons (Reply + Edit + Delete = ~84px). */
-    flex-shrink: 0;
+    z-index: 10;
 }
-/* Desktop : reveal au hover du message. Gated comme la react-bar pour
-   éviter le sticky-hover sur tactile. */
 @media (hover: hover) {
-    .home-chat-msg--community:hover .home-chat-msg-actions {
+    .home-chat-msg--community:hover .home-chat-msg-toolbar {
         opacity: 1;
         pointer-events: auto;
+        transform: translateY(0);
     }
 }
-/* Mobile / universel : la pill apparaît aussi quand le message est
-   "ouvert" (.is-react-open) — donc le double-tap révèle À LA FOIS la
-   barre emoji et les boutons reply/edit/delete (cliquables seulement
-   à ce moment-là). */
-.home-chat-msg--community.is-react-open .home-chat-msg-actions {
+.home-chat-msg--community.is-react-open .home-chat-msg-toolbar {
     opacity: 1;
     pointer-events: auto;
+    transform: translateY(0);
+}
+/* Petite séparation visuelle entre la zone "actions" (gauche) et la
+   zone "réactions" (droite) dans le toolbar unifié. */
+.home-chat-msg-toolbar .home-chat-msg-actions + .home-chat-react-bar::before {
+    content: '';
+    display: inline-block;
+    width: 1px;
+    height: 14px;
+    background: rgba(255, 255, 255, 0.12);
+    margin: 0 4px 0 2px;
+    align-self: center;
+}
+/* Les bars enfants perdent leur propre layout absolu — c'est désormais
+   le toolbar parent qui flotte. */
+.home-chat-msg-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
 }
 .home-chat-msg-action {
-    /* Boutons un peu plus grands pour que les 3 icônes (Reply / Edit /
-       Delete) soient toutes bien visibles et cliquables — et que la pill
-       d'actions au coin inférieur-droit soit lisible. */
-    width: 22px; height: 22px;
+    /* Toolbar compact — boutons 20×20 avec icônes 12×12. Tailles
+       resserrées pour s'aligner avec la barre emoji adjacente dans
+       le toolbar flottant unifié. */
+    width: 20px; height: 20px;
     background: transparent;
     border: 0;
     border-radius: 5px;
-    color: rgba(255,255,255,0.55);
+    color: rgba(255,255,255,0.6);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -14376,7 +14386,7 @@ body.is-profile-loading #profileLoadingOverlay * {
     flex-shrink: 0;
     transition: background 0.12s, color 0.12s;
 }
-.home-chat-msg-action svg { width: 13px; height: 13px; }
+.home-chat-msg-action svg { width: 12px; height: 12px; }
 .home-chat-msg-edit-btn:hover {
     background: rgba(0,179,255,0.15);
     color: #00B3FF;
@@ -29159,46 +29169,17 @@ body { box-sizing: border-box; }
      sur tactile pour éviter le sticky-hover qui laisse des barres
      ouvertes sur plusieurs messages en parallèle, et on a abandonné le
      long-press parce qu'il se déclenchait pendant un scroll ralenti. */
+/* La barre emoji devient un enfant inline du toolbar parent — plus de
+   position absolue ni de visibility ici (gérées par .home-chat-msg-toolbar). */
 .home-chat-react-bar {
-    position: absolute;
-    top: -18px;
-    right: 10px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 2px;
-    background: #0d1829;
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 20px;
-    padding: 3px 6px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.15s ease, transform 0.15s ease;
-    transform: translateY(4px);
-    z-index: 10;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
 }
-/* Nécessite position:relative sur le message */
+/* Le toolbar absolu est positionné par rapport au message — on garde
+   position:relative pour l'ancrage. */
 .home-chat-msg--community {
     position: relative;
-}
-/* Desktop : hover du message → reveal de la barre. Gated par
-   @media (hover: hover) pour ne pas s'activer sur tactile (où :hover
-   peut rester "sticky" après un tap, causant des barres qui s'ouvrent
-   sur plusieurs messages à la fois). */
-@media (hover: hover) {
-    .home-chat-msg--community:hover .home-chat-react-bar {
-        opacity: 1;
-        pointer-events: auto;
-        transform: translateY(0);
-    }
-}
-/* Universel : la classe .is-react-open (posée par le long-press JS sur
-   mobile, ou par un toggle programmatique) révèle la barre — fonctionne
-   à la fois sur desktop et sur tactile. */
-.home-chat-msg--community.is-react-open .home-chat-react-bar {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0);
 }
 
 /* ── Boutons emoji dans la barre ── */
@@ -29206,10 +29187,12 @@ body { box-sizing: border-box; }
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 15px;
+    /* Taille emoji resserrée pour matcher les boutons d'action (20px)
+       dans le toolbar unifié. */
+    font-size: 13px;
     line-height: 1;
-    padding: 2px 3px;
-    border-radius: 6px;
+    padding: 2px;
+    border-radius: 5px;
     transition: transform 0.12s ease, background 0.12s ease;
     display: flex;
     align-items: center;
