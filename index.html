@@ -9553,6 +9553,14 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     avatar:   user.avatarUrl   || null,
                     lastSeen: firebase.database.ServerValue.TIMESTAMP
                 });
+                // onDisconnect : met à jour lastSeen avec le timestamp
+                // serveur au moment où la WebSocket tombe. Vu côté admin
+                // (sidebar offline) sous forme "vu il y a Xm/Xh/Xd". On
+                // s'arrête à .set sur le champ lastSeen plutôt que de
+                // réécrire tout l'object pour ne pas effacer username/
+                // display/avatar à la disconnect.
+                fbDb.ref(`chat/members/${memberKey}/lastSeen`).onDisconnect()
+                    .set(firebase.database.ServerValue.TIMESTAMP);
                 announceJoinIfNeeded(user, memberKey);
                 scheduleLeaveAnnounce(user);
             } else {
@@ -9954,13 +9962,18 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 pill.className = 'home-chat-reaction-pill' + (mine ? ' home-chat-reaction-pill--mine' : '');
                 pill.innerHTML = '<span class="home-chat-reaction-emoji">' + emoji + '</span>'
                                + '<span class="home-chat-reaction-count">' + count + '</span>';
-                // Reactor list — decode "u_<name>" keys to usernames, "s_*"
-                // (visiteurs non signés) deviennent "Anonymous". Sert au
-                // tooltip natif (hover desktop) ET au popover long-press
-                // mobile (cf. wireReactionPillReveal plus bas).
-                const reactorNames = Object.keys(users).map(k =>
-                    k.startsWith('u_') ? k.slice(2) : 'Anonymous'
-                );
+                // Reactor list — decode "u_<name>" keys et utilise le
+                // displayName cached (.home-chat-msg-user en titre de
+                // message) plutôt que le username technique. "s_*"
+                // (visiteurs non signés) reste "Anonymous". Le cache est
+                // alimenté par _cacheName à chaque rendu de message /
+                // d'avatar dans la sidebar, donc dès qu'un user a posté
+                // ou apparaît en ligne, son display est dispo ici.
+                const reactorNames = Object.keys(users).map(k => {
+                    if (!k.startsWith('u_')) return 'Anonymous';
+                    const uname = k.slice(2);
+                    return _chatNameCache.get(uname.toLowerCase()) || uname;
+                });
                 pill.title = reactorNames.join(', ');
                 pill.dataset.reactors = JSON.stringify(reactorNames);
                 pill.dataset.emojiKey = emojiKey;
@@ -11261,6 +11274,28 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // Chaque ligne porte data-mention-username + role="button" → clic =
         // mentionne le membre dans l'input chat (cf. event delegation plus
         // bas dans initChat).
+        // Helper : formatte un timestamp en "now" / "Xm" / "Xh" / "Xd"
+        // / "Xw" — utilisé côté admin pour afficher "déconnecté depuis"
+        // à droite de chaque membre offline dans la sidebar.
+        function _formatLastSeen(ts) {
+            if (!ts) return '';
+            const diff = Date.now() - Number(ts);
+            if (diff < 60_000) return 'now';
+            if (diff < 3_600_000) return Math.floor(diff / 60_000) + 'm';
+            if (diff < 86_400_000) return Math.floor(diff / 3_600_000) + 'h';
+            if (diff < 7 * 86_400_000) return Math.floor(diff / 86_400_000) + 'd';
+            return Math.floor(diff / (7 * 86_400_000)) + 'w';
+        }
+        // Refresh "Xm ago" labels chaque minute sans rebuild la sidebar
+        // — on relit data-last-seen sur les spans déjà présents.
+        if (!window._lastSeenRefreshTimer) {
+            window._lastSeenRefreshTimer = setInterval(() => {
+                document.querySelectorAll('.home-chat-member-lastseen[data-last-seen]').forEach(el => {
+                    const ts = Number(el.dataset.lastSeen);
+                    if (ts) el.textContent = _formatLastSeen(ts);
+                });
+            }, 60_000);
+        }
         function renderAvatarStack(container, members, max, isOffline) {
             if (!container) return;
             if (!members || members.length === 0) {
@@ -11272,6 +11307,13 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             const shown = members.slice(0, max);
             const extra = members.length - max;
             const offCls = isOffline ? ' home-chat-member--offline' : '';
+            // Le label "déconnecté depuis…" n'est visible que pour
+            // l'admin (Unscoop), et uniquement pour les membres offline.
+            // Source de vérité : le user du chat (localStorage via
+            // getCurrentUser) — pas window.currentUsername qui n'est
+            // posé qu'après une visite My Profile.
+            const _me = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+            const showLastSeen = isOffline && _me && String(_me.username || '').toLowerCase() === 'unscoop';
             container.innerHTML =
                 shown.map(m => {
                     const uname = m.username || '';
@@ -11314,13 +11356,16 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     // quand on clique (ex. "THE PHOTOGRAPH"). data-mention-
                     // username = identifiant technique pour la résolution
                     // côté render (matchera @THE PHOTOGRAPH ou @snipe13).
+                    const lastSeenHtml = (showLastSeen && m.lastSeen)
+                        ? `<span class="home-chat-member-lastseen" data-last-seen="${Number(m.lastSeen)}" title="Last seen ${new Date(Number(m.lastSeen)).toLocaleString()}">${_formatLastSeen(Number(m.lastSeen))}</span>`
+                        : '';
                     return `
                     <div class="home-chat-member${offCls}${isCertified ? ' home-chat-member--certified' : ''}" data-mention-username="${_fcEsc(uname)}" data-mention-display="${_fcEsc(dname)}" role="button" tabindex="0" title="Mention @${_fcEsc(dname)} in chat">
                         ${m.avatar
                             ? `<img class="home-chat-member-avatar" src="${_fcEsc(m.avatar)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><span class="home-chat-member-initial" style="display:none">${_fcEsc(dname[0].toUpperCase())}</span>`
                             : `<span class="home-chat-member-initial">${_fcEsc(dname[0].toUpperCase())}</span>`
                         }
-                        <span class="home-chat-member-name">${_fcEsc(dname)}</span>${verifiedHtml}${creatorHtml}${ogHtml}${patronHtml}
+                        <span class="home-chat-member-name">${_fcEsc(dname)}</span>${verifiedHtml}${creatorHtml}${ogHtml}${patronHtml}${lastSeenHtml}
                     </div>`;
                 }).join('') +
                 (extra > 0 ? `<div class="home-chat-member home-chat-member--more">+${extra} more</div>` : '');
