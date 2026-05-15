@@ -10264,6 +10264,14 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                           + (isLeave ? 'home-chat-msg--leave' : 'home-chat-msg--join');
             if (key) div.dataset.msgKey = key;
 
+            // Cache le display name du membre dès le rendu de sa pastille de
+            // connexion/déconnexion — sinon les @-mentions vers ce membre
+            // rendues juste après (avant qu'il n'envoie un premier message)
+            // tombent en fallback regex `[A-Za-z0-9_-]+` qui coupe au
+            // premier espace : "@Francisco Gabriel" devenait "@FRANCISCO"
+            // + " Gabriel" en plain text.
+            if (msg.user) _cacheName(msg.user, msg.display);
+
             const display = _fcEsc(msg.display || msg.user || 'Anonymous');
             const time    = formatDateTime(msg.t);
             // Les pastilles "is connected" / "is disconnected" sont
