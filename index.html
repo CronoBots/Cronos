@@ -11274,28 +11274,6 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // Chaque ligne porte data-mention-username + role="button" → clic =
         // mentionne le membre dans l'input chat (cf. event delegation plus
         // bas dans initChat).
-        // Helper : formatte un timestamp en "now" / "Xm" / "Xh" / "Xd"
-        // / "Xw" — utilisé côté admin pour afficher "déconnecté depuis"
-        // à droite de chaque membre offline dans la sidebar.
-        function _formatLastSeen(ts) {
-            if (!ts) return '';
-            const diff = Date.now() - Number(ts);
-            if (diff < 60_000) return 'now';
-            if (diff < 3_600_000) return Math.floor(diff / 60_000) + 'm';
-            if (diff < 86_400_000) return Math.floor(diff / 3_600_000) + 'h';
-            if (diff < 7 * 86_400_000) return Math.floor(diff / 86_400_000) + 'd';
-            return Math.floor(diff / (7 * 86_400_000)) + 'w';
-        }
-        // Refresh "Xm ago" labels chaque minute sans rebuild la sidebar
-        // — on relit data-last-seen sur les spans déjà présents.
-        if (!window._lastSeenRefreshTimer) {
-            window._lastSeenRefreshTimer = setInterval(() => {
-                document.querySelectorAll('.home-chat-member-lastseen[data-last-seen]').forEach(el => {
-                    const ts = Number(el.dataset.lastSeen);
-                    if (ts) el.textContent = _formatLastSeen(ts);
-                });
-            }, 60_000);
-        }
         function renderAvatarStack(container, members, max, isOffline) {
             if (!container) return;
             if (!members || members.length === 0) {
@@ -11356,8 +11334,14 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     // quand on clique (ex. "THE PHOTOGRAPH"). data-mention-
                     // username = identifiant technique pour la résolution
                     // côté render (matchera @THE PHOTOGRAPH ou @snipe13).
+                    // Le timestamp est figé au render : pas de tick, pas de
+                    // setInterval. Le label se rafraîchit naturellement à
+                    // chaque rebuild de la sidebar (= à chaque event de
+                    // présence Firebase) — comme le "Xm ago" des cartes du
+                    // Market Bot. timeAgo() est défini plus haut dans le
+                    // fichier (~ligne 13009), accessible globalement.
                     const lastSeenHtml = (showLastSeen && m.lastSeen)
-                        ? `<span class="home-chat-member-lastseen" data-last-seen="${Number(m.lastSeen)}" title="Last seen ${new Date(Number(m.lastSeen)).toLocaleString()}">${_formatLastSeen(Number(m.lastSeen))}</span>`
+                        ? `<span class="home-chat-member-lastseen" title="Last seen ${new Date(Number(m.lastSeen)).toLocaleString()}">${timeAgo(Number(m.lastSeen))}</span>`
                         : '';
                     return `
                     <div class="home-chat-member${offCls}${isCertified ? ' home-chat-member--certified' : ''}" data-mention-username="${_fcEsc(uname)}" data-mention-display="${_fcEsc(dname)}" role="button" tabindex="0" title="Mention @${_fcEsc(dname)} in chat">
@@ -16316,6 +16300,24 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-15T22:30:00Z',
+            type:  'improvement',
+            title: 'Chat: profile header polish + admin last-seen',
+            text:  'Username now reads in white at 13px with a bigger avatar (26px), bigger verified pill, and role badges with centered text. Mobile shrinks a hair so "CRONOS WTF" stops truncating. Touch scroll no longer flashes bubbles (hover effects gated to real pointers). Reaction-pill popover shows display names instead of technical usernames. Admin sees "Xm ago / Xh ago / Xd ago" next to each offline member in the sidebar.'
+        },
+        {
+            date:  '2026-05-15T21:30:00Z',
+            type:  'improvement',
+            title: 'Featured Collection: profile-header layout',
+            text:  'Collection logo straddles the banner / stats boundary (half on banner, half below) — Twitter/Discord profile style. Single cyan border, no more dark outer ring. Name and artist centered inside the banner with a softer text-shadow that does not clash with the image. Four "premium" NFT tiles in 2×2 (big square thumbnail + label/value), random samples row restored underneath. "by" prefix dropped from the creator line — just the artist name + verified ✓.'
+        },
+        {
+            date:  '2026-05-15T20:00:00Z',
+            type:  'improvement',
+            title: 'Chat: denser feed + collapsible emoji bar',
+            text:  'Messages from different authors sit tighter together (~6px gap), consecutive messages from the same author are strictly flush (zero internal space inside the merged bubble). Update / connect pills keep their breathing room. Reaction bar is a single flat row of 8 emojis — 👌 dropped, no "+" toggle.'
+        },
         {
             date:  '2026-05-15T19:30:00Z',
             type:  'improvement',
