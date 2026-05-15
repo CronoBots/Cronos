@@ -9582,28 +9582,10 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
          * Re-programmé à chaque login / changement d'utilisateur.            *
          * ------------------------------------------------------------------ */
         function scheduleLeaveAnnounce(user) {
-            if (!fbDb || !user || !user.username) return;
-            // Déjà programmé pour CE user → on garde tel quel (idempotent
-            // sur les heartbeats / visibilitychange qui rappellent
-            // syncPresence en boucle).
-            if (_scheduledLeaveForUser === user.username && _scheduledLeaveRef) return;
-            // Changement d'user (re-login) → on annule l'ancien d'abord.
-            cancelScheduledLeave();
-            const display = user.displayName || user.username;
-            const ref     = fbDb.ref('chat/messages').push();
-            const payload = {
-                system:  true,
-                event:   'leave',
-                user:    user.username,
-                display: display,
-                avatar:  user.avatarUrl || null,
-                text:    display + ' left the chat',
-                t:       firebase.database.ServerValue.TIMESTAMP
-            };
-            ref.onDisconnect().set(payload).then(() => {
-                _scheduledLeaveRef     = ref;
-                _scheduledLeaveForUser = user.username;
-            }).catch(e => console.error('[Community chat] leave schedule failed:', e));
+            // Annonces de connexion/déconnexion désactivées — encombraient
+            // le chat sans valeur ajoutée. La présence reste trackée via
+            // chat/presence pour le compteur "Online now".
+            return;
         }
         function cancelScheduledLeave() {
             if (!_scheduledLeaveRef) return;
@@ -9622,28 +9604,11 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
          * est retirée de Firebase quand la nouvelle arrive).                *
          * ------------------------------------------------------------------ */
         function announceJoinIfNeeded(user, key) {
-            if (_sessionJoinAnnounced) return;
             if (!fbDb || !user || !key) return;
-            _sessionJoinAnnounced = true;
-
-            const display = user.displayName || user.username;
-            fbDb.ref('chat/messages').push({
-                system:  true,
-                event:   'join',
-                user:    user.username,
-                display: display,
-                avatar:  user.avatarUrl || null,
-                text:    display + ' joined the chat',
-                t:       firebase.database.ServerValue.TIMESTAMP
-            }).catch(e => {
-                console.error('[Community chat] join push failed:', e);
-                _sessionJoinAnnounced = false;  // libère le verrou pour retry
-            });
-
-            // firstJoinAt : 1re annonce ever pour ce membre → on tag pour
-            // les charts Pulse "member growth". On garde lastJoinAt pour
-            // compat éventuelle ailleurs mais on ne s'en sert plus pour
-            // throttler.
+            // Annonces de connexion/déconnexion désactivées — encombraient
+            // le chat. On continue cependant à tagger firstJoinAt/lastJoinAt
+            // dans chat/members car les charts Pulse "member growth"
+            // s'appuient dessus.
             const firstJoinRef = fbDb.ref(`chat/members/${key}/firstJoinAt`);
             firstJoinRef.once('value').then(snap => {
                 if (!snap.exists()) firstJoinRef.set(Date.now()).catch(() => {});
@@ -10414,27 +10379,15 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     renderUpdateMessage(msg, key, instant);
                     return;
                 }
-                // Les annonces "X joined the chat" / "X left the chat"
-                // disparaissent après 24h. On skip le rendu ET on supprime
-                // l'entrée Firebase au passage (self-healing).
+                // Annonces de connexion/déconnexion désactivées : on skip
+                // systématiquement le rendu et on supprime l'entrée de
+                // Firebase au passage (self-healing pour purger les
+                // messages legacy déjà présents dans la base).
                 if (msg.event === 'join' || msg.event === 'leave') {
-                    const ts = Number(msg.t);
-                    if (ts && Date.now() - ts > JOIN_MESSAGE_TTL_MS) {
-                        if (fbDb && key) {
-                            fbDb.ref('chat/messages/' + key).remove().catch(() => {});
-                        }
-                        return;
+                    if (fbDb && key) {
+                        fbDb.ref('chat/messages/' + key).remove().catch(() => {});
                     }
-                    if (msg.event === 'leave') {
-                        if (!_processLeaveEvent(msg, key, ts, instant)) return;
-                    } else {
-                        // Idem que leave : si _processJoinEvent rejette le
-                        // message (join out-of-order plus ancien que le
-                        // join déjà tracké), on ne le rend pas — sinon il
-                        // apparaîtrait furtivement avant que child_removed
-                        // ne le retire après le round-trip Firebase.
-                        if (!_processJoinEvent(msg, key, ts)) return;
-                    }
+                    return;
                 }
                 renderSystemMessage(msg, key, instant);
                 return;
@@ -10468,7 +10421,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                cas où une personne signe avec un username alternatif
                (ex: "unscoop" ou "cronoswtf"). */
             const CREATORS = new Set(['unscoop', 'cronoswtf']);
-            const OG_USERS = new Set(['snipe13']);
+            const OG_USERS = new Set(['snipe13', 'fgrm1979']);
             const isCreator = CREATORS.has(userKey);
             const isOg      = OG_USERS.has(userKey);
             const creatorBadgeHtml = isCreator
@@ -11303,7 +11256,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     // messages.
                     const _u = String(uname).toLowerCase();
                     const isMemberCreator = (_u === 'unscoop' || _u === 'cronoswtf');
-                    const isMemberOg      = (_u === 'snipe13');
+                    const isMemberOg      = (_u === 'snipe13' || _u === 'fgrm1979');
                     const creatorHtml = isMemberCreator
                         ? '<span class="chat-creator-badge" title="Founder / Creator of CRONOS.WTF">WTF CREATOR</span>'
                         : '';
