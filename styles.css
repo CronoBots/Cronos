@@ -11291,9 +11291,12 @@ body.is-profile-loading #profileLoadingOverlay * {
    active, l'onglet du topnav qui pointe vers la même feature reçoit
    ce highlight subtil. Seule l'icône (svg) passe en blanc — on ne
    touche pas au background pour rester moins intrusif. Posé/retiré
-   par le carousel Spotlight via la fonction `show()`. */
-.topnav-tab--spotlight-hint:not(.topnav-tab--active):not(.topnav-tab--disabled) {
-    color: rgba(255, 255, 255, 0.95);
+   par le carousel Spotlight via la fonction `show()`. !important pour
+   gagner aussi sur l'onglet actif (.topnav-tab--active force la
+   couleur cyan, qu'on doit re-passer en blanc quand le spotlight
+   pointe sur l'onglet courant — ex. Home pendant la slide Community). */
+.topnav-tab--spotlight-hint:not(.topnav-tab--disabled) {
+    color: rgba(255, 255, 255, 0.95) !important;
 }
 
 /* Variante du hint pour les slides Profile/Collection Explorer qui
@@ -29333,7 +29336,14 @@ body { box-sizing: border-box; }
 #topnavCertifyBtn { display: none !important; }
 
 /* ── Gear button ── */
-.topnav-tab--settings { color: #c8d0e8; position: relative; }
+.topnav-tab--settings {
+    color: #c8d0e8;
+    position: relative;
+    /* Centre horizontalement le SVG dans le bouton — seul enfant (pas
+       de label texte comme les autres tabs), donc on force le centrage
+       au lieu du flex-start par défaut. */
+    justify-content: center;
+}
 .topnav-tab--settings:hover,
 .topnav-tab--settings.is-open { color: var(--color1, #00b3ff); }
 .topnav-tab--settings.is-open .topnav-tab-icon {
