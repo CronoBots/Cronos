@@ -14237,11 +14237,11 @@ body.is-profile-loading #profileLoadingOverlay * {
     color: #fff;
 }
 .home-chat-msg-time {
-    /* Aligné sur le rendu de .home-chat-msg--join .home-chat-msg-system-time
-       (l'heure dans les pastilles de connexion) — même font-family
-       sans-serif, même couleur, même taille, même tabular-nums.
-       L'heure des messages et celle des pastilles partagent donc
-       maintenant exactement le même look. */
+    /* Affichage discret : caché par défaut, révélé au hover du message
+       sur desktop (ou quand la pill d'actions est ouverte sur tactile).
+       Évite le bruit visuel d'une heure répétée sur chaque message tout
+       en gardant l'info accessible. min-width réservé pour éviter le
+       layout shift au survol. */
     font-size: 9.5px;
     color: rgba(255,255,255,0.3);
     flex-shrink: 0;
@@ -14250,7 +14250,13 @@ body.is-profile-loading #profileLoadingOverlay * {
     text-align: right;
     font-variant-numeric: tabular-nums;
     line-height: 1.4;
+    opacity: 0;
+    transition: opacity 0.18s ease;
 }
+@media (hover: hover) {
+    .home-chat-msg--community:hover .home-chat-msg-time { opacity: 1; }
+}
+.home-chat-msg--community.is-react-open .home-chat-msg-time { opacity: 1; }
 /* Bloc droit du méta-header : heure + (edited) + actions edit/delete.
    On groupe pour avoir un alignement stable même quand un message est édité
    ou que les boutons apparaissent sur les messages "à moi". */
