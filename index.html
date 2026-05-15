@@ -10573,8 +10573,15 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     ` : ''}
                 </span>` : '';
 
+            // Toolbar unifié : actions (reply/pin/edit/delete) + barre emoji
+            // groupés en une seule pill flottante au-dessus du message,
+            // ancrée au top-right (style Discord). Cf. .home-chat-msg-toolbar
+            // dans le CSS pour le positionnement et la visibilité.
+            const toolbarHtml = (reactBarHtml || actionsHtml)
+                ? `<div class="home-chat-msg-toolbar">${actionsHtml}${reactBarHtml}</div>`
+                : '';
             div.innerHTML = `
-                ${reactBarHtml}
+                ${toolbarHtml}
                 <div class="home-chat-msg-meta">
                     <span class="home-chat-msg-meta-left">
                         <span class="home-chat-msg-avatar-slot" data-user="${_fcEsc(userKey)}" data-initial="${_fcEsc(displayInitial)}">${avatarHtml}</span>
@@ -10591,7 +10598,6 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 ${collShare
                     ? collShareHtml
                     : '<div class="home-chat-msg-body">' + formatChatBody(msg.text || '', me?.username) + '</div>'}
-                ${actionsHtml}
                 <div class="home-chat-reactions" style="display:none;"></div>
             `;
 
