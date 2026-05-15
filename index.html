@@ -11670,19 +11670,35 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             // feature que la slide active : icône blanchie + léger fond.
             // Sert de fil conducteur entre le Spotlight et l'onglet
             // correspondant — sur mobile c'est particulièrement utile
-            // car les tabs n'ont pas de label texte. Skip pour les
-            // slides Profile/Collection Explorer qui n'ont pas de tab
-            // dédié (elles ouvrent la search bar à la place). Skip aussi
-            // si la home n'est pas le panel visible — le carousel cycle
-            // en arrière-plan mais le hint n'aurait aucun rapport avec
-            // ce que voit le user.
+            // car les tabs n'ont pas de label texte. Pour les slides
+            // Profile / Collection Explorer qui ouvrent la search bar
+            // au lieu d'un tab, on highlight la search bar elle-même
+            // (la loupe sur mobile, le wrap input sur desktop). Skip
+            // si la home n'est pas le panel visible — le carousel
+            // cycle en arrière-plan mais le hint n'aurait aucun rapport
+            // avec ce que voit le user.
             document.querySelectorAll('.topnav-tab--spotlight-hint')
                 .forEach(t => t.classList.remove('topnav-tab--spotlight-hint'));
+            document.querySelector('.topnav-mobile-search-btn--spotlight-hint')
+                ?.classList.remove('topnav-mobile-search-btn--spotlight-hint');
+            document.querySelector('.topnav-search-wrap--spotlight-hint')
+                ?.classList.remove('topnav-search-wrap--spotlight-hint');
             const homePanel = document.getElementById('homePanel');
             const homeVisible = homePanel && homePanel.style.display !== 'none';
-            if (homeVisible && newTarget && !isExplorerSlide) {
-                document.querySelector('.topnav-tab[data-tab="' + newTarget + '"]')
-                    ?.classList.add('topnav-tab--spotlight-hint');
+            if (homeVisible && newTarget) {
+                if (isExplorerSlide) {
+                    // Highlight la search bar (loupe mobile + wrap desktop).
+                    // Les deux classes sont posées en même temps — la règle
+                    // CSS ne s'active que sur l'élément réellement visible
+                    // au viewport courant.
+                    document.querySelector('.topnav-mobile-search-btn')
+                        ?.classList.add('topnav-mobile-search-btn--spotlight-hint');
+                    document.querySelector('.topnav-search-wrap')
+                        ?.classList.add('topnav-search-wrap--spotlight-hint');
+                } else {
+                    document.querySelector('.topnav-tab[data-tab="' + newTarget + '"]')
+                        ?.classList.add('topnav-tab--spotlight-hint');
+                }
             }
         }
 
@@ -11803,14 +11819,19 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
 
         // Quand l'utilisateur navigue vers un autre onglet (Stats / Drops /
         // Snapshot / etc.), on retire immédiatement le hint Spotlight des
-        // tabs — sinon il reste collé sur un tab le temps du prochain
-        // show() (jusqu'à 6.5s plus tard) pendant que le user est déjà
-        // ailleurs. Au retour sur Home, le prochain show() le réapplique.
+        // tabs ET de la search bar — sinon ils restent collés le temps du
+        // prochain show() (jusqu'à 6.5s plus tard) pendant que le user
+        // est déjà ailleurs. Au retour sur Home, le prochain show()
+        // les réapplique.
         document.querySelectorAll('.topnav-tab[data-tab]').forEach(tab => {
             tab.addEventListener('click', () => {
                 if (tab.dataset.tab !== 'collections') {
                     document.querySelectorAll('.topnav-tab--spotlight-hint')
                         .forEach(t => t.classList.remove('topnav-tab--spotlight-hint'));
+                    document.querySelector('.topnav-mobile-search-btn--spotlight-hint')
+                        ?.classList.remove('topnav-mobile-search-btn--spotlight-hint');
+                    document.querySelector('.topnav-search-wrap--spotlight-hint')
+                        ?.classList.remove('topnav-search-wrap--spotlight-hint');
                 }
             });
         });
