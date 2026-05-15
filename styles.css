@@ -14730,6 +14730,118 @@ body.is-profile-loading #profileLoadingOverlay * {
     flex-shrink: 0;
     position: relative;
 }
+
+/* ── Typing indicator ── Petite ligne discrète au-dessus de l'input
+   row : "X is typing…" + dots animés. Apparaît quand un autre user
+   est en train de taper (via le listener chat/typing/*). */
+.home-chat-typing {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 14px 6px;
+    font-family: sans-serif;
+    font-size: 11px;
+    color: rgba(0, 179, 255, 0.7);
+    flex-shrink: 0;
+    min-height: 18px;
+}
+.home-chat-typing[hidden] { display: none; }
+.home-chat-typing-text {
+    font-style: italic;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.home-chat-typing-dots {
+    display: inline-flex;
+    gap: 3px;
+}
+.home-chat-typing-dots span {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.4;
+    animation: homeChatTypingDot 1.2s ease-in-out infinite;
+}
+.home-chat-typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+.home-chat-typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes homeChatTypingDot {
+    0%, 60%, 100% { opacity: 0.35; transform: translateY(0); }
+    30%           { opacity: 1;    transform: translateY(-2px); }
+}
+
+/* ── Sound toggle button ── Petit bouton dans l'input row, à gauche du
+   bouton envoyer. Bell on/off selon localStorage cwtf-chat-sound. */
+.home-chat-sound-toggle {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.18s, border-color 0.18s, color 0.18s;
+    padding: 0;
+}
+.home-chat-sound-toggle:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.8);
+}
+.home-chat-sound-toggle .home-chat-sound-icon-on  { display: none; }
+.home-chat-sound-toggle .home-chat-sound-icon-off { display: block; }
+.home-chat-sound-toggle.is-on {
+    color: #00B3FF;
+    background: rgba(0, 179, 255, 0.08);
+    border-color: rgba(0, 179, 255, 0.32);
+}
+.home-chat-sound-toggle.is-on .home-chat-sound-icon-on  { display: block; }
+.home-chat-sound-toggle.is-on .home-chat-sound-icon-off { display: none; }
+
+/* ── Badge non-lus sur l'icône Home du topnav ── Apparaît quand des
+   messages chat arrivent pendant que l'utilisateur n'est pas sur
+   Home. Couleur passe en rouge si une mention `@<currentUser>` est
+   parmi les non-lus. */
+.topnav-tab-unread {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #00B3FF;
+    color: #fff;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px;
+    line-height: 16px;
+    letter-spacing: 0;
+    text-align: center;
+    font-weight: 800;
+    box-shadow: 0 0 8px rgba(0, 179, 255, 0.65);
+    pointer-events: none;
+    z-index: 2;
+}
+.topnav-tab-unread[hidden] { display: none; }
+.topnav-tab-unread--mention {
+    background: #f87171;
+    box-shadow: 0 0 10px rgba(248, 113, 113, 0.7);
+}
+@media (max-width: 600px) {
+    .topnav-tab-unread {
+        top: 4px;
+        right: 4px;
+        min-width: 14px;
+        height: 14px;
+        font-size: 8px;
+        line-height: 14px;
+    }
+}
 /* Popover @mentions — flotte au-dessus de l'input. Affiché quand
    l'utilisateur tape "@..." et masqué dès que le token est terminé
    par un espace ou que le curseur sort. */

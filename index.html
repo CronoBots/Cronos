@@ -125,6 +125,11 @@
       <button class="topnav-tab topnav-tab--active" data-tab="collections" role="tab" aria-selected="true" type="button">
         <svg class="topnav-tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L10 3l7 6.5V17a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M7 18V12h6v6"/></svg>
         <span>Home</span>
+        <!-- Badge non-lus chat : incrémenté quand de nouveaux messages
+             arrivent pendant que l'utilisateur n'est pas sur Home. Couleur
+             passe en rouge si une mention `@user` est dans les messages
+             non-lus. Géré par le module chat (initChat). -->
+        <span class="topnav-tab-unread" id="homeUnreadBadge" hidden>0</span>
       </button>
       <button class="topnav-tab" data-tab="stats" role="tab" aria-selected="false" type="button">
         <svg class="topnav-tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,15 7,9 11,12 18,4"/><line x1="2" y1="18" x2="18" y2="18"/></svg>
@@ -1230,8 +1235,24 @@
               </div>
               <button class="home-chat-reply-banner-cancel" id="homeChatReplyCancel" type="button" aria-label="Cancel reply">×</button>
             </div>
+            <!-- Typing indicator : ligne discrète sous les messages, au-dessus
+                 de l'input row. Affiche "X is typing…" / "X & Y are typing…" /
+                 "Several people are typing…" selon le nombre. Posée/retirée
+                 par le listener chat/typing/*. -->
+            <div class="home-chat-typing" id="homeChatTyping" hidden>
+              <span class="home-chat-typing-dots" aria-hidden="true">
+                <span></span><span></span><span></span>
+              </span>
+              <span class="home-chat-typing-text" id="homeChatTypingText"></span>
+            </div>
             <div class="home-chat-input-row" id="homeChatInputRow">
               <input class="home-chat-input" id="homeChatInput" type="text" placeholder="WTF is up?" autocomplete="off" spellcheck="false" maxlength="500"/>
+              <!-- Toggle son notification : off par défaut, persisté en
+                   localStorage (key cwtf-chat-sound). Click bascule l'état. -->
+              <button class="home-chat-sound-toggle" id="homeChatSoundToggle" type="button" aria-label="Toggle notification sound" title="Notification sound off">
+                <svg class="home-chat-sound-icon-off" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                <svg class="home-chat-sound-icon-on" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 010 7.07"/><path d="M19.07 4.93a10 10 0 010 14.14"/></svg>
+              </button>
               <button class="home-chat-send" id="homeChatSend" type="button">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
               </button>
@@ -9384,6 +9405,26 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // affiche son join PUIS son leave). Mais à la (re)connexion du
         // membre, les DEUX sont retirées et seul le nouveau join reste.
         const _latestLeaveByUser = new Map();
+
+        /* ── Typing indicator state ── */
+        let _typingRef           = null;  // ref Firebase de notre entrée typing
+        let _typingLastWriteAt   = 0;     // throttle des écritures (1s)
+        let _typingClearTimer    = null;  // timer de nettoyage après inactivité
+        const _typingByUser      = new Map(); // username → { display, t } pour le rendu
+        const TYPING_THROTTLE_MS = 1000;
+        const TYPING_IDLE_MS     = 4000;  // cleanup local après cette inactivité
+        const TYPING_DISPLAY_MS  = 5000;  // côté affichage : un user typing > X ms = stale
+
+        /* ── Unread + mentions badge state ── */
+        let _unreadCount         = 0;
+        let _mentionCount        = 0;
+        const UNREAD_CAP         = 99;    // affichage : 99+ au-delà
+
+        /* ── Sound preference (off par défaut, persist localStorage) ── */
+        const SOUND_STORAGE_KEY  = 'cwtf-chat-sound';
+        let _soundEnabled        = false;
+        try { _soundEnabled = localStorage.getItem(SOUND_STORAGE_KEY) === 'on'; } catch (_) {}
+
         // Snapshot live des usernames présents (rempli par le listener
         // chat/presence). Sert au filtre des leaves stale : un leave
         // qui arrive pour un user actuellement dans /chat/presence est
@@ -10515,6 +10556,10 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             // un refresh.
             if (typeof window._patchPatronBadges === 'function') window._patchPatronBadges();
             _chatScrollToBottom(instant);
+            // Badge non-lus + mention sur l'icône Home — uniquement les
+            // messages live (post-initial-load). Pas les messages chargés
+            // au boot, sinon le badge s'allume avec l'historique entier.
+            if (_initialLoadDone && !instant) _bumpUnread(msg);
         }
 
         // Re-render d'un message existant suite à un child_changed (édition,
@@ -11007,6 +11052,40 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     if (!document.hidden && fbDb && _presenceRef) syncPresence();
                 });
 
+                // ── Typing indicator listener ──
+                // Snapshot temps réel des autres sessions en train de taper.
+                // On rebuild _typingByUser à chaque value event puis on re-
+                // rend l'indicateur. Un user avec plusieurs onglets ne
+                // compte qu'une fois (dédup par username, on garde le t le
+                // plus récent).
+                fbDb.ref('chat/typing').on('value', snap => {
+                    _typingByUser.clear();
+                    const now = Date.now();
+                    snap.forEach(child => {
+                        const v = child.val();
+                        if (!v || !v.user) return;
+                        const t = Number(v.t) || 0;
+                        // Garbage collector : si l'entrée est trop vieille
+                        // (peut arriver si un onglet crash sans avoir pu
+                        // remove son entrée), on la nettoie en passant.
+                        if (now - t > TYPING_DISPLAY_MS * 3) {
+                            if (fbDb && child.key) {
+                                fbDb.ref('chat/typing/' + child.key).remove().catch(() => {});
+                            }
+                            return;
+                        }
+                        const existing = _typingByUser.get(v.user);
+                        if (!existing || t > (existing.t || 0)) {
+                            _typingByUser.set(v.user, { display: v.display || v.user, t });
+                        }
+                    });
+                    _renderTypingIndicator();
+                });
+                // Refresh périodique du rendu typing pour cleaner les
+                // entrées stale visuellement (sans attendre un nouveau
+                // value event Firebase).
+                setInterval(_renderTypingIndicator, 2000);
+
                 // ── Présence temps réel ──
                 _presenceRef.on('value', snap => {
                     const onlineKeys  = new Set();
@@ -11217,6 +11296,145 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             }, 3500);
         }
 
+        /* ============================================================ *
+         * TYPING INDICATOR                                              *
+         * Émet une entrée /chat/typing/<sessKey> quand le user tape     *
+         * (throttle 1s). Cleanup auto après TYPING_IDLE_MS d'inactivité *
+         * + onDisconnect().remove() pour crash safety. Listener filtre  *
+         * les entrées stale (>5s) et rend "X is typing…" en bas.        *
+         * ============================================================ */
+        function _writeTyping() {
+            if (!fbDb || !_currentSessKey) return;
+            const me = getCurrentUser();
+            if (!me || !me.username) return;
+            const now = Date.now();
+            if (now - _typingLastWriteAt < TYPING_THROTTLE_MS) {
+                // Throttle : on planifie juste le cleanup
+                _scheduleTypingCleanup();
+                return;
+            }
+            _typingLastWriteAt = now;
+            if (!_typingRef) {
+                _typingRef = fbDb.ref('chat/typing/' + _currentSessKey);
+                _typingRef.onDisconnect().remove();
+            }
+            _typingRef.set({
+                user:    me.username,
+                display: me.displayName || me.username,
+                t:       firebase.database.ServerValue.TIMESTAMP
+            }).catch(() => {});
+            _scheduleTypingCleanup();
+        }
+        function _scheduleTypingCleanup() {
+            clearTimeout(_typingClearTimer);
+            _typingClearTimer = setTimeout(() => { _clearTyping(); }, TYPING_IDLE_MS);
+        }
+        function _clearTyping() {
+            clearTimeout(_typingClearTimer);
+            _typingClearTimer = null;
+            _typingLastWriteAt = 0;
+            if (_typingRef) {
+                _typingRef.remove().catch(() => {});
+            }
+        }
+        function _renderTypingIndicator() {
+            const el     = document.getElementById('homeChatTyping');
+            const textEl = document.getElementById('homeChatTypingText');
+            if (!el || !textEl) return;
+            const me   = getCurrentUser();
+            const myUn = me?.username || null;
+            const now  = Date.now();
+            const names = [];
+            for (const [un, info] of _typingByUser) {
+                if (un === myUn) continue;
+                if (now - (info.t || 0) > TYPING_DISPLAY_MS) continue;
+                names.push(info.display || un);
+            }
+            if (names.length === 0) { el.hidden = true; textEl.textContent = ''; return; }
+            let txt;
+            if (names.length === 1)      txt = names[0] + ' is typing…';
+            else if (names.length === 2) txt = names[0] + ' & ' + names[1] + ' are typing…';
+            else                          txt = 'Several people are typing…';
+            textEl.textContent = txt;
+            el.hidden = false;
+        }
+
+        /* ============================================================ *
+         * UNREAD + MENTION BADGE on the Home tab                        *
+         * Incrémenté quand un msg arrive et que la home n'est pas la    *
+         * vue active. Mention détectée via @<myUsername> dans le text. *
+         * Reset au click sur le tab Home.                               *
+         * ============================================================ */
+        function _bumpUnread(msg) {
+            if (!msg || msg.system) return;
+            const me = getCurrentUser();
+            const myUn = me?.username || null;
+            // Pas de compteur pour ses propres messages.
+            if (myUn && msg.user === myUn) return;
+            // Home visible = pas de bump.
+            const homePanel = document.getElementById('homePanel');
+            if (homePanel && homePanel.style.display !== 'none') return;
+            _unreadCount++;
+            // Détection mention : @<myUsername> word-boundary, insensible
+            // à la casse. Si match → bump mention + ding son optionnel.
+            if (myUn && typeof msg.text === 'string') {
+                const re = new RegExp('@' + myUn.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\b', 'i');
+                if (re.test(msg.text)) {
+                    _mentionCount++;
+                    _playNotificationSound();
+                }
+            }
+            _renderUnreadBadge();
+        }
+        function _resetUnread() {
+            _unreadCount = 0;
+            _mentionCount = 0;
+            _renderUnreadBadge();
+        }
+        function _renderUnreadBadge() {
+            const badge = document.getElementById('homeUnreadBadge');
+            if (!badge) return;
+            if (_unreadCount === 0) { badge.hidden = true; return; }
+            badge.hidden = false;
+            badge.textContent = _unreadCount > UNREAD_CAP ? UNREAD_CAP + '+' : String(_unreadCount);
+            badge.classList.toggle('topnav-tab-unread--mention', _mentionCount > 0);
+        }
+
+        /* ============================================================ *
+         * NOTIFICATION SOUND (Web Audio beep, opt-in)                   *
+         * Court bip généré in-browser quand un @mention arrive ET que   *
+         * le toggle est on. Pas de fichier audio à charger.             *
+         * ============================================================ */
+        let _audioCtx = null;
+        function _playNotificationSound() {
+            if (!_soundEnabled) return;
+            try {
+                if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const ctx  = _audioCtx;
+                const t0   = ctx.currentTime;
+                // Deux courts pings cyan-style, 880 → 1320 Hz, 80ms chacun.
+                [[880, 0], [1320, 0.10]].forEach(([freq, delay]) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+                    gain.gain.value = 0;
+                    gain.gain.setValueAtTime(0, t0 + delay);
+                    gain.gain.linearRampToValueAtTime(0.15, t0 + delay + 0.01);
+                    gain.gain.linearRampToValueAtTime(0,    t0 + delay + 0.09);
+                    osc.connect(gain).connect(ctx.destination);
+                    osc.start(t0 + delay);
+                    osc.stop(t0 + delay + 0.10);
+                });
+            } catch (_) { /* silently fail on browsers without Web Audio */ }
+        }
+        function _refreshSoundToggleUI() {
+            const btn = document.getElementById('homeChatSoundToggle');
+            if (!btn) return;
+            btn.classList.toggle('is-on', _soundEnabled);
+            btn.title = _soundEnabled ? 'Notification sound on' : 'Notification sound off';
+        }
+
         async function sendMessage() {
             const user = getCurrentUser();
             if (!user || !fbDb || !input) return;
@@ -11241,6 +11459,9 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             if (now - lastSendAt < 500) return;
             lastSendAt = now;
             input.value = '';
+            // Le user vient d'envoyer → on clear son entrée typing
+            // immédiatement (sinon "is typing…" reste affiché 4s après).
+            _clearTyping();
             // Snapshot le contexte de reply puis on clear l'état tout de
             // suite — l'utilisateur peut taper le suivant librement.
             const replyTo = _replyingTo ? {
@@ -11272,6 +11493,29 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
             else if (e.key === 'Escape' && _replyingTo) { e.preventDefault(); setReplyTo(null); }
         });
+        // Typing indicator : on déclenche l'écriture Firebase sur chaque
+        // input (clavier physique, IME, paste, mobile virtual keyboard).
+        // Le throttle interne (1s) évite de spammer la DB.
+        input?.addEventListener('input', () => {
+            if (input.value.trim().length === 0) {
+                _clearTyping();
+            } else {
+                _writeTyping();
+            }
+        });
+        // Toggle son notification : persiste le choix en localStorage.
+        const soundBtn = document.getElementById('homeChatSoundToggle');
+        _refreshSoundToggleUI();
+        soundBtn?.addEventListener('click', () => {
+            _soundEnabled = !_soundEnabled;
+            try { localStorage.setItem(SOUND_STORAGE_KEY, _soundEnabled ? 'on' : 'off'); } catch (_) {}
+            _refreshSoundToggleUI();
+            // Feedback audible quand on l'active.
+            if (_soundEnabled) _playNotificationSound();
+        });
+        // Reset du badge non-lus dès que l'utilisateur clique sur Home.
+        document.querySelector('.topnav-tab[data-tab="collections"]')
+            ?.addEventListener('click', () => { _resetUnread(); });
         document.getElementById('homeChatReplyCancel')?.addEventListener('click', () => setReplyTo(null));
 
         // Mobile : fermer la barre emoji + pill actions si on tap n'importe
