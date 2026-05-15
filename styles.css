@@ -14896,54 +14896,70 @@ body.is-profile-loading #profileLoadingOverlay * {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.05) 100%);
     border-color: rgba(255, 255, 255, 0.32);
 }
+/* Premium banner layout : carte pleine largeur du message, logo collection
+   chevauche le bord gauche (moitié dedans / moitié dehors), stats alignées
+   sur une rangée propre en dessous, CTA en bas à droite. */
 .home-chat-coll-share {
-    display: flex;
-    gap: 14px;
-    padding: 12px 12px 12px 14px;
-    margin-top: 8px;
-    background: rgba(7, 14, 28, 0.32);
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+        "header header"
+        "stats  cta";
+    column-gap: 14px;
+    row-gap: 12px;
+    align-items: center;
+    /* margin négatif pour casser le padding 10px de la bulle parent et
+       prendre toute la largeur du message — d'où "bannière complète". */
+    margin: 10px -10px 2px;
+    padding: 14px 16px 14px 50px;
+    background:
+        radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0) 55%),
+        linear-gradient(135deg, rgba(7, 14, 28, 0.48) 0%, rgba(7, 14, 28, 0.30) 100%);
     border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 12px;
+    border-radius: 14px;
     cursor: pointer;
-    transition: background 0.18s, border-color 0.18s;
+    transition: background 0.18s, border-color 0.18s, transform 0.18s;
     -webkit-tap-highlight-color: transparent;
+    overflow: visible;
 }
 .home-chat-coll-share:hover,
 .home-chat-coll-share:focus-visible {
-    background: rgba(7, 14, 28, 0.48);
     border-color: rgba(255, 255, 255, 0.36);
     outline: none;
+    transform: translateY(-1px);
 }
 .home-chat-coll-share-logo {
-    width: 56px; height: 56px;
-    border-radius: 12px;
+    /* moitié dedans / moitié dehors : 64px logo, -32px à gauche */
+    position: absolute;
+    left: -32px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 64px; height: 64px;
+    border-radius: 14px;
     object-fit: cover;
     background: rgba(255, 255, 255, 0.06);
-    /* Même épaisseur 1px que .home-chat-msg-avatar — demande user :
-       « contour de l'image de collection même épaisseur que l'image
-       de profil de l'utilisateur qui envoie le message ». */
+    /* 1px comme l'avatar user — demande PR #96 préservée. Le halo doux
+       autour assure la lisibilité du logo qui dépasse hors carte. */
     border: 1px solid rgba(255, 255, 255, 0.55);
-    flex-shrink: 0;
-    align-self: flex-start;
+    box-shadow:
+        0 0 0 3px rgba(7, 14, 28, 0.55),
+        0 6px 18px rgba(0, 0, 0, 0.45);
+    z-index: 2;
 }
 .home-chat-coll-share-logo--empty {
     background: rgba(255, 255, 255, 0.10);
 }
-.home-chat-coll-share-body {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 0;
-    flex: 1;
-}
-.home-chat-coll-share-name-row {
+.home-chat-coll-share-header {
+    grid-area: header;
     display: flex;
     align-items: center;
     gap: 6px;
+    min-width: 0;
 }
 .home-chat-coll-share-name {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 800;
     color: #fff;
     letter-spacing: 0.01em;
@@ -14956,28 +14972,37 @@ body.is-profile-loading #profileLoadingOverlay * {
     flex-shrink: 0;
 }
 .home-chat-coll-share-stats {
+    grid-area: stats;
     display: flex;
     flex-wrap: wrap;
-    gap: 14px;
     align-items: center;
+    gap: 0;
+    min-width: 0;
 }
 .home-chat-coll-share-stat {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 3px;
+    padding: 0 16px;
+    border-left: 1px solid rgba(255, 255, 255, 0.10);
+    min-width: 0;
+}
+.home-chat-coll-share-stat:first-child {
+    padding-left: 0;
+    border-left: none;
 }
 .home-chat-coll-share-stat-label {
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 8.5px;
     font-weight: 800;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.55);
     line-height: 1;
 }
 .home-chat-coll-share-stat-val {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 800;
     color: #fff;
     line-height: 1.1;
@@ -14987,12 +15012,13 @@ body.is-profile-loading #profileLoadingOverlay * {
     font-weight: 600;
 }
 .home-chat-coll-share-cta {
-    align-self: flex-start;
+    grid-area: cta;
+    align-self: center;
+    justify-self: end;
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    margin-top: 2px;
-    padding: 6px 12px;
+    padding: 7px 14px;
     background: rgba(255, 255, 255, 0.10);
     border: 1px solid rgba(255, 255, 255, 0.45);
     border-radius: 999px;
@@ -15004,6 +15030,7 @@ body.is-profile-loading #profileLoadingOverlay * {
     text-transform: uppercase;
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s, color 0.15s;
+    white-space: nowrap;
 }
 .home-chat-coll-share-cta:hover {
     background: rgba(255, 255, 255, 0.20);
@@ -15012,16 +15039,24 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 @media (max-width: 600px) {
     .home-chat-coll-share {
-        gap: 10px;
-        padding: 10px 10px 10px 12px;
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "header"
+            "stats"
+            "cta";
+        row-gap: 10px;
+        padding: 12px 12px 12px 42px;
+        margin: 10px -8px 2px;
     }
     .home-chat-coll-share-logo {
-        width: 48px; height: 48px;
-        border-radius: 10px;
+        left: -24px;
+        width: 52px; height: 52px;
+        border-radius: 12px;
     }
-    .home-chat-coll-share-name { font-size: 13px; }
-    .home-chat-coll-share-stats { gap: 12px; }
-    .home-chat-coll-share-stat-val { font-size: 12px; }
+    .home-chat-coll-share-name { font-size: 14px; }
+    .home-chat-coll-share-stat { padding: 0 12px; }
+    .home-chat-coll-share-stat-val { font-size: 13px; }
+    .home-chat-coll-share-cta { justify-self: start; }
 }
 
 /* ── Pinned message ── Bannière en haut du chat (hors scroll des
