@@ -1216,6 +1216,24 @@
         <div class="home-community-card">
           <!-- Zone principale : messages -->
           <div class="home-chat-main">
+            <!-- Message épinglé créateur : posé en haut du chat, hors
+                 du scroll des messages. Visible quand /chat/pinned/current
+                 existe. Click → scroll vers le message original (s'il
+                 est encore chargé). Le créateur (cf. CREATORS set) voit
+                 en plus un bouton × pour retirer le pin. -->
+            <div class="home-chat-pinned" id="homeChatPinned" hidden>
+              <svg class="home-chat-pinned-icon" width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14 2l4 4-5 2v4l-3 3-3-3 3-3V8L5 6l4-4z"/>
+                <line x1="10" y1="14" x2="6" y2="18"/>
+              </svg>
+              <div class="home-chat-pinned-body">
+                <span class="home-chat-pinned-author" id="homeChatPinnedAuthor"></span>
+                <span class="home-chat-pinned-text" id="homeChatPinnedText"></span>
+              </div>
+              <button class="home-chat-pinned-close" id="homeChatPinnedClose" type="button" aria-label="Unpin message" title="Unpin" hidden>
+                <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l10 10M15 5L5 15"/></svg>
+              </button>
+            </div>
             <div class="home-chat-messages" id="homeChatMessages"></div>
             <div id="homeChatOnlinePanel" style="display:none;"></div>
             <div class="home-chat-locked" id="homeChatLocked" style="display:none;">
@@ -9738,6 +9756,63 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             catch(e) { console.error('[Community chat] delete failed:', e); }
         }
 
+        /* ============================================================ *
+         * PINNED MESSAGE (creator-only)                                 *
+         * Le créateur (CREATORS set) peut épingler n'importe quel       *
+         * message via le bouton 📌 dans la barre d'actions. Le pin est  *
+         * écrit dans /chat/pinned/current — un seul message épinglé à   *
+         * la fois (le nouveau remplace l'ancien). Listener temps réel   *
+         * rend la bannière en haut du chat pour tous.                   *
+         * ============================================================ */
+        const CREATORS_GLOBAL = new Set(['unscoop', 'cronoswtf']);
+        let _pinnedCurrent = null;   // dernière snapshot reçue de Firebase
+
+        async function pinMsg(key, snap) {
+            if (!fbDb || !key) return;
+            const me = getCurrentUser();
+            const myUn = (me?.username || '').toLowerCase();
+            if (!CREATORS_GLOBAL.has(myUn)) return; // garde client
+            try {
+                await fbDb.ref('chat/pinned/current').set({
+                    key:       key,
+                    user:      snap.user || null,
+                    display:   snap.display || snap.user || 'Anonymous',
+                    text:      String(snap.text || '').slice(0, 500),
+                    t:         Number(snap.t) || Date.now(),
+                    pinnedAt:  firebase.database.ServerValue.TIMESTAMP,
+                    pinnedBy:  me.username
+                });
+            } catch (e) {
+                console.error('[Community chat] pin failed:', e);
+            }
+        }
+        async function unpinMsg() {
+            if (!fbDb) return;
+            const me = getCurrentUser();
+            const myUn = (me?.username || '').toLowerCase();
+            if (!CREATORS_GLOBAL.has(myUn)) return;
+            try { await fbDb.ref('chat/pinned/current').remove(); }
+            catch (e) { console.error('[Community chat] unpin failed:', e); }
+        }
+        function _renderPinnedBanner() {
+            const banner   = document.getElementById('homeChatPinned');
+            const authorEl = document.getElementById('homeChatPinnedAuthor');
+            const textEl   = document.getElementById('homeChatPinnedText');
+            const closeBtn = document.getElementById('homeChatPinnedClose');
+            if (!banner || !authorEl || !textEl) return;
+            if (!_pinnedCurrent) {
+                banner.hidden = true;
+                return;
+            }
+            authorEl.textContent = _pinnedCurrent.display || _pinnedCurrent.user || 'Anonymous';
+            textEl.textContent   = String(_pinnedCurrent.text || '');
+            banner.hidden = false;
+            // Bouton × visible uniquement pour les créateurs.
+            const me = getCurrentUser();
+            const myUn = (me?.username || '').toLowerCase();
+            if (closeBtn) closeBtn.hidden = !CREATORS_GLOBAL.has(myUn);
+        }
+
         // ── Emoji reactions ─────────────────────────────────────────────────────
         // On utilise l'INDEX (0-5) comme data-emoji-idx pour éviter tout problème
         // d'encodage Unicode des emojis composés dans les attributs data-*.
@@ -10405,15 +10480,24 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     <span class="home-chat-msg-quote-text">${_fcEsc(String(msg.replyTo.text || '').slice(0, 140))}</span>
                 </div>` : '';
 
-            // Actions (Reply / Edit / Delete) — placées HORS du meta pour
-            // pouvoir les positionner au coin inférieur-droit du message
-            // (cf. CSS .home-chat-msg-actions). Reply est dispo pour TOUS,
-            // Edit/Delete uniquement pour ses propres messages.
+            // Actions (Reply / Pin / Edit / Delete) — placées HORS du
+            // meta pour pouvoir les positionner au coin inférieur-droit
+            // du message (cf. CSS .home-chat-msg-actions). Reply est
+            // dispo pour TOUS. Pin est dispo pour les comptes créateurs
+            // (cf. CREATORS set) sur N'IMPORTE QUEL message. Edit/Delete
+            // uniquement pour ses propres messages.
+            const myUserKey = (me?.username || '').toLowerCase();
+            const iAmCreator = CREATORS.has(myUserKey);
             const actionsHtml = key ? `
                 <span class="home-chat-msg-actions">
                     <button class="home-chat-msg-action home-chat-msg-reply-btn" type="button" title="Reply" aria-label="Reply">
                         <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,15 3,9 9,3"/><path d="M3 9h9a5 5 0 0 1 5 5v3"/></svg>
                     </button>
+                    ${iAmCreator ? `
+                        <button class="home-chat-msg-action home-chat-msg-pin-btn" type="button" title="Pin message" aria-label="Pin">
+                            <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(45deg);"><path d="M14 2l4 4-5 2v4l-3 3-3-3 3-3V8L5 6l4-4z"/><line x1="10" y1="14" x2="6" y2="18"/></svg>
+                        </button>
+                    ` : ''}
                     ${isMine ? `
                         <button class="home-chat-msg-action home-chat-msg-edit-btn" type="button" title="Edit message" aria-label="Edit">
                             <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3.5a2 2 0 0 1 2.83 2.83L7 16.66 3 17.5l.84-4 10.66-10z"/></svg>
@@ -10447,6 +10531,14 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             if (isMine && key) {
                 div.querySelector('.home-chat-msg-edit-btn')?.addEventListener('click', () => startEdit(div, key, msg.text || ''));
                 div.querySelector('.home-chat-msg-delete-btn')?.addEventListener('click', () => deleteMsg(key));
+            }
+            // Pin button (creator only) — disponible sur n'importe quel
+            // message du chat, pas juste les siens.
+            if (iAmCreator && key) {
+                div.querySelector('.home-chat-msg-pin-btn')?.addEventListener('click', e => {
+                    e.stopPropagation();
+                    pinMsg(key, msg);
+                });
             }
             // Reply button : disponible pour TOUS les messages (pas juste
             // les siens). Memorise le contexte dans _replyingTo et affiche
@@ -11071,6 +11163,15 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     if (!document.hidden && fbDb && _presenceRef) syncPresence();
                 });
 
+                // ── Pinned message listener ──
+                // Snapshot temps réel du message épinglé par le créateur.
+                // Single node /chat/pinned/current — un seul pin actif à
+                // la fois. Le nouveau remplace l'ancien.
+                fbDb.ref('chat/pinned/current').on('value', snap => {
+                    _pinnedCurrent = snap.exists() ? snap.val() : null;
+                    _renderPinnedBanner();
+                });
+
                 // ── Typing indicator listener ──
                 // Snapshot temps réel des autres sessions en train de taper.
                 // On rebuild _typingByUser à chaque value event puis on re-
@@ -11535,6 +11636,17 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // Reset du badge non-lus dès que l'utilisateur clique sur Home.
         document.querySelector('.topnav-tab[data-tab="collections"]')
             ?.addEventListener('click', () => { _resetUnread(); });
+        // Pinned banner : click → scroll vers l'original. Bouton × →
+        // unpin (visible créateur uniquement, géré dans _renderPinnedBanner).
+        document.getElementById('homeChatPinned')?.addEventListener('click', (ev) => {
+            if (ev.target.closest('.home-chat-pinned-close')) return;
+            if (!_pinnedCurrent || !_pinnedCurrent.key) return;
+            scrollToMessage(_pinnedCurrent.key);
+        });
+        document.getElementById('homeChatPinnedClose')?.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            unpinMsg();
+        });
         document.getElementById('homeChatReplyCancel')?.addEventListener('click', () => setReplyTo(null));
 
         // Mobile : fermer la barre emoji + pill actions si on tap n'importe
