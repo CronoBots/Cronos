@@ -13247,9 +13247,13 @@ body.is-profile-loading #profileLoadingOverlay * {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    /* Padding aéré pour scaler avec la font 9.5px (bumpée depuis 8px)
-       en lock-step avec le pseudo passé à 13px. */
-    padding: 2px 8px 1px;
+    /* Hauteur + line-height explicites pour que le texte (Geomanist
+       caps anchored haut) soit visuellement centré dans la pill —
+       avant on avait un padding asymétrique 2/1 qui poussait le texte
+       en haut de la pill. */
+    height: 16px;
+    line-height: 16px;
+    padding: 0 8px;
     border-radius: 8px;
     background: rgba(255, 200, 0, 0.16);
     color: #FFC800;
@@ -13263,7 +13267,6 @@ body.is-profile-loading #profileLoadingOverlay * {
     flex-shrink: 0;
     cursor: default;
     transform: translateY(-2px);
-    line-height: 1;
 }
 /* Variant pour la liste des membres : un peu plus tassé pour ne pas
    pousser la ligne au-delà de la largeur de la sidebar. */
@@ -13280,7 +13283,11 @@ body.is-profile-loading #profileLoadingOverlay * {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 2px 8px 1px;
+    /* Même technique que .chat-patron-badge : height + line-height
+       explicites pour centrer le texte. */
+    height: 16px;
+    line-height: 16px;
+    padding: 0 8px;
     border-radius: 8px;
     background: rgba(239, 68, 68, 0.18);
     color: #fca5a5;
@@ -13294,7 +13301,6 @@ body.is-profile-loading #profileLoadingOverlay * {
     flex-shrink: 0;
     cursor: default;
     transform: translateY(-2px);
-    line-height: 1;
 }
 
 /* ── Badge "WTF OG" — vert, réservé aux OGs (snipe13 / The Photograph).
@@ -13303,7 +13309,10 @@ body.is-profile-loading #profileLoadingOverlay * {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 2px 8px 1px;
+    /* Même technique que .chat-creator-badge / .chat-patron-badge. */
+    height: 16px;
+    line-height: 16px;
+    padding: 0 8px;
     border-radius: 8px;
     background: rgba(74, 222, 128, 0.18);
     color: #86efac;
@@ -13317,7 +13326,6 @@ body.is-profile-loading #profileLoadingOverlay * {
     flex-shrink: 0;
     cursor: default;
     transform: translateY(-2px);
-    line-height: 1;
 }
 
 
@@ -14374,7 +14382,9 @@ body.is-profile-loading #profileLoadingOverlay * {
     .chat-og-badge,
     .chat-patron-badge {
         font-size: 9px;
-        padding: 2px 6px 1px;
+        height: 15px;
+        line-height: 15px;
+        padding: 0 6px;
         transform: translateY(-1.5px);
     }
     /* Mention pill garde le clamp à la taille du pseudo. */
@@ -15007,45 +15017,35 @@ body.is-profile-loading #profileLoadingOverlay * {
     letter-spacing: 0.04em;
 }
 
-/* ── Collection share message ── bulle blanche (variante du message
-   communautaire) avec une carte logo + nom + stats + CTA. Déclenchée
-   par sendCollectionShare quand l'utilisateur sélectionne une coll
-   dans l'autocomplete `#`. Demande user : couleur blanche au lieu de
-   l'or initial — neutre, premium, ne fight pas avec les pills jaunes
-   "PERPETUAL" / "WTF PATRON" déjà présentes dans le chat. */
-.home-chat-msg--community.home-chat-msg--coll-share {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
-    border-color: rgba(255, 255, 255, 0.22);
-}
-@media (hover: hover) and (pointer: fine) {
-    .home-chat-msg--community.home-chat-msg--coll-share:hover {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.05) 100%);
-        border-color: rgba(255, 255, 255, 0.32);
-    }
-}
-/* Carte coll-share : reste dans les marges normales du message (pas de
-   bannière débordante), logo entièrement à l'intérieur sur la gauche,
-   nom + stats à droite. Pas de CTA — un clic sur la carte ouvre la
-   collection directement. */
+/* ── Collection share message ── seule la CARTE intérieure prend la
+   teinte blanche/neutre. La bulle de message parent garde son fond
+   normal + son liseré gauche coloré par rôle (creator/og/patron) —
+   sinon la teinte blanche écrasait l'identité d'auteur, alors qu'un
+   coll-share reste avant tout un message posté par quelqu'un. */
 .home-chat-coll-share {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 12px 14px;
     margin-top: 8px;
-    background:
-        radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 55%),
-        linear-gradient(135deg, rgba(7, 14, 28, 0.42) 0%, rgba(7, 14, 28, 0.26) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    /* Fond blanc translucide (déplacé depuis le wrapper .home-chat-
+       msg--coll-share). Le gradient subtil donne du relief sans
+       fight avec les pills jaunes ("PERPETUAL" / "WTF PATRON") déjà
+       posées plus haut dans la bulle. */
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 12px;
     cursor: pointer;
     transition: background 0.18s, border-color 0.18s;
     -webkit-tap-highlight-color: transparent;
 }
-.home-chat-coll-share:hover,
-.home-chat-coll-share:focus-visible {
-    border-color: rgba(255, 255, 255, 0.36);
-    outline: none;
+@media (hover: hover) and (pointer: fine) {
+    .home-chat-coll-share:hover,
+    .home-chat-coll-share:focus-visible {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.05) 100%);
+        border-color: rgba(255, 255, 255, 0.36);
+        outline: none;
+    }
 }
 .home-chat-coll-share-logo {
     width: 56px; height: 56px;
