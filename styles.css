@@ -11289,13 +11289,11 @@ body.is-profile-loading #profileLoadingOverlay * {
 
 /* Spotlight hint : quand une slide du Spotlight de la home est
    active, l'onglet du topnav qui pointe vers la même feature reçoit
-   ce highlight subtil (icône blanche + fond très clair). Mime le
-   :hover desktop mais reste appliqué en permanence — donc visible
-   sur mobile aussi, là où :hover ne fire pas. Posé/retiré par le
-   carousel Spotlight via la fonction `show()`. */
+   ce highlight subtil. Seule l'icône (svg) passe en blanc — on ne
+   touche pas au background pour rester moins intrusif. Posé/retiré
+   par le carousel Spotlight via la fonction `show()`. */
 .topnav-tab--spotlight-hint:not(.topnav-tab--active):not(.topnav-tab--disabled) {
     color: rgba(255, 255, 255, 0.95);
-    background: rgba(255, 255, 255, 0.05);
 }
 
 /* Variante du hint pour les slides Profile/Collection Explorer qui
@@ -16982,7 +16980,10 @@ code.sup-card-address {
 .sup2-tr:last-child { border-bottom: none; }
 .sup2-tr:hover { background: rgba(0,179,255,0.04); }
 .sup2-td {
-    padding: 10px 14px;
+    /* Padding vertical réduit (10 → 6) pour resserrer la liste des
+       patrons côté Support tab + section home. Préserve le 14px
+       horizontal et le ratio visuel des badges/montants. */
+    padding: 6px 14px;
     color: rgba(255,255,255,0.85);
     font-size: 13px;
     vertical-align: middle;
@@ -17080,7 +17081,8 @@ code.sup-card-address {
         gap: 24px;
     }
     .sup2-th--tags, .sup2-td--tags { display: none; }
-    .sup2-th, .sup2-td { padding: 10px 8px; font-size: 12px; }
+    .sup2-th { padding: 10px 8px; font-size: 12px; }
+    .sup2-td { padding: 6px 8px; font-size: 12px; }
     .sup2-td--amount { font-size: 13px; }
     .sup2-table-avatar { width: 28px; height: 28px; }
     .sup2-table-name { font-size: 12px; }
@@ -26028,89 +26030,97 @@ a.snap-holder-username:hover {
     overflow: hidden;
     position: relative;
 }
-/* Bannière : ratio 4:1 (au lieu de 3:1) + max-height 280px pour
-   ne pas exploser en hauteur sur des écrans larges (à 1920px le
-   3:1 donnait 590px, ce qui clippait le reste de la carte sous
-   l'overflow:hidden du spotlight). Avec 4:1 + cap, la bannière
-   reste contenue et le contenu sous-jacent (identity, stats,
-   showcase) reste toujours visible. */
+/* Bannière : ratio 3:1 = format natif 1500×500 des bannières Crypto.com NFT.
+   Max-height 500px pour laisser respirer sur écrans larges sans déformer
+   le ratio source. */
 .home-fc-spotlight .home-feat-v3-hero {
     position: relative;
-    aspect-ratio: 4 / 1;
+    aspect-ratio: 3 / 1;
     width: 100%;
-    max-height: 280px;
+    max-height: 500px;
     flex-shrink: 0;
     overflow: hidden;
+    /* Fin trait bleu sous la bannière — délimite la zone hero du reste
+       de la card (stats / showcase). */
+    border-bottom: 1px solid rgba(0, 179, 255, 0.55);
+    box-shadow: 0 1px 0 0 rgba(0, 179, 255, 0.18);
 }
 .home-fc-spotlight .home-feat-v3-hero-img {
     background-size: cover;
     background-position: center;
 }
-/* Tint très léger sur le hero — la lisibilité du texte vient
-   désormais de la position de l'identité hors bannière (sous), donc
-   pas besoin d'un dégradé sombre marqué. */
+/* Tint un peu plus marqué : la lisibilité du nom centré dépend
+   désormais du contraste sur la bannière. */
 .home-fc-spotlight .home-feat-v3-hero-tint {
     background: linear-gradient(
         180deg,
-        rgba(8, 14, 28, 0.00) 50%,
-        rgba(8, 14, 28, 0.10) 100%);
+        rgba(8, 14, 28, 0.30) 0%,
+        rgba(8, 14, 28, 0.50) 100%);
 }
-/* Identity = SIBLING du hero. Le logo chevauche le bord inférieur de
-   la bannière (moitié dedans / moitié dehors) via un margin-top négatif.
-   Le bloc texte est à droite du logo et ne dépasse pas la bannière —
-   il vit dans la bande qui suit le hero. */
+/* Identity = OVERLAY centré sur la bannière. Logo carré au-dessus,
+   nom de collection en très gros, ligne artiste en dessous — tout
+   centré verticalement et horizontalement sur le hero. */
 .home-fc-spotlight .home-feat-v3-identity {
-    position: relative;
+    position: absolute;
+    inset: 0;
     z-index: 3;
-    margin-top: -38px;            /* moitié du logo (76 / 2 = 38) */
-    padding: 0 18px;
     display: flex;
-    align-items: flex-end;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     gap: 14px;
-    min-width: 0;
+    padding: 24px 32px;
+    text-align: center;
+    pointer-events: none; /* le hero garde le click pour ouvrir la collection */
 }
 .home-fc-spotlight .home-feat-v3-logo {
-    width: 76px;
-    height: 76px;
-    border-radius: 14px;
+    width: clamp(72px, 8vw, 110px);
+    height: clamp(72px, 8vw, 110px);
+    border-radius: 16px;
     flex-shrink: 0;
-    border: 3px solid rgba(11, 20, 38, 0.95);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.65);
+    /* Fin contour cyan + halo doux autour de la photo de collection. */
+    border: 1px solid rgba(0, 179, 255, 0.75);
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.45),
+        0 6px 20px rgba(0, 0, 0, 0.6),
+        0 0 18px rgba(0, 179, 255, 0.35);
     background: rgba(11, 20, 38, 0.85);
 }
 .home-fc-spotlight .home-feat-v3-id-text {
-    flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding-bottom: 6px;          /* aligne le texte avec le bas du logo */
+    align-items: center;
+    gap: 6px;
 }
 .home-fc-spotlight .home-feat-v3-name {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 17px;
+    /* Beaucoup plus gros — le nom de collection devient l'élément
+       dominant du hero. clamp() pour scaler du mobile au grand écran. */
+    font-size: clamp(26px, 3.8vw, 48px);
     font-weight: 800;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #fff;
-    line-height: 1.1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.08;
+    /* Le nom peut wrap si très long — on conserve la lisibilité. */
+    white-space: normal;
+    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.75);
 }
 .home-fc-spotlight .home-feat-v3-creator {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 10px;
+    font-size: clamp(11px, 1.1vw, 14px);
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.55);
+    color: rgba(255, 255, 255, 0.78);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.7);
 }
 .home-fc-spotlight .home-feat-v3-creator-text { display: inline; }
 .home-fc-spotlight .home-feat-v3-creator strong {
@@ -26349,11 +26359,13 @@ a.snap-holder-username:hover {
 
 @media (max-width: 720px) {
     /* Mobile : layout vertical (banner+identity overlay → stats →
-       showcase). Tailles réduites pour la place dispo. */
-    .home-fc-spotlight .home-feat-v3-identity { left: 10px; right: 10px; bottom: 10px; gap: 10px; }
-    .home-fc-spotlight .home-feat-v3-logo { width: 44px; height: 44px; }
-    .home-fc-spotlight .home-feat-v3-name { font-size: 15px; }
-    .home-fc-spotlight .home-feat-v3-creator { font-size: 9.5px; }
+       showcase). Tailles réduites pour la place dispo. L'identité
+       reste centrée sur la bannière (inset: 0) — on resserre juste
+       les paddings et tailles. */
+    .home-fc-spotlight .home-feat-v3-identity { padding: 14px 16px; gap: 10px; }
+    .home-fc-spotlight .home-feat-v3-logo { width: 56px; height: 56px; border-radius: 12px; }
+    .home-fc-spotlight .home-feat-v3-name { font-size: 22px; }
+    .home-fc-spotlight .home-feat-v3-creator { font-size: 10.5px; letter-spacing: 0.1em; }
     .home-fc-spotlight .home-feat-v3-stats { padding: 10px 12px; }
     .home-fc-spotlight .home-feat-v3-stat-val { font-size: 14px; }
     .home-fc-spotlight .home-feat-v3-showcase { padding: 8px 10px 10px; }
