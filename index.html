@@ -8239,21 +8239,21 @@ document.addEventListener('DOMContentLoaded', initialize);
                 <div class="home-feat-v3-hero-img" style="background-image:url('${safeLogo}');"></div>
                 <div class="home-feat-v3-hero-tint"></div>
                 <span class="home-feat-v3-change" style="display:none;"></span>
-                <!-- Identité : posée DANS le hero, centrée verticalement et
-                     horizontalement sur la bannière (logo + nom large + ligne
-                     artiste). Le logo porte un fin contour bleu, et le bas
-                     de la bannière reçoit un trait bleu fin (cf. CSS). -->
-                <div class="home-feat-v3-identity">
-                    <img class="home-feat-v3-logo" src="${safeLogo}" alt="" loading="lazy" onerror="this.style.opacity='0.25';this.style.background='rgba(255,255,255,0.05)';"/>
-                    <div class="home-feat-v3-id-text">
-                        <span class="home-feat-v3-name-row">
-                            <span class="home-feat-v3-name">${col.name || '—'}</span>
-                        </span>
-                        <span class="home-feat-v3-creator home-feat-v3-creator--loading">
-                            <span class="home-feat-v3-creator-text">Loading…</span>
-                            <span class="home-feat-v3-verified-slot"></span>
-                        </span>
-                    </div>
+            </div>
+            <!-- Identité : strip propre SOUS la bannière. Le logo carré
+                 (positionné absolute) chevauche la bannière de moitié pour
+                 un look "profile header" type Twitter/Discord. Le nom et
+                 le créateur sont centrés horizontalement dans le strip. -->
+            <div class="home-feat-v3-identity">
+                <img class="home-feat-v3-logo" src="${safeLogo}" alt="" loading="lazy" onerror="this.style.opacity='0.25';this.style.background='rgba(255,255,255,0.05)';"/>
+                <div class="home-feat-v3-id-text">
+                    <span class="home-feat-v3-name-row">
+                        <span class="home-feat-v3-name">${col.name || '—'}</span>
+                    </span>
+                    <span class="home-feat-v3-creator home-feat-v3-creator--loading">
+                        <span class="home-feat-v3-creator-text">Loading…</span>
+                        <span class="home-feat-v3-verified-slot"></span>
+                    </span>
                 </div>
             </div>
             <!-- Stats inline juste sous la bannière. -->
@@ -8668,15 +8668,6 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             return `<img src="${_fcEsc(img)}" alt="${_fcEsc(a?.name || '')}" loading="lazy" onerror="this.style.opacity='0.2'"/>`;
         };
 
-        const samples = (data.samples || []).slice(0, 8);
-        const samplesHtml = samples.length ? `
-            <div class="home-feat-showcase-samples">
-                <span class="home-feat-showcase-strip-label">Sample NFTs</span>
-                <div class="home-feat-showcase-samples-row">
-                    ${samples.map(a => `<div class="home-feat-showcase-sample" title="${_fcEsc(a.name || '')}">${thumb(a)}</div>`).join('')}
-                </div>
-            </div>` : '';
-
         // Tuile compacte : thumb à gauche + 3 lignes de texte à droite
         // (label coloré · nom NFT · valeur principale). NFT name est
         // tronqué à 18 chars avec ellipsis pour ne pas péter le layout.
@@ -8727,7 +8718,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 ${tile('Floor Price', data.floor?.name      || '', fmtFloor(data.floor),                            data.floor,      'floor')}
             </div>`;
 
-        wrap.innerHTML = tilesHtml + samplesHtml;
+        wrap.innerHTML = tilesHtml;
     }
 
     async function buildFeatured() {

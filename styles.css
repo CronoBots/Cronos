@@ -26097,78 +26097,90 @@ a.snap-holder-username:hover {
     background-size: cover;
     background-position: center;
 }
-/* Tint un peu plus marqué : la lisibilité du nom centré dépend
-   désormais du contraste sur la bannière. */
+/* Tint très léger sur la bannière — l'identité (logo + nom) n'est
+   plus en overlay donc le contraste n'a plus besoin d'être agressif.
+   On garde un soupçon de gradient en bas uniquement pour aider la
+   lisibilité du badge +%. */
 .home-fc-spotlight .home-feat-v3-hero-tint {
     background: linear-gradient(
         180deg,
-        rgba(8, 14, 28, 0.30) 0%,
-        rgba(8, 14, 28, 0.50) 100%);
+        rgba(8, 14, 28, 0.0) 0%,
+        rgba(8, 14, 28, 0.08) 100%);
 }
-/* Identity = OVERLAY centré sur la bannière. Logo carré au-dessus,
-   nom de collection en très gros, ligne artiste en dessous — tout
-   centré verticalement et horizontalement sur le hero. */
+/* Identity = strip dédié SOUS la bannière (plus en overlay). Layout
+   "profile header" type Twitter/Discord :
+     - logo carré positionné absolute en bas-gauche, qui chevauche la
+       bannière de moitié (top: -36px sur 72px de hauteur)
+     - nom + créateur centrés horizontalement dans le strip
+   Le strip a sa propre hauteur (~40px) qui accueille la moitié basse
+   du logo + une marge sous le texte. */
 .home-fc-spotlight .home-feat-v3-identity {
-    position: absolute;
-    inset: 0;
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    padding: 24px 32px;
+    position: relative;
+    padding: 8px 16px 12px;
     text-align: center;
-    pointer-events: none; /* le hero garde le click pour ouvrir la collection */
+    min-height: 44px;
+    flex-shrink: 0;
+    pointer-events: none;
 }
 .home-fc-spotlight .home-feat-v3-logo {
-    width: clamp(72px, 8vw, 110px);
-    height: clamp(72px, 8vw, 110px);
-    border-radius: 16px;
-    flex-shrink: 0;
-    /* Fin contour cyan + halo doux autour de la photo de collection. */
-    border: 1px solid rgba(0, 179, 255, 0.75);
+    /* Positionné absolute en bas-gauche, chevauche la bannière à 50%. */
+    position: absolute;
+    top: -36px;
+    left: 16px;
+    width: 72px;
+    height: 72px;
+    border-radius: 14px;
+    /* Double bordure : fin contour cyan + anneau sombre extérieur pour
+       détacher proprement le logo de la bannière (sinon l'image se
+       fond dans l'image de fond). */
+    border: 2px solid rgba(0, 179, 255, 0.7);
     box-shadow:
-        0 0 0 1px rgba(0, 0, 0, 0.45),
-        0 6px 20px rgba(0, 0, 0, 0.6),
-        0 0 18px rgba(0, 179, 255, 0.35);
-    background: rgba(11, 20, 38, 0.85);
+        0 0 0 2px rgba(8, 14, 28, 0.95),
+        0 6px 18px rgba(0, 0, 0, 0.55),
+        0 0 12px rgba(0, 179, 255, 0.3);
+    background: rgba(11, 20, 38, 0.9);
+    z-index: 2;
 }
 .home-fc-spotlight .home-feat-v3-id-text {
-    min-width: 0;
-    display: flex;
+    display: inline-flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 3px;
+    min-width: 0;
+    max-width: 100%;
+    /* Décale légèrement le centre du texte vers la droite pour qu'il
+       n'entre pas visuellement en collision avec le logo à gauche. */
+    padding-left: 56px;
 }
 .home-fc-spotlight .home-feat-v3-name {
     font-family: 'Geomanist-Bold', sans-serif;
-    /* Beaucoup plus gros — le nom de collection devient l'élément
-       dominant du hero. clamp() pour scaler du mobile au grand écran. */
-    font-size: clamp(26px, 3.8vw, 48px);
+    /* Taille réduite (vs 26-48px de l'ancien overlay) — le nom n'est
+       plus posé sur la bannière, donc plus besoin d'être énorme pour
+       dominer l'image. */
+    font-size: clamp(17px, 2.4vw, 26px);
     font-weight: 800;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #fff;
-    line-height: 1.08;
-    /* Le nom peut wrap si très long — on conserve la lisibilité. */
+    line-height: 1.1;
     white-space: normal;
-    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.75);
+    /* Plus de text-shadow lourd : le nom est sur fond uniforme. */
+    text-shadow: none;
 }
 .home-fc-spotlight .home-feat-v3-creator {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: clamp(11px, 1.1vw, 14px);
+    font-size: clamp(10px, 1vw, 12px);
     font-weight: 700;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.78);
+    color: rgba(255, 255, 255, 0.6);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.7);
+    text-shadow: none;
 }
 .home-fc-spotlight .home-feat-v3-creator-text { display: inline; }
 .home-fc-spotlight .home-feat-v3-creator strong {
@@ -26254,10 +26266,14 @@ a.snap-holder-username:hover {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 10px 12px 12px;
+    padding: 12px;
     background: rgba(11, 20, 38, 0.35);
     flex: 1;
-    min-height: 240px;
+    /* Plus de strip de samples (8 vignettes) — la zone se contente des
+       4 tuiles premium en 2×2. min-height réduite en conséquence pour
+       réserver pile la place de la grille pendant le chargement (sinon
+       layout shift quand l'API renvoie). */
+    min-height: 160px;
     min-width: 0;
 }
 .home-feat-showcase-loading {
@@ -26268,83 +26284,55 @@ a.snap-holder-username:hover {
     gap: 6px;
     opacity: 0.4;
 }
-/* Strip de samples en bas du showcase : 8 vignettes carrées sur UNE
-   seule ligne, sans label ni texte — le nom du NFT s'affiche via le
-   tooltip natif (attribut title) au hover. */
-.home-feat-showcase-samples {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex-shrink: 0;
-}
-.home-feat-showcase-strip-label {
-    /* Label "Sample NFTs" caché : la zone parle d'elle-même. */
-    display: none;
-}
-.home-feat-showcase-samples-row {
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 6px;
-}
-.home-feat-showcase-sample {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    margin: 0 auto;
-    border-radius: 6px;
-    overflow: hidden;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    cursor: default;
-}
-.home-feat-showcase-sample img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-/* Grille 2×2 : Top rank, Most viewed, Most liked, Floor.
-   Plus de place par tuile que le 4×1 précédent → on peut afficher
-   l'image NFT à gauche et le label/valeur à droite sans tronquer. */
+/* Grille 2×2 "premium" : 4 tuiles VERTICALES — Top rank, Most viewed,
+   Most liked, Floor. L'image NFT prend toute la largeur de la tuile en
+   haut (carrée, dominante visuelle), label + valeur s'empilent en
+   dessous dans une mini-zone d'info. Look "trading card" type Crypto.com
+   NFT, plus haut de gamme que l'ancienne version horizontale (thumb 64px
+   + texte à côté) qui ressemblait à une ligne de stats. */
 .home-feat-showcase-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 8px;
+    grid-template-rows: auto auto;
+    gap: 10px;
 }
-/* Tuile highlight HORIZONTALE :
-     IMAGE NFT à gauche (carrée, fixe ~64px)
-     TEXTE à droite empilé : LABEL en haut, VALEUR en gros
-   Le nom du NFT n'est plus affiché (il est répétitif puisque c'est
-   toujours la même collection — déjà visible en haut avec le titre).
-   Le tooltip natif (attribut title sur la tuile) donne quand même
-   le nom NFT spécifique au hover. */
 .home-feat-showcase-tile {
     display: flex;
-    flex-direction: row;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     text-align: left;
-    gap: 12px;
-    padding: 10px;
-    background: rgba(0, 0, 0, 0.32);
+    gap: 0;
+    padding: 0;
+    /* Fond avec gradient cyan léger pour souligner l'identité de la
+       carte — distingue clairement du fond noir de la zone showcase. */
+    background: linear-gradient(180deg,
+        rgba(0, 179, 255, 0.06) 0%,
+        rgba(0, 0, 0, 0.45) 100%);
     border: 1px solid rgba(0, 179, 255, 0.22);
-    border-radius: 10px;
+    border-radius: 12px;
     min-width: 0;
     overflow: hidden;
-    transition: border-color 0.15s, background 0.15s;
+    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
 }
-.home-fc-spotlight .home-feat-v3:hover .home-feat-showcase-tile {
-    border-color: rgba(0, 179, 255, 0.4);
+@media (hover: hover) and (pointer: fine) {
+    .home-fc-spotlight .home-feat-v3:hover .home-feat-showcase-tile {
+        border-color: rgba(0, 179, 255, 0.45);
+        box-shadow: 0 4px 14px rgba(0, 179, 255, 0.12);
+    }
 }
 .home-feat-showcase-tile-thumb {
-    width: 64px;
-    height: 64px;
+    /* Image NFT carrée, full-width de la tuile — c'est la dominante
+       visuelle. Pas de border-radius interne (la tuile parent a déjà
+       son overflow: hidden + border-radius). */
+    width: 100%;
+    height: auto;
     aspect-ratio: 1 / 1;
-    border-radius: 8px;
+    border-radius: 0;
     overflow: hidden;
     background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    flex-shrink: 0;
+    border: 0;
     margin: 0;
+    flex-shrink: 0;
 }
 .home-feat-showcase-tile-thumb img {
     width: 100%;
@@ -26352,13 +26340,15 @@ a.snap-holder-username:hover {
     object-fit: cover;
     display: block;
 }
-/* Wrapper texte = colonne flex à droite du thumb. */
+/* Zone texte sous l'image : label en haut (cyan, petit, uppercase),
+   valeur en dessous (blanc, gros, bold). Padding compact mais aéré. */
 .home-feat-showcase-tile-text {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
     justify-content: center;
     gap: 4px;
-    flex: 1;
+    padding: 8px 10px 10px;
     min-width: 0;
 }
 .home-feat-showcase-tile-label {
@@ -26374,19 +26364,18 @@ a.snap-holder-username:hover {
     text-overflow: ellipsis;
     max-width: 100%;
 }
-/* Nom NFT caché — toujours rendu dans le DOM (pour le tooltip via
-   attribut title sur la tuile parent), juste masqué visuellement
-   pour gagner de la place et éviter la répétition "Loaded Lio…"
-   sur les 4 tuiles. */
+/* Nom NFT masqué visuellement (toujours dans le DOM pour le tooltip
+   title sur la tuile parent). Évite la répétition du même nom de
+   collection sur les 4 tuiles. */
 .home-feat-showcase-tile-name {
     display: none;
 }
 .home-feat-showcase-tile-val {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 800;
     color: #fff;
-    line-height: 1.1;
+    line-height: 1.15;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -26406,23 +26395,29 @@ a.snap-holder-username:hover {
 .home-fc-spotlight .home-feat-v3-cta { display: none; }
 
 @media (max-width: 720px) {
-    /* Mobile : layout vertical (banner+identity overlay → stats →
-       showcase). Tailles réduites pour la place dispo. L'identité
-       reste centrée sur la bannière (inset: 0) — on resserre juste
-       les paddings et tailles. */
-    .home-fc-spotlight .home-feat-v3-identity { padding: 14px 16px; gap: 10px; }
-    .home-fc-spotlight .home-feat-v3-logo { width: 56px; height: 56px; border-radius: 12px; }
-    .home-fc-spotlight .home-feat-v3-name { font-size: 22px; }
+    /* Mobile : layout vertical (banner → identity strip → stats →
+       showcase). L'identity est désormais un strip dédié sous la
+       bannière (plus en overlay) avec logo absolute en bas-gauche
+       qui chevauche la bannière. On resserre juste les tailles. */
+    .home-fc-spotlight .home-feat-v3-identity { padding: 6px 14px 10px; min-height: 36px; }
+    .home-fc-spotlight .home-feat-v3-logo {
+        top: -30px;
+        left: 14px;
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+    }
+    .home-fc-spotlight .home-feat-v3-id-text { padding-left: 48px; }
+    .home-fc-spotlight .home-feat-v3-name { font-size: 18px; }
     .home-fc-spotlight .home-feat-v3-creator { font-size: 10.5px; letter-spacing: 0.1em; }
     .home-fc-spotlight .home-feat-v3-stats { padding: 10px 12px; }
     .home-fc-spotlight .home-feat-v3-stat-val { font-size: 14px; }
-    .home-fc-spotlight .home-feat-v3-showcase { padding: 8px 10px 10px; }
-    /* Tile horizontale plus compacte sur mobile. */
-    .home-feat-showcase-tile { gap: 8px; padding: 8px; }
-    .home-feat-showcase-tile-thumb { width: 48px; height: 48px; }
+    .home-fc-spotlight .home-feat-v3-showcase { padding: 10px; min-height: 140px; }
+    /* Tile verticale resserrée sur mobile : padding texte réduit,
+       valeur un poil plus petite. */
+    .home-feat-showcase-tile-text { padding: 6px 8px 8px; gap: 3px; }
     .home-feat-showcase-tile-label { font-size: 8.5px; }
-    .home-feat-showcase-tile-val { font-size: 14px; }
-    .home-feat-showcase-samples-row { gap: 4px; }
+    .home-feat-showcase-tile-val { font-size: 13px; }
     .home-fc-controls { gap: 10px; padding: 8px 12px; }
 }
 
