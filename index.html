@@ -9957,6 +9957,11 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             if (prevJ && prevJ.key !== key) {
                 if ((prevJ.t || 0) <= newT) {
                     fbDb.ref('chat/messages/' + prevJ.key).remove().catch(() => {});
+                    // Suppression DOM immédiate (sans attendre l'aller-
+                    // retour Firebase + child_removed) — sinon l'ancienne
+                    // pastille reste affichée le temps du round-trip et le
+                    // user voit transitoirement deux "X is connected".
+                    removeMessageById(prevJ.key);
                     _latestJoinByUser.set(uname, { key, t: newT });
                 } else {
                     // Out-of-order : ce join est plus ancien que celui
@@ -9969,10 +9974,13 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             }
             // Reconnexion : on retire toute pastille « is disconnected »
             // précédente (le membre est revenu, son disconnect n'a plus
-            // de sens). La cascade child_removed retire le DOM partout.
+            // de sens). Suppression sync du DOM en plus de la suppression
+            // Firebase pour ne pas avoir un état transitoire "X connected"
+            // + "X disconnected" affichés en même temps.
             const prevL = _latestLeaveByUser.get(uname);
             if (prevL && prevL.key) {
                 fbDb.ref('chat/messages/' + prevL.key).remove().catch(() => {});
+                removeMessageById(prevL.key);
                 _latestLeaveByUser.delete(uname);
             }
             return true;
@@ -9997,6 +10005,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             if (prevL && prevL.key !== key) {
                 if ((prevL.t || 0) <= newT) {
                     fbDb.ref('chat/messages/' + prevL.key).remove().catch(() => {});
+                    removeMessageById(prevL.key);
                     _latestLeaveByUser.set(uname, { key, t: newT });
                 } else {
                     fbDb.ref('chat/messages/' + key).remove().catch(() => {});
@@ -10017,6 +10026,33 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 const ok = _processLeaveEvent(item.msg, item.key, item.ts, item.instant);
                 if (ok) renderSystemMessage(item.msg, item.key, item.instant);
             });
+        }
+
+        /* Insertion chronologique d'un message dans le chat.
+         *   - Chaque div porte `data-msg-t` (timestamp ms).
+         *   - On parcourt depuis la fin (l'ordre est presque toujours
+         *     croissant), et on insère après le premier élément dont
+         *     le t ≤ newT. Si tous sont plus récents (cas rare des
+         *     arrivées vraiment hors-ordre), on prepend.
+         *   - Évite la situation où une pastille "is connected" /
+         *     "is disconnected" arrive en retard et se colle à la
+         *     fin du chat alors qu'elle date d'avant les messages
+         *     déjà rendus. Le chat reste strictement chronologique
+         *     même quand Firebase / les listeners délivrent dans le
+         *     désordre.
+         */
+        function _insertChrono(container, div, t) {
+            const newT = Number(t) || 0;
+            div.dataset.msgT = String(newT);
+            const kids = container.children;
+            for (let i = kids.length - 1; i >= 0; i--) {
+                const ct = Number(kids[i].dataset.msgT) || 0;
+                if (ct <= newT) {
+                    kids[i].after(div);
+                    return;
+                }
+            }
+            container.prepend(div);
         }
 
         /* ------------------------------------------------------------------ *
@@ -10063,7 +10099,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     ?.addEventListener('click', e => { e.stopPropagation(); deleteMsg(key); });
             }
 
-            msgs.appendChild(div);
+            _insertChrono(msgs, div, msg.t);
             _chatScrollToBottom(instant);
         }
 
@@ -10129,7 +10165,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 80);
             });
-            msgs.appendChild(div);
+            _insertChrono(msgs, div, msg.t);
             _chatScrollToBottom(instant);
         }
 
@@ -10169,7 +10205,12 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     if (msg.event === 'leave') {
                         if (!_processLeaveEvent(msg, key, ts, instant)) return;
                     } else {
-                        _processJoinEvent(msg, key, ts);
+                        // Idem que leave : si _processJoinEvent rejette le
+                        // message (join out-of-order plus ancien que le
+                        // join déjà tracké), on ne le rend pas — sinon il
+                        // apparaîtrait furtivement avant que child_removed
+                        // ne le retire après le round-trip Firebase.
+                        if (!_processJoinEvent(msg, key, ts)) return;
                     }
                 }
                 renderSystemMessage(msg, key, instant);
@@ -10386,7 +10427,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 }
             }
 
-            msgs.appendChild(div);
+            _insertChrono(msgs, div, msg.t);
             // Si _patronsCache est arrivé après le render initial du message
             // (race courante : le module Support fetch après initChat), on
             // re-patche pour que le pill WTF PATRON apparaisse sans attendre
