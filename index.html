@@ -8234,27 +8234,31 @@ document.addEventListener('DOMContentLoaded', initialize);
                     Top rank · Most viewed · Most liked · Floor.
                  4) SAMPLES : 3 vignettes random pour donner un aperçu
                     du look des NFTs de la collection. -->
-            <div class="home-feat-v3-hero">
-                <div class="home-feat-v3-hero-bg"  style="background-image:url('${safeLogo}');"></div>
-                <div class="home-feat-v3-hero-img" style="background-image:url('${safeLogo}');"></div>
-                <div class="home-feat-v3-hero-tint"></div>
-                <span class="home-feat-v3-change" style="display:none;"></span>
-            </div>
-            <!-- Identité : strip propre SOUS la bannière. Le logo carré
-                 (positionné absolute) chevauche la bannière de moitié pour
-                 un look "profile header" type Twitter/Discord. Le nom et
-                 le créateur sont centrés horizontalement dans le strip. -->
-            <div class="home-feat-v3-identity">
-                <img class="home-feat-v3-logo" src="${safeLogo}" alt="" loading="lazy" onerror="this.style.opacity='0.25';this.style.background='rgba(255,255,255,0.05)';"/>
-                <div class="home-feat-v3-id-text">
-                    <span class="home-feat-v3-name-row">
-                        <span class="home-feat-v3-name">${col.name || '—'}</span>
-                    </span>
-                    <span class="home-feat-v3-creator home-feat-v3-creator--loading">
-                        <span class="home-feat-v3-creator-text">Loading…</span>
-                        <span class="home-feat-v3-verified-slot"></span>
-                    </span>
+            <!-- Wrapper qui permet au logo de chevaucher visuellement
+                 la frontière bannière/stats sans être clippé : hero
+                 garde overflow:hidden (à cause du bg blur scale 1.4),
+                 le logo est un sibling positionné absolute relativement
+                 au wrap. -->
+            <div class="home-feat-v3-hero-wrap">
+                <div class="home-feat-v3-hero">
+                    <div class="home-feat-v3-hero-bg"  style="background-image:url('${safeLogo}');"></div>
+                    <div class="home-feat-v3-hero-img" style="background-image:url('${safeLogo}');"></div>
+                    <div class="home-feat-v3-hero-tint"></div>
+                    <span class="home-feat-v3-change" style="display:none;"></span>
+                    <!-- Identité : OVERLAY centrée H+V sur la bannière
+                         (le logo n'est plus dans ce bloc, il est posé
+                         comme sibling du hero pour pouvoir déborder). -->
+                    <div class="home-feat-v3-identity">
+                        <span class="home-feat-v3-name-row">
+                            <span class="home-feat-v3-name">${col.name || '—'}</span>
+                        </span>
+                        <span class="home-feat-v3-creator home-feat-v3-creator--loading">
+                            <span class="home-feat-v3-creator-text">Loading…</span>
+                            <span class="home-feat-v3-verified-slot"></span>
+                        </span>
+                    </div>
                 </div>
+                <img class="home-feat-v3-logo" src="${safeLogo}" alt="" loading="lazy" onerror="this.style.opacity='0.25';this.style.background='rgba(255,255,255,0.05)';"/>
             </div>
             <!-- Stats inline juste sous la bannière. -->
             <div class="home-feat-v3-stats">
@@ -8337,7 +8341,7 @@ document.addEventListener('DOMContentLoaded', initialize);
             if (meta) {
                 const override = card.dataset.creatorOverride || '';
                 const textEl = meta.querySelector('.home-feat-v3-creator-text') || meta;
-                textEl.innerHTML = override ? `by <strong>${override}</strong>` : '&nbsp;';
+                textEl.innerHTML = override ? `<strong>${override}</strong>` : '&nbsp;';
             }
             return;
         }
@@ -8443,7 +8447,9 @@ document.addEventListener('DOMContentLoaded', initialize);
             // On écrit dans le sous-span dédié (.home-feat-v3-creator-text)
             // pour ne pas écraser le verified-slot voisin.
             const textEl = meta.querySelector('.home-feat-v3-creator-text') || meta;
-            textEl.innerHTML = creator ? `by <strong>${creator}</strong>` : '&nbsp;';
+            // Pas de "by " devant — le nom de l'artiste se suffit à
+            // lui-même, accompagné du checkmark vérifié (slot voisin).
+            textEl.innerHTML = creator ? `<strong>${creator}</strong>` : '&nbsp;';
         }
     }
 
@@ -8668,6 +8674,17 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             return `<img src="${_fcEsc(img)}" alt="${_fcEsc(a?.name || '')}" loading="lazy" onerror="this.style.opacity='0.2'"/>`;
         };
 
+        // Strip random : 8 vignettes carrées en bas du showcase pour
+        // donner un aperçu de la variété visuelle de la collection.
+        const samples = (data.samples || []).slice(0, 8);
+        const samplesHtml = samples.length ? `
+            <div class="home-feat-showcase-samples">
+                <span class="home-feat-showcase-strip-label">Sample NFTs</span>
+                <div class="home-feat-showcase-samples-row">
+                    ${samples.map(a => `<div class="home-feat-showcase-sample" title="${_fcEsc(a.name || '')}">${thumb(a)}</div>`).join('')}
+                </div>
+            </div>` : '';
+
         // Tuile compacte : thumb à gauche + 3 lignes de texte à droite
         // (label coloré · nom NFT · valeur principale). NFT name est
         // tronqué à 18 chars avec ellipsis pour ne pas péter le layout.
@@ -8718,7 +8735,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 ${tile('Floor Price', data.floor?.name      || '', fmtFloor(data.floor),                            data.floor,      'floor')}
             </div>`;
 
-        wrap.innerHTML = tilesHtml;
+        wrap.innerHTML = tilesHtml + samplesHtml;
     }
 
     async function buildFeatured() {
