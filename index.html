@@ -9799,8 +9799,14 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // ── Emoji reactions ─────────────────────────────────────────────────────
         // On utilise l'INDEX (0-5) comme data-emoji-idx pour éviter tout problème
         // d'encodage Unicode des emojis composés dans les attributs data-*.
-        const QUICK_EMOJIS = ['❤️','🤣','🤗','😮','🔥','👀','💎','👌','🙏'];
-        const EMOJI_KEYS   = ['heart','joy','hug','wow','fire','eyes','gem','ok','pray'];
+        // Ordre = priorité d'affichage : les 5 PREMIERS emojis sont
+        // visibles par défaut dans la barre de réactions, les 4 derniers
+        // sont cachés derrière le bouton "+" (cf. .home-chat-react-btn
+        // --secondary dans le CSS). Garde le set complet aligné avec
+        // les clés Firebase (rules valident toujours les 9).
+        const QUICK_EMOJIS = ['❤️','🤣','🔥','💎','👀','🙏','😮','🤗','👌'];
+        const EMOJI_KEYS   = ['heart','joy','fire','gem','eyes','pray','wow','hug','ok'];
+        const REACT_PRIMARY_COUNT = 5;
         let _reactionsListener = null;
         let _cachedReactions   = {};   // cache local pour les updates rapides
 
@@ -10478,10 +10484,13 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             if (msg.user) div.dataset.msgUser = msg.user;
             if (tokenPending) { div.dataset.certPending = userKey; div.dataset.certToken = msg.certToken; }
 
-            // Barre emoji flottante (style Discord) — index utilisé pour éviter les bugs Unicode
+            // Barre emoji flottante (style Discord) — index utilisé pour éviter les bugs Unicode.
+            // Les emojis d'index ≥ REACT_PRIMARY_COUNT (5) sont cachés
+            // par défaut et révélés au clic sur le bouton "+".
             const reactBarHtml = key ? `
                 <div class="home-chat-react-bar" aria-label="Quick reactions">
-                    ${QUICK_EMOJIS.map((e, i) => `<button class="home-chat-react-btn" type="button" data-emoji-idx="${i}" title="${e}">${e}</button>`).join('')}
+                    ${QUICK_EMOJIS.map((e, i) => `<button class="home-chat-react-btn${i >= REACT_PRIMARY_COUNT ? ' home-chat-react-btn--secondary' : ''}" type="button" data-emoji-idx="${i}" title="${e}">${e}</button>`).join('')}
+                    <button class="home-chat-react-more" type="button" title="More reactions" aria-label="More reactions">+</button>
                 </div>` : '';
 
             // Si le message porte un payload `collShare` (= partagé via
@@ -10662,6 +10671,11 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                         const idx = parseInt(btn.dataset.emojiIdx, 10);
                         toggleReaction(key, idx);
                     });
+                });
+                // Bouton "+" — révèle/cache les emojis secondaires de la barre.
+                div.querySelector('.home-chat-react-more')?.addEventListener('click', e => {
+                    e.stopPropagation();
+                    e.currentTarget.closest('.home-chat-react-bar')?.classList.toggle('is-expanded');
                 });
 
                 // Mobile : DOUBLE-TAP ou LONG-PRESS (~450ms) sur un
