@@ -13886,11 +13886,14 @@ body.is-profile-loading #profileLoadingOverlay * {
     padding: 12px 14px;
     display: flex;
     flex-direction: column;
-    /* 6px entre les bulles distinctes (groupes d'auteurs différents).
-       Resserré depuis 10px pour densifier le feed sans coller les
-       messages. La continuation utilise margin-top:-6px (cf. plus bas)
-       pour annuler exactement ce gap et fusionner avec la bulle parent. */
-    gap: 6px;
+    /* 10px = espacement de référence utilisé par les pastilles système
+       (--join / --leave / --update). Le resserrement community↔community
+       passe par .home-chat-msg--community + community { margin-top: -4px }
+       (cf. plus bas) pour ne pas toucher aux bulles système. La règle
+       plus spécifique .home-community-card .home-chat-messages utilise
+       la même valeur, donc continuation margin-top: -10px fonctionne
+       partout. */
+    gap: 10px;
     min-height: 0;
 }
 .home-chat-msg {
@@ -13952,22 +13955,38 @@ body.is-profile-loading #profileLoadingOverlay * {
    précédente (type Discord : une seule bulle continue par auteur). */
 .home-chat-msg--continuation .home-chat-msg-meta { display: none; }
 .home-chat-msg--continuation {
-    /* Annule exactement le gap parent (6px) pour que la continuation
-       touche la bulle précédente et fusionne avec elle. */
-    margin-top: -6px;
-    padding-top: 6px;
+    /* Annule le gap parent (10px, défini sur .home-community-card
+       .home-chat-messages) pour que la continuation touche la bulle
+       précédente : margins se chevauchent → 0 d'espace visible entre
+       les deux portions de la bulle mergée. padding-top: 0 supprime
+       toute respiration interne en haut de la continuation. */
+    margin-top: -10px;
+    padding-top: 0;
     border-top: 0;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
 }
-/* La bulle JUSTE AVANT une continuation perd sa bordure inférieure
-   et l'arrondi du bas — ainsi les deux portions partagent le même
-   contour et apparaissent comme une seule bulle. */
+/* La bulle JUSTE AVANT une continuation perd sa bordure inférieure,
+   l'arrondi du bas, ET son padding-bottom : avec padding-bottom: 0
+   + continuation à padding-top: 0, la jointure est strictement plate
+   (pas de respiration interne). */
 .home-chat-msg--community:has(+ .home-chat-msg--continuation) {
     border-bottom: 0;
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
-    padding-bottom: 4px;
+    padding-bottom: 0;
+}
+/* Resserre LÉGÈREMENT l'espace entre deux bulles community d'auteurs
+   différents (qui ne fusionnent pas). Le gap parent reste à 10px sur
+   .home-community-card .home-chat-messages (utilisé par les pastilles
+   système — bulles --join / --update / --leave — qu'on ne veut PAS
+   toucher) ; on tire juste les bulles community vers le haut de 4px
+   pour passer à un écart effectif de ~6px. La règle exclut les
+   continuations (qui ont leur propre marge -10px) et ne s'applique
+   qu'entre deux community successifs : système → community ou
+   community → système conservent leur 10px. */
+.home-chat-msg--community + .home-chat-msg--community:not(.home-chat-msg--continuation) {
+    margin-top: -4px;
 }
 .home-chat-msg--mine {
     background: rgba(0,179,255,0.07) !important;
@@ -29204,39 +29223,6 @@ body { box-sizing: border-box; }
     display: flex;
     align-items: center;
     justify-content: center;
-}
-/* Emojis secondaires (index ≥ 5) : cachés par défaut, révélés
-   lorsque la barre porte la classe .is-expanded (toggle via "+"). */
-.home-chat-react-btn--secondary { display: none; }
-.home-chat-react-bar.is-expanded .home-chat-react-btn--secondary { display: flex; }
-/* Bouton "+" — même look que les emoji-btn, ouvre/ferme la zone
-   secondaire. Devient cyan quand expanded pour signaler l'état actif. */
-.home-chat-react-more {
-    background: none;
-    border: none;
-    cursor: pointer;
-    width: 20px;
-    height: 20px;
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 1;
-    color: rgba(255, 255, 255, 0.55);
-    border-radius: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    transition: background 0.12s ease, color 0.12s ease, transform 0.15s ease;
-    flex-shrink: 0;
-}
-.home-chat-react-more:hover {
-    background: rgba(0, 179, 255, 0.15);
-    color: #00B3FF;
-}
-.home-chat-react-bar.is-expanded .home-chat-react-more {
-    color: #00B3FF;
-    transform: rotate(45deg); /* "+" → "x" visuel pour close */
 }
 .home-chat-react-btn:hover {
     transform: scale(1.3);
