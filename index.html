@@ -11666,6 +11666,24 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     if (document.activeElement === input) input.blur();
                 }
             }
+            // Hint visuel sur le tab du topnav qui pointe vers la même
+            // feature que la slide active : icône blanchie + léger fond.
+            // Sert de fil conducteur entre le Spotlight et l'onglet
+            // correspondant — sur mobile c'est particulièrement utile
+            // car les tabs n'ont pas de label texte. Skip pour les
+            // slides Profile/Collection Explorer qui n'ont pas de tab
+            // dédié (elles ouvrent la search bar à la place). Skip aussi
+            // si la home n'est pas le panel visible — le carousel cycle
+            // en arrière-plan mais le hint n'aurait aucun rapport avec
+            // ce que voit le user.
+            document.querySelectorAll('.topnav-tab--spotlight-hint')
+                .forEach(t => t.classList.remove('topnav-tab--spotlight-hint'));
+            const homePanel = document.getElementById('homePanel');
+            const homeVisible = homePanel && homePanel.style.display !== 'none';
+            if (homeVisible && newTarget && !isExplorerSlide) {
+                document.querySelector('.topnav-tab[data-tab="' + newTarget + '"]')
+                    ?.classList.add('topnav-tab--spotlight-hint');
+            }
         }
 
         function tick(now) {
@@ -11783,7 +11801,26 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             });
         });
 
-        // Lance le cycle
+        // Quand l'utilisateur navigue vers un autre onglet (Stats / Drops /
+        // Snapshot / etc.), on retire immédiatement le hint Spotlight des
+        // tabs — sinon il reste collé sur un tab le temps du prochain
+        // show() (jusqu'à 6.5s plus tard) pendant que le user est déjà
+        // ailleurs. Au retour sur Home, le prochain show() le réapplique.
+        document.querySelectorAll('.topnav-tab[data-tab]').forEach(tab => {
+            tab.addEventListener('click', () => {
+                if (tab.dataset.tab !== 'collections') {
+                    document.querySelectorAll('.topnav-tab--spotlight-hint')
+                        .forEach(t => t.classList.remove('topnav-tab--spotlight-hint'));
+                }
+            });
+        });
+
+        // Lance le cycle. show(active) au boot pour que les side-effects
+        // (hint sur le tab correspondant, etc.) s'appliquent dès le 1er
+        // paint — la slide a déjà la classe is-active dans le HTML mais
+        // show() n'a jamais tourné, donc les hints/animations dépendant
+        // de l'appel n'auraient pas fire.
+        show(active);
         raf = requestAnimationFrame(tick);
     }
 })();
