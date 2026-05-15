@@ -13886,8 +13886,13 @@ body.is-profile-loading #profileLoadingOverlay * {
     padding: 12px 14px;
     display: flex;
     flex-direction: column;
-    /* 10px entre les bulles — testé en mobile, c'est le compromis
-       entre "messages collés" (6/8) et "trop d'air" (12). */
+    /* 10px = espacement de référence utilisé par les pastilles système
+       (--join / --leave / --update). Le resserrement community↔community
+       passe par .home-chat-msg--community + community { margin-top: -4px }
+       (cf. plus bas) pour ne pas toucher aux bulles système. La règle
+       plus spécifique .home-community-card .home-chat-messages utilise
+       la même valeur, donc continuation margin-top: -10px fonctionne
+       partout. */
     gap: 10px;
     min-height: 0;
 }
@@ -13950,20 +13955,38 @@ body.is-profile-loading #profileLoadingOverlay * {
    précédente (type Discord : une seule bulle continue par auteur). */
 .home-chat-msg--continuation .home-chat-msg-meta { display: none; }
 .home-chat-msg--continuation {
+    /* Annule le gap parent (10px, défini sur .home-community-card
+       .home-chat-messages) pour que la continuation touche la bulle
+       précédente : margins se chevauchent → 0 d'espace visible entre
+       les deux portions de la bulle mergée. padding-top: 0 supprime
+       toute respiration interne en haut de la continuation. */
     margin-top: -10px;
-    padding-top: 6px;
+    padding-top: 0;
     border-top: 0;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
 }
-/* La bulle JUSTE AVANT une continuation perd sa bordure inférieure
-   et l'arrondi du bas — ainsi les deux portions partagent le même
-   contour et apparaissent comme une seule bulle. */
+/* La bulle JUSTE AVANT une continuation perd sa bordure inférieure,
+   l'arrondi du bas, ET son padding-bottom : avec padding-bottom: 0
+   + continuation à padding-top: 0, la jointure est strictement plate
+   (pas de respiration interne). */
 .home-chat-msg--community:has(+ .home-chat-msg--continuation) {
     border-bottom: 0;
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
-    padding-bottom: 4px;
+    padding-bottom: 0;
+}
+/* Resserre LÉGÈREMENT l'espace entre deux bulles community d'auteurs
+   différents (qui ne fusionnent pas). Le gap parent reste à 10px sur
+   .home-community-card .home-chat-messages (utilisé par les pastilles
+   système — bulles --join / --update / --leave — qu'on ne veut PAS
+   toucher) ; on tire juste les bulles community vers le haut de 4px
+   pour passer à un écart effectif de ~6px. La règle exclut les
+   continuations (qui ont leur propre marge -10px) et ne s'applique
+   qu'entre deux community successifs : système → community ou
+   community → système conservent leur 10px. */
+.home-chat-msg--community + .home-chat-msg--community:not(.home-chat-msg--continuation) {
+    margin-top: -4px;
 }
 .home-chat-msg--mine {
     background: rgba(0,179,255,0.07) !important;

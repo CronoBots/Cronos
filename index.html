@@ -9799,8 +9799,14 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // ── Emoji reactions ─────────────────────────────────────────────────────
         // On utilise l'INDEX (0-5) comme data-emoji-idx pour éviter tout problème
         // d'encodage Unicode des emojis composés dans les attributs data-*.
-        const QUICK_EMOJIS = ['❤️','🤣','🤗','😮','🔥','👀','💎','👌','🙏'];
-        const EMOJI_KEYS   = ['heart','joy','hug','wow','fire','eyes','gem','ok','pray'];
+        // Liste fixe de 8 emojis affichés en barre rapide. Garde
+        // l'alignement strict entre l'emoji visuel et la clé Firebase
+        // (les rules valident toujours les clés historiques 'heart'
+        // 'joy' 'fire' 'gem' 'eyes' 'pray' 'wow' 'hug' 'ok'). 'ok'
+        // (👌) reste validé côté Firebase pour les réactions
+        // anciennes, mais on ne l'expose plus dans la barre.
+        const QUICK_EMOJIS = ['❤️','🤣','🔥','💎','👀','🙏','😮','🤗'];
+        const EMOJI_KEYS   = ['heart','joy','fire','gem','eyes','pray','wow','hug'];
         let _reactionsListener = null;
         let _cachedReactions   = {};   // cache local pour les updates rapides
 
@@ -10478,7 +10484,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             if (msg.user) div.dataset.msgUser = msg.user;
             if (tokenPending) { div.dataset.certPending = userKey; div.dataset.certToken = msg.certToken; }
 
-            // Barre emoji flottante (style Discord) — index utilisé pour éviter les bugs Unicode
+            // Barre emoji flottante (style Discord) — index utilisé pour éviter les bugs Unicode.
             const reactBarHtml = key ? `
                 <div class="home-chat-react-bar" aria-label="Quick reactions">
                     ${QUICK_EMOJIS.map((e, i) => `<button class="home-chat-react-btn" type="button" data-emoji-idx="${i}" title="${e}">${e}</button>`).join('')}
