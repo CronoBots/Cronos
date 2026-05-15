@@ -10666,6 +10666,11 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             // re-patche pour que le pill WTF PATRON apparaisse sans attendre
             // un refresh.
             if (typeof window._patchPatronBadges === 'function') window._patchPatronBadges();
+            // Résolution async des chips `#word` inconnus (pas dans la
+            // cache locale). Fetch via fetchDropDown — couvre toutes
+            // les collections Crypto.com. Patch DOM en place ou unwrap
+            // en plain text si pas de match.
+            div.querySelectorAll('.home-chat-coll-chip-pending').forEach(_resolveAndPatchPendingChip);
             _chatScrollToBottom(instant);
             // Badge non-lus + mention sur l'icône Home — uniquement les
             // messages live (post-initial-load). Pas les messages chargés
@@ -10790,6 +10795,164 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         for (const c of CHAT_FEATURED_COLLS) {
             _chatCollByNorm.set(_normalizeCollName(c.name), { id: c.id, name: c.name, logo: c.logo });
         }
+        // Enrichit en arrière-plan les featured dont le logo hardcodé
+        // est manquant ou incertain : 1 fetchDropDown par name au boot
+        // pour récupérer la logo URL officielle Crypto.com et override
+        // la cache. Évite le `?` placeholder sur Loaded Mushroom etc.
+        // dès que le chat ouvre.
+        setTimeout(() => {
+            if (typeof fetchDropDown !== 'function') return;
+            CHAT_FEATURED_COLLS.forEach(async (c) => {
+                try {
+                    const data = await fetchDropDown(c.name);
+                    const cols = data?.collections || [];
+                    const hit  = cols.find(x => x && x.id === c.id);
+                    if (hit && hit.logo?.url) {
+                        const info = { id: c.id, name: c.name, logo: hit.logo.url };
+                        _chatCollByNorm.set(_normalizeCollName(c.name), info);
+                        // Patch les chips déjà rendues qui pointent vers cette coll.
+                        document.querySelectorAll('.home-chat-coll-chip[data-coll-id="' + c.id + '"] .home-chat-coll-chip-logo').forEach(el => {
+                            if (el.tagName === 'IMG') { el.src = hit.logo.url; }
+                            else {
+                                const img = document.createElement('img');
+                                img.className = 'home-chat-coll-chip-logo';
+                                img.src = hit.logo.url;
+                                img.alt = '';
+                                img.loading = 'lazy';
+                                el.replaceWith(img);
+                            }
+                        });
+                    }
+                } catch (_) {}
+            });
+        }, 0);
+
+        // Cache des résolutions par nom normalisé (positive ET négative)
+        // pour éviter de re-fetch en boucle un mot qui n'a pas de
+        // collection correspondante (ex : `#hello`).
+        const _chatCollResolveCache  = new Map();   // norm → info | null
+        const _chatCollResolveInflight = new Map(); // norm → Promise
+
+        /* Résolution live d'un `#word` via le même endpoint GraphQL que
+         * la search bar topnav (`fetchDropDown` — couvre toutes les
+         * collections Crypto.com NFT, pas juste les 4 featured).
+         *
+         *   - Cache positif : le 1er match exact (normalisé) est stocké
+         *     dans `_chatCollByNorm`.
+         *   - Cache négatif : si aucun match exact, on retient `null`
+         *     pour ne pas re-fetch à chaque message.
+         *   - Inflight dédupliqué : N rendus en parallèle pour le même
+         *     mot → un seul fetch réseau.
+         */
+        async function _resolveCollByName(rawName) {
+            const norm = _normalizeCollName(rawName);
+            if (!norm) return null;
+            if (_chatCollByNorm.has(norm)) return _chatCollByNorm.get(norm);
+            if (_chatCollResolveCache.has(norm)) return _chatCollResolveCache.get(norm);
+            if (_chatCollResolveInflight.has(norm)) return _chatCollResolveInflight.get(norm);
+            if (typeof fetchDropDown !== 'function') return null;
+            const p = (async () => {
+                try {
+                    const data = await fetchDropDown(rawName);
+                    const cols = data?.collections || [];
+                    for (const c of cols) {
+                        if (!c || !c.name) continue;
+                        if (_normalizeCollName(c.name) === norm) {
+                            const info = { id: c.id, name: c.name, logo: c.logo?.url || '' };
+                            _chatCollByNorm.set(norm, info);
+                            _chatCollResolveCache.set(norm, info);
+                            return info;
+                        }
+                    }
+                } catch (_) {}
+                _chatCollResolveCache.set(norm, null);
+                return null;
+            })();
+            _chatCollResolveInflight.set(norm, p);
+            try { return await p; }
+            finally { _chatCollResolveInflight.delete(norm); }
+        }
+
+        /* Patch un span `.home-chat-coll-chip-pending` après résolution
+         * async. Si match → on rebuild le innerHTML avec le format chip
+         * complet et on échange la classe. Si pas de match → on remplace
+         * le span par un text node `#word` (= comme s'il n'y avait pas
+         * eu de chip du tout, le mot reste lisible). */
+        async function _resolveAndPatchPendingChip(span) {
+            if (!span || span.dataset.resolved === '1') return;
+            span.dataset.resolved = '1';
+            const raw  = span.dataset.collRaw || '';
+            const norm = span.dataset.collNorm || _normalizeCollName(raw);
+            const info = await _resolveCollByName(raw);
+            if (!info) {
+                // Pas de collection trouvée → unwrap en text node.
+                const txt = document.createTextNode('#' + raw);
+                span.replaceWith(txt);
+                return;
+            }
+            const logo = info.logo || '';
+            const floor = (_chatCollFloorById.get(info.id) || {}).floor;
+            _fetchChatCollFloor(info.id);
+            const logoHtml = logo
+                ? '<img class="home-chat-coll-chip-logo" src="' + _fcEsc(logo) + '" alt="" loading="lazy"/>'
+                : '<span class="home-chat-coll-chip-logo home-chat-coll-chip-logo--empty"></span>';
+            const floorVal = floor
+                ? '$' + floor.toFixed(0)
+                : '<span class="home-chat-coll-chip-floor-loading">…</span>';
+            span.className = 'home-chat-coll-chip';
+            span.dataset.collId = info.id;
+            span.setAttribute('role', 'button');
+            span.setAttribute('tabindex', '0');
+            span.setAttribute('title', 'Open ' + info.name);
+            span.innerHTML =
+                logoHtml +
+                '<span class="home-chat-coll-chip-name">' + _fcEsc(info.name) + '</span>' +
+                '<span class="home-chat-coll-chip-sep">·</span>' +
+                '<span class="home-chat-coll-chip-floor">' +
+                    '<span class="home-chat-coll-chip-floor-label">Floor Price</span>' +
+                    '<span class="home-chat-coll-chip-floor-val">' + floorVal + '</span>' +
+                '</span>';
+        }
+
+        /* Recherche live pour l'autocomplete : renvoie jusqu'à `limit`
+         * collections matchant la query (préfixe ou substring). Utilise
+         * fetchDropDown qui ne tire que si la query a ≥3 caractères côté
+         * Crypto.com. Pour <3 chars on retourne juste les featured. */
+        async function _searchCollsLive(q, limit) {
+            const norm = _normalizeCollName(q);
+            // 1) Subset local instantané (featured + cache déjà résolus).
+            const localById = new Map();
+            _chatCollByNorm.forEach((info) => {
+                if (!norm || _normalizeCollName(info.name).includes(norm)) {
+                    localById.set(info.id, info);
+                }
+            });
+            // 2) Live search si la query a ≥3 chars. On MERGE en
+            //    privilégiant la version live (logo officiel) — sinon
+            //    les featured avec un logo vide / périmé restent à `?`.
+            if (q && q.length >= 3 && typeof fetchDropDown === 'function') {
+                try {
+                    const data = await fetchDropDown(q);
+                    const cols = data?.collections || [];
+                    for (const c of cols) {
+                        if (!c || !c.id || !c.name) continue;
+                        const liveLogo = c.logo?.url || '';
+                        const existing = localById.get(c.id);
+                        // Override le local si le live a un logo et que
+                        // le local n'en avait pas (ou l'inverse, juste
+                        // pour s'aligner sur la version Crypto.com).
+                        const merged = {
+                            id:   c.id,
+                            name: c.name,
+                            logo: liveLogo || (existing && existing.logo) || ''
+                        };
+                        _chatCollByNorm.set(_normalizeCollName(c.name), merged);
+                        localById.set(c.id, merged);
+                    }
+                } catch (_) {}
+            }
+            return Array.from(localById.values()).slice(0, limit || 6);
+        }
 
         // Requête GraphQL minimale pour le floor — inlined pour ne pas
         // dépendre du Q_METRIC déclaré dans un autre IIFE.
@@ -10870,7 +11033,11 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     // (`#LoadedLions`, `#CRONOSWTF`, `#loaded_lions`) puis
                     // on normalise et on cherche un match. Si trouvé →
                     // chip cliquable avec logo + nom (+ floor si dispo).
-                    // Sinon : on laisse `#word` tel quel.
+                    // Sinon : on émet un placeholder `pending` qui sera
+                    // résolu async via fetchDropDown (couvre toutes les
+                    // collections Crypto.com, pas juste les featured).
+                    // Si la résolution échoue (mot inconnu), le
+                    // placeholder est unwrap en plain `#word` text.
                     const cm = /^#([A-Za-z0-9_]{2,40})/.exec(text.substr(i));
                     if (cm) {
                         const raw = cm[1];
@@ -10881,16 +11048,10 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                             const name  = info.name;
                             const logo  = info.logo || '';
                             const floor = (_chatCollFloorById.get(id) || {}).floor;
-                            // Trigger lazy fetch du floor (no-op si déjà
-                            // en cache ou en cours).
                             _fetchChatCollFloor(id);
                             const logoHtml = logo
                                 ? '<img class="home-chat-coll-chip-logo" src="' + _fcEsc(logo) + '" alt="" loading="lazy"/>'
                                 : '<span class="home-chat-coll-chip-logo home-chat-coll-chip-logo--empty"></span>';
-                            // Format demandé : photo · nom · "Floor Price : $X".
-                            // Le label "FLOOR PRICE" reste visible même quand
-                            // la valeur n'est pas encore chargée — on affiche
-                            // `…` à la place du prix le temps du fetch GraphQL.
                             const floorVal = floor
                                 ? '$' + floor.toFixed(0)
                                 : '<span class="home-chat-coll-chip-floor-loading">…</span>';
@@ -10904,6 +11065,20 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                                         '<span class="home-chat-coll-chip-floor-val">' + floorVal + '</span>' +
                                     '</span>' +
                                 '</span>'
+                            );
+                            i += 1 + raw.length;
+                            continue;
+                        }
+                        // Cache miss : on émet un placeholder. Une passe
+                        // post-render appellera _resolveCollByName et
+                        // patchera le DOM en chip riche (ou unwrap si pas
+                        // de collection matching).
+                        if (_chatCollResolveCache.get(norm) === null) {
+                            // Cache négatif connu — pas la peine de tenter,
+                            // on laisse `#word` en plain text.
+                        } else {
+                            out.push(
+                                '<span class="home-chat-coll-chip-pending" data-coll-raw="' + _fcEsc(raw) + '" data-coll-norm="' + _fcEsc(norm) + '">#' + _fcEsc(raw) + '</span>'
                             );
                             i += 1 + raw.length;
                             continue;
@@ -12129,17 +12304,35 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 // Trigger lazy floor fetch pour les colls affichées sans floor cache.
                 matches.slice(0, 6).forEach(c => _fetchChatCollFloor(c.id));
             }
+            let _refreshTimer = null;
+            let _refreshSeq   = 0;
             function _refresh() {
                 const ctx = _readHashContext();
                 if (!ctx) { _hide(); return; }
-                const q = _normalizeCollName(ctx.partial);
-                const all = _allColls();
-                // q vide (vient de taper `#`) → on liste TOUT (4 collections,
-                // ce qui est court). Sinon filtre normalisé.
-                const matches = q
-                    ? all.filter(c => _normalizeCollName(c.name).includes(q))
-                    : all;
-                _render(matches);
+                const partial = ctx.partial;
+                // Affichage instantané du subset local (featured + cache).
+                // Permet une réponse immédiate visuellement avant la live
+                // search qui ajoute ensuite les résultats Crypto.com.
+                const localMatches = _allColls().filter(c => {
+                    if (!partial) return true;
+                    return _normalizeCollName(c.name).includes(_normalizeCollName(partial));
+                });
+                _render(localMatches);
+                // Debounce 220 ms puis live search (couvre toutes les
+                // collections Crypto.com, pas juste les featured).
+                clearTimeout(_refreshTimer);
+                const seq = ++_refreshSeq;
+                _refreshTimer = setTimeout(async () => {
+                    // Si l'utilisateur a tapé entre-temps OU si le ctx a
+                    // disparu (espace après le `#`), on annule.
+                    if (seq !== _refreshSeq) return;
+                    const ctx2 = _readHashContext();
+                    if (!ctx2) { _hide(); return; }
+                    const liveMatches = await _searchCollsLive(ctx2.partial, 6);
+                    if (seq !== _refreshSeq) return;
+                    if (!liveMatches.length) { _hide(); return; }
+                    _render(liveMatches);
+                }, 220);
             }
             function _pick(idx) {
                 const c = activeMatches[idx];
