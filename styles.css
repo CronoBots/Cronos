@@ -14785,10 +14785,10 @@ body.is-profile-loading #profileLoadingOverlay * {
     border-radius: 50%;
     object-fit: cover;
     background: rgba(0, 179, 255, 0.18);
-    /* Contour blanc autour du logo (request user) — mêmes proportions
-       que le contour de l'avatar artist sur la home. */
-    border: 1.5px solid rgba(255, 255, 255, 0.95);
-    box-shadow: 0 0 6px rgba(255, 255, 255, 0.18);
+    /* Épaisseur de contour alignée sur l'avatar user (.home-chat-msg-avatar
+       → 1px cyan-translucent). Demande user : « même épaisseur que
+       l'image de profil de l'utilisateur qui envoie le message ». */
+    border: 1px solid rgba(0, 179, 255, 0.45);
     flex-shrink: 0;
     display: block;
 }
@@ -14852,8 +14852,7 @@ body.is-profile-loading #profileLoadingOverlay * {
     border-radius: 50%;
     object-fit: cover;
     background: rgba(0, 179, 255, 0.18);
-    border: 1.5px solid rgba(255, 255, 255, 0.95);
-    box-shadow: 0 0 6px rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(0, 179, 255, 0.45);
     flex-shrink: 0;
     display: block;
 }
@@ -14881,6 +14880,148 @@ body.is-profile-loading #profileLoadingOverlay * {
     font-size: 9.5px;
     color: rgba(0, 179, 255, 0.85);
     letter-spacing: 0.04em;
+}
+
+/* ── Collection share message ── bulle jaune (variante du message
+   communautaire) avec une carte logo + nom + stats + CTA. Déclenchée
+   par sendCollectionShare quand l'utilisateur sélectionne une coll
+   dans l'autocomplete `#`. Le badge top-right reste cyan, seul le
+   fond du body switch en or pour identifier visuellement la nature
+   "share" du message. */
+.home-chat-msg--community.home-chat-msg--coll-share {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.10) 0%, rgba(251, 191, 36, 0.04) 100%);
+    border-color: rgba(251, 191, 36, 0.32);
+}
+.home-chat-msg--community.home-chat-msg--coll-share:hover {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.14) 0%, rgba(251, 191, 36, 0.06) 100%);
+    border-color: rgba(251, 191, 36, 0.48);
+}
+.home-chat-coll-share {
+    display: flex;
+    gap: 14px;
+    padding: 12px 12px 12px 14px;
+    margin-top: 8px;
+    background: rgba(7, 14, 28, 0.32);
+    border: 1px solid rgba(251, 191, 36, 0.28);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.18s, border-color 0.18s;
+    -webkit-tap-highlight-color: transparent;
+}
+.home-chat-coll-share:hover,
+.home-chat-coll-share:focus-visible {
+    background: rgba(7, 14, 28, 0.48);
+    border-color: rgba(251, 191, 36, 0.55);
+    outline: none;
+}
+.home-chat-coll-share-logo {
+    width: 56px; height: 56px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: rgba(251, 191, 36, 0.12);
+    /* Même épaisseur 1px que .home-chat-msg-avatar — demande user :
+       « contour de l'image de collection même épaisseur que l'image
+       de profil de l'utilisateur qui envoie le message ». */
+    border: 1px solid rgba(251, 191, 36, 0.55);
+    flex-shrink: 0;
+    align-self: flex-start;
+}
+.home-chat-coll-share-logo--empty {
+    background: rgba(251, 191, 36, 0.18);
+}
+.home-chat-coll-share-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    flex: 1;
+}
+.home-chat-coll-share-name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.home-chat-coll-share-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.home-chat-coll-share-verified {
+    width: 13px; height: 13px;
+    flex-shrink: 0;
+}
+.home-chat-coll-share-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+}
+.home-chat-coll-share-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+.home-chat-coll-share-stat-label {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 8.5px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(251, 191, 36, 0.85);
+    line-height: 1;
+}
+.home-chat-coll-share-stat-val {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.1;
+}
+.home-chat-coll-share-loading {
+    color: rgba(255, 255, 255, 0.45);
+    font-weight: 600;
+}
+.home-chat-coll-share-cta {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+    padding: 6px 12px;
+    background: rgba(251, 191, 36, 0.18);
+    border: 1px solid rgba(251, 191, 36, 0.55);
+    border-radius: 999px;
+    color: #fcd34d;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.home-chat-coll-share-cta:hover {
+    background: rgba(251, 191, 36, 0.30);
+    border-color: rgba(251, 191, 36, 0.85);
+    color: #fff;
+}
+@media (max-width: 600px) {
+    .home-chat-coll-share {
+        gap: 10px;
+        padding: 10px 10px 10px 12px;
+    }
+    .home-chat-coll-share-logo {
+        width: 48px; height: 48px;
+        border-radius: 10px;
+    }
+    .home-chat-coll-share-name { font-size: 13px; }
+    .home-chat-coll-share-stats { gap: 12px; }
+    .home-chat-coll-share-stat-val { font-size: 12px; }
 }
 
 /* ── Pinned message ── Bannière en haut du chat (hors scroll des

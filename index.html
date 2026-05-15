@@ -10472,6 +10472,57 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     ${QUICK_EMOJIS.map((e, i) => `<button class="home-chat-react-btn" type="button" data-emoji-idx="${i}" title="${e}">${e}</button>`).join('')}
                 </div>` : '';
 
+            // Si le message porte un payload `collShare` (= partagé via
+            // l'autocomplete `#`), on rend une carte enrichie en lieu et
+            // place du body texte. La bulle prend une teinte jaune pour
+            // distinguer ces shares des messages textes classiques.
+            const collShare = msg.collShare && msg.collShare.id && msg.collShare.name ? msg.collShare : null;
+            if (collShare) {
+                div.classList.add('home-chat-msg--coll-share');
+                // Trigger lazy floor fetch.
+                _fetchChatCollFloor(collShare.id);
+            }
+            const cs = collShare;
+            const csFloor = cs ? (_chatCollFloorById.get(cs.id) || {}).floor : null;
+            const csLogoHtml = cs
+                ? (cs.logo
+                    ? '<img class="home-chat-coll-share-logo" src="' + _fcEsc(cs.logo) + '" alt="" loading="lazy"/>'
+                    : '<span class="home-chat-coll-share-logo home-chat-coll-share-logo--empty"></span>')
+                : '';
+            const csVerifiedHtml = cs && cs.verified
+                ? '<svg class="home-chat-coll-share-verified" viewBox="0 0 20 20" fill="none" aria-label="Verified"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+                : '';
+            const csFloorVal = csFloor
+                ? '$' + csFloor.toFixed(0)
+                : '<span class="home-chat-coll-share-loading">…</span>';
+            const csItemsTxt = (cs && cs.items)
+                ? Number(cs.items).toLocaleString() + ' items'
+                : '';
+            const collShareHtml = cs ? (
+                '<div class="home-chat-coll-share" data-coll-id="' + _fcEsc(cs.id) + '" role="button" tabindex="0" title="Open ' + _fcEsc(cs.name) + '">' +
+                    csLogoHtml +
+                    '<div class="home-chat-coll-share-body">' +
+                        '<div class="home-chat-coll-share-name-row">' +
+                            '<span class="home-chat-coll-share-name">' + _fcEsc(cs.name) + '</span>' +
+                            csVerifiedHtml +
+                        '</div>' +
+                        '<div class="home-chat-coll-share-stats">' +
+                            '<span class="home-chat-coll-share-stat">' +
+                                '<span class="home-chat-coll-share-stat-label">Floor Price</span>' +
+                                '<span class="home-chat-coll-share-stat-val">' + csFloorVal + '</span>' +
+                            '</span>' +
+                            (csItemsTxt
+                                ? '<span class="home-chat-coll-share-stat">' +
+                                      '<span class="home-chat-coll-share-stat-label">Supply</span>' +
+                                      '<span class="home-chat-coll-share-stat-val">' + _fcEsc(csItemsTxt) + '</span>' +
+                                  '</span>'
+                                : '') +
+                        '</div>' +
+                        '<button class="home-chat-coll-share-cta" type="button">View Collection <span aria-hidden="true">→</span></button>' +
+                    '</div>' +
+                '</div>'
+            ) : '';
+
             // Bloc "quote" si le message répond à un autre — affiché en
             // tête du body avec auteur + extrait du message cité.
             const quoteHtml = msg.replyTo && (msg.replyTo.text || msg.replyTo.user) ? `
@@ -10523,7 +10574,9 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     </span>
                 </div>
                 ${quoteHtml}
-                <div class="home-chat-msg-body">${formatChatBody(msg.text || '', me?.username)}</div>
+                ${collShare
+                    ? collShareHtml
+                    : '<div class="home-chat-msg-body">' + formatChatBody(msg.text || '', me?.username) + '</div>'}
                 ${actionsHtml}
                 <div class="home-chat-reactions" style="display:none;"></div>
             `;
@@ -10980,11 +11033,8 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 const m = json?.data?.public?.collectionMetric;
                 const floor = m ? Number(m.minSaleListingPriceDecimal) : null;
                 _chatCollFloorById.set(id, { floor: (floor && floor > 0) ? floor : null, fetchedAt: Date.now() });
-                // Mise à jour des chips déjà rendues pour cette collection :
-                // patch le sous-élément `…-floor-val` avec le nouveau prix
-                // (ou retire toute la pastille `…-floor` si le floor est
-                // null — collection sans listings actifs).
                 const info = _chatCollFloorById.get(id);
+                // Patch chips inline `#name`.
                 document.querySelectorAll('.home-chat-coll-chip[data-coll-id="' + id + '"]').forEach(el => {
                     const valEl  = el.querySelector('.home-chat-coll-chip-floor-val');
                     const wrapEl = el.querySelector('.home-chat-coll-chip-floor');
@@ -10992,11 +11042,23 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     if (info && info.floor && valEl) {
                         valEl.textContent = '$' + info.floor.toFixed(0);
                     } else if (wrapEl && sepEl) {
-                        // Floor absent → on retire la pastille pour ne pas
-                        // afficher "Floor Price …" qui resterait à
-                        // l'écran indéfiniment.
                         wrapEl.remove();
                         sepEl.remove();
+                    }
+                });
+                // Patch cartes collShare (bulle jaune).
+                document.querySelectorAll('.home-chat-coll-share[data-coll-id="' + id + '"]').forEach(el => {
+                    // Le 1er stat est toujours Floor Price.
+                    const firstStat = el.querySelector('.home-chat-coll-share-stat');
+                    if (!firstStat) return;
+                    const valEl = firstStat.querySelector('.home-chat-coll-share-stat-val');
+                    if (!valEl) return;
+                    if (info && info.floor) {
+                        valEl.textContent = '$' + info.floor.toFixed(0);
+                    } else {
+                        // Floor absent → on remplace par un tiret pour
+                        // ne pas laisser "…" infini.
+                        valEl.textContent = '—';
                     }
                 });
             } catch (_) { /* silent — chip stays without floor */ }
@@ -11855,6 +11917,47 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             btn.title = _soundEnabled ? 'Notification sound on' : 'Notification sound off';
         }
 
+        /* ============================================================ *
+         * COLLECTION SHARE                                             *
+         * Publie un message structuré "collection share" (bulle jaune  *
+         * avec carte logo + nom + floor + items + CTA). Déclenché par  *
+         * la sélection dans l'autocomplete `#`. Le texte `#NormName`   *
+         * reste rempli pour rétro-compatibilité avec les anciens       *
+         * clients qui n'auraient pas la branche de render `collShare`. *
+         * ============================================================ */
+        async function sendCollectionShare(coll) {
+            const user = getCurrentUser();
+            if (!user || !fbDb || !coll || !coll.id) return;
+            // Rate limit partagé avec sendMessage().
+            const now = Date.now();
+            if (now - lastSendAt < 500) return;
+            lastSendAt = now;
+            _clearTyping();
+            try {
+                const payload = {
+                    user:      user.username,
+                    display:   user.displayName || user.username,
+                    // Texte fallback pour les anciens clients : ils
+                    // verront le chip inline classique généré par
+                    // formatChatBody. Les nouveaux clients privilégient
+                    // le bloc collShare.
+                    text:      '#' + _normalizeCollName(coll.name),
+                    certToken: user.certToken || null,
+                    collShare: {
+                        id:    coll.id,
+                        name:  coll.name,
+                        logo:  coll.logo || '',
+                        verified: !!coll.verified,
+                        items: (coll.metrics && coll.metrics.items) ? Number(coll.metrics.items) : null
+                    },
+                    t:         firebase.database.ServerValue.TIMESTAMP
+                };
+                await fbDb.ref('chat/messages').push(payload);
+            } catch (e) {
+                console.error('[Community chat] collShare push failed:', e);
+            }
+        }
+
         async function sendMessage() {
             const user = getCurrentUser();
             if (!user || !fbDb || !input) return;
@@ -11941,9 +12044,17 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // `#CollectionName` → ouvre le panel Collections sur cette
         // collection via loadCollectionById (déjà exposé en global).
         const _openCollChipFromEvent = (ev) => {
-            const chip = ev.target.closest?.('.home-chat-coll-chip');
-            if (!chip) return;
-            const id = chip.dataset.collId;
+            // Couvre 3 cas : chip inline `#name`, carte collShare (bulle
+            // jaune complète), bouton CTA "View Collection →". Tous
+            // remontent par closest jusqu'à un élément avec data-coll-id.
+            const target = ev.target.closest?.(
+                '.home-chat-coll-chip, .home-chat-coll-share, .home-chat-coll-share-cta'
+            );
+            if (!target) return;
+            // Le CTA est nested dans .home-chat-coll-share — on retombe
+            // sur le parent pour récupérer le data-coll-id.
+            const owner = target.closest('[data-coll-id]');
+            const id = owner?.dataset.collId;
             if (!id) return;
             ev.preventDefault();
             ev.stopPropagation();
@@ -11956,7 +12067,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         msgs?.addEventListener('click', _openCollChipFromEvent);
         msgs?.addEventListener('keydown', (ev) => {
             if (ev.key !== 'Enter' && ev.key !== ' ') return;
-            if (!ev.target.closest?.('.home-chat-coll-chip')) return;
+            if (!ev.target.closest?.('.home-chat-coll-chip, .home-chat-coll-share, .home-chat-coll-share-cta')) return;
             _openCollChipFromEvent(ev);
         });
         // Pinned banner : click → scroll vers l'original. Bouton × →
@@ -12339,18 +12450,21 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 if (!c) return;
                 const ctx = _readHashContext();
                 if (!ctx) { _hide(); return; }
-                // Insert `#NormalizedName ` (sans espace dans le name pour
-                // que formatChatBody le matche au render).
+                // Sur sélection, on retire le `#partial` du input et on
+                // PUBLIE directement un message "collection share"
+                // structuré (request user) : pas besoin que l'utilisateur
+                // tape Enter ensuite. La fonction sendCollectionShare()
+                // écrit dans Firebase un message avec un payload spécial
+                // `collShare` que renderMessage détecte pour afficher la
+                // bulle jaune avec logo + Floor + items + CTA.
                 const before = (input.value || '').slice(0, ctx.start);
                 const after  = (input.value || '').slice(ctx.end);
-                const token  = '#' + _normalizeCollName(c.name);
-                input.value = before + token + ' ' + after;
-                try {
-                    const newPos = (before + token + ' ').length;
-                    input.setSelectionRange(newPos, newPos);
-                } catch (_) {}
-                input.focus();
+                input.value = (before + after).trim();
                 _hide();
+                input.focus();
+                if (typeof sendCollectionShare === 'function') {
+                    sendCollectionShare(c);
+                }
             }
 
             input.addEventListener('input', _refresh);
