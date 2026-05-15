@@ -14357,6 +14357,29 @@ body.is-profile-loading #profileLoadingOverlay * {
     color: rgba(255,255,255,0.25);
     font-style: italic;
 }
+/* Override mobile : sur viewports étroits (~360-720px), le cluster
+   avatar + pseudo + ✓ + badge + timestamp ne tient pas sur une seule
+   ligne avec les tailles bumped (cf. PR #113), et le pseudo se fait
+   tronquer ("CRONOS WTF" → "CRONOS ..."). On adoucit légèrement
+   pseudo + badges + paddings pour redonner ~10px de marge horizontale
+   sur le pseudo, sans toucher au rendu desktop. translateY recalibré
+   sur la cap-line de la nouvelle taille 12px. */
+@media (max-width: 720px) {
+    .home-chat-msg-user { font-size: 12px; }
+    .home-chat-msg-user-wrap .chat-verified-badge {
+        transform: translateY(-1.5px);
+        width: 14px; height: 14px; min-width: 14px;
+    }
+    .chat-creator-badge,
+    .chat-og-badge,
+    .chat-patron-badge {
+        font-size: 9px;
+        padding: 2px 6px 1px;
+        transform: translateY(-1.5px);
+    }
+    /* Mention pill garde le clamp à la taille du pseudo. */
+    .home-chat-mention { font-size: 12px; }
+}
 /* Toolbar unifié — wrapper qui contient à la fois les actions
    (reply/pin/edit/delete) ET la barre quick-emoji. Positionné en
    overlay au-dessus du message (style Discord), ancré au coin
