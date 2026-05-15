@@ -11274,6 +11274,20 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // Chaque ligne porte data-mention-username + role="button" → clic =
         // mentionne le membre dans l'input chat (cf. event delegation plus
         // bas dans initChat).
+        // Helper "Xs ago / Xm ago / Xh ago / Xd ago" — duplique
+        // exactement le timeAgo() global (~ligne 13038 utilisé par les
+        // cartes Market Bot) mais inliné ici parce que ce bloc <script>
+        // est séparé du suivant, donc la version globale n'est PAS
+        // accessible depuis cette closure (bug live : ReferenceError
+        // crashait tout le innerHTML de renderAvatarStack → sidebar
+        // vide pour l'admin).
+        function _chatTimeAgo(ts) {
+            const diff = (Date.now() - Number(ts)) / 1000;
+            if (diff < 60)    return Math.round(diff)        + 's ago';
+            if (diff < 3600)  return Math.round(diff / 60)   + 'm ago';
+            if (diff < 86400) return Math.round(diff / 3600) + 'h ago';
+            return Math.round(diff / 86400) + 'd ago';
+        }
         function renderAvatarStack(container, members, max, isOffline) {
             if (!container) return;
             if (!members || members.length === 0) {
@@ -11341,7 +11355,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     // Market Bot. timeAgo() est défini plus haut dans le
                     // fichier (~ligne 13009), accessible globalement.
                     const lastSeenHtml = (showLastSeen && m.lastSeen)
-                        ? `<span class="home-chat-member-lastseen" title="Last seen ${new Date(Number(m.lastSeen)).toLocaleString()}">${timeAgo(Number(m.lastSeen))}</span>`
+                        ? `<span class="home-chat-member-lastseen" title="Last seen ${new Date(Number(m.lastSeen)).toLocaleString()}">${_chatTimeAgo(Number(m.lastSeen))}</span>`
                         : '';
                     return `
                     <div class="home-chat-member${offCls}${isCertified ? ' home-chat-member--certified' : ''}" data-mention-username="${_fcEsc(uname)}" data-mention-display="${_fcEsc(dname)}" role="button" tabindex="0" title="Mention @${_fcEsc(dname)} in chat">
