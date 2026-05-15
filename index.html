@@ -10760,6 +10760,73 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
          *     correspondent à personne en cache (typage libre).
          *  4) Le contenu de la pill est toujours le *display name* trouvé
          *     dans le cache (inversion username→display si nécessaire). */
+        /* ── Collection chip cache & resolver ──
+         * Map (normalisée→{id, name, logo, floor}) construite au boot
+         * depuis FEATURED (cf. la liste éditoriale du home) + remplie
+         * dynamiquement par les fetches qu'on déclenche au render.
+         * `normalize(name)` retire espaces / underscores / dots et
+         * passe en lower → permet de matcher `#LoadedLions`,
+         * `#loaded_lions`, `#LOADEDLIONS` sur la même collection.
+         * Le floor est cachée par id et hydratée 1× / session via
+         * Q_METRIC (GraphQL existant) au 1er match. */
+        const _chatCollByNorm = new Map();
+        const _chatCollFloorById = new Map();   // id → {floor, fetchedAt}
+        const _chatCollPendingFetch = new Set(); // id en cours de fetch
+        const _CHAT_COLL_FLOOR_TTL_MS = 5 * 60 * 1000; // 5 min
+        function _normalizeCollName(s) {
+            return String(s || '').toLowerCase().replace(/[\s._\-]/g, '');
+        }
+        // Liste éditoriale des collections matchables via `#Name` dans
+        // le chat. Hardcodée ici parce que la `FEATURED` globale du
+        // module home est encapsulée dans son propre IIFE et non
+        // exposée. Source de vérité unique : la liste éditoriale du
+        // home featured spotlight (cf. autour de la ligne 8157).
+        const CHAT_FEATURED_COLLS = [
+            { id: '82421cf8e15df0edcaa200af752a344f', name: 'Loaded Lions',    logo: 'https://media.nft.crypto.com/273dc24c-5b5f-45d9-83d3-5db578bdce79/original.gif' },
+            { id: '40af4533404b6dc586cf847f46810372', name: 'Loaded Pixel',    logo: 'https://media.nft.crypto.com/e7dc8e5d-5773-4dbb-a5ba-7c69e76e8960/original.gif' },
+            { id: '0281887cff39c6e2d790a2e716f84686', name: 'Loaded Mushroom', logo: '' },
+            { id: '2ec243b8746154fd9dc1c892d7f54fe9', name: 'CRONOS.WTF',      logo: 'https://media.nft.crypto.com/22b0261a-8c1a-4fe3-a76e-9e6b90e43b8d/original.png' }
+        ];
+        for (const c of CHAT_FEATURED_COLLS) {
+            _chatCollByNorm.set(_normalizeCollName(c.name), { id: c.id, name: c.name, logo: c.logo });
+        }
+
+        // Requête GraphQL minimale pour le floor — inlined pour ne pas
+        // dépendre du Q_METRIC déclaré dans un autre IIFE.
+        const _CHAT_GQL_FLOOR_Q = 'query GetCollectionMetric($collectionId: ID!) { public { collectionMetric(id: $collectionId) { minSaleListingPriceDecimal } } }';
+        const _CHAT_GQL_ENDPOINT = (typeof graphqlEndpoint === 'string')
+            ? graphqlEndpoint
+            : 'https://crypto.com/nft-api/graphql';
+
+        async function _fetchChatCollFloor(id) {
+            if (!id || _chatCollPendingFetch.has(id)) return;
+            const cached = _chatCollFloorById.get(id);
+            if (cached && Date.now() - cached.fetchedAt < _CHAT_COLL_FLOOR_TTL_MS) return;
+            _chatCollPendingFetch.add(id);
+            try {
+                const res = await fetch(_CHAT_GQL_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        operationName: 'GetCollectionMetric',
+                        variables: { collectionId: id },
+                        query: _CHAT_GQL_FLOOR_Q
+                    })
+                });
+                const json = await res.json();
+                const m = json?.data?.public?.collectionMetric;
+                const floor = m ? Number(m.minSaleListingPriceDecimal) : null;
+                _chatCollFloorById.set(id, { floor: (floor && floor > 0) ? floor : null, fetchedAt: Date.now() });
+                // Mise à jour des chips déjà rendues pour cette collection.
+                document.querySelectorAll('.home-chat-coll-chip[data-coll-id="' + id + '"]').forEach(el => {
+                    const fe = el.querySelector('.home-chat-coll-chip-floor');
+                    const info = _chatCollFloorById.get(id);
+                    if (fe && info && info.floor) fe.textContent = '· $' + info.floor.toFixed(0);
+                });
+            } catch (_) { /* silent — chip stays without floor */ }
+            finally { _chatCollPendingFetch.delete(id); }
+        }
+
         function formatChatBody(text, myUsername) {
             if (!text) return '';
 
@@ -10785,6 +10852,43 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             const out = [];
             let i = 0;
             while (i < text.length) {
+                if (text[i] === '#') {
+                    // Collection mention : on capture la suite alphanum
+                    // (`#LoadedLions`, `#CRONOSWTF`, `#loaded_lions`) puis
+                    // on normalise et on cherche un match. Si trouvé →
+                    // chip cliquable avec logo + nom (+ floor si dispo).
+                    // Sinon : on laisse `#word` tel quel.
+                    const cm = /^#([A-Za-z0-9_]{2,40})/.exec(text.substr(i));
+                    if (cm) {
+                        const raw = cm[1];
+                        const norm = _normalizeCollName(raw);
+                        const info = _chatCollByNorm.get(norm);
+                        if (info) {
+                            const id    = info.id;
+                            const name  = info.name;
+                            const logo  = info.logo || '';
+                            const floor = (_chatCollFloorById.get(id) || {}).floor;
+                            // Trigger lazy fetch du floor (no-op si déjà
+                            // en cache ou en cours).
+                            _fetchChatCollFloor(id);
+                            const logoHtml = logo
+                                ? '<img class="home-chat-coll-chip-logo" src="' + _fcEsc(logo) + '" alt="" loading="lazy"/>'
+                                : '<span class="home-chat-coll-chip-logo home-chat-coll-chip-logo--empty"></span>';
+                            const floorHtml = floor
+                                ? '<span class="home-chat-coll-chip-floor">· $' + floor.toFixed(0) + '</span>'
+                                : '<span class="home-chat-coll-chip-floor"></span>';
+                            out.push(
+                                '<span class="home-chat-coll-chip" data-coll-id="' + _fcEsc(id) + '" role="button" tabindex="0" title="Open ' + _fcEsc(name) + '">' +
+                                    logoHtml +
+                                    '<span class="home-chat-coll-chip-name">' + _fcEsc(name) + '</span>' +
+                                    floorHtml +
+                                '</span>'
+                            );
+                            i += 1 + raw.length;
+                            continue;
+                        }
+                    }
+                }
                 if (text[i] === '@') {
                     let matched = null;
                     // 1) Greedy match contre les noms connus (avec espaces).
@@ -11636,6 +11740,29 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // Reset du badge non-lus dès que l'utilisateur clique sur Home.
         document.querySelector('.topnav-tab[data-tab="collections"]')
             ?.addEventListener('click', () => { _resetUnread(); });
+
+        // Delegation : click (ou Enter / Space) sur un chip
+        // `#CollectionName` → ouvre le panel Collections sur cette
+        // collection via loadCollectionById (déjà exposé en global).
+        const _openCollChipFromEvent = (ev) => {
+            const chip = ev.target.closest?.('.home-chat-coll-chip');
+            if (!chip) return;
+            const id = chip.dataset.collId;
+            if (!id) return;
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (typeof window.loadCollectionById === 'function') {
+                window.loadCollectionById(id);
+            } else {
+                document.querySelector('.topnav-tab[data-tab="collections"]')?.click();
+            }
+        };
+        msgs?.addEventListener('click', _openCollChipFromEvent);
+        msgs?.addEventListener('keydown', (ev) => {
+            if (ev.key !== 'Enter' && ev.key !== ' ') return;
+            if (!ev.target.closest?.('.home-chat-coll-chip')) return;
+            _openCollChipFromEvent(ev);
+        });
         // Pinned banner : click → scroll vers l'original. Bouton × →
         // unpin (visible créateur uniquement, géré dans _renderPinnedBanner).
         document.getElementById('homeChatPinned')?.addEventListener('click', (ev) => {
