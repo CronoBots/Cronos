@@ -14126,11 +14126,29 @@ body.is-profile-loading #profileLoadingOverlay * {
 /* Flash bref quand on scroll vers un message via le quote — aide à
    localiser visuellement le message cible. */
 .home-chat-msg--flash {
-    animation: homeChatMsgFlash 1.4s ease-out;
+    animation: homeChatMsgFlash 1.6s ease-out;
+    position: relative;
+    z-index: 1;
 }
 @keyframes homeChatMsgFlash {
-    0%, 30%   { background: rgba(0, 179, 255, 0.18); border-radius: 6px; }
-    100%      { background: transparent; }
+    0%        { box-shadow: 0 0 0 2px rgba(0, 179, 255, 0.65), 0 0 24px rgba(0, 179, 255, 0.45); background: rgba(0, 179, 255, 0.18); }
+    25%       { box-shadow: 0 0 0 2px rgba(0, 179, 255, 0.55), 0 0 18px rgba(0, 179, 255, 0.35); background: rgba(0, 179, 255, 0.16); }
+    100%      { box-shadow: 0 0 0 0 rgba(0, 179, 255, 0), 0 0 0 rgba(0, 179, 255, 0); background: transparent; }
+}
+
+/* Feedback "message hors-fenêtre" : quand la pastille pointe vers un
+   message trop ancien (non chargé dans les 50 derniers) ou supprimé.
+   Petit shake horizontal + bord rouge pour signaler que rien ne se
+   passera. */
+.home-chat-msg-quote--miss {
+    animation: homeChatQuoteMiss 0.6s ease-out;
+}
+@keyframes homeChatQuoteMiss {
+    0%, 100% { transform: translateX(0); border-left-color: rgba(248, 113, 113, 0.9); }
+    20%      { transform: translateX(-4px); }
+    40%      { transform: translateX(4px); }
+    60%      { transform: translateX(-3px); }
+    80%      { transform: translateX(3px); }
 }
 
 /* @mentions inside a message body — pill cyan TRÈS visible (avant elles
