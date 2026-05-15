@@ -9405,6 +9405,11 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // Les leaves reçus pendant cette fenêtre sont mis en queue et
         // re-traités quand presence est prête.
         let   _presenceReady     = false;
+        // Flag : true dès que le chargement initial des messages est
+        // terminé (les child_added live arrivent ensuite avec instant=false).
+        // Sert au self-heal des leaves orphelins qui ne doit tourner qu'une
+        // fois, après que toutes les données initiales sont rendues.
+        let   _initialLoadDone   = false;
         const _pendingLeaves     = [];
         // { key, t } — UNE SEULE annonce d'update visible dans le chat
         // à un instant donné. Quand une nouvelle apparaît, l'ancienne
@@ -9963,6 +9968,8 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             const newT = ts || 0;
             // Cleanup du join précédent du même user (au plus 1 join visible).
             const prevJ = _latestJoinByUser.get(uname);
+            const display = msg.display || uname;
+            const avatar  = msg.avatar  || null;
             if (prevJ && prevJ.key !== key) {
                 if ((prevJ.t || 0) <= newT) {
                     fbDb.ref('chat/messages/' + prevJ.key).remove().catch(() => {});
@@ -9971,7 +9978,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     // pastille reste affichée le temps du round-trip et le
                     // user voit transitoirement deux "X is connected".
                     removeMessageById(prevJ.key);
-                    _latestJoinByUser.set(uname, { key, t: newT });
+                    _latestJoinByUser.set(uname, { key, t: newT, display, avatar });
                 } else {
                     // Out-of-order : ce join est plus ancien que celui
                     // déjà tracké → on le jette, jamais rendu.
@@ -9979,7 +9986,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     return false;
                 }
             } else if (!prevJ) {
-                _latestJoinByUser.set(uname, { key, t: newT });
+                _latestJoinByUser.set(uname, { key, t: newT, display, avatar });
             }
             // Reconnexion : on retire toute pastille « is disconnected »
             // précédente (le membre est revenu, son disconnect n'a plus
@@ -10041,6 +10048,58 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             // disconnected »). Il sera nettoyé à la prochaine reconnexion.
             return true;
         }
+        /* ------------------------------------------------------------------ *
+         * Self-heal des pastilles orphelines "is connected"                  *
+         * Au chargement du chat, si un user a une pastille "is connected"   *
+         * affichée mais aucune "is disconnected" correspondante ET qu'il    *
+         * n'est pas dans /chat/presence (donc bien offline), c'est qu'on a  *
+         * raté un onDisconnect quelque part (race condition d'une session   *
+         * antérieure, browser kill, etc.). On pousse alors une pastille     *
+         * synthétique avec `t = Date.now()` pour rétablir la cohérence du   *
+         * chat. Tous les clients reçoivent l'update via Firebase.           *
+         *                                                                    *
+         * Conditions :                                                       *
+         *   • initial load terminé (sinon _latestJoinByUser incomplet)       *
+         *   • presence ready (sinon _onlineUsernames non fiable)             *
+         *   • user authentifié (push Firebase nécessite auth)                *
+         *   • le user orphelin n'est PAS soi-même (sinon on émettrait un     *
+         *     leave alors qu'on est en train de regarder le chat)            *
+         *                                                                    *
+         * Idempotent via _orphanHealDone (1× par session). Multi-clients :  *
+         * si plusieurs heal poussent le même leave, la dédup naturelle de   *
+         * _processLeaveEvent garde le plus récent et retire l'autre.        *
+         * ------------------------------------------------------------------ */
+        let _orphanHealDone = false;
+        function _healOrphanLeaves() {
+            if (_orphanHealDone) return;
+            if (!_presenceReady) return;
+            if (!_initialLoadDone) return;
+            if (!fbDb) return;
+            const me = getCurrentUser();
+            if (!me || !me.username) return;
+            _orphanHealDone = true;
+
+            const myName = me.username;
+            const now = Date.now();
+            for (const [uname, joinInfo] of _latestJoinByUser) {
+                if (!uname || uname === myName) continue;
+                if (_onlineUsernames.has(uname)) continue;
+                if (_latestLeaveByUser.has(uname)) continue;
+                const display = (joinInfo && joinInfo.display) || uname;
+                const avatar  = (joinInfo && joinInfo.avatar)  || null;
+                fbDb.ref('chat/messages').push({
+                    system:    true,
+                    event:     'leave',
+                    user:      uname,
+                    display:   display,
+                    avatar:    avatar,
+                    text:      display + ' left the chat',
+                    t:         now,
+                    synthetic: true
+                }).catch(e => console.error('[Chat] orphan heal push failed:', e));
+            }
+        }
+
         function _drainPendingLeaves() {
             if (_pendingLeaves.length === 0) return;
             const queue = _pendingLeaves.splice(0);
@@ -10871,7 +10930,10 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 msgs.parentNode.insertBefore(_loadingDots, msgs);
                 msgs.style.display = 'none';
 
-                let _initialLoadDone = false;
+                // _initialLoadDone est déclaré au scope module (cf. début
+                // du module) — on le réinitialise ici puis on le bascule
+                // à true au bout de 600ms.
+                _initialLoadDone = false;
                 fbDb.ref('chat/messages').limitToLast(50).on('child_added', snap => {
                     const v = snap.val();
                     if (v) renderMessage(v, snap.key, _initialLoadDone);
@@ -10891,6 +10953,10 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     // Cette vérif tourne 1× par onglet ; le dedup côté
                     // render se charge de la concurrence inter-onglets.
                     maybeAnnounceLatestUpdate();
+                    // Self-heal des "is connected" orphelins (cf.
+                    // _healOrphanLeaves). No-op si presence pas encore
+                    // ready — re-déclenché par le listener presence.
+                    _healOrphanLeaves();
                 }, 600);
                 fbDb.ref('chat/messages').limitToLast(50).on('child_changed', snap => {
                     const v = snap.val();
@@ -11012,6 +11078,11 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     // presence soit prête. Re-applique le filtre stale
                     // maintenant que _onlineUsernames est fiable.
                     _drainPendingLeaves();
+                    // Self-heal des "is connected" orphelins (cf.
+                    // _healOrphanLeaves). No-op si initial load pas
+                    // encore done — re-déclenché par la setTimeout du
+                    // chargement initial.
+                    _healOrphanLeaves();
                     // "viewers" = visiteurs anonymes uniquement (sans les membres nommés)
                     const totalConnected = anonCount;
 
