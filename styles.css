@@ -13185,7 +13185,11 @@ body.is-profile-loading #profileLoadingOverlay * {
     font-size: 10px; font-weight: 800; color: #00B3FF;
 }
 .home-chat-member-name {
-    font-size: 11px; color: rgba(255,255,255,0.78);
+    /* Police légèrement réduite (11 → 10) côté sidebar desktop pour
+       laisser de la place aux badges WTF OG / CREATOR / PATRON et au
+       badge ✓ verified sans ellipsis. La variante --modal (mobile)
+       conserve sa taille via override plus bas. */
+    font-size: 10px; color: rgba(255,255,255,0.78);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     font-family: 'Geomanist-Bold', sans-serif;
     /* Pseudo en MAJUSCULES — cohérent avec les noms d'auteurs des
@@ -13313,15 +13317,6 @@ body.is-profile-loading #profileLoadingOverlay * {
     line-height: 1;
 }
 
-/* Badges role compactés dans la liste des membres — sinon, combinés au
-   badge ✓ verified, ils poussent les pseudos longs (ex. "THE PHOTOGRAPH")
-   en ellipsis. Même recette que .chat-patron-badge--member. */
-.home-chat-member .chat-og-badge,
-.home-chat-member .chat-creator-badge {
-    padding: 2px 6px 1px;
-    font-size: 7.5px;
-    margin-left: 2px;
-}
 
 /* ── Header droit du chat ── */
 .home-chat-header-right {
@@ -13946,16 +13941,26 @@ body.is-profile-loading #profileLoadingOverlay * {
 .home-chat-msg--role-patron:hover  { border-left-color: rgba(255, 200, 0, 0.9); }
 
 /* Message "continuation" — suite d'un message du même auteur posté < 5 min
-   auparavant. On masque le header (avatar/pseudo/heure), on compense le
-   gap parent (10px) par un margin-top négatif pour visuellement coller
-   les bulles, et on aplatit les coins du haut pour qu'elles forment un
-   bloc continu type Discord. */
+   auparavant. On masque le header (avatar/pseudo/heure), on annule
+   totalement le gap parent (10px) et on supprime border-top + corners
+   du haut pour que la continuation fusionne visuellement avec la bulle
+   précédente (type Discord : une seule bulle continue par auteur). */
 .home-chat-msg--continuation .home-chat-msg-meta { display: none; }
 .home-chat-msg--continuation {
-    margin-top: -7px;
-    padding-top: 4px;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
+    margin-top: -10px;
+    padding-top: 6px;
+    border-top: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+/* La bulle JUSTE AVANT une continuation perd sa bordure inférieure
+   et l'arrondi du bas — ainsi les deux portions partagent le même
+   contour et apparaissent comme une seule bulle. */
+.home-chat-msg--community:has(+ .home-chat-msg--continuation) {
+    border-bottom: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    padding-bottom: 4px;
 }
 .home-chat-msg--mine {
     background: rgba(0,179,255,0.07) !important;
