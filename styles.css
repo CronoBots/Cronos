@@ -469,7 +469,9 @@ h1 {
    l'ordre de cascade et éviter le décalage au premier chargement */
 .home-title-h1 {
     margin: 0 !important;
-    font-size: clamp(32px, 4vw, 56px) !important;
+    /* Plus gros que les H1 de panel (clamp(32px, 4vw, 56px)) — la home
+       est la première impression, le titre doit dominer la page. */
+    font-size: clamp(40px, 5.4vw, 76px) !important;
 }
 
 a {
@@ -12431,13 +12433,33 @@ body.is-profile-loading #profileLoadingOverlay * {
     display: flex;
     flex-direction: column;
 }
+/* Quand le panel collection est visible, on harmonise le padding
+   de `.app-main` pour que les écarts top et L/R soient les mêmes
+   (request user).
+   - Desktop : par défaut 40 top / 55 L/R → on ramène L/R à 40 →
+     symétrique ~60-63 (avec cp-inner padding).
+   - Mobile : par défaut 40 top / 0 L/R → on ramène top à 0 (le
+     padding interne de cp-inner gère l'écart) → symétrique ~14
+     sur les 4 côtés. */
+@media (min-width: 769px) {
+    .app-main:has(#collectionsPanel:not([style*="display:none"])) {
+        padding-left: 40px !important;
+        padding-right: 40px !important;
+    }
+}
+@media (max-width: 768px) {
+    .app-main:has(#collectionsPanel:not([style*="display:none"])) {
+        padding-top: 0 !important;
+    }
+}
 .cp-inner {
     width: 100%;
     box-sizing: border-box;
-    /* Aligné sur drops-inner / sb-inner / stats-panel pour que le contenu
-       de l'onglet ait la même largeur effective que les autres onglets
-       (Drops / Top Collections / Market Bot). */
-    padding: clamp(8px, 1.5vh, 20px) 20px 64px;
+    /* Padding symétrique : top = L/R = clamp(14px, 1.6vw, 22px) pour
+       que le cadre Collection ait le même écart en haut qu'à gauche
+       et droite (request user). Bottom plus grand (64px) pour aérer
+       la fin du contenu / éviter le scroll sticky. */
+    padding: clamp(14px, 1.6vw, 22px) clamp(14px, 1.6vw, 22px) 64px;
     flex: 1;
 }
 
@@ -12457,8 +12479,10 @@ body.is-profile-loading #profileLoadingOverlay * {
         0 0 80px rgba(0,179,255,0.18);
     background: rgba(11,20,38,0.4);
     overflow: hidden;
-    /* Marge en haut pour aérer du titre de page (si présent au-dessus). */
-    margin-top: clamp(8px, 1.5vh, 20px);
+    /* margin-top retiré : c'est désormais le padding-top de
+       .cp-inner qui assure l'écart top, pour que cet écart soit
+       SYMÉTRIQUE avec les écarts L/R (request user). */
+    margin-top: 0;
 }
 /* Padding interne pour les enfants du cadre (sauf bannière qui reste
    pleine largeur clippée par overflow:hidden du wrapper). Aligné sur
@@ -26347,11 +26371,12 @@ a.snap-holder-username:hover {
 .home-spotlight-section { padding: 0; }
 
 /* Écart entre le titre de page (CRONOS.WTF + sous-titre) et le cadre
-   Spotlight = aligné sur le rythme de Top Collections : 32px
-   (`.stats-page-title-block { margin-bottom: 32px }`). Sur la home,
-   `.home-body { gap: 28px }` donne déjà 28px ; on ajoute 4px en
-   `margin-top` pour atteindre les 32px de Top Collections. */
-.home-body > .home-spotlight-section { margin-top: 4px; }
+   Spotlight : on veut un breathing room généreux pour que le titre
+   ait son propre espace avant que la carte ne commence. Total visé
+   ~52-60px desktop, ~40-44px mobile. La base `.home-body { gap }`
+   donne 28px desktop / 24px mobile ; on ajoute clamp(16-32px) en
+   margin-top → 44-60px de gap réel. */
+.home-body > .home-spotlight-section { margin-top: clamp(16px, 2.2vw, 32px); }
 
 /* ══════════════════════════════════════════════════════════
    SPOTLIGHT — premium polish (sans média)
@@ -27973,7 +27998,7 @@ body { box-sizing: border-box; }
 }
 .home-title-h1 {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: clamp(32px, 4vw, 56px);
+    font-size: clamp(40px, 5.4vw, 76px);
     font-weight: 800;
     color: #fff;
     letter-spacing: 0.06em;
@@ -27986,11 +28011,12 @@ body { box-sizing: border-box; }
 }
 .home-title-sub {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 12px;
+    /* Sous-titre adaptatif : ~13 px mobile, jusqu'à 17 px desktop. */
+    font-size: clamp(13px, 1.15vw, 17px);
     color: #00B3FF;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    margin: 8px 0 0 !important;
+    margin: 10px 0 0 !important;
     padding: 0 !important;
     display: block;
 }

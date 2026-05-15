@@ -11496,6 +11496,22 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 root.classList.add('is-userbumped');
                 setTimeout(() => root.classList.remove('is-userbumped'), 280);
             }
+            // Mobile : si la search bar du topnav avait été ouverte par un
+            // tap sur Profile/Collection Explorer mais que l'utilisateur
+            // change de slide vers autre chose sans rien avoir tapé, on
+            // referme la search bar — sinon elle reste posée vide en haut
+            // pendant que le carousel cycle, ce qui fait flotter un input
+            // sans rapport avec la slide visible.
+            const newTarget = slides[idx]?.dataset.tabTarget;
+            const isExplorerSlide = newTarget === 'profil' || newTarget === 'explorer';
+            if (!isExplorerSlide) {
+                const wrap  = document.querySelector('.topnav-search-wrap.is-mobile-open');
+                const input = wrap?.querySelector('#topnavSearchInput');
+                if (wrap && input && !input.value.trim()) {
+                    wrap.classList.remove('is-mobile-open');
+                    if (document.activeElement === input) input.blur();
+                }
+            }
         }
 
         function tick(now) {
