@@ -10483,7 +10483,10 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 _fetchChatCollFloor(collShare.id);
             }
             const cs = collShare;
-            const csFloor = cs ? (_chatCollFloorById.get(cs.id) || {}).floor : null;
+            const csMetrics = cs ? (_chatCollFloorById.get(cs.id) || {}) : {};
+            const csFloor   = csMetrics.floor  || null;
+            const csOwners  = csMetrics.owners || null;
+            const csVolume  = csMetrics.volume || null;
             const csLogoHtml = cs
                 ? (cs.logo
                     ? '<img class="home-chat-coll-share-logo" src="' + _fcEsc(cs.logo) + '" alt="" loading="lazy"/>'
@@ -10492,12 +10495,10 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             const csVerifiedHtml = cs && cs.verified
                 ? '<svg class="home-chat-coll-share-verified" viewBox="0 0 20 20" fill="none" aria-label="Verified"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
                 : '';
-            const csFloorVal = csFloor
-                ? '$' + csFloor.toFixed(0)
-                : '<span class="home-chat-coll-share-loading">…</span>';
-            const csItemsTxt = (cs && cs.items)
-                ? Number(cs.items).toLocaleString() + ' items'
-                : '';
+            const csLoading = '<span class="home-chat-coll-share-loading">…</span>';
+            const csFloorVal  = csFloor  ? '$' + csFloor.toFixed(0)  : csLoading;
+            const csOwnersVal = csOwners ? _chatFmtCompact(csOwners) : csLoading;
+            const csVolumeVal = csVolume ? '$' + _chatFmtCompact(csVolume) : csLoading;
             const collShareHtml = cs ? (
                 '<div class="home-chat-coll-share" data-coll-id="' + _fcEsc(cs.id) + '" role="button" tabindex="0" title="Open ' + _fcEsc(cs.name) + '">' +
                     csLogoHtml +
@@ -10507,16 +10508,18 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                             csVerifiedHtml +
                         '</div>' +
                         '<div class="home-chat-coll-share-stats">' +
-                            '<span class="home-chat-coll-share-stat">' +
+                            '<span class="home-chat-coll-share-stat" data-stat="floor">' +
                                 '<span class="home-chat-coll-share-stat-label">Floor Price</span>' +
                                 '<span class="home-chat-coll-share-stat-val">' + csFloorVal + '</span>' +
                             '</span>' +
-                            (csItemsTxt
-                                ? '<span class="home-chat-coll-share-stat">' +
-                                      '<span class="home-chat-coll-share-stat-label">Supply</span>' +
-                                      '<span class="home-chat-coll-share-stat-val">' + _fcEsc(csItemsTxt) + '</span>' +
-                                  '</span>'
-                                : '') +
+                            '<span class="home-chat-coll-share-stat" data-stat="owners">' +
+                                '<span class="home-chat-coll-share-stat-label">Owners</span>' +
+                                '<span class="home-chat-coll-share-stat-val">' + csOwnersVal + '</span>' +
+                            '</span>' +
+                            '<span class="home-chat-coll-share-stat" data-stat="volume">' +
+                                '<span class="home-chat-coll-share-stat-label">Volume</span>' +
+                                '<span class="home-chat-coll-share-stat-val">' + csVolumeVal + '</span>' +
+                            '</span>' +
                         '</div>' +
                         '<button class="home-chat-coll-share-cta" type="button">View Collection <span aria-hidden="true">→</span></button>' +
                     '</div>' +
@@ -11007,17 +11010,74 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             return Array.from(localById.values()).slice(0, limit || 6);
         }
 
-        // Requête GraphQL minimale pour le floor — inlined pour ne pas
-        // dépendre du Q_METRIC déclaré dans un autre IIFE.
-        const _CHAT_GQL_FLOOR_Q = 'query GetCollectionMetric($collectionId: ID!) { public { collectionMetric(id: $collectionId) { minSaleListingPriceDecimal } } }';
+        // Requête GraphQL pour les métriques collection — Floor +
+        // Owners + Volume total. Inlined pour ne pas dépendre du
+        // Q_METRIC encapsulé dans un autre IIFE.
+        const _CHAT_GQL_FLOOR_Q = 'query GetCollectionMetric($collectionId: ID!) { public { collectionMetric(id: $collectionId) { minSaleListingPriceDecimal owners totalSalesDecimal totalSupply } } }';
         const _CHAT_GQL_ENDPOINT = (typeof graphqlEndpoint === 'string')
             ? graphqlEndpoint
             : 'https://crypto.com/nft-api/graphql';
 
+        // Format compact de nombres : 1.2k, 3.4M, 720, etc. Évite
+        // d'afficher "1238" ou "1238756" qui prend trop de place dans
+        // les pills stats de la carte coll-share.
+        function _chatFmtCompact(n) {
+            const v = Number(n);
+            if (!isFinite(v) || v <= 0) return '—';
+            if (v >= 1_000_000) return (v / 1_000_000).toFixed(v >= 10_000_000 ? 0 : 1).replace(/\.0$/,'') + 'M';
+            if (v >= 1_000)     return (v / 1_000).toFixed(v >= 10_000 ? 0 : 1).replace(/\.0$/,'') + 'k';
+            return String(Math.round(v));
+        }
+
+        // Helper : patche en place toutes les vues qui montrent les
+        // stats d'une collection. Appelé après chaque fetch (succès OU
+        // échec) pour clear le placeholder `…` même quand le réseau
+        // tombe — sinon l'utilisateur reste bloqué sur "…" indéfiniment.
+        function _patchCollViews(id) {
+            const info = _chatCollFloorById.get(id);
+            // Inline chips `#name` — seul le floor y est affiché.
+            document.querySelectorAll('.home-chat-coll-chip[data-coll-id="' + id + '"]').forEach(el => {
+                const valEl  = el.querySelector('.home-chat-coll-chip-floor-val');
+                const wrapEl = el.querySelector('.home-chat-coll-chip-floor');
+                const sepEl  = el.querySelector('.home-chat-coll-chip-sep');
+                if (info && info.floor && valEl) {
+                    valEl.textContent = '$' + info.floor.toFixed(0);
+                } else if (wrapEl && sepEl) {
+                    wrapEl.remove();
+                    sepEl.remove();
+                }
+            });
+            // Cartes coll-share (bulle blanche) — 3 stats data-stat=floor / owners / volume.
+            document.querySelectorAll('.home-chat-coll-share[data-coll-id="' + id + '"]').forEach(el => {
+                el.querySelectorAll('.home-chat-coll-share-stat').forEach(stat => {
+                    const which = stat.dataset.stat;
+                    const valEl = stat.querySelector('.home-chat-coll-share-stat-val');
+                    if (!valEl) return;
+                    if (!info) {
+                        valEl.textContent = '—';
+                        return;
+                    }
+                    if (which === 'floor') {
+                        valEl.textContent = info.floor ? '$' + info.floor.toFixed(0) : '—';
+                    } else if (which === 'owners') {
+                        valEl.textContent = info.owners ? _chatFmtCompact(info.owners) : '—';
+                    } else if (which === 'volume') {
+                        valEl.textContent = info.volume ? '$' + _chatFmtCompact(info.volume) : '—';
+                    }
+                });
+            });
+        }
+
         async function _fetchChatCollFloor(id) {
             if (!id || _chatCollPendingFetch.has(id)) return;
             const cached = _chatCollFloorById.get(id);
-            if (cached && Date.now() - cached.fetchedAt < _CHAT_COLL_FLOOR_TTL_MS) return;
+            if (cached && Date.now() - cached.fetchedAt < _CHAT_COLL_FLOOR_TTL_MS) {
+                // Cache hit : on patch quand même (les nouvelles vues
+                // rendues APRÈS le 1er fetch n'avaient pas reçu la
+                // valeur).
+                _patchCollViews(id);
+                return;
+            }
             _chatCollPendingFetch.add(id);
             try {
                 const res = await fetch(_CHAT_GQL_ENDPOINT, {
@@ -11031,38 +11091,24 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 });
                 const json = await res.json();
                 const m = json?.data?.public?.collectionMetric;
-                const floor = m ? Number(m.minSaleListingPriceDecimal) : null;
-                _chatCollFloorById.set(id, { floor: (floor && floor > 0) ? floor : null, fetchedAt: Date.now() });
-                const info = _chatCollFloorById.get(id);
-                // Patch chips inline `#name`.
-                document.querySelectorAll('.home-chat-coll-chip[data-coll-id="' + id + '"]').forEach(el => {
-                    const valEl  = el.querySelector('.home-chat-coll-chip-floor-val');
-                    const wrapEl = el.querySelector('.home-chat-coll-chip-floor');
-                    const sepEl  = el.querySelector('.home-chat-coll-chip-sep');
-                    if (info && info.floor && valEl) {
-                        valEl.textContent = '$' + info.floor.toFixed(0);
-                    } else if (wrapEl && sepEl) {
-                        wrapEl.remove();
-                        sepEl.remove();
-                    }
+                const floor   = m ? Number(m.minSaleListingPriceDecimal) : null;
+                const owners  = m ? Number(m.owners) : null;
+                const volume  = m ? Number(m.totalSalesDecimal) : null;
+                _chatCollFloorById.set(id, {
+                    floor:  (floor  && floor  > 0) ? floor  : null,
+                    owners: (owners && owners > 0) ? owners : null,
+                    volume: (volume && volume > 0) ? volume : null,
+                    fetchedAt: Date.now()
                 });
-                // Patch cartes collShare (bulle jaune).
-                document.querySelectorAll('.home-chat-coll-share[data-coll-id="' + id + '"]').forEach(el => {
-                    // Le 1er stat est toujours Floor Price.
-                    const firstStat = el.querySelector('.home-chat-coll-share-stat');
-                    if (!firstStat) return;
-                    const valEl = firstStat.querySelector('.home-chat-coll-share-stat-val');
-                    if (!valEl) return;
-                    if (info && info.floor) {
-                        valEl.textContent = '$' + info.floor.toFixed(0);
-                    } else {
-                        // Floor absent → on remplace par un tiret pour
-                        // ne pas laisser "…" infini.
-                        valEl.textContent = '—';
-                    }
-                });
-            } catch (_) { /* silent — chip stays without floor */ }
-            finally { _chatCollPendingFetch.delete(id); }
+            } catch (_) {
+                // Échec réseau / parse → on cache un objet vide avec
+                // fetchedAt pour éviter de re-spammer en boucle, mais
+                // on signale les vues pour clear le "…".
+                _chatCollFloorById.set(id, { floor: null, owners: null, volume: null, fetchedAt: Date.now() });
+            } finally {
+                _chatCollPendingFetch.delete(id);
+                _patchCollViews(id);
+            }
         }
 
         function formatChatBody(text, myUsername) {
