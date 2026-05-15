@@ -10817,11 +10817,24 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 const m = json?.data?.public?.collectionMetric;
                 const floor = m ? Number(m.minSaleListingPriceDecimal) : null;
                 _chatCollFloorById.set(id, { floor: (floor && floor > 0) ? floor : null, fetchedAt: Date.now() });
-                // Mise à jour des chips déjà rendues pour cette collection.
+                // Mise à jour des chips déjà rendues pour cette collection :
+                // patch le sous-élément `…-floor-val` avec le nouveau prix
+                // (ou retire toute la pastille `…-floor` si le floor est
+                // null — collection sans listings actifs).
+                const info = _chatCollFloorById.get(id);
                 document.querySelectorAll('.home-chat-coll-chip[data-coll-id="' + id + '"]').forEach(el => {
-                    const fe = el.querySelector('.home-chat-coll-chip-floor');
-                    const info = _chatCollFloorById.get(id);
-                    if (fe && info && info.floor) fe.textContent = '· $' + info.floor.toFixed(0);
+                    const valEl  = el.querySelector('.home-chat-coll-chip-floor-val');
+                    const wrapEl = el.querySelector('.home-chat-coll-chip-floor');
+                    const sepEl  = el.querySelector('.home-chat-coll-chip-sep');
+                    if (info && info.floor && valEl) {
+                        valEl.textContent = '$' + info.floor.toFixed(0);
+                    } else if (wrapEl && sepEl) {
+                        // Floor absent → on retire la pastille pour ne pas
+                        // afficher "Floor Price …" qui resterait à
+                        // l'écran indéfiniment.
+                        wrapEl.remove();
+                        sepEl.remove();
+                    }
                 });
             } catch (_) { /* silent — chip stays without floor */ }
             finally { _chatCollPendingFetch.delete(id); }
@@ -10874,14 +10887,22 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                             const logoHtml = logo
                                 ? '<img class="home-chat-coll-chip-logo" src="' + _fcEsc(logo) + '" alt="" loading="lazy"/>'
                                 : '<span class="home-chat-coll-chip-logo home-chat-coll-chip-logo--empty"></span>';
-                            const floorHtml = floor
-                                ? '<span class="home-chat-coll-chip-floor">· $' + floor.toFixed(0) + '</span>'
-                                : '<span class="home-chat-coll-chip-floor"></span>';
+                            // Format demandé : photo · nom · "Floor Price : $X".
+                            // Le label "FLOOR PRICE" reste visible même quand
+                            // la valeur n'est pas encore chargée — on affiche
+                            // `…` à la place du prix le temps du fetch GraphQL.
+                            const floorVal = floor
+                                ? '$' + floor.toFixed(0)
+                                : '<span class="home-chat-coll-chip-floor-loading">…</span>';
                             out.push(
                                 '<span class="home-chat-coll-chip" data-coll-id="' + _fcEsc(id) + '" role="button" tabindex="0" title="Open ' + _fcEsc(name) + '">' +
                                     logoHtml +
                                     '<span class="home-chat-coll-chip-name">' + _fcEsc(name) + '</span>' +
-                                    floorHtml +
+                                    '<span class="home-chat-coll-chip-sep">·</span>' +
+                                    '<span class="home-chat-coll-chip-floor">' +
+                                        '<span class="home-chat-coll-chip-floor-label">Floor Price</span>' +
+                                        '<span class="home-chat-coll-chip-floor-val">' + floorVal + '</span>' +
+                                    '</span>' +
                                 '</span>'
                             );
                             i += 1 + raw.length;
@@ -12035,6 +12056,138 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 if (!btn) return;
                 e.preventDefault();
                 const idx = Array.from(pop.querySelectorAll('.home-chat-mention-pop-item')).indexOf(btn);
+                _pick(idx);
+            });
+        })();
+
+        /* ============================================================ *
+         * AUTOCOMPLETE #COLLECTION                                     *
+         * Même pattern que wireMentionAutocomplete ci-dessus mais pour *
+         * les tokens `#word`. Propose les collections de               *
+         * _chatCollByNorm filtrées sur le partial après le `#`. Sur    *
+         * pick, on remplace `#partial` par `#NormalizedName` (sans     *
+         * espaces) — c'est ce que formatChatBody attend pour matcher. *
+         * ============================================================ */
+        (function wireCollectionAutocomplete() {
+            if (!input) return;
+            const inputRow = document.getElementById('homeChatInputRow');
+            if (!inputRow) return;
+            const pop = document.createElement('div');
+            pop.className = 'home-chat-mention-pop home-chat-coll-pop';
+            pop.style.display = 'none';
+            inputRow.appendChild(pop);
+
+            let activeIdx = 0;
+            let activeMatches = [];
+
+            function _allColls() {
+                const list = [];
+                _chatCollByNorm.forEach((info) => list.push(info));
+                list.sort((a, b) => a.name.localeCompare(b.name));
+                return list;
+            }
+            function _readHashContext() {
+                const cur = input.value || '';
+                const pos = input.selectionStart ?? cur.length;
+                const upto = cur.slice(0, pos);
+                const m = upto.match(/(^|\s)#([A-Za-z0-9_]{0,40})$/);
+                if (!m) return null;
+                const partial = m[2];
+                const hashIndex = upto.length - (partial.length + 1);
+                return { partial, start: hashIndex, end: pos };
+            }
+            function _esc(s) {
+                return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+            }
+            function _hide() {
+                pop.style.display = 'none';
+                pop.innerHTML = '';
+                activeMatches = [];
+                activeIdx = 0;
+            }
+            function _render(matches) {
+                if (!matches.length) { _hide(); return; }
+                activeMatches = matches;
+                activeIdx = Math.min(activeIdx, matches.length - 1);
+                pop.innerHTML = matches.slice(0, 6).map((c, i) => {
+                    const floor = (_chatCollFloorById.get(c.id) || {}).floor;
+                    const floorTxt = floor ? '· Floor $' + floor.toFixed(0) : '';
+                    const logoHtml = c.logo
+                        ? '<img class="home-chat-coll-pop-logo" src="' + _esc(c.logo) + '" alt="" loading="lazy"/>'
+                        : '<span class="home-chat-coll-pop-logo home-chat-coll-pop-logo--empty"></span>';
+                    return '<button type="button" class="home-chat-mention-pop-item home-chat-coll-pop-item' +
+                        (i === activeIdx ? ' is-active' : '') +
+                        '" data-coll-id="' + _esc(c.id) + '" data-coll-name="' + _esc(c.name) + '">' +
+                            logoHtml +
+                            '<span class="home-chat-coll-pop-text">' +
+                                '<span class="home-chat-coll-pop-name">' + _esc(c.name) + '</span>' +
+                                (floorTxt ? '<span class="home-chat-coll-pop-floor">' + _esc(floorTxt) + '</span>' : '') +
+                            '</span>' +
+                        '</button>';
+                }).join('');
+                pop.style.display = 'block';
+                // Trigger lazy floor fetch pour les colls affichées sans floor cache.
+                matches.slice(0, 6).forEach(c => _fetchChatCollFloor(c.id));
+            }
+            function _refresh() {
+                const ctx = _readHashContext();
+                if (!ctx) { _hide(); return; }
+                const q = _normalizeCollName(ctx.partial);
+                const all = _allColls();
+                // q vide (vient de taper `#`) → on liste TOUT (4 collections,
+                // ce qui est court). Sinon filtre normalisé.
+                const matches = q
+                    ? all.filter(c => _normalizeCollName(c.name).includes(q))
+                    : all;
+                _render(matches);
+            }
+            function _pick(idx) {
+                const c = activeMatches[idx];
+                if (!c) return;
+                const ctx = _readHashContext();
+                if (!ctx) { _hide(); return; }
+                // Insert `#NormalizedName ` (sans espace dans le name pour
+                // que formatChatBody le matche au render).
+                const before = (input.value || '').slice(0, ctx.start);
+                const after  = (input.value || '').slice(ctx.end);
+                const token  = '#' + _normalizeCollName(c.name);
+                input.value = before + token + ' ' + after;
+                try {
+                    const newPos = (before + token + ' ').length;
+                    input.setSelectionRange(newPos, newPos);
+                } catch (_) {}
+                input.focus();
+                _hide();
+            }
+
+            input.addEventListener('input', _refresh);
+            input.addEventListener('keyup', e => {
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Home' || e.key === 'End') _refresh();
+            });
+            input.addEventListener('blur', () => setTimeout(_hide, 120));
+            input.addEventListener('keydown', e => {
+                if (pop.style.display === 'none' || !activeMatches.length) return;
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    activeIdx = (activeIdx + 1) % Math.min(activeMatches.length, 6);
+                    _render(activeMatches);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    activeIdx = (activeIdx - 1 + Math.min(activeMatches.length, 6)) % Math.min(activeMatches.length, 6);
+                    _render(activeMatches);
+                } else if (e.key === 'Enter' || e.key === 'Tab') {
+                    e.preventDefault();
+                    _pick(activeIdx);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    _hide();
+                }
+            });
+            pop.addEventListener('mousedown', e => {
+                const btn = e.target.closest('.home-chat-coll-pop-item');
+                if (!btn) return;
+                e.preventDefault();
+                const idx = Array.from(pop.querySelectorAll('.home-chat-coll-pop-item')).indexOf(btn);
                 _pick(idx);
             });
         })();
