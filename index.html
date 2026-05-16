@@ -9019,12 +9019,11 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         return { collections: enriched, userMetrics: metrics };
     }
 
-    function buildArtistSlide(cfg, data, bundle) {
+    function buildArtistSlide(cfg, data, bundle, slideIdx, totalSlides) {
         const slide = document.createElement('div');
         slide.className = 'home-fa-slide';
         const avatar = data?.avatar?.url || '';
         const name   = data?.displayName || cfg.displayName || cfg.username;
-        const bio    = data?.bio || '';
         const verified = data?.verified || false;
         const profileUrl = cfg.url || `https://crypto.com/nft/profile/${cfg.username}?tab=created`;
         const fmt = n => {
@@ -9053,55 +9052,59 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         const totalNfts  = Number(userMetrics?.created) || 0;
         const totalVol   = collections.reduce((s,c) => s + _creatorVol(c), 0);
 
-        /* Top 3 collections par all-time vol — déjà triées par
-           fetchCreatorBundle. Rangs affichés avec les médailles emoji
-           🥇🥈🥉 (cohérent avec les Top Collections / Top Patrons). */
-        const MEDALS = ['🥇', '🥈', '🥉'];
-        const top3 = collections.slice(0, 3);
-        const colsHtml = top3.map((c,i) => {
-            const floor = Number(c.metric?.minSaleListingPriceDecimal) || 0;
-            const items = Number(c.metric?.totalSupply) || 0;
+        /* Top 4 collections par all-time vol — déjà triées par
+           fetchCreatorBundle. Affichées en grille horizontale de
+           tuiles (logo carré + nom + vol) au lieu de l'ancienne liste
+           texte avec médailles emoji. Plus visuel, plus premium. */
+        const top4 = collections.slice(0, 4);
+        const colsHtml = top4.map(c => {
+            const vol  = _creatorVol(c);
+            const logo = c.logo?.url;
             return `
-            <a class="home-fa-col" href="https://crypto.com/nft/collection/${c.id}" target="_blank" rel="noopener">
-                <span class="home-fa-col-rank" aria-label="Rank ${i+1}">${MEDALS[i]}</span>
-                ${c.logo?.url?`<img class="home-fa-col-logo" src="${_fcEsc(c.logo.url)}" alt="" loading="lazy"/>`:`<div class="home-fa-col-logo--empty"></div>`}
-                <div class="home-fa-col-info">
-                    <span class="home-fa-col-name">${_fcEsc(c.name||'—')}</span>
-                    <div class="home-fa-col-stats">
-                        <span class="home-fa-col-vol">${fmt(_creatorVol(c))} vol.</span>
-                        ${floor ? `<span class="home-fa-col-floor">${fmt(floor)} floor</span>` : ''}
-                        ${items ? `<span class="home-fa-col-items">${fmtNum(items)} items</span>` : ''}
-                    </div>
-                </div>
+            <a class="home-fa-col-tile" href="https://crypto.com/nft/collection/${c.id}" target="_blank" rel="noopener" title="${_fcEsc(c.name||'')}">
+                ${logo ? `<img class="home-fa-col-tile-img" src="${_fcEsc(logo)}" alt="" loading="lazy"/>` : `<div class="home-fa-col-tile-img home-fa-col-tile-img--empty"></div>`}
+                <span class="home-fa-col-tile-name">${_fcEsc(c.name||'—')}</span>
+                <span class="home-fa-col-tile-vol">${fmt(vol)}</span>
             </a>`;
-        }).join('') || `<span class="home-fa-no-cols">No public collections yet</span>`;
+        }).join('');
 
-        /* Layout vertical centré : avatar en haut avec un écart, puis
-           pseudo + role centrés, puis stats, top 3 collections, et
-           enfin la CTA "View Profile" tout en bas. Plus de bio :
-           sa longueur variable changeait la hauteur de chaque slide,
-           ce qui faisait sauter le carousel d'un artiste à l'autre. */
+        // Hero banner = bannière de la top collection (la plus volumée).
+        // Fallback sur logo si pas de banner. Sert de visuel d'accroche
+        // en haut de la slide — donne envie d'aller voir le travail.
+        const heroSource = top4[0]?.banner?.url || top4[0]?.logo?.url || avatar || '';
+
+        // Numéro éditorial "01" / "02" / "03" (style magazine print).
+        const num = String((slideIdx ?? 0) + 1).padStart(2, '0');
+        const total = String(totalSlides ?? 0).padStart(2, '0');
+
         slide.innerHTML = `
-            <div class="home-fa-bg" style="background:linear-gradient(135deg,rgba(0,179,255,0.07),rgba(7,14,28,0.95))"></div>
+            <div class="home-fa-hero" ${heroSource ? `style="background-image:url('${_fcEsc(heroSource)}')"` : ''}></div>
+            <div class="home-fa-hero-tint"></div>
             <div class="home-fa-content">
-                <div class="home-fa-header">
+                <div class="home-fa-eyebrow">
+                    <span class="home-fa-eyebrow-label">Featured Artist</span>
+                    <span class="home-fa-eyebrow-num">${num}<span class="home-fa-eyebrow-total"> / ${total}</span></span>
+                </div>
+                <div class="home-fa-portrait">
                     ${avatar?`<img class="home-fa-avatar" src="${_fcEsc(avatar)}" alt="${_fcEsc(name)}" loading="lazy"/>`:`<div class="home-fa-avatar--fallback">${_fcEsc(name[0]?.toUpperCase()||'?')}</div>`}
+                </div>
+                <div class="home-fa-identity">
                     <div class="home-fa-name-row">
                         <span class="home-fa-name">${_fcEsc(name)}</span>
                         ${verified?'<svg class="home-fa-verified" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
                     </div>
                     <span class="home-fa-role">${_fcEsc(cfg.role)}</span>
                 </div>
-                <div class="home-fa-stats">
-                    <span class="home-fa-stat"><span class="home-fa-stat-val">${totalCols}</span><span class="home-fa-stat-label">collections</span></span>
-                    <span class="home-fa-stat"><span class="home-fa-stat-val">${fmtNum(totalNfts)}</span><span class="home-fa-stat-label">NFTs</span></span>
-                    <span class="home-fa-stat"><span class="home-fa-stat-val">${fmt(totalVol)}</span><span class="home-fa-stat-label">all-time vol</span></span>
+                <div class="home-fa-stats-inline">
+                    <span><strong>${totalCols}</strong> collections</span>
+                    <span class="home-fa-stats-sep"></span>
+                    <span><strong>${fmtNum(totalNfts)}</strong> NFTs</span>
+                    <span class="home-fa-stats-sep"></span>
+                    <span><strong>${fmt(totalVol)}</strong> vol</span>
                 </div>
-                <div class="home-fa-cols-wrap">
-                    <span class="home-fa-cols-label">Top collections · by volume</span>
-                    <div class="home-fa-cols">${colsHtml}</div>
-                </div>
-                <a class="home-fa-cta" href="${_fcEsc(profileUrl)}" target="_blank" rel="noopener">View Profile →</a>
+                ${top4.length ? `
+                <div class="home-fa-cols-grid">${colsHtml}</div>` : ''}
+                <a class="home-fa-cta" href="${_fcEsc(profileUrl)}" target="_blank" rel="noopener">Discover their work →</a>
             </div>`;
         return slide;
     }
@@ -9110,48 +9113,51 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
        carrousel Featured Artists, au lieu d'un bandeau séparé en dessous.
        Pour qu'un artiste qui passe sur la home se projette dans le slot
        et comprenne à quoi son profil ressemblerait s'il nous contactait. */
-    function buildPromoSlide() {
+    function buildPromoSlide(slideIdx, totalSlides) {
         const slide = document.createElement('div');
         slide.className = 'home-fa-slide home-fa-slide--promo';
+        const num   = String((slideIdx ?? 0) + 1).padStart(2, '0');
+        const total = String(totalSlides ?? 0).padStart(2, '0');
         slide.innerHTML = `
-            <div class="home-fa-bg" style="background:linear-gradient(135deg,rgba(0,179,255,0.07),rgba(7,14,28,0.95))"></div>
+            <div class="home-fa-hero home-fa-hero--promo"></div>
+            <div class="home-fa-hero-tint"></div>
             <div class="home-fa-content">
-                <div class="home-fa-header">
+                <div class="home-fa-eyebrow">
+                    <span class="home-fa-eyebrow-label">Open slot</span>
+                    <span class="home-fa-eyebrow-num">${num}<span class="home-fa-eyebrow-total"> / ${total}</span></span>
+                </div>
+                <div class="home-fa-portrait">
                     <div class="home-fa-avatar--fallback home-fa-avatar--promo" aria-hidden="true">+</div>
+                </div>
+                <div class="home-fa-identity">
                     <div class="home-fa-name-row">
                         <span class="home-fa-name">Your profile here</span>
                     </div>
                     <span class="home-fa-role">Featured artist · open slot</span>
                 </div>
-                <div class="home-fa-stats home-fa-stats--promo">
-                    <span class="home-fa-stat"><span class="home-fa-stat-val">—</span><span class="home-fa-stat-label">collections</span></span>
-                    <span class="home-fa-stat"><span class="home-fa-stat-val">—</span><span class="home-fa-stat-label">NFTs</span></span>
-                    <span class="home-fa-stat"><span class="home-fa-stat-val">—</span><span class="home-fa-stat-label">all-time vol</span></span>
+                <div class="home-fa-stats-inline home-fa-stats-inline--promo">
+                    <span><strong>—</strong> collections</span>
+                    <span class="home-fa-stats-sep"></span>
+                    <span><strong>—</strong> NFTs</span>
+                    <span class="home-fa-stats-sep"></span>
+                    <span><strong>—</strong> vol</span>
                 </div>
-                <div class="home-fa-cols-wrap">
-                    <span class="home-fa-cols-label">Top collections · by volume</span>
-                    <div class="home-fa-cols">
-                        <div class="home-fa-col home-fa-col--promo">
-                            <span class="home-fa-col-rank" aria-hidden="true">🥇</span>
-                            <div class="home-fa-col-logo--empty"></div>
-                            <div class="home-fa-col-info">
-                                <span class="home-fa-col-name">Your top collection</span>
-                            </div>
-                        </div>
-                        <div class="home-fa-col home-fa-col--promo">
-                            <span class="home-fa-col-rank" aria-hidden="true">🥈</span>
-                            <div class="home-fa-col-logo--empty"></div>
-                            <div class="home-fa-col-info">
-                                <span class="home-fa-col-name">Your #2 collection</span>
-                            </div>
-                        </div>
-                        <div class="home-fa-col home-fa-col--promo">
-                            <span class="home-fa-col-rank" aria-hidden="true">🥉</span>
-                            <div class="home-fa-col-logo--empty"></div>
-                            <div class="home-fa-col-info">
-                                <span class="home-fa-col-name">Your #3 collection</span>
-                            </div>
-                        </div>
+                <div class="home-fa-cols-grid home-fa-cols-grid--promo">
+                    <div class="home-fa-col-tile home-fa-col-tile--promo">
+                        <div class="home-fa-col-tile-img home-fa-col-tile-img--empty"></div>
+                        <span class="home-fa-col-tile-name">Your top drop</span>
+                    </div>
+                    <div class="home-fa-col-tile home-fa-col-tile--promo">
+                        <div class="home-fa-col-tile-img home-fa-col-tile-img--empty"></div>
+                        <span class="home-fa-col-tile-name">Your #2</span>
+                    </div>
+                    <div class="home-fa-col-tile home-fa-col-tile--promo">
+                        <div class="home-fa-col-tile-img home-fa-col-tile-img--empty"></div>
+                        <span class="home-fa-col-tile-name">Your #3</span>
+                    </div>
+                    <div class="home-fa-col-tile home-fa-col-tile--promo">
+                        <div class="home-fa-col-tile-img home-fa-col-tile-img--empty"></div>
+                        <span class="home-fa-col-tile-name">Your #4</span>
                     </div>
                 </div>
                 <a class="home-fa-cta home-fa-cta--promo" href="https://twitter.com/Cronos_WTF" target="_blank" rel="noopener">Contact me to get featured →</a>
@@ -9240,10 +9246,11 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // halo qui englobe désormais le spotlight ET la nav (pour que les
         // flèches + progress + dots soient intégrées au bas du cadre).
         const { profiles, bundles } = await _loadFeaturedCreatorsData();
+        const totalSlides = FEATURED_CREATORS.length + 1; // +1 pour la promo
         const spotlight = document.createElement('div');
         spotlight.className = 'home-fa-spotlight';
         FEATURED_CREATORS.forEach((cfg,i) => {
-            const slide = buildArtistSlide(cfg, profiles[i], bundles[i]);
+            const slide = buildArtistSlide(cfg, profiles[i], bundles[i], i, totalSlides);
             if (i===0) slide.classList.add('is-active');
             spotlight.appendChild(slide);
         });
@@ -9251,9 +9258,9 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // qu'un artiste qui voit défiler les Featured Artists tombe sur un
         // slot vide à son nom et se projette dedans. La CTA jaune ouvre
         // directement twitter.com/Cronos_WTF (anchor natif, pas de JS).
-        const promoSlide = buildPromoSlide();
+        const promoSlide = buildPromoSlide(FEATURED_CREATORS.length, totalSlides);
         spotlight.appendChild(promoSlide);
-        const n = FEATURED_CREATORS.length + 1; // +1 pour la promo
+        const n = totalSlides;
         let current = 0;
         // Nav row : prev arrow · progress bar · dots · next arrow.
         // MÊME pattern visuel que Featured Collections (home-fc-controls)
@@ -16343,6 +16350,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-16T20:00:00Z',
+            type:  'improvement',
+            title: 'Featured Artists redesigned — editorial style',
+            text:  'Each artist slide is now built like a magazine feature: hero banner of their top collection at the top, portrait overlapping the bottom of the hero, a small "Featured Artist 01 / 04" eyebrow at the top, stats compressed into a single pill, and a horizontal grid of their four highest-volume collections shown as visual tiles instead of a text list. Bigger emphasis on the work itself, less on text.'
+        },
         {
             date:  '2026-05-16T19:00:00Z',
             type:  'improvement',
