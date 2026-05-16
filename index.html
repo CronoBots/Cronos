@@ -15560,14 +15560,27 @@ async function sha256hex(str) {
             const uname = wrap.dataset.patronUsername || '';
             const should = cache.has(uname);
             const existing = wrap.querySelector('.chat-patron-badge');
+            // On synchronise AUSSI la classe role-patron sur la bulle
+            // parente : sinon le liseré jaune n'apparaît pas quand le
+            // cache patrons arrive après le render du message (renderMessage
+            // a vu isPatron=false au premier passage et n'a pas posé la
+            // classe). Priorité creator > og > patron : on ne touche pas
+            // au liseré si un rôle plus prioritaire est déjà là.
+            const msgDiv = wrap.closest('.home-chat-msg--community');
             if (should && !existing) {
                 const span = document.createElement('span');
                 span.className = 'chat-patron-badge';
                 span.title = 'Official Patron — supporter of CRONOS.WTF';
                 span.textContent = 'WTF PATRON';
                 wrap.appendChild(span);
+                if (msgDiv
+                    && !msgDiv.classList.contains('home-chat-msg--role-creator')
+                    && !msgDiv.classList.contains('home-chat-msg--role-og')) {
+                    msgDiv.classList.add('home-chat-msg--role-patron');
+                }
             } else if (!should && existing) {
                 existing.remove();
+                if (msgDiv) msgDiv.classList.remove('home-chat-msg--role-patron');
             }
         });
         // Liste des membres (sidebar + modal mobile)
