@@ -353,6 +353,57 @@
     margin: 0 2px;
 }
 
+/* Petit bouton "?" en bas-droite qui ouvre la cheat sheet. Permet de
+   découvrir les shortcuts sans connaître la touche ? d'avance.
+   Caché sur mobile (où le clavier physique n'est pas utilisé). */
+.kbd-hint {
+    position: fixed;
+    bottom: 22px;
+    left: 22px;
+    z-index: 9000;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: rgba(10, 26, 58, 0.72);
+    border: 1px solid rgba(0, 179, 255, 0.22);
+    color: rgba(255, 255, 255, 0.55);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: opacity 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+    opacity: 0.55;
+    padding: 0;
+}
+.kbd-hint:hover {
+    opacity: 1;
+    color: var(--color1);
+    border-color: rgba(0, 179, 255, 0.55);
+    transform: translateY(-1px);
+}
+.kbd-hint:focus-visible {
+    outline: 2px solid var(--color1);
+    outline-offset: 2px;
+}
+.kbd-hint kbd {
+    font-family: 'Geomanist-Bold', monospace;
+    font-size: 13px;
+    color: inherit;
+    background: none;
+    border: none;
+    padding: 0;
+    line-height: 1;
+    display: block;
+}
+/* Sur mobile pas de hint (pas de clavier physique pour utiliser les
+   shortcuts de toute façon). Évite aussi le conflit avec scroll-to-top
+   / scroll-to-bottom déjà fixed sur petit écran. */
+@media (max-width: 768px), (hover: none) {
+    .kbd-hint { display: none; }
+}
+
 /* Indicateur visuel quand on est en pending 'g' (vim-style prefix). */
 .kbd-go-pending::before {
     content: 'g…';
