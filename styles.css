@@ -131,6 +131,67 @@
     gap: 8px;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOTION — micro-animations pour donner de la continuité visuelle.
+   Toutes hardware-accelerated (transform + opacity uniquement), durations
+   courtes (200-500ms), désactivées sous prefers-reduced-motion.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Panel fade-in : à chaque fois qu'un panel topnav passe de display:none
+   à display:block, l'animation rejoue (le browser reset les animations
+   au changement display). Donne une transition douce entre les onglets
+   (Spotlight ↔ Drops ↔ Stats ↔ Market…) au lieu d'un cut sec. */
+@keyframes panel-fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: none; }
+}
+.collections-panel,
+.sb-panel,
+.sup-panel,
+.stats-panel,
+.drops-panel,
+.snapshot-panel {
+    animation: panel-fade-in 240ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Boot cascade de la home : les 3 sections au-dessus du fold
+   (spotlight + chat row) apparaissent en cascade légère à l'arrivée,
+   donnent une impression de boot soigné plutôt qu'un flash uniforme.
+   Les autres sections de la home sont content-visibility:auto, leur
+   première peinture au scroll est déjà rapide et bénéficie pas du
+   fade (l'opacity 0 serait sautée par content-visibility de toute
+   façon). */
+@keyframes home-section-boot {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+}
+.home-spotlight-section {
+    animation: home-section-boot 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+.home-community-section {
+    animation: home-section-boot 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) 80ms backwards;
+}
+.home-community-pulse-section {
+    animation: home-section-boot 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) 160ms backwards;
+}
+
+/* Respect total de l'accessibility setting "réduire les animations".
+   Couvre les keyframes définies ici + les autres animations du site
+   (shimmer skel, pulse live). */
+@media (prefers-reduced-motion: reduce) {
+    .collections-panel,
+    .sb-panel,
+    .sup-panel,
+    .stats-panel,
+    .drops-panel,
+    .snapshot-panel,
+    .home-spotlight-section,
+    .home-community-section,
+    .home-community-pulse-section {
+        animation: none !important;
+    }
+}
+
 [data-theme="cdc"] {
     --collection-bg: #0b1426;
     --page-bg: #0f1a30;
@@ -11432,7 +11493,11 @@ body.is-profile-loading #profileLoadingOverlay * {
     background: rgba(0, 179, 255, 0.04);
 }
 
-.topnav-tab--active::after {
+/* Underline cyan sous le tab actif. On le rend SUR TOUS les tabs avec
+   opacity:0 par défaut et opacity:1 quand --active, pour pouvoir
+   transitionner — un cut sec entre `pas d'after` et `after` n'aurait
+   pas pu être animé. Le passage entre onglets fade smoothement. */
+.topnav-tab::after {
     content: '';
     position: absolute;
     bottom: 0; left: 0; right: 0;
@@ -11440,6 +11505,12 @@ body.is-profile-loading #profileLoadingOverlay * {
     background: var(--color1);
     box-shadow: 0 0 8px rgba(0, 179, 255, 0.55);
     border-radius: 2px 2px 0 0;
+    opacity: 0;
+    transition: opacity 0.22s ease;
+    pointer-events: none;
+}
+.topnav-tab--active::after {
+    opacity: 1;
 }
 
 .topnav-tab--disabled {
