@@ -26182,7 +26182,12 @@ a.snap-holder-username:hover {
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #fff;
-    line-height: 1.08;
+    /* line-height: 1 (vs ~1.08) — sans ça, l'extra leading du flex
+       child décale le centre visuel du texte vers le bas et l'overlay
+       paraît "trop haut" dans la bannière même si flex centre bien
+       la boîte. line-height: 1 colle le centre visuel au centre
+       géométrique → vrai centrage vertical perçu. */
+    line-height: 1;
     white-space: normal;
     /* Shadow en couches : un drop net pour détacher la silhouette
        du texte de l'image, un halo flou pour adoucir. Pas de voile
@@ -26201,6 +26206,9 @@ a.snap-holder-username:hover {
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.85);
+    /* line-height: 1 en miroir de .home-feat-v3-name — aligne le
+       centre visuel de la ligne créateur avec le vrai centre vertical. */
+    line-height: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -26245,9 +26253,11 @@ a.snap-holder-username:hover {
     flex-direction: column-reverse;  /* value au-dessus, label en dessous */
     align-items: center;
     gap: 2px;
-    flex: 1;                          /* répartit également les 3 stats */
-    padding: 0 12px 0 0;
-    margin-right: 12px;
+    flex: 1;                          /* répartit également les 6 stats */
+    /* Gutter resserré (8px de chaque côté du séparateur) pour qu'on
+       puisse loger 6 stats au lieu de 4 sans déborder sur mobile. */
+    padding: 0 8px 0 0;
+    margin-right: 8px;
     border-right: 1px solid rgba(255, 255, 255, 0.12);
     background: transparent;
     border-radius: 0;
@@ -26257,6 +26267,20 @@ a.snap-holder-username:hover {
     border-right: none;
     margin-right: 0;
     padding-right: 0;
+}
+/* Description courte de la collection, rendue sous la stats row.
+   line-clamp à 3 lignes pour ne pas exploser la hauteur de la card. */
+.home-fc-spotlight .home-feat-v3-desc {
+    margin: 10px 16px 8px;
+    font-family: 'Geomanist', sans-serif;
+    font-size: 12px;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.6);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .home-fc-spotlight .home-feat-v3-stat-sep { display: none; }
 .home-fc-spotlight .home-feat-v3-stat-label {
