@@ -28190,62 +28190,235 @@ body { box-sizing: border-box; }
     pointer-events: auto;
 }
 
-/* Bannière cover en fond */
-.home-fa-bg {
+/* ═══════════════════════════════════════════════════════════════
+   Editorial redesign : la slide est un poster magazine avec
+   - hero banner de la top collection en haut (visuel d'accroche)
+   - eyebrow éditorial "FEATURED ARTIST · 01 / 04"
+   - avatar qui chevauche le bas du hero (style profile header)
+   - identité (nom + rôle) centrée
+   - stats inline single-row avec séparateurs fins
+   - grille horizontale de 4 tuiles de collections (logo + nom + vol)
+   - CTA outlined
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Hero banner — moitié haute du slide, image cover. Fallback radial
+   cyan quand pas d'image (slide promo notamment). */
+.home-fa-hero {
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 42%;
     background-size: cover;
-    background-position: center top;
+    background-position: center;
+    background-color: #0b1426;
     z-index: 0;
 }
-.home-fa-bg::after {
-    content: '';
+/* Variante promo : pas d'image, juste un gradient cyan diffus pour
+   donner envie de "remplir le slot". */
+.home-fa-hero--promo {
+    background:
+        radial-gradient(120% 80% at 50% 30%, rgba(0,179,255,0.22) 0%, transparent 65%),
+        linear-gradient(180deg, rgba(11,20,38,0.95), rgba(7,14,28,1));
+}
+/* Tint qui fade le hero vers le bas pour le faire fusionner avec le
+   contenu (et garantir la lisibilité du texte qui passe par-dessus). */
+.home-fa-hero-tint {
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
     background: linear-gradient(
-        100deg,
-        rgba(7,14,28,0.98) 0%,
-        rgba(7,14,28,0.90) 35%,
-        rgba(7,14,28,0.55) 62%,
-        rgba(7,14,28,0.20) 100%
+        180deg,
+        rgba(7,14,28,0.35) 0%,
+        rgba(7,14,28,0.55) 60%,
+        rgba(7,14,28,0.98) 100%
     );
+    z-index: 1;
 }
 
-/* Contenu par-dessus — layout vertical, tout centré horizontalement.
-   Avatar en haut, puis pseudo+role, stats, top 3 collections, et
-   enfin la CTA juste en dessous. Padding-bottom = gap (14px) → l'écart
-   entre la 3e collection et le bouton est égal à l'écart entre le
-   bouton et le bas du cadre. */
+/* Contenu — stacked sous le hero. Padding L/R aligné sur les autres
+   cards du home (16px). Gap entre blocs = 12px (au lieu de 14, plus
+   tight pour le format éditorial). */
 .home-fa-content {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     display: flex;
     flex-direction: column;
     width: 100%;
-    /* height: 100% retiré : le slide actif est maintenant en
-       position:relative et c'est ce content qui dicte la hauteur du
-       wrapper. height:100% sur un parent en auto-height collapse à 0
-       sur certains navigateurs. */
-    /* Padding L/R aligné sur .home-cp-content (16px) + le chat
-       (.home-community-card → 16px aussi) — les 3 cadres en bas de la
-       home ont désormais le même écart entre leur contenu et leur
-       bord. Top 28px / bottom 14px restent propres à FA pour aérer
-       le poster (avatar haut + CTA bas). */
-    padding: 28px 16px 14px;
-    gap: 14px;
+    padding: 16px 16px 16px;
+    gap: 12px;
     align-items: center;
     text-align: center;
     overflow: hidden;
 }
 
-/* ── Header : avatar + pseudo + role + bio, tout centré ── */
-.home-fa-header {
+/* Eyebrow éditorial en haut : "FEATURED ARTIST" à gauche, "01 / 04"
+   à droite. Pleine largeur, justify-between, look magazine print. */
+.home-fa-eyebrow {
+    display: flex;
+    width: 100%;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: 2px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 4px;
+}
+.home-fa-eyebrow-label {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
+.home-fa-eyebrow-num {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #00B3FF;
+    font-variant-numeric: tabular-nums;
+}
+.home-fa-eyebrow-total {
+    color: rgba(255, 255, 255, 0.35);
+    font-weight: 400;
+    font-size: 11px;
+}
+
+/* Portrait wrapper — sert juste à isoler l'avatar pour le centrer
+   horizontalement sans dépendre du flex parent. L'avatar lui-même
+   garde sa taille / halo blanc d'avant. */
+.home-fa-portrait {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 6px;
+}
+
+/* Identity = nom + role, centré sous l'avatar. */
+.home-fa-identity {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 4px;
+    width: 100%;
+    max-width: 640px;
+}
+
+/* Stats sur une seule ligne, avec séparateurs verticaux fins entre
+   les 3 entrées. Plus compact que l'ancienne version 3 colonnes
+   empilées avec value au-dessus + label au-dessous. */
+.home-fa-stats-inline {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+    padding: 8px 14px;
+    background: rgba(11, 20, 38, 0.5);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.home-fa-stats-inline strong {
+    color: #fff;
+    font-size: 13px;
+    margin-right: 3px;
+    font-variant-numeric: tabular-nums;
+}
+.home-fa-stats-sep {
+    width: 1px;
+    height: 11px;
+    background: rgba(255, 255, 255, 0.15);
+    display: inline-block;
+}
+.home-fa-stats-inline--promo strong { color: rgba(255, 255, 255, 0.35); }
+
+/* Grille horizontale de 4 tuiles de collections — chaque tuile :
+   logo carré au-dessus, nom + vol en dessous. Plus visuel que
+   l'ancienne liste verticale avec médailles emoji. */
+.home-fa-cols-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 8px;
     width: 100%;
     max-width: 640px;
+    margin-top: 2px;
+}
+.home-fa-col-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 4px 10px;
+    background: rgba(11, 20, 38, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.18s, background 0.18s, transform 0.18s;
+    min-width: 0;
+}
+.home-fa-col-tile,
+.home-fa-col-tile * { text-decoration: none !important; }
+.home-fa-col-tile:hover,
+.home-fa-col-tile:focus-visible {
+    background: rgba(0, 179, 255, 0.08);
+    border-color: rgba(0, 179, 255, 0.3);
+    transform: translateY(-2px);
+}
+.home-fa-col-tile-img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+}
+.home-fa-col-tile-img--empty {
+    background:
+        linear-gradient(135deg, rgba(0,179,255,0.12), rgba(11,20,38,0.6));
+}
+.home-fa-col-tile-name {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.78);
+    letter-spacing: 0.02em;
+    line-height: 1.15;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+}
+.home-fa-col-tile-vol {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    color: #4ade80;
+    font-weight: 700;
+    line-height: 1;
+}
+.home-fa-col-tile--promo .home-fa-col-tile-name {
+    color: rgba(255, 255, 255, 0.35);
+}
+.home-fa-col-tile--promo {
+    background: rgba(0, 179, 255, 0.04);
+    border-style: dashed;
+    border-color: rgba(0, 179, 255, 0.25);
+}
+@media (max-width: 540px) {
+    /* Sur mobile très étroit, on garde 4 colonnes mais on réduit le
+       padding interne et la font des noms pour que tout tienne. */
+    .home-fa-cols-grid { gap: 6px; }
+    .home-fa-col-tile { padding: 6px 3px 8px; gap: 4px; }
+    .home-fa-col-tile-name { font-size: 9.5px; }
+    .home-fa-col-tile-vol { font-size: 9px; }
 }
 .home-fa-avatar {
     width: 96px;
