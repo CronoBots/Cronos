@@ -13083,8 +13083,12 @@ body.is-profile-loading #profileLoadingOverlay * {
     gap: 24px;
     align-items: start;
 }
-@media (max-width: 860px) {
-    .home-two-col { grid-template-columns: 1fr; }
+/* Breakpoint abaissé de 860px à 720px : tablettes en portrait (iPad
+   768px, Surface) profitent désormais du layout 2-col chat+pulse au
+   lieu de tomber en 1 col empilé comme sur mobile. À <720px (vrai
+   mobile), on reste en 1 col pleine largeur. */
+@media (max-width: 720px) {
+    .home-two-col { grid-template-columns: 1fr; gap: 16px; }
 }
 
 /* ── COMMUNITY CHAT — carte flex-row avec sidebar membres ── */
@@ -28596,7 +28600,12 @@ body { box-sizing: border-box; }
 }
 .home-fa-name {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 22px; font-weight: 800;
+    /* clamp(18, 2.4vw, 26) — fluide entre mobile et desktop large.
+       À 720px : 17.3px → clamp à 18px. À 1024px (tablette landscape) :
+       24.6px. À 1920px : 26px (max). Pas de saut visuel entre les
+       breakpoints. */
+    font-size: clamp(18px, 2.4vw, 26px);
+    font-weight: 800;
     color: #fff; letter-spacing: 0.02em; line-height: 1.1;
 }
 .home-fa-verified { width: 16px; height: 16px; flex-shrink: 0; }
@@ -31434,10 +31443,21 @@ body { box-sizing: border-box; }
    ═══════════════════════════════════════════════════════════════════════════ */
 /* Spotlight full-width — 1 carte par rangée, bannière à gauche, infos+samples à droite */
 .home-fd-grid {
-    display: flex;
-    flex-direction: column;
+    /* Grid auto-fluide : minmax(380px, 1fr) → mobile passe naturellement
+       en 1 col (la card ne tient pas sous 380px), tablette portrait
+       (~768px) → 2 cols, desktop large (>1140px) → 3 cols. Avant :
+       flex-column qui empilait toujours en 1 col, ce qui gaspillait
+       l'espace horizontal sur tablette et donnait des banners 21:7
+       énormes (~400px de haut) sur desktop. */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
     gap: 16px;
     margin-bottom: 14px;
+}
+/* Mobile <720px : on force 1 col explicite (lecture verticale type "feed"
+   plutôt que côte-à-côte sur landscape mobile très larges). */
+@media (max-width: 720px) {
+    .home-fd-grid { grid-template-columns: 1fr; }
 }
 /* Card = spread magazine vertical (banner top + corps éditorial). Mirroir
    de la grammaire Featured Collections / Artists : eyebrow, status pill,
@@ -31610,7 +31630,11 @@ body { box-sizing: border-box; }
 }
 .home-fd-card-name {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 22px;
+    /* clamp(17, 1.8vw, 24) — fluide entre tablette portrait (768px ×
+       1.8% = 13.8 → clamp à 17) et desktop large. Plus serré que
+       Featured Artists car la card de drop a un container plus
+       étroit en 2-col tablette. */
+    font-size: clamp(17px, 1.8vw, 24px);
     font-weight: 800;
     color: #fff;
     letter-spacing: 0.03em;
@@ -31698,7 +31722,8 @@ body { box-sizing: border-box; }
 @media (max-width: 720px) {
     .home-fd-card-banner { aspect-ratio: 16 / 7; }
     .home-fd-card-info { padding: 14px 14px 16px; gap: 11px; }
-    .home-fd-card-name { font-size: 18px; }
+    /* font-size du nom géré par clamp() en règle de base — pas
+       d'override fixe ici qui annulerait la fluidité. */
     .home-fd-card-header { padding-bottom: 6px; }
     .home-fd-card-eyebrow-label { font-size: 9px; letter-spacing: 0.18em; }
     .home-fd-card-eyebrow-num { font-size: 12px; }
