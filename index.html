@@ -8160,7 +8160,7 @@ document.addEventListener('DOMContentLoaded', initialize);
                     body: JSON.stringify({
                         operationName: 'GetFeatStats',
                         variables: { id, withStats: true },
-                        query: `query GetFeatStats($id:ID!,$withStats:Boolean!){public{collection(id:$id){id name verified logo{url} banner{url} creator{username verified} metrics{items owners totalSalesDecimal minSaleListingPriceDecimal listedCollectiblesCount} stats@include(if:$withStats){floorPriceDecimal oneDayVolumeDecimal oneDayVolumeDecimalChange sevenDayVolumeDecimal}}}}`
+                        query: `query GetFeatStats($id:ID!,$withStats:Boolean!){public{collection(id:$id){id name description verified logo{url} banner{url} creator{username verified} metrics{items owners totalSalesDecimal minSaleListingPriceDecimal listedCollectiblesCount} stats@include(if:$withStats){floorPriceDecimal oneDayVolumeDecimal oneDayVolumeDecimalChange sevenDayVolumeDecimal}}}}`
                     })
                 });
                 const json = await res.json();
@@ -8227,15 +8227,24 @@ document.addEventListener('DOMContentLoaded', initialize);
                 </div>
                 <img class="home-feat-v3-logo" src="${safeLogo}" alt="" loading="lazy" onerror="this.style.opacity='0.25';this.style.background='rgba(255,255,255,0.05)';"/>
             </div>
-            <!-- Stats inline juste sous la bannière. -->
+            <!-- Stats inline juste sous la bannière. 6 colonnes :
+                 Floor / Items / Owners / Listings / Volume / Total. -->
             <div class="home-feat-v3-stats">
                 <div class="home-feat-v3-stat">
                     <span class="home-feat-v3-stat-label">Floor</span>
                     <span class="home-feat-v3-stat-val" data-stat="floor">—</span>
                 </div>
                 <div class="home-feat-v3-stat">
+                    <span class="home-feat-v3-stat-label">Items</span>
+                    <span class="home-feat-v3-stat-val" data-stat="items">—</span>
+                </div>
+                <div class="home-feat-v3-stat">
                     <span class="home-feat-v3-stat-label">Owners</span>
                     <span class="home-feat-v3-stat-val" data-stat="owners">—</span>
+                </div>
+                <div class="home-feat-v3-stat">
+                    <span class="home-feat-v3-stat-label">Listed</span>
+                    <span class="home-feat-v3-stat-val" data-stat="listed">—</span>
                 </div>
                 <div class="home-feat-v3-stat">
                     <span class="home-feat-v3-stat-label" data-label="vol">Volume</span>
@@ -8246,7 +8255,12 @@ document.addEventListener('DOMContentLoaded', initialize);
                     <span class="home-feat-v3-stat-val" data-stat="traded">—</span>
                 </div>
             </div>
-            <!-- Showcase : 4 highlights + samples row, injectés par updateShowcase(). -->
+            <!-- Description courte (injectée par updateFeaturedCardStats si
+                 l'API renvoie une description). Cachée tant qu'on n'a pas
+                 de texte. Clip à 3 lignes via line-clamp cote CSS. -->
+            <p class="home-feat-v3-desc" data-desc style="display:none;"></p>
+            <!-- Showcase : 8 NFTs random integrant les 4 highlights sans
+                 leur label, injectes par updateShowcase(). -->
             <div class="home-feat-v3-showcase" data-showcase>
                 <div class="home-feat-showcase-loading">
                     <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
@@ -8369,19 +8383,38 @@ document.addEventListener('DOMContentLoaded', initialize);
         else if (volAll > 0){ volValue = volAll; volLabel = 'All-time'; }
 
         const owners = Number(data.metrics?.owners) || 0;
+        const items  = Number(data.metrics?.items) || 0;
+        const listed = Number(data.metrics?.listedCollectiblesCount) || 0;
 
         const elFloor  = card.querySelector('[data-stat="floor"]');
+        const elItems  = card.querySelector('[data-stat="items"]');
         const elOwners = card.querySelector('[data-stat="owners"]');
+        const elListed = card.querySelector('[data-stat="listed"]');
         const elVol    = card.querySelector('[data-stat="vol"]');
         const elVolLbl = card.querySelector('[data-label="vol"]');
         const elTraded = card.querySelector('[data-stat="traded"]');
         if (elFloor)  elFloor.textContent  = fmtMoney(floor);
+        if (elItems)  elItems.textContent  = fmtNum(items);
         if (elOwners) elOwners.textContent = fmtNum(owners);
+        if (elListed) elListed.textContent = fmtNum(listed);
         if (elVol)    elVol.textContent    = fmtMoney(volValue);
         if (elVolLbl) elVolLbl.textContent = volLabel;
         // Volume traded = somme cumulative de toutes les ventes (USD) sur
         // toute la durée de vie de la collection.
         if (elTraded) elTraded.textContent = fmtMoney(Number(data.metrics?.totalSalesDecimal) || 0);
+
+        // Description — injectée si l'API la renvoie. Le CSS clamp à 3
+        // lignes pour ne pas exploser la hauteur de la card.
+        const descEl = card.querySelector('[data-desc]');
+        const desc   = (data.description || '').trim();
+        if (descEl) {
+            if (desc) {
+                descEl.textContent = desc;
+                descEl.style.display = '';
+            } else {
+                descEl.style.display = 'none';
+            }
+        }
 
         // 24h change badge — only shown when there's been recent activity
         const change = Number(data.stats?.oneDayVolumeDecimalChange) || 0;
@@ -8612,97 +8645,39 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         if (!data) { wrap.style.display = 'none'; return; }
         wrap.style.display = '';
 
-        const fmtMoney = (n) => {
-            const v = Number(n);
-            if (!v || v <= 0) return '—';
-            if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
-            if (v >= 1e3) return '$' + (v / 1e3).toFixed(1) + 'K';
-            return '$' + v.toFixed(v < 10 ? 2 : 0);
-        };
-        const fmtNum = (n) => {
-            const v = Number(n);
-            if (!v || v <= 0) return '0';
-            if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
-            if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
-            return String(v);
-        };
-        const fmtPrice = (price, currency) => {
-            // Default listing price est en token natif (CRO/ETH...) — pas en
-            // USD. On affiche le montant + ticker quand on l'a.
-            const v = Number(price);
-            if (!v || v <= 0) return '—';
-            const sym = (currency || '').toUpperCase();
-            const num = v >= 1000 ? (v / 1000).toFixed(1) + 'k' : (v < 10 ? v.toFixed(2) : v.toFixed(0));
-            return num + (sym ? ' ' + sym : '');
-        };
-
         const thumb = (a) => {
             const img = a?.cover?.url || a?.main?.url || '';
             return `<img src="${_fcEsc(img)}" alt="${_fcEsc(a?.name || '')}" loading="lazy" onerror="this.style.opacity='0.2'"/>`;
         };
 
-        // Strip random : 8 vignettes carrées en bas du showcase pour
-        // donner un aperçu de la variété visuelle de la collection.
-        const samples = (data.samples || []).slice(0, 8);
-        const samplesHtml = samples.length ? `
+        // Showcase = 8 NFTs aléatoires affichés sans label. On y intègre
+        // les 4 highlights (bestRank, mostViewed, mostLiked, floor) en
+        // tête de liste mais SANS leur étiquette qui les définissait
+        // (plus de "TOP RANK / MOST VIEWED" — juste la vignette nue).
+        // Ensuite on complète avec les samples random, en évitant les
+        // doublons par id d'asset. Limite à 8 au total.
+        const seen = new Set();
+        const pool = [];
+        const add  = (a) => {
+            if (!a) return;
+            const k = a.id || (a.cover?.url || a.main?.url || a.name || '');
+            if (!k || seen.has(k)) return;
+            seen.add(k);
+            pool.push(a);
+        };
+        add(data.bestRank);
+        add(data.mostViewed);
+        add(data.mostLiked);
+        add(data.floor);
+        (data.samples || []).forEach(add);
+        const items = pool.slice(0, 8);
+
+        wrap.innerHTML = items.length ? `
             <div class="home-feat-showcase-samples">
-                <span class="home-feat-showcase-strip-label">Sample NFTs</span>
                 <div class="home-feat-showcase-samples-row">
-                    ${samples.map(a => `<div class="home-feat-showcase-sample" title="${_fcEsc(a.name || '')}">${thumb(a)}</div>`).join('')}
+                    ${items.map(a => `<div class="home-feat-showcase-sample" title="${_fcEsc(a.name || '')}">${thumb(a)}</div>`).join('')}
                 </div>
             </div>` : '';
-
-        // Tuile compacte : thumb à gauche + 3 lignes de texte à droite
-        // (label coloré · nom NFT · valeur principale). NFT name est
-        // tronqué à 18 chars avec ellipsis pour ne pas péter le layout.
-        const tile = (label, name, value, asset, modifier) => {
-            if (!asset) return '';
-            return `
-                <div class="home-feat-showcase-tile home-feat-showcase-tile--${modifier}" title="${_fcEsc(asset.name || '')}">
-                    <div class="home-feat-showcase-tile-thumb">${thumb(asset)}</div>
-                    <div class="home-feat-showcase-tile-text">
-                        <span class="home-feat-showcase-tile-label">${label}</span>
-                        <span class="home-feat-showcase-tile-name">${_fcEsc(name)}</span>
-                        <span class="home-feat-showcase-tile-val">${value}</span>
-                    </div>
-                </div>`;
-        };
-
-        // Floor : on préfère la valeur USD quand elle existe.
-        const fmtFloor = (f) => {
-            if (!f) return '—';
-            const usd = Number(f.priceUSD) || 0;
-            if (usd > 0) return fmtMoney(usd);
-            return fmtPrice(f.price, f.currency);
-        };
-        // Like / view counts : si l'API ne les renvoie pas, on affiche
-        // juste un dash plutôt que "0" (qui serait trompeur).
-        const fmtCount = (n) => {
-            const v = Number(n);
-            if (!v || v <= 0) return '—';
-            return fmtNum(v);
-        };
-
-        // Format rank : "1 / total" (sans le #) quand on connaît le total
-        // supply de la collection, sinon juste "1".
-        const fmtRank = (rank, total) => {
-            const r = Number(rank);
-            if (!r || r <= 0) return '—';
-            const t = Number(total) || 0;
-            return t > 0 ? `${fmtNum(r)} / ${fmtNum(t)}` : String(r);
-        };
-
-        // Ordre : Top rank — Most viewed — Most liked — Floor Price.
-        // Layout 2×2 horizontal (cf. CSS .home-feat-showcase-grid).
-        const tilesHtml = `
-            <div class="home-feat-showcase-grid">
-                ${tile('Top rank',    data.bestRank?.name   || '', fmtRank(data.bestRank?.rank, data.total),       data.bestRank,   'rank')}
-                ${tile('Most viewed', data.mostViewed?.name || '', fmtCount(data.mostViewed?.views) + ' views',     data.mostViewed, 'viewed')}
-                ${tile('Most liked',  data.mostLiked?.name  || '', '❤ ' + fmtCount(data.mostLiked?.likes),          data.mostLiked,  'liked')}
-                ${tile('Floor Price', data.floor?.name      || '', fmtFloor(data.floor),                            data.floor,      'floor')}
-            </div>`;
-
-        wrap.innerHTML = tilesHtml + samplesHtml;
     }
 
     async function buildFeatured() {
@@ -16298,6 +16273,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-16T18:30:00Z',
+            type:  'improvement',
+            title: 'Featured Collection cards enriched',
+            text:  'Every featured collection card now shows the official description under the stats row, two extra stats (Items and Listed) for a total of six side-by-side, and a single row of 8 random NFT thumbnails — the previously highlighted ones (top rank / most viewed / most liked / floor) are now woven into the random row as plain thumbnails without their labels. Collection title and artist re-centered vertically in the banner.'
+        },
         {
             date:  '2026-05-16T11:30:00Z',
             type:  'improvement',
