@@ -9159,6 +9159,79 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         return slide;
     }
 
+    /* ------------------------------------------------------------------ *
+     *   Featured Artists — Firebase cache (24h TTL)
+     * ------------------------------------------------------------------ *
+     *   On stocke le bundle complet (profiles + bundles fetché côté
+     *   Crypto.com NFT) dans Firebase à chemin `cache/featured-artists`
+     *   avec un timestamp `lastUpdated`. Tant que le cache a moins de
+     *   24h on le sert directement sans appeler l'API — ce qui économise
+     *   ~12 requêtes GraphQL par chargement de home (3 artists × 4
+     *   queries) et accélère le rendu pour tout le monde.
+     *
+     *   Quand le cache est stale (>24h) ou absent, le premier user qui
+     *   charge la page paye le coût du fetch et écrit le résultat dans
+     *   Firebase. Pas de protection write-once : si 2-3 users tombent
+     *   simultanément sur un cache stale, ils refetchent en parallèle et
+     *   le dernier écrase — coût négligeable, pas de corruption.
+     *
+     *   ⚠️ Règle Firebase à ajouter par l'utilisateur dans la console :
+     *     "cache": {
+     *         "featured-artists": {
+     *             ".read": true,
+     *             ".write": true,
+     *             ".validate": "newData.hasChildren(['lastUpdated', 'data'])
+     *                           && newData.child('lastUpdated').isNumber()"
+     *         }
+     *     }
+     * ------------------------------------------------------------------ */
+    const FA_CACHE_PATH   = 'cache/featured-artists';
+    const FA_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+    async function _waitForFbDb(timeoutMs = 1500) {
+        // window.fbDb est posé par initChat() dans un autre <script>.
+        // Si on arrive avant lui, on attend brièvement avant d'abandonner.
+        const deadline = Date.now() + timeoutMs;
+        while (Date.now() < deadline) {
+            if (window.fbDb) return window.fbDb;
+            await new Promise(r => setTimeout(r, 50));
+        }
+        return null;
+    }
+
+    async function _loadFeaturedCreatorsData() {
+        const fb = await _waitForFbDb();
+        // 1) Tentative de lecture du cache Firebase
+        if (fb) {
+            try {
+                const snap = await fb.ref(FA_CACHE_PATH).once('value');
+                const cached = snap.val();
+                const age = cached?.lastUpdated ? Date.now() - cached.lastUpdated : Infinity;
+                if (cached?.data?.profiles && cached?.data?.bundles && age < FA_CACHE_TTL_MS) {
+                    return cached.data;
+                }
+            } catch (e) { console.warn('[FA cache] read failed:', e?.message); }
+        }
+        // 2) Cache miss / stale / Firebase absent → fetch frais depuis l'API
+        const [profiles, bundles] = await Promise.all([
+            Promise.all(FEATURED_CREATORS.map(c => fetchCreatorProfile(c.username))),
+            Promise.all(FEATURED_CREATORS.map(c => fetchCreatorBundle(c.username)))
+        ]);
+        const data = { profiles, bundles };
+        // 3) Écriture fire-and-forget du cache pour les prochains visiteurs.
+        //    JSON.parse(stringify) supprime les `undefined` qui font
+        //    rejeter le push par Firebase.
+        if (fb) {
+            try {
+                fb.ref(FA_CACHE_PATH).set({
+                    lastUpdated: Date.now(),
+                    data: JSON.parse(JSON.stringify(data))
+                }).catch(e => console.warn('[FA cache] write failed:', e?.message));
+            } catch (e) { console.warn('[FA cache] write failed:', e?.message); }
+        }
+        return data;
+    }
+
     async function buildFeaturedCreators() {
         const wrap = document.getElementById('homeFeaturedCreatorsGrid');
         if (!wrap || wrap.querySelector('.home-fa-spotlight')) return;
@@ -9166,10 +9239,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // On GARDE la className `home-creators-grid` — c'est le wrapper
         // halo qui englobe désormais le spotlight ET la nav (pour que les
         // flèches + progress + dots soient intégrées au bas du cadre).
-        const [profiles, bundles] = await Promise.all([
-            Promise.all(FEATURED_CREATORS.map(c => fetchCreatorProfile(c.username))),
-            Promise.all(FEATURED_CREATORS.map(c => fetchCreatorBundle(c.username)))
-        ]);
+        const { profiles, bundles } = await _loadFeaturedCreatorsData();
         const spotlight = document.createElement('div');
         spotlight.className = 'home-fa-spotlight';
         FEATURED_CREATORS.forEach((cfg,i) => {
@@ -16273,6 +16343,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-16T19:00:00Z',
+            type:  'improvement',
+            title: 'Featured Artists load faster',
+            text:  'The Featured Artists carousel used to refetch every artist profile, every collection, and every collection metric on each page load — roughly a dozen API calls before the section could render. Those results are now cached in our backend for 24 hours, so the page reuses the same dataset for every visitor in that window. First load each day is unchanged; everyone else gets the section instantly.'
+        },
         {
             date:  '2026-05-16T18:30:00Z',
             type:  'improvement',
