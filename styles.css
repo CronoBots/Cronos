@@ -13,16 +13,18 @@
     /* Recette unifiée des cards du home :
          border: 1px solid var(--home-halo-border)
          box-shadow: var(--home-halo-shadow)
-       Le halo est composé UNIQUEMENT des blurs doux (50px + 100px).
-       L'ancien `0 0 0 1px rgba(0,179,255,0.5)` qui dessinait un trait
-       net juste autour du border a été retiré : c'est lui qui créait
-       la fausse "2e ligne" visible au zoom (le trait sharp + le vrai
-       border 1px côte à côte). Avec seulement les blurs, on a un trait
-       unique + un glow extérieur diffus. */
+       Halo en deux couches diffuses. SPREAD NÉGATIF (-12px / -24px)
+       sur les deux : ça pousse le point de densité maximale du blur
+       loin du border, sinon le pic de luminosité du `0 0 50px` se
+       collait juste à côté du border et lisait comme un 2e trait
+       cyan parallèle (effet "double border" visible au zoom sur les
+       cards à bg opaque comme le Spotlight). Les blurs sont aussi
+       plus larges (60/120 → 80/160) pour rendre le glow plus
+       enveloppant et moins "ringé". */
     --home-halo-border: rgba(0, 179, 255, 0.55);
     --home-halo-shadow:
-        0 0 50px  rgba(0, 179, 255, 0.28),
-        0 0 100px rgba(0, 179, 255, 0.12);
+        0 0 60px  -12px rgba(0, 179, 255, 0.45),
+        0 0 120px -24px rgba(0, 179, 255, 0.25);
     --download-green: #90EE90;
     --color2: #2C2C2C;
     --text-dark: #fff;
