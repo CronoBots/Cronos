@@ -11,8 +11,11 @@
        le top spotlight lui-même qui est la référence). Changer ici =
        changer partout sur la home en une seule édition. */
     --home-halo-border: rgba(0, 179, 255, 0.45);
+    /* Halo shadow : SEULEMENT le glow flou (50px + 100px), pas le
+       contour net 1px qui doublait visuellement le `border` ci-dessus
+       (deux traits cyan d'opacité différente collés → effet "double
+       ligne" sur toutes les cards du home). */
     --home-halo-shadow:
-        0 0 0   1px rgba(0, 179, 255, 0.5),
         0 0 50px    rgba(0, 179, 255, 0.28),
         0 0 100px   rgba(0, 179, 255, 0.12);
     --download-green: #90EE90;
@@ -13200,10 +13203,10 @@ body.is-profile-loading #profileLoadingOverlay * {
     width: 24px; height: 24px; border-radius: 50%;
     object-fit: cover; flex-shrink: 0;
     background: rgba(0,179,255,0.15);
-    /* Contour blanc translucide, en miroir du .home-chat-msg-avatar
-       des messages du chat. Donne une identité visuelle cohérente aux
-       avatars partout sur la home. */
-    border: 1px solid rgba(255, 255, 255, 0.55);
+    /* Cadre blanc 0.85 — à 0.55 (tentative précédente, #122) le
+       contour lisait gris sur le fond foncé. Match avec
+       .home-chat-msg-avatar pour cohérence chat ↔ panel members. */
+    border: 1px solid rgba(255, 255, 255, 0.85);
 }
 .home-chat-member-initial {
     width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
@@ -13963,7 +13966,13 @@ body.is-profile-loading #profileLoadingOverlay * {
 /* Community chat — message avec user + timestamp */
 .home-chat-msg--community {
     background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
+    /* Bordure top/right/bottom TRANSPARENTE par défaut — le cadre cyan
+       de .home-community-card englobe déjà la zone, un second contour
+       gris autour de chaque bulle était redondant. Les .home-chat-msg
+       --mine repeignent les trois côtés en cyan via leur propre règle,
+       et .home-chat-msg--role-* peignent juste le border-left-color
+       (rouge / vert / jaune) pour le liseré de rôle. */
+    border: 1px solid transparent;
     color: rgba(255,255,255,0.9);
     align-self: stretch;
     max-width: 100%;
@@ -14090,10 +14099,10 @@ body.is-profile-loading #profileLoadingOverlay * {
     width: 26px; height: 26px;
     border-radius: 50%;
     object-fit: cover;
-    /* Contour blanc translucide — match le rendu des avatars du panel
-       online/offline, plus neutre que le cyan qui se mélangeait à la
-       bulle teintée par rôle (creator rouge / og vert / patron jaune). */
-    border: 1px solid rgba(255, 255, 255, 0.55);
+    /* Blanc plus marqué (0.85) que les 0.55 d'une tentative
+       précédente (#122) : à 0.55 le contour lisait gris sur fond
+       sombre. Match avec .home-chat-member-avatar. */
+    border: 1px solid rgba(255, 255, 255, 0.85);
     background: rgba(255, 255, 255, 0.05);
     flex-shrink: 0;
 }
