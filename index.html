@@ -26197,5 +26197,262 @@ window.initSnapshotPanel = function() {
     }
 })();
 </script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     KEYBOARD SHORTCUTS + SCROLL PROGRESS BAR
+     ──────────────────────────────────────────────────────────────────────
+     Power-user navigation : j/k pour cycler entre les onglets topnav,
+     g+lettre pour aller direct à un onglet, / pour focus la recherche,
+     ? pour afficher la cheat sheet, Esc pour fermer modals/overlays,
+     t/b pour scroll top/bottom.
+
+     Tous les handlers sont court-circuités si l'utilisateur est en train
+     de taper dans un input/textarea/contenteditable — pas d'interférence
+     avec la saisie.
+
+     La scroll progress bar (1 px en haut du viewport) reflète la
+     position scroll de la page entière. Hardware-accelerated (transform
+     scaleX) pour rester smooth même sur les longues pages (Drops,
+     Snapshot, Stats). Respecte prefers-reduced-motion.
+     ────────────────────────────────────────────────────────────────── -->
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<div class="kbd-cheatsheet" id="kbdCheatsheet" role="dialog" aria-modal="true" aria-labelledby="kbdCheatsheetTitle" style="display:none;">
+  <div class="kbd-cheatsheet-inner">
+    <div class="kbd-cheatsheet-header">
+      <h3 class="kbd-cheatsheet-title" id="kbdCheatsheetTitle">Keyboard shortcuts</h3>
+      <button class="kbd-cheatsheet-close" id="kbdCheatsheetClose" type="button" aria-label="Close shortcuts">×</button>
+    </div>
+    <div class="kbd-cheatsheet-grid">
+      <div class="kbd-cheatsheet-section">
+        <div class="kbd-cheatsheet-section-title">Navigation</div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>j</kbd></span><span class="kbd-row-desc">Next tab</span></div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>k</kbd></span><span class="kbd-row-desc">Previous tab</span></div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>g</kbd> <kbd>h</kbd></span><span class="kbd-row-desc">Spotlight (home)</span></div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>g</kbd> <kbd>s</kbd></span><span class="kbd-row-desc">Top collections</span></div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>g</kbd> <kbd>m</kbd></span><span class="kbd-row-desc">Market bot</span></div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>g</kbd> <kbd>d</kbd></span><span class="kbd-row-desc">Drops</span></div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>g</kbd> <kbd>x</kbd></span><span class="kbd-row-desc">Snapshot</span></div>
+      </div>
+      <div class="kbd-cheatsheet-section">
+        <div class="kbd-cheatsheet-section-title">Actions</div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>/</kbd></span><span class="kbd-row-desc">Focus search</span></div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>t</kbd></span><span class="kbd-row-desc">Scroll to top</span></div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>b</kbd></span><span class="kbd-row-desc">Scroll to bottom</span></div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>?</kbd></span><span class="kbd-row-desc">Toggle this panel</span></div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>Esc</kbd></span><span class="kbd-row-desc">Close any panel</span></div>
+      </div>
+    </div>
+    <div class="kbd-cheatsheet-footer">Press <kbd>?</kbd> anytime to bring this back.</div>
+  </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    /* ── SCROLL PROGRESS BAR ──────────────────────────────────────────── */
+    const bar = document.getElementById('scrollProgress');
+    if (bar) {
+        let raf = 0;
+        function paint() {
+            raf = 0;
+            const max = (document.documentElement.scrollHeight - window.innerHeight);
+            const pct = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+            bar.style.transform = 'scaleX(' + pct + ')';
+        }
+        window.addEventListener('scroll', () => {
+            if (!raf) raf = requestAnimationFrame(paint);
+        }, { passive: true });
+        window.addEventListener('resize', paint, { passive: true });
+        paint();
+    }
+
+    /* ── KEYBOARD SHORTCUTS ───────────────────────────────────────────── */
+    const TABS_ORDER = ['collections', 'stats', 'salesbot', 'drops', 'snapshot', 'support'];
+    const GO_TARGETS = { h: 'collections', s: 'stats', m: 'salesbot', d: 'drops', x: 'snapshot', u: 'support' };
+
+    function isTypingTarget(el) {
+        if (!el) return false;
+        if (el.isContentEditable) return true;
+        const tag = el.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+        return false;
+    }
+
+    function activateTab(name) {
+        const btn = document.querySelector('.topnav-tab[data-tab="' + name + '"]');
+        if (btn && !btn.classList.contains('topnav-tab--disabled')) {
+            btn.click();
+            return true;
+        }
+        return false;
+    }
+
+    function cycleTab(direction) {
+        const active = document.querySelector('.topnav-tab--active');
+        if (!active) return;
+        const current = active.getAttribute('data-tab');
+        const idx = TABS_ORDER.indexOf(current);
+        if (idx < 0) return;
+        // Boucle sur les tabs visibles uniquement
+        const enabled = TABS_ORDER.filter(t => {
+            const b = document.querySelector('.topnav-tab[data-tab="' + t + '"]');
+            return b && !b.classList.contains('topnav-tab--disabled') && b.offsetParent !== null;
+        });
+        const enIdx = enabled.indexOf(current);
+        if (enIdx < 0) return;
+        const next = enabled[(enIdx + direction + enabled.length) % enabled.length];
+        activateTab(next);
+    }
+
+    function focusSearch() {
+        // Préfère la searchbar topnav si visible, sinon le panneau actif
+        const candidates = [
+            document.getElementById('usernameInput'),
+            document.getElementById('cpWelcomeInput'),
+            document.getElementById('pfWelcomeInput'),
+            document.getElementById('snapshotColIdInput'),
+            document.getElementById('sbSearchInput')
+        ];
+        const target = candidates.find(el => el && el.offsetParent !== null);
+        if (target) {
+            target.focus();
+            target.select && target.select();
+            return true;
+        }
+        return false;
+    }
+
+    /* ── Cheat sheet modal ────────────────────────────────────────────── */
+    const sheet = document.getElementById('kbdCheatsheet');
+    const sheetClose = document.getElementById('kbdCheatsheetClose');
+    function showSheet() {
+        if (sheet) sheet.style.display = 'flex';
+    }
+    function hideSheet() {
+        if (sheet) sheet.style.display = 'none';
+    }
+    function isSheetVisible() {
+        return sheet && sheet.style.display !== 'none';
+    }
+    if (sheetClose) sheetClose.addEventListener('click', hideSheet);
+    if (sheet) sheet.addEventListener('click', (e) => {
+        if (e.target === sheet) hideSheet();
+    });
+
+    /* ── Esc → ferme tous les overlays détectables ────────────────────── */
+    function closeOverlays() {
+        // Cheat sheet
+        if (isSheetVisible()) { hideSheet(); return true; }
+        // Login modal
+        const lmBackdrop = document.getElementById('loginModalBackdrop');
+        if (lmBackdrop && lmBackdrop.style.display !== 'none') {
+            const close = document.getElementById('loginModalClose');
+            if (close) { close.click(); return true; }
+        }
+        // Settings modal
+        const settings = document.getElementById('settingsPanel');
+        if (settings && settings.style.display !== 'none') {
+            const close = document.getElementById('settingsClose');
+            if (close) { close.click(); return true; }
+        }
+        // Certify dropdown
+        const cd = document.getElementById('certifyDropdown');
+        if (cd && cd.style.display !== 'none') {
+            const close = document.getElementById('certifyDropdownClose');
+            if (close) { close.click(); return true; }
+        }
+        // NFT preview modal (s'il a une close button standard)
+        const preview = document.querySelector('.nft-preview-panel');
+        if (preview && preview.offsetParent !== null) {
+            const close = preview.querySelector('.preview-close, [aria-label="Close"]');
+            if (close) { close.click(); return true; }
+        }
+        return false;
+    }
+
+    /* ── 'g' prefix : 'g h' / 'g s' / etc. (vim-style) ───────────────── */
+    let goPending = false;
+    let goTimer = 0;
+    function resetGo() {
+        goPending = false;
+        if (goTimer) { clearTimeout(goTimer); goTimer = 0; }
+        document.documentElement.classList.remove('kbd-go-pending');
+    }
+
+    document.addEventListener('keydown', function (e) {
+        // Modifiers actifs (Cmd/Ctrl/Alt) → on laisse passer
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+        // Esc gère même quand on est dans un input (utile pour close suggestions)
+        if (e.key === 'Escape') {
+            if (closeOverlays()) { e.preventDefault(); resetGo(); }
+            return;
+        }
+
+        // Si on tape dans un input, ne pas intercepter
+        if (isTypingTarget(e.target)) return;
+
+        // Pas de shortcuts pendant qu'un overlay critique est ouvert (sauf Esc)
+        const lmOpen = document.getElementById('loginModalBackdrop');
+        if (lmOpen && lmOpen.style.display !== 'none' && !isSheetVisible()) {
+            resetGo();
+            return;
+        }
+
+        const k = e.key;
+
+        // Si on est en 'g pending', la lettre suivante doit être une cible
+        if (goPending) {
+            const target = GO_TARGETS[k.toLowerCase()];
+            resetGo();
+            if (target) {
+                e.preventDefault();
+                activateTab(target);
+            }
+            return;
+        }
+
+        // Touche '?' (avec ou sans Shift) → cheat sheet
+        if (k === '?') {
+            e.preventDefault();
+            if (isSheetVisible()) hideSheet(); else showSheet();
+            return;
+        }
+
+        switch (k) {
+            case 'j':
+                e.preventDefault();
+                cycleTab(1);
+                break;
+            case 'k':
+                e.preventDefault();
+                cycleTab(-1);
+                break;
+            case 'g':
+                e.preventDefault();
+                goPending = true;
+                document.documentElement.classList.add('kbd-go-pending');
+                goTimer = setTimeout(resetGo, 1200);
+                break;
+            case '/':
+                if (focusSearch()) e.preventDefault();
+                break;
+            case 't':
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                break;
+            case 'b':
+                e.preventDefault();
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+                break;
+        }
+    });
+
+    /* ── Expose pour debug + futurs hooks ─────────────────────────────── */
+    window.CronosKbd = { showSheet, hideSheet, cycleTab, activateTab };
+})();
+</script>
 </body>
 </html>
