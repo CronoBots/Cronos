@@ -18,6 +18,23 @@
 <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/><meta content="#0a1a3a" name="theme-color"/>
 <meta content="Browse smarter. Collect better – Developed by Unscoop" name="description"/>
 <title>CRONOS.WTF | Developed by Unscoop</title>
+<!-- ── Open Graph / Twitter Card ──
+     Métadonnées pour les prévisualisations partagées (Discord, X,
+     Slack, iMessage, etc.). Sans ça, le lien apparaît "nu" sans
+     image ni description. -->
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="CRONOS.WTF"/>
+<meta property="og:title" content="CRONOS.WTF — Browse smarter. Collect better."/>
+<meta property="og:description" content="Live stats, drops, snapshots and community for the Cronos NFT ecosystem."/>
+<meta property="og:url" content="https://cronos.wtf/"/>
+<meta property="og:image" content="https://cronos.wtf/icons/icon-512.png"/>
+<meta property="og:image:width" content="512"/>
+<meta property="og:image:height" content="512"/>
+<meta property="og:locale" content="en_US"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="CRONOS.WTF — Browse smarter. Collect better."/>
+<meta name="twitter:description" content="Live stats, drops, snapshots and community for the Cronos NFT ecosystem."/>
+<meta name="twitter:image" content="https://cronos.wtf/icons/icon-512.png"/>
 <!-- ── PWA install / standalone mode ──
      Manifest + meta tags pour rendre l'app installable sur Android,
      iOS, Windows. `viewport-fit=cover` (au-dessus) étend la zone safe
@@ -26327,11 +26344,27 @@ window.initSnapshotPanel = function() {
     /* ── Cheat sheet modal ────────────────────────────────────────────── */
     const sheet = document.getElementById('kbdCheatsheet');
     const sheetClose = document.getElementById('kbdCheatsheetClose');
+    let sheetLastFocus = null;
     function showSheet() {
-        if (sheet) sheet.style.display = 'flex';
+        if (!sheet) return;
+        sheetLastFocus = document.activeElement;
+        sheet.style.display = 'flex';
+        // Donner le focus au bouton close — Tab restera dans la modal
+        // (un seul élément focusable suffit ici pour la cheat sheet),
+        // Esc / click backdrop / click × pour fermer.
+        if (sheetClose) {
+            // setTimeout pour laisser le navigateur peindre la modal d'abord
+            setTimeout(() => sheetClose.focus(), 0);
+        }
     }
     function hideSheet() {
-        if (sheet) sheet.style.display = 'none';
+        if (!sheet) return;
+        sheet.style.display = 'none';
+        // Restaure le focus sur l'élément qui avait le focus avant l'ouverture
+        if (sheetLastFocus && typeof sheetLastFocus.focus === 'function') {
+            try { sheetLastFocus.focus(); } catch (_) {}
+        }
+        sheetLastFocus = null;
     }
     function isSheetVisible() {
         return sheet && sheet.style.display !== 'none';
