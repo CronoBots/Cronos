@@ -13104,17 +13104,20 @@ body.is-profile-loading #profileLoadingOverlay * {
     display: flex;
     flex-direction: row;     /* messages + sidebar côte à côte */
     /* Cadre unifié home : 2px solid via les variables --home-halo-*
-       déclarées sur :root. Changer là-bas = changer partout. */
-    border: 2px solid var(--home-halo-border);
+       déclarées sur :root. Changer là-bas = changer partout.
+       OVERRIDE local de la couleur border : on passe en cyan 100%
+       opaque (rgba 1.0) au lieu de la var (0.55). Avec 0.55, le
+       sub-pixel rendering iOS Safari sur le bg semi-opaque du chat
+       (0.4) faisait apparaître l'inner edge du border plus sombre
+       que l'outer edge → effet « 2 traits cyan concentriques » visible
+       au zoom (cf. revue mobile). Une couleur solide à 1.0 élimine
+       l'artifact d'alpha-blending — la border lit comme un trait
+       unique. Les autres cards (pulse, featured, etc.) gardent la
+       var à 0.55 où elles n'ont pas le problème (bg quasi-transparent). */
+    border: 2px solid rgba(0, 179, 255, 1);
     border-radius: 18px;
     overflow: hidden;
     box-shadow: var(--home-halo-shadow);
-    /* Background à 0.4 (avant 0.85). À 0.85 le contraste très opaque
-       avec le border cyan créait un "step" net perçu comme un 2e trait
-       — bug remonté en mobile review : « le chat a une double
-       bordure ». 0.4 aligne sur les autres cards home (home-cp-wrap,
-       home-updates-list, etc.) où la border lit comme un trait propre
-       sans step interne. */
     background: rgba(11,20,38,0.4);
     /* Hauteur dictée par le flex dans .home-two-col--chat-live (chat et
        live feed sont stretchés à la même hauteur). Le min-height là-bas
