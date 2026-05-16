@@ -1889,21 +1889,6 @@
         <span class="sb-result-count" id="sbResultCount"></span>
       </div>
       <div class="sb-filters-right">
-        <!-- Prix min/max -->
-        <div class="sb-price-range">
-          <input class="sb-price-input" id="sbPriceMin" type="number" placeholder="Min $" min="0" step="10" inputmode="numeric"/>
-          <span class="sb-price-sep">–</span>
-          <input class="sb-price-input" id="sbPriceMax" type="number" placeholder="Max $" min="0" step="10" inputmode="numeric"/>
-          <button class="sb-price-reset" id="sbPriceReset" type="button" title="Reset price filter" style="display:none;">×</button>
-        </div>
-        <!-- Hide $1 transfers — toggle au style snapshot (track + thumb) -->
-        <label class="snapshot-opt-toggle sb-hide-dollar-toggle" id="sbHideDollarToggle" title="Hide $1 sales (usually owner-to-owner transfers)">
-          <input class="snapshot-opt-toggle-input" id="sbHideDollarInput" type="checkbox"/>
-          <span class="snapshot-opt-toggle-track"><span class="snapshot-opt-toggle-thumb"></span></span>
-          <span class="snapshot-opt-toggle-label">
-            <span class="snapshot-opt-toggle-title">Hide $1</span>
-          </span>
-        </label>
         <!-- Tri -->
         <div class="stats-timerange sb-sort-group" id="sbSortGroup">
           <button class="stats-tr-btn stats-tr-btn--active" data-sbsort="date-desc" type="button">Recent</button>
@@ -1989,6 +1974,15 @@
             <div class="sb-addcol-suggestions" id="sbAddColSuggestions" role="listbox" aria-label="Collection suggestions"></div>
           </div>
         </div>
+        <!-- Hide $1 transfers — placé à gauche du bouton Alert (demande user).
+             Toggle style snapshot (track + thumb). -->
+        <label class="snapshot-opt-toggle sb-hide-dollar-toggle" id="sbHideDollarToggle" title="Hide $1 sales (usually owner-to-owner transfers)">
+          <input class="snapshot-opt-toggle-input" id="sbHideDollarInput" type="checkbox"/>
+          <span class="snapshot-opt-toggle-track"><span class="snapshot-opt-toggle-thumb"></span></span>
+          <span class="snapshot-opt-toggle-label">
+            <span class="snapshot-opt-toggle-title">Hide $1</span>
+          </span>
+        </label>
         <!-- Alarme sonore -->
         <div class="sb-alarm-wrap" id="sbAlarmWrap">
           <button class="sb-alarm-btn" id="sbAlarmBtn" type="button" title="Price alert">
@@ -2004,11 +1998,6 @@
               <input class="sb-alarm-volume" id="sbAlarmVolume" type="range" min="0" max="100" value="70"/>
             </div>
           </div>
-        </div>
-        <!-- Live indicator — tout à droite -->
-        <div class="sb-live sb-live--filter" id="sbLive">
-          <span class="sb-live-dot"></span>
-          <span class="sb-live-label">LIVE</span>
         </div>
       </div>
     </div>
@@ -13210,8 +13199,6 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         const countEl = document.getElementById('sbResultCount');
         if (!feed) return;
         const search = (window._sbCurrentSearch || '').toLowerCase();
-        const pMin   = window._sbPriceMin || 0;
-        const pMax   = window._sbPriceMax || Infinity;
         const sort   = window._sbCurrentSort || 'date-desc';
         let filtered = _sales.slice().filter(s => {
             const price = Number(s.listing?.salePriceDecimalUSD) || Number(s.amountDecimal) || 0;
@@ -13226,8 +13213,6 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 ].map(v => (v || '').toLowerCase());
                 if (!fields.some(f => f.includes(search))) return false;
             }
-            if (price > 1 && price < pMin) return false;
-            if (pMax < Infinity && price > pMax) return false;
             // Masquer ventes à 1$ (transferts déguisés) quand le filtre est actif
             if (window._sbHideDollarSales && price > 0 && price <= 1) return false;
             // Filtre auction côté client
@@ -15114,8 +15099,6 @@ async function sha256hex(str) {
 (function() {
     let _sbSort = 'date-desc';
     let _sbSearch = '';
-    let _sbPriceMin = 0;
-    let _sbPriceMax = Infinity;
 
     function applyFilters() {
         const feed = document.getElementById('sbFeed');
@@ -15158,29 +15141,6 @@ async function sha256hex(str) {
         applyFilters();
     });
 
-    const minInp = document.getElementById('sbPriceMin');
-    const maxInp = document.getElementById('sbPriceMax');
-    const resetBtn = document.getElementById('sbPriceReset');
-    function updatePriceFilter() {
-        _sbPriceMin = parseFloat(minInp?.value) || 0;
-        _sbPriceMax = parseFloat(maxInp?.value) || Infinity;
-        window._sbPriceMin = _sbPriceMin;
-        window._sbPriceMax = _sbPriceMax;
-        const hasFilter = (minInp?.value !== '' || maxInp?.value !== '');
-        if (resetBtn) resetBtn.style.display = hasFilter ? 'flex' : 'none';
-        applyFilters();
-    }
-    minInp?.addEventListener('input', updatePriceFilter);
-    maxInp?.addEventListener('input', updatePriceFilter);
-    resetBtn?.addEventListener('click', () => {
-        if (minInp) minInp.value = '';
-        if (maxInp) maxInp.value = '';
-        if (resetBtn) resetBtn.style.display = 'none';
-        _sbPriceMin = 0; _sbPriceMax = Infinity;
-        window._sbPriceMin = 0; window._sbPriceMax = Infinity;
-        applyFilters();
-    });
-
     // Toggle Hide $1 transfers — style snapshot (input checkbox + label)
     const hideDollarInput = document.getElementById('sbHideDollarInput');
     hideDollarInput?.addEventListener('change', () => {
@@ -15191,8 +15151,6 @@ async function sha256hex(str) {
     // Init globals
     window._sbCurrentSort = 'date-desc';
     window._sbCurrentSearch = '';
-    window._sbPriceMin = 0;
-    window._sbPriceMax = Infinity;
     window._sbHideDollarSales = false;
 })();
 </script>
@@ -16362,6 +16320,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-16T11:30:00Z',
+            type:  'improvement',
+            title: 'Market Bot: cleaner toolbar',
+            text:  'The min/max price inputs and the LIVE indicator pill are gone — the feed is always live and the search bar covers what the price range was used for. Hide $1 toggle now sits right next to the Alert button on the right side, where related controls belong. On mobile, the sales count stays centered under the search bar.'
+        },
         {
             date:  '2026-05-15T22:30:00Z',
             type:  'improvement',
