@@ -26152,6 +26152,18 @@ a.snap-holder-username:hover {
     padding: 16px 32px;
     text-align: center;
     pointer-events: none;
+    /* Backdrop radial doux centré derrière le texte — joue le rôle
+       de "spotlight" magazine cover : assure la lisibilité du titre
+       sur des bannières claires sans s'appuyer sur une text-shadow
+       dure. Ellipse plus large que haute pour épouser le bloc nom +
+       creator centré. Le fade en transparent en bordure évite toute
+       transition visible avec le tint sous-jacent. */
+    background: radial-gradient(
+        ellipse 65% 55% at 50% 50%,
+        rgba(8, 14, 28, 0.45) 0%,
+        rgba(8, 14, 28, 0.25) 45%,
+        rgba(8, 14, 28, 0.00) 80%
+    );
 }
 /* Logo "profile avatar" : positionné absolute relativement au
    hero-wrap, chevauche la frontière hero/stats avec un bottom: -36px
@@ -26182,19 +26194,22 @@ a.snap-holder-username:hover {
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #fff;
-    /* line-height: 1 (vs ~1.08) — sans ça, l'extra leading du flex
-       child décale le centre visuel du texte vers le bas et l'overlay
-       paraît "trop haut" dans la bannière même si flex centre bien
-       la boîte. line-height: 1 colle le centre visuel au centre
-       géométrique → vrai centrage vertical perçu. */
-    line-height: 1;
+    /* line-height: 1.15 (vs 1 strict) — un line-height plus généreux
+       redonne de l'air au-dessus et en dessous des capitales, ce qui
+       aligne mieux le CENTRE VISUEL des glyphes avec le centre
+       géométrique de la boîte centrée par flex. Avec line-height: 1
+       l'ascender métrique de la police poussait subtilement le rendu
+       vers le haut → texte qui paraissait "haut perché" même si la
+       box flex était bien centrée. */
+    line-height: 1.15;
     white-space: normal;
-    /* Shadow en couches : un drop net pour détacher la silhouette
-       du texte de l'image, un halo flou pour adoucir. Pas de voile
-       large derrière (c'est ça que l'utilisateur trouvait moche). */
+    /* Halo doux symétrique — uniquement du blur, pas d'offset
+       directionnel. Détache le texte de la bannière sans l'effet
+       "stroke" / "drop hard" de l'ancienne version qui faisait
+       trop brut. Look magazine cover. */
     text-shadow:
-        0 1px 2px rgba(0, 0, 0, 0.85),
-        0 2px 8px rgba(0, 0, 0, 0.55);
+        0 0 22px rgba(0, 0, 0, 0.75),
+        0 0 8px rgba(0, 0, 0, 0.55);
 }
 .home-fc-spotlight .home-feat-v3-creator {
     display: inline-flex;
@@ -26206,16 +26221,16 @@ a.snap-holder-username:hover {
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.85);
-    /* line-height: 1 en miroir de .home-feat-v3-name — aligne le
-       centre visuel de la ligne créateur avec le vrai centre vertical. */
-    line-height: 1;
+    /* Même line-height généreux que .home-feat-v3-name pour
+       cohérence du centrage visuel. */
+    line-height: 1.15;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
     text-shadow:
-        0 1px 2px rgba(0, 0, 0, 0.85),
-        0 1px 6px rgba(0, 0, 0, 0.5);
+        0 0 16px rgba(0, 0, 0, 0.7),
+        0 0 6px rgba(0, 0, 0, 0.5);
 }
 .home-fc-spotlight .home-feat-v3-creator-text { display: inline; }
 .home-fc-spotlight .home-feat-v3-creator strong {
