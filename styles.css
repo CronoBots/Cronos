@@ -10,21 +10,14 @@
        crypto, featured, artists, drops, top collections, updates, et
        le top spotlight lui-même qui est la référence). Changer ici =
        changer partout sur la home en une seule édition. */
-    /* Recette unifiée des cards du home :
-         border: 1px solid var(--home-halo-border)
-         box-shadow: var(--home-halo-shadow)
-       Halo en deux couches diffuses. SPREAD NÉGATIF (-12px / -24px)
-       sur les deux : ça pousse le point de densité maximale du blur
-       loin du border, sinon le pic de luminosité du `0 0 50px` se
-       collait juste à côté du border et lisait comme un 2e trait
-       cyan parallèle (effet "double border" visible au zoom sur les
-       cards à bg opaque comme le Spotlight). Les blurs sont aussi
-       plus larges (60/120 → 80/160) pour rendre le glow plus
-       enveloppant et moins "ringé". */
+    /* Bordure des cards du home — 2px solid, sans halo flou.
+       L'ancienne combinaison `border 1px + box-shadow blur 50px/100px`
+       créait un effet "double trait" visible (la zone la plus dense
+       du blur, juste au-delà du border, lisait comme un second trait).
+       On unifie sur un seul trait épais — même recette pour la chat
+       card, les featured spotlights, le live feed ET les pulse cards. */
     --home-halo-border: rgba(0, 179, 255, 0.55);
-    --home-halo-shadow:
-        0 0 60px  -12px rgba(0, 179, 255, 0.45),
-        0 0 120px -24px rgba(0, 179, 255, 0.25);
+    --home-halo-shadow: none;
     --download-green: #90EE90;
     --color2: #2C2C2C;
     --text-dark: #fff;
@@ -12516,11 +12509,13 @@ body.is-profile-loading #profileLoadingOverlay * {
    overflow:hidden). Les enfants qui ne sont pas pleine largeur (titre,
    tabs, filtres, sections) ont leur propre padding latéral interne. */
 .cp-results-wrap {
-    /* Cadre unifié home (var --home-halo-*) — 2px solid sans halo. */
-    border: 1px solid var(--home-halo-border);
+    border: 1px solid rgba(0,179,255,0.5);
     border-radius: 14px;
-    box-shadow: var(--home-halo-shadow);
-    background: rgba(11,20,38,0.85);
+    box-shadow:
+        0 0 0  1px rgba(0,179,255,0.55),
+        0 0 40px rgba(0,179,255,0.35),
+        0 0 80px rgba(0,179,255,0.18);
+    background: rgba(11,20,38,0.4);
     overflow: hidden;
     /* margin-top retiré : c'est désormais le padding-top de
        .cp-inner qui assure l'écart top, pour que cet écart soit
@@ -13110,10 +13105,9 @@ body.is-profile-loading #profileLoadingOverlay * {
     position: relative;
     display: flex;
     flex-direction: row;     /* messages + sidebar côte à côte */
-    /* Cadre unifié home : 1px solid + halo blur via les variables
-       --home-halo-* déclarées sur :root. Changer là-bas = changer
-       partout. */
-    border: 1px solid var(--home-halo-border);
+    /* Cadre unifié home : 2px solid via les variables --home-halo-*
+       déclarées sur :root. Changer là-bas = changer partout. */
+    border: 2px solid var(--home-halo-border);
     border-radius: 18px;
     overflow: hidden;
     box-shadow: var(--home-halo-shadow);
@@ -13746,11 +13740,11 @@ body.is-profile-loading #profileLoadingOverlay * {
        .home-fc-spotlight côté Collections. */
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--home-halo-border);
+    border: 2px solid var(--home-halo-border);
     border-radius: 14px;
     overflow: hidden;
     box-shadow: var(--home-halo-shadow);
-    background: rgba(11,20,38,0.85);
+    background: rgba(11,20,38,0.6);
     min-height: 0;
 }
 .home-creator-card {
@@ -15603,13 +15597,14 @@ body.is-profile-loading #profileLoadingOverlay * {
    les cartes des drops live : .drop-card--live) pour mettre en évidence le
    bloc d'événements. Englobe à la fois le feed (vue cards) et la vue table. */
 .sb-results-wrap {
-    /* Cadre unifié avec les home cards (var --home-halo-border + 2px).
-       Avant : 1px + double halo cyan (effet "2 traits"). */
-    border: 1px solid var(--home-halo-border);
+    border: 1px solid rgba(0,179,255,0.5);
     border-radius: 14px;
-    box-shadow: var(--home-halo-shadow);
+    box-shadow:
+        0 0 0  1px rgba(0,179,255,0.55),
+        0 0 40px rgba(0,179,255,0.35),
+        0 0 80px rgba(0,179,255,0.18);
     padding: 16px;
-    background: rgba(11,20,38,0.85);
+    background: rgba(11,20,38,0.4);
     margin-top: 8px;
     position: relative;       /* ancre pour le loader overlay */
     overflow: hidden;         /* clip le tableau contre les coins arrondis */
@@ -17020,12 +17015,11 @@ code.sup-card-address {
     text-decoration: underline;
 }
 .sup2-supporters-table-wrap {
-    /* Cadre unifié home (var --home-halo-*) — match les autres frames. */
-    background: rgba(11,20,38,0.85);
-    border: 1px solid var(--home-halo-border);
+    background: rgba(8,10,20,0.4);
+    border: 1px solid rgba(0,179,255,0.18);
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: var(--home-halo-shadow);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
 }
 .sup2-table {
     width: 100%;
@@ -18092,39 +18086,38 @@ code.sup-card-address {
     gap: 24px;
 }
 
-/* ── Carte commune ── Aligne sur la recette unifiée du site (chat,
-   pulse, market bot results, snapshot, etc.) : background à 0.4,
-   border-color via var --home-halo-border, halo soft via la var
-   --home-halo-shadow. Avant : bg gradient sombre + bordure blanche
-   0.06 + aucun halo → cards visuellement étrangères au reste du
-   site. Les variantes --live / --upcoming / --ended ci-dessous ne
-   redéfinissent QUE leur border-color pour signaler le statut, le
-   reste de la recette reste identique. */
+/* ── Carte commune ── */
 .drop-card {
-    background: rgba(11, 20, 38, 0.85);
-    border: 1px solid var(--home-halo-border);
+    background: linear-gradient(180deg, rgba(14,24,48,0.95), rgba(8,15,32,0.98));
+    border: 1px solid rgba(255,255,255,0.06);
     border-radius: 16px;
     overflow: hidden;
     text-decoration: none;
     display: flex;
     flex-direction: column;
-    box-shadow: var(--home-halo-shadow);
-    transition: border-color 0.2s, transform 0.2s;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
     position: relative;
 }
 .drop-card--ended { cursor: pointer; }
-
-/* Cartes LIVE : border-color cyan plus marquée pour signaler l'état
-   actif (le halo cumule avec le standard) — pas de box-shadow
-   override avec `0 0 0 1px` qui créait le fameux "2e trait sharp". */
-.drop-card--live {
-    border-color: rgba(0, 179, 255, 0.85);
+.drop-card:hover {
+    border-color: rgba(0,179,255,0.4);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,179,255,0.15);
 }
 
-/* Cartes UPCOMING : border-color muted blanc — état non-actif, le
-   halo reste pour rester cohérent avec les autres cards. */
+/* Halo PERMANENT sur les cartes LIVE (état hover appliqué en continu) */
+.drop-card--live {
+    border-color: rgba(0,179,255,0.5);
+    box-shadow: 0 0 0 1px rgba(0,179,255,0.55), 0 0 40px rgba(0,179,255,0.35), 0 0 80px rgba(0,179,255,0.18);
+}
+.drop-card--live:hover {
+    border-color: rgba(0,179,255,0.5);
+    box-shadow: 0 0 0 1px rgba(0,179,255,0.55), 0 0 40px rgba(0,179,255,0.35), 0 0 80px rgba(0,179,255,0.18);
+}
+
+/* Glow statique doux sur les cartes UPCOMING */
 .drop-card--upcoming {
-    border-color: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255,255,255,0.1);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.4);
 }
 
 /* Image wrap */
@@ -19982,7 +19975,7 @@ code.sup-card-address {
     line-height: 1;
     letter-spacing: -0.01em;
 }
-.snapshot-table-wrap { background:rgba(11,20,38,0.85); border: 1px solid var(--home-halo-border); border-radius:14px; overflow:hidden; box-shadow: var(--home-halo-shadow); }
+.snapshot-table-wrap { background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.07); border-radius:14px; overflow:hidden; }
 .snapshot-table { width:100%; border-collapse:collapse; }
 .snapshot-th { font-family:'Geomanist-Bold',sans-serif; font-size:13px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; color:#ffffff; padding:12px 10px; text-align:left; background:#0d1829; border-bottom:1px solid rgba(255,255,255,0.15); white-space:nowrap; }
 .snapshot-th--rank { width:60px; text-align:center; }
@@ -25967,7 +25960,7 @@ a.snap-holder-username:hover {
        à la fois la card active ET la barre de contrôles dans le même
        cadre. Du coup les flèches + progress + dots sont intégrés au bas
        du cadre featured, pas séparés en dessous. */
-    border: 1px solid var(--home-halo-border);
+    border: 2px solid var(--home-halo-border);
     border-radius: 16px;
     box-shadow: var(--home-halo-shadow);
     background: rgba(11, 20, 38, 0.85);
@@ -27085,27 +27078,26 @@ a.snap-holder-username:hover {
     background:
         radial-gradient(120% 80% at 85% -10%, var(--accent-soft) 0%, transparent 55%),
         linear-gradient(120deg, rgba(11,20,38,0.85) 0%, rgba(7,14,28,0.95) 60%, rgba(7,14,28,1) 100%);
-    /* Border identique aux autres cards du home (var --home-halo-border).
-       Pas d'infusion d'accent sur la border : avec color-mix qui poussait
-       jusqu'à 32% de la couleur de slide active, le trait apparaissait
-       plus épais que celui des autres cards, ce qui cassait l'unification
-       demandée par l'utilisateur. L'identité de slide reste portée par
-       le background (radial accent-soft) + le titre coloré. */
-    border: 1px solid var(--home-halo-border);
+    /* Halo : base = recette de référence du home (cyan unifié),
+       mais on infuse ~32% de l'accent actif dans le contour et
+       on ajoute un glow extérieur subtil teinté à l'accent. Le
+       cadre garde son identité cyan tout en suivant la lumière
+       du Spotlight quand le user cycle entre les features. */
+    border: 2px solid color-mix(in srgb, var(--accent) 32%, var(--home-halo-border));
     border-radius: 24px;
     overflow: hidden;
     isolation: isolate;
-    /* Halo strictement identique aux autres cards — pas de glow extra
-       teinté à l'accent (l'ancien `0 0 32px color-mix(...)` se cumulait
-       au halo standard et donnait au spotlight un trait visuellement
-       plus large que les autres frames). */
-    box-shadow: var(--home-halo-shadow);
+    box-shadow:
+        var(--home-halo-shadow),
+        0 0 32px color-mix(in srgb, var(--accent) 18%, transparent);
     cursor: pointer;
     transition: border-color 0.6s ease, background 0.6s ease, box-shadow 0.6s ease;
 }
 .home-spotlight:hover {
-    border-color: var(--home-halo-border);
-    box-shadow: var(--home-halo-shadow);
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--home-halo-border));
+    box-shadow:
+        var(--home-halo-shadow),
+        0 0 44px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 /* Halo radial coloré (suit l'accent actif), positionné en haut à droite. */
@@ -27512,10 +27504,10 @@ a.snap-holder-username:hover {
     min-width: 0;
 }
 .home-two-col--chat-pulse .home-cp-wrap {
-    /* Halo cyan unifié home — 2px solid comme les autres frames. */
+    /* Halo cyan unifié home — même cadre que les autres frames. */
     border: 1px solid var(--home-halo-border);
     border-radius: 14px;
-    background: rgba(11, 20, 38, 0.85);
+    background: rgba(11, 20, 38, 0.4);
     box-shadow: var(--home-halo-shadow);
     overflow: hidden;
     display: flex;
@@ -30294,7 +30286,7 @@ body { box-sizing: border-box; }
 
 .home-crypto-card {
     position: relative;
-    background: rgba(11, 20, 38, 0.85);
+    background: rgba(11, 20, 38, 0.7);
     /* Halo unifié home (variables --home-halo-*). */
     border: 1px solid var(--home-halo-border);
     border-radius: 14px;
@@ -31110,7 +31102,7 @@ body { box-sizing: border-box; }
 }
 .home-fd-card {
     position: relative;
-    background: rgba(11, 20, 38, 0.85);
+    background: rgba(11, 20, 38, 0.7);
     /* Halo unifié home (variables --home-halo-*). */
     border: 1px solid var(--home-halo-border);
     border-radius: 14px;
@@ -31332,9 +31324,7 @@ body { box-sizing: border-box; }
 .home-live-table-wrap,
 .home-top-table-wrap {
     background: rgba(11, 20, 38, 0.85);
-    /* Halo unifié home (variables --home-halo-*). 2px solid, pas de
-       glow — même recette que toutes les autres cards home depuis
-       #131 (chat, featured, pulse, etc.). */
+    /* Halo unifié home (variables --home-halo-*). */
     border: 1px solid var(--home-halo-border);
     border-radius: 14px;
     overflow: hidden;
@@ -31929,8 +31919,8 @@ body { box-sizing: border-box; }
     list-style: none;
     margin: 0;
     padding: 14px;
-    /* Halo unifié home (variables --home-halo-*) — 2px solid. */
-    background: rgba(11, 20, 38, 0.85);
+    /* Halo unifié home (variables --home-halo-*). */
+    background: rgba(11, 20, 38, 0.4);
     border: 1px solid var(--home-halo-border);
     border-radius: 14px;
     overflow-y: auto;
@@ -32066,7 +32056,7 @@ body { box-sizing: border-box; }
 }
 /* Cadre halo'd unifié (même rendu que Top Collections / Updates) */
 .pulse-wrap {
-    background: rgba(11, 20, 38, 0.85);
+    background: rgba(11, 20, 38, 0.4);
     border: 1px solid rgba(0, 179, 255, 0.5);
     border-radius: 14px;
     box-shadow:
@@ -32162,18 +32152,14 @@ body { box-sizing: border-box; }
     gap: 12px;
 }
 .pulse-card {
-    background: rgba(11, 20, 38, 0.85);
+    background: rgba(255, 255, 255, 0.025);
     /* Même recette de cadre que les autres cards du home (chat,
        featured spotlight, live feed) : 2px solid var(--home-halo-
        border). Avant c'était un fin 1px à 0.18 d'opacité, qui rendait
        les pulse cards beaucoup moins présentes visuellement que le
        reste — incohérence relevée en revue mobile. */
-    border: 1px solid var(--home-halo-border);
+    border: 2px solid var(--home-halo-border);
     border-radius: 10px;
-    /* Halo unifié pour matcher les autres cards du home (chat, market
-       bot, featured…) — avant la pulse-card avait border mais pas de
-       halo, ce qui la rendait visuellement plus "froide" que le reste. */
-    box-shadow: var(--home-halo-shadow);
     padding: 12px 14px 14px;
     display: flex;
     flex-direction: column;
