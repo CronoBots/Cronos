@@ -30,6 +30,29 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   PERFORMANCE — content-visibility sur les sections sous le fold.
+   Le browser skip le layout + paint de ces sections tant qu'elles ne
+   sont pas proches du viewport au scroll. Énorme gain sur le first paint
+   d'une page aussi longue que la home (8+ sections empilées).
+   `contain-intrinsic-size: auto 800px` réserve un placeholder de hauteur
+   pour éviter le saut de scrollbar : à la première peinture le browser
+   mesure la vraie hauteur de la section et la mémorise (mot-clé `auto`).
+   On préserve le Spotlight (hero, au-dessus du fold) et Chat + Pulse
+   (live interactif). Les autres sections, toujours sous le fold initial,
+   bénéficient du skip.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.home-section--featured,
+.home-section--featured-artists,
+.home-fd-section,
+.home-crypto-section,
+.home-patrons-section,
+.home-updates-section,
+.home-pulse-section {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 800px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    SKELETON SHIMMER — système réutilisable pour les états de chargement.
    Remplace les anciens "3 dots" pulsants par des placeholders en forme
    du contenu final qui shimmer en cyan. Plus premium → impression que
