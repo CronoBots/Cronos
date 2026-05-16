@@ -10,14 +10,14 @@
        crypto, featured, artists, drops, top collections, updates, et
        le top spotlight lui-même qui est la référence). Changer ici =
        changer partout sur la home en une seule édition. */
-    --home-halo-border: rgba(0, 179, 255, 0.45);
-    /* Halo shadow : SEULEMENT le glow flou (50px + 100px), pas le
-       contour net 1px qui doublait visuellement le `border` ci-dessus
-       (deux traits cyan d'opacité différente collés → effet "double
-       ligne" sur toutes les cards du home). */
-    --home-halo-shadow:
-        0 0 50px    rgba(0, 179, 255, 0.28),
-        0 0 100px   rgba(0, 179, 255, 0.12);
+    /* Bordure des cards du home — 2px solid, sans halo flou.
+       L'ancienne combinaison `border 1px + box-shadow blur 50px/100px`
+       créait un effet "double trait" visible (la zone la plus dense
+       du blur, juste au-delà du border, lisait comme un second trait).
+       On unifie sur un seul trait épais — même recette pour la chat
+       card, les featured spotlights, le live feed ET les pulse cards. */
+    --home-halo-border: rgba(0, 179, 255, 0.55);
+    --home-halo-shadow: none;
     --download-green: #90EE90;
     --color2: #2C2C2C;
     --text-dark: #fff;
@@ -13105,11 +13105,9 @@ body.is-profile-loading #profileLoadingOverlay * {
     position: relative;
     display: flex;
     flex-direction: row;     /* messages + sidebar côte à côte */
-    /* Halo : recette du top spotlight (.home-spotlight) — toutes les
-       frames du home utilisent désormais le MÊME halo pour un rendu
-       homogène. Si tu veux changer le halo des frames du home, change
-       les variables --home-halo-* déclarées sur :root. */
-    border: 1px solid var(--home-halo-border);
+    /* Cadre unifié home : 2px solid via les variables --home-halo-*
+       déclarées sur :root. Changer là-bas = changer partout. */
+    border: 2px solid var(--home-halo-border);
     border-radius: 18px;
     overflow: hidden;
     box-shadow: var(--home-halo-shadow);
@@ -13742,7 +13740,7 @@ body.is-profile-loading #profileLoadingOverlay * {
        .home-fc-spotlight côté Collections. */
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--home-halo-border);
+    border: 2px solid var(--home-halo-border);
     border-radius: 14px;
     overflow: hidden;
     box-shadow: var(--home-halo-shadow);
@@ -26029,7 +26027,7 @@ a.snap-holder-username:hover {
        à la fois la card active ET la barre de contrôles dans le même
        cadre. Du coup les flèches + progress + dots sont intégrés au bas
        du cadre featured, pas séparés en dessous. */
-    border: 1px solid var(--home-halo-border);
+    border: 2px solid var(--home-halo-border);
     border-radius: 16px;
     box-shadow: var(--home-halo-shadow);
     background: rgba(11, 20, 38, 0.85);
@@ -27152,7 +27150,7 @@ a.snap-holder-username:hover {
        on ajoute un glow extérieur subtil teinté à l'accent. Le
        cadre garde son identité cyan tout en suivant la lumière
        du Spotlight quand le user cycle entre les features. */
-    border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--home-halo-border));
+    border: 2px solid color-mix(in srgb, var(--accent) 32%, var(--home-halo-border));
     border-radius: 24px;
     overflow: hidden;
     isolation: isolate;
@@ -32225,7 +32223,12 @@ body { box-sizing: border-box; }
 }
 .pulse-card {
     background: rgba(255, 255, 255, 0.025);
-    border: 1px solid rgba(0, 179, 255, 0.18);
+    /* Même recette de cadre que les autres cards du home (chat,
+       featured spotlight, live feed) : 2px solid var(--home-halo-
+       border). Avant c'était un fin 1px à 0.18 d'opacité, qui rendait
+       les pulse cards beaucoup moins présentes visuellement que le
+       reste — incohérence relevée en revue mobile. */
+    border: 2px solid var(--home-halo-border);
     border-radius: 10px;
     padding: 12px 14px 14px;
     display: flex;
