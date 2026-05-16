@@ -8171,50 +8171,33 @@ document.addEventListener('DOMContentLoaded', initialize);
         return null;
     }
 
-    function buildFeaturedCard(col) {
+    function buildFeaturedCard(col, idx, total) {
         const card = document.createElement('div');
         card.className = 'home-feat-v3';
         card.dataset.colId = col.id;
         if (col.creator) card.dataset.creatorOverride = col.creator;
         const safeLogo = col.logo || '';
-        // Layout — top half is a SHARP, full-bleed hero image (banner if
-        // available, otherwise large logo), bottom half is the body with
-        // identity (logo overlaps the boundary), stats, and a prominent
-        // CTA button. Visual hierarchy emphasizes "this is something to
-        // explore", not just data.
-        // Two layers in the hero:
-        //  • .home-feat-v3-hero-bg  — blurred backdrop using the same image,
-        //    fills via cover (used as wallpaper to fill the empty area when
-        //    the foreground uses `contain`). Hidden when a real banner is
-        //    available (the banner already fills the area cleanly).
-        //  • .home-feat-v3-hero-img — sharp foreground image. Uses `contain`
-        //    for logos so the FULL logo (including halos / wordmark edges)
-        //    is visible — no more cropping. Banners use `cover` since
-        //    they're designed for full-bleed.
+        // Numéro éditorial "01 / 04" style magazine print, mirroir de
+        // la slide Featured Artists. idx/total sont passés par buildFeatured().
+        const num    = String((idx ?? 0) + 1).padStart(2, '0');
+        const totalS = String(total ?? 0).padStart(2, '0');
+        // Layout éditorial — la card est un spread magazine vertical :
+        //   1) HERO : bannière 3:1 + overlay nom + creator centrés.
+        //   2) Logo absolute qui chevauche la frontière hero/body.
+        //   3) EYEBROW : "FEATURED COLLECTION · 01 / 04" (filet sous).
+        //   4) STATS PILL : 6 chiffres en pastille inline (Floor /
+        //      Items / Owners / Listed / Volume / Total) avec
+        //      séparateurs verticaux.
+        //   5) DESC : pull-quote avec barre cyan à gauche (éditorial).
+        //   6) SHOWCASE : 8 NFTs random avec petit eyebrow au-dessus.
+        //   7) CTA : bouton "Browse collection →" outlined cyan.
         card.innerHTML = `
-            <!-- Spotlight v3 : layout vertical empilé en 4 zones.
-                 1) HERO : bannière plein-cadre 3:1 + identité OVERLAY en
-                    bas-gauche (logo carré + nom de collection + ligne
-                    "BY ARTIST ✓") qui chevauche la bannière.
-                 2) STATS : 3 stats inline (Floor / Owners / Volume).
-                 3) HIGHLIGHTS : 4 tuiles dans l'ordre demandé —
-                    Top rank · Most viewed · Most liked · Floor.
-                 4) SAMPLES : 3 vignettes random pour donner un aperçu
-                    du look des NFTs de la collection. -->
-            <!-- Wrapper qui permet au logo de chevaucher visuellement
-                 la frontière bannière/stats sans être clippé : hero
-                 garde overflow:hidden (à cause du bg blur scale 1.4),
-                 le logo est un sibling positionné absolute relativement
-                 au wrap. -->
             <div class="home-feat-v3-hero-wrap">
                 <div class="home-feat-v3-hero">
                     <div class="home-feat-v3-hero-bg"  style="background-image:url('${safeLogo}');"></div>
                     <div class="home-feat-v3-hero-img" style="background-image:url('${safeLogo}');"></div>
                     <div class="home-feat-v3-hero-tint"></div>
                     <span class="home-feat-v3-change" style="display:none;"></span>
-                    <!-- Identité : OVERLAY centrée H+V sur la bannière
-                         (le logo n'est plus dans ce bloc, il est posé
-                         comme sibling du hero pour pouvoir déborder). -->
                     <div class="home-feat-v3-identity">
                         <span class="home-feat-v3-name-row">
                             <span class="home-feat-v3-name">${col.name || '—'}</span>
@@ -8227,45 +8210,44 @@ document.addEventListener('DOMContentLoaded', initialize);
                 </div>
                 <img class="home-feat-v3-logo" src="${safeLogo}" alt="" loading="lazy" onerror="this.style.opacity='0.25';this.style.background='rgba(255,255,255,0.05)';"/>
             </div>
-            <!-- Stats inline juste sous la bannière. 6 colonnes :
-                 Floor / Items / Owners / Listings / Volume / Total. -->
-            <div class="home-feat-v3-stats">
-                <div class="home-feat-v3-stat">
-                    <span class="home-feat-v3-stat-label">Floor</span>
-                    <span class="home-feat-v3-stat-val" data-stat="floor">—</span>
-                </div>
-                <div class="home-feat-v3-stat">
-                    <span class="home-feat-v3-stat-label">Items</span>
-                    <span class="home-feat-v3-stat-val" data-stat="items">—</span>
-                </div>
-                <div class="home-feat-v3-stat">
-                    <span class="home-feat-v3-stat-label">Owners</span>
-                    <span class="home-feat-v3-stat-val" data-stat="owners">—</span>
-                </div>
-                <div class="home-feat-v3-stat">
-                    <span class="home-feat-v3-stat-label">Listed</span>
-                    <span class="home-feat-v3-stat-val" data-stat="listed">—</span>
-                </div>
-                <div class="home-feat-v3-stat">
-                    <span class="home-feat-v3-stat-label" data-label="vol">Volume</span>
-                    <span class="home-feat-v3-stat-val" data-stat="vol">—</span>
-                </div>
-                <div class="home-feat-v3-stat">
-                    <span class="home-feat-v3-stat-label">Total</span>
-                    <span class="home-feat-v3-stat-val" data-stat="traded">—</span>
-                </div>
+            <!-- Eyebrow éditorial "FEATURED COLLECTION · 01 / 04". Le
+                 padding-left dégage la zone occupée par le logo qui
+                 chevauche depuis la bannière. -->
+            <div class="home-feat-v3-eyebrow">
+                <span class="home-feat-v3-eyebrow-label">Featured Collection</span>
+                <span class="home-feat-v3-eyebrow-num">${num}<span class="home-feat-v3-eyebrow-total"> / ${totalS}</span></span>
             </div>
-            <!-- Description courte (injectée par updateFeaturedCardStats si
-                 l'API renvoie une description). Cachée tant qu'on n'a pas
-                 de texte. Clip à 3 lignes via line-clamp cote CSS. -->
+            <!-- Stats en pastille inline — chaque chiffre porte son label
+                 directement à côté (style éditorial type "fact sheet"). -->
+            <div class="home-feat-v3-stats">
+                <span class="home-feat-v3-stat"><strong data-stat="floor">—</strong> Floor</span>
+                <span class="home-feat-v3-stat-sep"></span>
+                <span class="home-feat-v3-stat"><strong data-stat="items">—</strong> Items</span>
+                <span class="home-feat-v3-stat-sep"></span>
+                <span class="home-feat-v3-stat"><strong data-stat="owners">—</strong> Owners</span>
+                <span class="home-feat-v3-stat-sep"></span>
+                <span class="home-feat-v3-stat"><strong data-stat="listed">—</strong> Listed</span>
+                <span class="home-feat-v3-stat-sep"></span>
+                <span class="home-feat-v3-stat"><strong data-stat="vol">—</strong> <span data-label="vol">Volume</span></span>
+                <span class="home-feat-v3-stat-sep"></span>
+                <span class="home-feat-v3-stat"><strong data-stat="traded">—</strong> Total</span>
+            </div>
+            <!-- Description : traitée en pull-quote (filet cyan à gauche,
+                 italique) — donne un ton éditorial, plus "lecture longue"
+                 que stats brutes. Cachée tant que l'API n'a pas renvoyé
+                 de texte. Clamp à 3 lignes côté CSS. -->
             <p class="home-feat-v3-desc" data-desc style="display:none;"></p>
-            <!-- Showcase : 8 NFTs random integrant les 4 highlights sans
-                 leur label, injectes par updateShowcase(). -->
+            <!-- Showcase : eyebrow "From the collection" + 8 NFTs random
+                 intégrant les 4 highlights. Le label est injecté par
+                 updateShowcase quand on a au moins 1 item. -->
             <div class="home-feat-v3-showcase" data-showcase>
                 <div class="home-feat-showcase-loading">
                     <span class="stats-dot"></span><span class="stats-dot"></span><span class="stats-dot"></span>
                 </div>
             </div>
+            <!-- CTA outlined — toute la card est déjà cliquable, mais
+                 le bouton signale clairement l'affordance "explore". -->
+            <span class="home-feat-v3-browse">Browse collection<span class="home-feat-v3-browse-arrow"> →</span></span>
         `;
         card.addEventListener('click', () => {
             if (typeof window.loadCollectionById === 'function') {
@@ -8673,6 +8655,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         const items = pool.slice(0, 8);
 
         wrap.innerHTML = items.length ? `
+            <div class="home-feat-v3-showcase-label">From the collection<span class="home-feat-v3-showcase-label-meta"> · ${items.length} NFTs</span></div>
             <div class="home-feat-showcase-samples">
                 <div class="home-feat-showcase-samples-row">
                     ${items.map(a => `<div class="home-feat-showcase-sample" title="${_fcEsc(a.name || '')}">${thumb(a)}</div>`).join('')}
@@ -8683,7 +8666,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
     async function buildFeatured() {
         const grid = document.getElementById('homeFeaturedGrid');
         if (!grid || grid.children.length) return;
-        FEATURED.forEach(col => grid.appendChild(buildFeaturedCard(col)));
+        FEATURED.forEach((col, idx) => grid.appendChild(buildFeaturedCard(col, idx, FEATURED.length)));
         grid.appendChild(buildContactCard());
         // Spotlight rotation : one card visible at a time, auto-cycle, hover
         // pauses, prev/next/dots navigate manually. Wired up *after* the cards
@@ -16350,6 +16333,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-16T21:00:00Z',
+            type:  'improvement',
+            title: 'Featured Collections redesigned — editorial style',
+            text:  'The Featured Collections card now matches the magazine layout introduced for Featured Artists: a small "Featured Collection 01 / 04" eyebrow at the top of the body alongside the logo, the six stats compressed into a single inline pill instead of a six-column grid, the official description treated as a pull-quote with a cyan accent line, a small "From the collection" eyebrow above the 8 random NFTs, and a clear "Browse collection →" button at the bottom. Same data, more premium reading.'
+        },
         {
             date:  '2026-05-16T20:00:00Z',
             type:  'improvement',
