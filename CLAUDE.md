@@ -2,7 +2,15 @@
 
 ## After every functional change
 
-1. **Update `HOME_UPDATES`** in `index.html` with a new entry at the top of the array. Format: `{ date, type ('improvement' | 'feature'), title, text }`. Match the tone and length of existing entries — one short paragraph that an end user can parse.
+1. **Update `HOME_UPDATES`** in `index.html` with a new entry at the top of the array. Format: `{ date, type ('improvement' | 'feature' | 'fix'), title, text }`.
+
+   **Tone**: write as if the site owner is dropping a quick note to users — NOT as if you are announcing a marketing feature. Match the older entries in the array (the short ones from before mid-May 2026 are the reference):
+   - **1-3 short sentences max**, often just a single comma-separated list of changes.
+   - Direct, factual, visual. Skip implementation details (no "TLS handshake", "stale-while-revalidate", "clamp()", "off the main thread", "magazine grammar", "editorial spread", "pull-quote" — those are PR-description vocabulary, not user-facing).
+   - Skip marketing fluff ("premium", "smoother", "delightful", "world-class", "lighter on the network"). Just describe what changed.
+   - Title is a short label, NOT a sales line ("Chat avatars + WTF Creator badge" ✓ — "Smoother loading — shimmer skeletons" ✗ → "Shimmer skeletons while loading" ✓).
+   - First-person ("my own messages") is fine if natural; third-person is the default.
+   - English is the language of HOME_UPDATES even when the rest of our work is in French.
 
 2. **Open a PR** from a fresh branch off `origin/main`. **One PR per user message**, not one PR per modification — if a single user message lists several changes to make, they all go in the SAME PR. Branch naming: `claude/<short-task-name>`.
 
