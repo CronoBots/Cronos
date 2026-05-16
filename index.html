@@ -3,6 +3,18 @@
 <html data-theme="cdc" lang="en">
 <head>
 <meta charset="utf-8"/><link crossorigin="anonymous" href="https://upload.wikimedia.org" rel="preconnect"/><link href="https://upload.wikimedia.org" rel="dns-prefetch"/><link crossorigin="anonymous" href="https://crypto.com" rel="preconnect"/><link href="https://crypto.com" rel="dns-prefetch"/><link crossorigin="anonymous" href="https://cdnjs.cloudflare.com" rel="preconnect"/><link href="https://cdnjs.cloudflare.com" rel="dns-prefetch"/>
+<!-- Preconnect supplémentaires : ouvre la connexion TLS aux hosts qu'on
+     sollicite immédiatement après le first paint. Économie de ~150-300ms
+     sur le premier round-trip (TCP + TLS handshake fait pendant que le
+     parser HTML continue). Cibles :
+     • media.nft.crypto.com — CDN où vivent TOUTES les images des cards
+       Featured Collections / Drops / NFT thumbnails.
+     • cronos-wtf-chat-default-rtdb.europe-west1.firebasedatabase.app —
+       Realtime Database pour chat + analytics + cache.
+     • www.gstatic.com — Firebase JS SDK loader chargé en tout début. -->
+<link rel="preconnect" href="https://media.nft.crypto.com" crossorigin="anonymous"/><link rel="dns-prefetch" href="https://media.nft.crypto.com"/>
+<link rel="preconnect" href="https://cronos-wtf-chat-default-rtdb.europe-west1.firebasedatabase.app" crossorigin="anonymous"/><link rel="dns-prefetch" href="https://cronos-wtf-chat-default-rtdb.europe-west1.firebasedatabase.app"/>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin="anonymous"/><link rel="dns-prefetch" href="https://www.gstatic.com"/>
 <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/><meta content="#0a1a3a" name="theme-color"/>
 <meta content="Browse smarter. Collect better – Developed by Unscoop" name="description"/>
 <title>CRONOS.WTF | Developed by Unscoop</title>
@@ -25,8 +37,12 @@
 <link href="/icons/favicon-32.png" rel="icon" type="image/png" sizes="32x32"/>
 <link href="/icons/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180"/>
 <link as="image" href="icon.png?v=2" rel="preload"/>
-<!-- Preload WOFF2 quand dispo (3x plus léger), sinon le @font-face fallback OTF -->
-<link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2"/>
+<!-- Preload WOFF2 quand dispo (3x plus léger), sinon le @font-face fallback OTF.
+     fetchpriority="high" sur la font qui rend 90% des textes premium
+     du site (titres, stats, prix, boutons) — évite que le browser
+     downgrade la priorité parce qu'il découvre la font tardivement
+     en parcourant la CSS. -->
+<link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
 <link href="styles.css?v=1778205000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
@@ -456,7 +472,7 @@
 <div class="profile-info profile-info--center">
 <div class="username-container">
 <h2 class="username" id="username"></h2>
-<img alt="Verified" class="verified-badge" decoding="async" id="verifiedBadge" loading="lazy" onerror="this.src='/assets/fallback-verified.png'" src="https://parspng.com/wp-content/uploads/2022/07/tickpng.parspng.com-4-1024x1024.png" style="display: none;"/>
+<img alt="Verified" class="verified-badge" decoding="async" id="verifiedBadge" loading="lazy" decoding="async" onerror="this.src='/assets/fallback-verified.png'" src="https://parspng.com/wp-content/uploads/2022/07/tickpng.parspng.com-4-1024x1024.png" style="display: none;"/>
 </div>
 <p class="display-name" id="displayName"></p>
 <div class="social-container" id="socialContainer" style="display: none;">
@@ -467,17 +483,17 @@
 </p>
 <p id="twitterLink" style="display: none;">
 <a href="#" id="twitterUrl" rel="noopener noreferrer" target="_blank" title="Visit X Profile">
-<img alt="X Profile" class="social-icon" decoding="async" loading="lazy" onerror="this.src='/assets/fallback-icon.png'" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+CiAgPHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTE4LjkwMSAxLjE1M2gzLjY4bC04LjAzOCA5LjE5IDkuNDUgMTIuNTA0aC03LjRsLTUuOC03LjU4Ni02LjY0IDcuNTg2SC40N2w4LjYtOS44M0wwIDEuMTUzaDcuNTlsNS4yNCA2LjkzTDE4LjkwMSAxLjE1M1ptLTEuMjkgMTkuNWgyLjA0TDYuNDkgMy4yMkg0LjN6Ii8+Cjwvc3ZnPg=="/>
+<img alt="X Profile" class="social-icon" decoding="async" loading="lazy" decoding="async" onerror="this.src='/assets/fallback-icon.png'" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+CiAgPHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTE4LjkwMSAxLjE1M2gzLjY4bC04LjAzOCA5LjE5IDkuNDUgMTIuNTA0aC03LjRsLTUuOC03LjU4Ni02LjY0IDcuNTg2SC40N2w4LjYtOS44M0wwIDEuMTUzaDcuNTlsNS4yNCA2LjkzTDE4LjkwMSAxLjE1M1ptLTEuMjkgMTkuNWgyLjA0TDYuNDkgMy4yMkg0LjN6Ii8+Cjwvc3ZnPg=="/>
 </a>
 </p>
 <p id="facebookLink" style="display: none;">
 <a href="#" id="facebookUrl" rel="noopener noreferrer" target="_blank" title="Visit Facebook Profile">
-<img alt="Facebook Profile" class="social-icon" decoding="async" loading="lazy" onerror="this.src='/assets/fallback-icon.png'" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Facebook_f_logo_%282019%29.svg/512px-Facebook_f_logo_%282019%29.svg.png"/>
+<img alt="Facebook Profile" class="social-icon" decoding="async" loading="lazy" decoding="async" onerror="this.src='/assets/fallback-icon.png'" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Facebook_f_logo_%282019%29.svg/512px-Facebook_f_logo_%282019%29.svg.png"/>
 </a>
 </p>
 <p id="instagramLink" style="display: none;">
 <a href="#" id="instagramUrl" rel="noopener noreferrer" target="_blank" title="Visit Instagram Profile">
-<img alt="Instagram Profile" class="social-icon" decoding="async" loading="lazy" onerror="this.src='/assets/fallback-icon.png'" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/512px-Instagram_icon.png"/>
+<img alt="Instagram Profile" class="social-icon" decoding="async" loading="lazy" decoding="async" onerror="this.src='/assets/fallback-icon.png'" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/512px-Instagram_icon.png"/>
 </a>
 </p>
 </div><div class="profile-bio" id="profileBio" style="display: none;"></div>
@@ -762,7 +778,7 @@
     <div class="drops-section" id="snapshotResultSection" style="display:none;">
       <div class="snapshot-collection-header" id="snapshotCollectionHeader">
         <div class="snapshot-collection-banner-media" id="snapshotCollectionBanner">
-          <img class="snapshot-collection-banner-img" id="snapshotCollectionBannerImg" src="" alt="" loading="lazy"/>
+          <img class="snapshot-collection-banner-img" id="snapshotCollectionBannerImg" src="" alt="" loading="lazy" decoding="async"/>
           <div class="snapshot-collection-banner-overlay"></div>
           <div class="snapshot-collection-banner-info">
             <div class="snapshot-collection-banner-text">
@@ -778,7 +794,7 @@
                le logo de la collection à gauche, comme sur la page crypto.com. -->
           <div class="snapshot-summary" id="snapshotSummary">
             <div class="snapshot-summary-logo-wrap">
-              <img class="snapshot-summary-logo" id="snapshotCollectionLogo" src="" alt="" style="display:none" loading="lazy"/>
+              <img class="snapshot-summary-logo" id="snapshotCollectionLogo" src="" alt="" style="display:none" loading="lazy" decoding="async"/>
             </div>
             <div class="snapshot-stat snapshot-stat--official">
               <div class="snapshot-stat-val-row"><span class="snapshot-stat-val" id="snapTotalAssets">—</span></div>
@@ -8345,7 +8361,7 @@ document.addEventListener('DOMContentLoaded', initialize);
                         </span>
                     </div>
                 </div>
-                <img class="home-feat-v3-logo" src="${safeLogo}" alt="" loading="lazy" onerror="this.style.opacity='0.25';this.style.background='rgba(255,255,255,0.05)';"/>
+                <img class="home-feat-v3-logo" src="${safeLogo}" alt="" loading="lazy" decoding="async" onerror="this.style.opacity='0.25';this.style.background='rgba(255,255,255,0.05)';"/>
             </div>
             <!-- Eyebrow éditorial "FEATURED COLLECTION · 01 / 04". Le
                  padding-left dégage la zone occupée par le logo qui
@@ -8776,7 +8792,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
 
         const thumb = (a) => {
             const img = a?.cover?.url || a?.main?.url || '';
-            return `<img src="${_fcEsc(img)}" alt="${_fcEsc(a?.name || '')}" loading="lazy" onerror="this.style.opacity='0.2'"/>`;
+            return `<img src="${_fcEsc(img)}" alt="${_fcEsc(a?.name || '')}" loading="lazy" decoding="async" onerror="this.style.opacity='0.2'"/>`;
         };
 
         // Showcase = 8 NFTs aléatoires affichés sans label. On y intègre
@@ -9192,7 +9208,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             const logo = c.logo?.url;
             return `
             <a class="home-fa-col-tile" href="https://crypto.com/nft/collection/${c.id}" target="_blank" rel="noopener" title="${_fcEsc(c.name||'')}">
-                ${logo ? `<img class="home-fa-col-tile-img" src="${_fcEsc(logo)}" alt="" loading="lazy"/>` : `<div class="home-fa-col-tile-img home-fa-col-tile-img--empty"></div>`}
+                ${logo ? `<img class="home-fa-col-tile-img" src="${_fcEsc(logo)}" alt="" loading="lazy" decoding="async"/>` : `<div class="home-fa-col-tile-img home-fa-col-tile-img--empty"></div>`}
                 <span class="home-fa-col-tile-name">${_fcEsc(c.name||'—')}</span>
                 <span class="home-fa-col-tile-vol">${fmt(vol)}</span>
             </a>`;
@@ -9216,7 +9232,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     <span class="home-fa-eyebrow-num">${num}<span class="home-fa-eyebrow-total"> / ${total}</span></span>
                 </div>
                 <div class="home-fa-portrait">
-                    ${avatar?`<img class="home-fa-avatar" src="${_fcEsc(avatar)}" alt="${_fcEsc(name)}" loading="lazy"/>`:`<div class="home-fa-avatar--fallback">${_fcEsc(name[0]?.toUpperCase()||'?')}</div>`}
+                    ${avatar?`<img class="home-fa-avatar" src="${_fcEsc(avatar)}" alt="${_fcEsc(name)}" loading="lazy" decoding="async"/>`:`<div class="home-fa-avatar--fallback">${_fcEsc(name[0]?.toUpperCase()||'?')}</div>`}
                 </div>
                 <div class="home-fa-identity">
                     <div class="home-fa-name-row">
@@ -10639,7 +10655,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             const displayInitial = ((msg.display || msg.user || '?')[0] || '?').toUpperCase();
             const avatarUrl = msg.avatar || _memberAvatars[userKey] || null;
             const avatarHtml = avatarUrl
-                ? `<img class="home-chat-msg-avatar" src="${_fcEsc(avatarUrl)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'home-chat-msg-avatar home-chat-msg-avatar--initial',textContent:'${_fcEsc(displayInitial)}'}))"/>`
+                ? `<img class="home-chat-msg-avatar" src="${_fcEsc(avatarUrl)}" alt="" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'home-chat-msg-avatar home-chat-msg-avatar--initial',textContent:'${_fcEsc(displayInitial)}'}))"/>`
                 : `<span class="home-chat-msg-avatar home-chat-msg-avatar--initial">${_fcEsc(displayInitial)}</span>`;
             const div = document.createElement('div');
             // Classes role — drivent la teinte du liseré gauche (cf. CSS
@@ -10677,7 +10693,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             const csVolume  = csMetrics.volume || null;
             const csLogoHtml = cs
                 ? (cs.logo
-                    ? '<img class="home-chat-coll-share-logo" src="' + _fcEsc(cs.logo) + '" alt="" loading="lazy"/>'
+                    ? '<img class="home-chat-coll-share-logo" src="' + _fcEsc(cs.logo) + '" alt="" loading="lazy" decoding="async"/>'
                     : '<span class="home-chat-coll-share-logo home-chat-coll-share-logo--empty"></span>')
                 : '';
             const csVerifiedHtml = cs && cs.verified
@@ -11154,7 +11170,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             const floor = (_chatCollFloorById.get(info.id) || {}).floor;
             _fetchChatCollFloor(info.id);
             const logoHtml = logo
-                ? '<img class="home-chat-coll-chip-logo" src="' + _fcEsc(logo) + '" alt="" loading="lazy"/>'
+                ? '<img class="home-chat-coll-chip-logo" src="' + _fcEsc(logo) + '" alt="" loading="lazy" decoding="async"/>'
                 : '<span class="home-chat-coll-chip-logo home-chat-coll-chip-logo--empty"></span>';
             const floorVal = floor
                 ? '$' + floor.toFixed(0)
@@ -11362,7 +11378,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                             const floor = (_chatCollFloorById.get(id) || {}).floor;
                             _fetchChatCollFloor(id);
                             const logoHtml = logo
-                                ? '<img class="home-chat-coll-chip-logo" src="' + _fcEsc(logo) + '" alt="" loading="lazy"/>'
+                                ? '<img class="home-chat-coll-chip-logo" src="' + _fcEsc(logo) + '" alt="" loading="lazy" decoding="async"/>'
                                 : '<span class="home-chat-coll-chip-logo home-chat-coll-chip-logo--empty"></span>';
                             const floorVal = floor
                                 ? '$' + floor.toFixed(0)
@@ -11526,7 +11542,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     return `
                     <div class="home-chat-member${offCls}${isCertified ? ' home-chat-member--certified' : ''}" data-mention-username="${_fcEsc(uname)}" data-mention-display="${_fcEsc(dname)}" role="button" tabindex="0" title="Mention @${_fcEsc(dname)} in chat">
                         ${m.avatar
-                            ? `<img class="home-chat-member-avatar" src="${_fcEsc(m.avatar)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><span class="home-chat-member-initial" style="display:none">${_fcEsc(dname[0].toUpperCase())}</span>`
+                            ? `<img class="home-chat-member-avatar" src="${_fcEsc(m.avatar)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><span class="home-chat-member-initial" style="display:none">${_fcEsc(dname[0].toUpperCase())}</span>`
                             : `<span class="home-chat-member-initial">${_fcEsc(dname[0].toUpperCase())}</span>`
                         }
                         <span class="home-chat-member-name">${_fcEsc(dname)}</span>${verifiedHtml}${creatorHtml}${ogHtml}${patronHtml}${lastSeenHtml}
@@ -11672,7 +11688,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                         const url = _memberAvatars[u];
                         if (url && !slot.querySelector('img')) {
                             const initial = slot.dataset.initial || '?';
-                            slot.innerHTML = `<img class="home-chat-msg-avatar" src="${_fcEsc(url)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'home-chat-msg-avatar home-chat-msg-avatar--initial',textContent:'${_fcEsc(initial)}'}))"/>`;
+                            slot.innerHTML = `<img class="home-chat-msg-avatar" src="${_fcEsc(url)}" alt="" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'home-chat-msg-avatar home-chat-msg-avatar--initial',textContent:'${_fcEsc(initial)}'}))"/>`;
                         }
                     });
                 });
@@ -12679,7 +12695,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     const floor = (_chatCollFloorById.get(c.id) || {}).floor;
                     const floorTxt = floor ? '· Floor $' + floor.toFixed(0) : '';
                     const logoHtml = c.logo
-                        ? '<img class="home-chat-coll-pop-logo" src="' + _esc(c.logo) + '" alt="" loading="lazy"/>'
+                        ? '<img class="home-chat-coll-pop-logo" src="' + _esc(c.logo) + '" alt="" loading="lazy" decoding="async"/>'
                         : '<span class="home-chat-coll-pop-logo home-chat-coll-pop-logo--empty"></span>';
                     return '<button type="button" class="home-chat-mention-pop-item home-chat-coll-pop-item' +
                         (i === activeIdx ? ' is-active' : '') +
@@ -13275,7 +13291,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         card.className = 'sb-card' + (isHighlight ? ' sb-card--highlight' : '');
         card.innerHTML = `
             <div class="sb-card-img-wrap">
-                <img class="sb-card-img" src="${imgUrl}" alt="${name}" loading="lazy"/>
+                <img class="sb-card-img" src="${imgUrl}" alt="${name}" loading="lazy" decoding="async"/>
                 ${rank ? `<div class="sb-rank-badge"><svg width="10" height="10" viewBox="0 0 20 20" fill="#00B3FF" style="flex-shrink:0"><path d="M10 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L10 14.3l-4.8 2.5.9-5.4L2.2 7.7l5.4-.8z"/></svg>${rankText}</div>` : ''}
                 ${isHighlight ? '<span class="sb-card-hot">🔥</span>' : ''}
             </div>
@@ -13341,7 +13357,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // Ordre des colonnes : EVENT, ITEM, RANK, PRICE, FROM, TO, TIME (last).
         tr.innerHTML =
             '<td class="sb-td sb-td--event sb-td--center"><span class="sb-evt-label ' + evtCls + '">' + evtLabel + '</span></td>' +
-            '<td class="sb-td sb-td--item"><div class="sb-td-inner"><img class="sb-row-img" src="' + imgUrl + '" alt="" loading="lazy"/><span class="sb-row-name">' + name + '</span></div></td>' +
+            '<td class="sb-td sb-td--item"><div class="sb-td-inner"><img class="sb-row-img" src="' + imgUrl + '" alt="" loading="lazy" decoding="async"/><span class="sb-row-name">' + name + '</span></div></td>' +
             '<td class="sb-td sb-td--rarity sb-td--center">' + rankCell + '</td>' +
             '<td class="sb-td sb-td--price"><div class="sb-td-inner">' +
                 '<span class="sb-card-price ' + pClass + '">' + priceUsd + '</span>' + floorSpan +
@@ -15200,7 +15216,7 @@ async function sha256hex(str) {
                 return `
                     <button type="button" class="login-modal-sug-item" data-username="${escapeHtml(u.username)}">
                         ${av
-                            ? `<img class="login-modal-sug-avatar" src="${escapeHtml(av)}" alt="" loading="lazy"/>`
+                            ? `<img class="login-modal-sug-avatar" src="${escapeHtml(av)}" alt="" loading="lazy" decoding="async"/>`
                             : `<span class="login-modal-sug-avatar login-modal-sug-avatar--initial">${escapeHtml((dn[0] || '?').toUpperCase())}</span>`}
                         <span class="login-modal-sug-text">
                             <span class="login-modal-sug-display">${escapeHtml(dn)}${vbdg}</span>
@@ -15612,7 +15628,7 @@ async function sha256hex(str) {
             const rank = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#' + (i + 1);
             const initial = ((s.name || '?')[0] || '?').toUpperCase();
             const avatar = s.avatar
-                ? `<img class="sup2-table-avatar" src="${_esc(s.avatar)}" alt="" loading="lazy" onerror="this.outerHTML='&lt;span class=\\&quot;sup2-table-avatar sup2-table-avatar--initial\\&quot;&gt;${_esc(initial)}&lt;/span&gt;'"/>`
+                ? `<img class="sup2-table-avatar" src="${_esc(s.avatar)}" alt="" loading="lazy" decoding="async" onerror="this.outerHTML='&lt;span class=\\&quot;sup2-table-avatar sup2-table-avatar--initial\\&quot;&gt;${_esc(initial)}&lt;/span&gt;'"/>`
                 : `<span class="sup2-table-avatar sup2-table-avatar--initial">${_esc(initial)}</span>`;
             const tags = [];
             if (s.nftAmount    > 0) tags.push(`<span class="sup2-tag sup2-tag--nft" title="${s.nftCount} NFT${s.nftCount>1?'s':''} bought from CRONOS.WTF — $${s.nftAmount.toFixed(2)}">NFT × ${s.nftCount}</span>`);
@@ -16480,6 +16496,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-17T03:30:00Z',
+            type:  'improvement',
+            title: 'Faster first paint, lighter on the network',
+            text:  'A pile of invisible performance work. The home page is long (8+ sections stacked) so the browser is now told to skip painting sections that are below the fold until you scroll to them — the spotlight and chat paint almost instantly even on a cold cache. Every dynamic image (NFT thumbnails, banners, sample tiles, chat avatars) gained loading="lazy" + decoding="async", so they download only when visible and decode off the main thread. Connections to the NFT image CDN, Firebase and Google CDN are pre-opened in the head so the first round-trip is already TLS-ready by the time the API calls fire. The premium Geomanist font is pre-loaded with high fetch priority.'
+        },
         {
             date:  '2026-05-17T02:00:00Z',
             type:  'feature',
@@ -18205,7 +18227,7 @@ fragment CollectionStatsData on Collection {
             })();
 
             const logo = col.logo?.url
-                ? `<img src="${col.logo.url}" class="stats-col-logo" alt="" loading="lazy"/>`
+                ? `<img src="${col.logo.url}" class="stats-col-logo" alt="" loading="lazy" decoding="async"/>`
                 : `<div class="stats-col-logo stats-col-logo--placeholder"></div>`;
             const verified = col.verified
                 ? `<svg class="stats-verified" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
@@ -18827,7 +18849,7 @@ function extractPrices(desc) {
 function creatorHtml(creator) {
   return `
     <div class="drop-card-creator">
-      ${creator.avatar ? `<img class="drop-card-avatar" src="${creator.avatar}" alt="" loading="lazy"/>` : ''}
+      ${creator.avatar ? `<img class="drop-card-avatar" src="${creator.avatar}" alt="" loading="lazy" decoding="async"/>` : ''}
       <span class="drop-card-creator-name">${creator.displayName}</span>
       ${creator.verified ? '<svg class="drop-card-verified" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
     </div>`;
@@ -18877,7 +18899,7 @@ function buildLiveCard(drop) {
       <!-- BANNIERE : image cover + titre en bas -->
       <div class="drop-banner-media">
         <div class="drop-live-media-overlay"></div>
-        <img class="drop-banner-img drop-card-img--static" src="${drop.cover}" alt="${drop.name}" loading="lazy"/>
+        <img class="drop-banner-img drop-card-img--static" src="${drop.cover}" alt="${drop.name}" loading="lazy" decoding="async"/>
 
         <!-- Top bar : LIVE pulse / SOLD OUT (gauche) + countdown segmenté (droite) -->
         <div class="drop-hero-top">
@@ -19008,7 +19030,7 @@ function buildLiveCard(drop) {
               <a class="dli-pack dli-pack--card${p.soldOut ? ' dli-pack--sold' : ''}${isBest ? ' dli-pack--best' : ''}" href="${p.liveUrl || shopUrl}" target="_blank" rel="noopener" data-card-color="${p.rarity.toLowerCase()}" data-nft-name="${p.name}">
                 ${isBest ? '<span class="dli-pack-ribbon">BEST DEAL</span>' : ''}
                 <div class="dli-pack-img-wrap dli-pack-img-wrap--lg">
-                  <img class="dli-pack-img" src="${p.liveImg || p.cover}" alt="${p.name}" loading="lazy" onerror="this.style.background='rgba(255,255,255,0.05)'"/>
+                  <img class="dli-pack-img" src="${p.liveImg || p.cover}" alt="${p.name}" loading="lazy" decoding="async" onerror="this.style.background='rgba(255,255,255,0.05)'"/>
                   ${p.soldOut ? '<div class="dli-pack-sold-overlay"><span class="dli-pack-sold-stripe">SOLD OUT</span></div>' : ''}
                 </div>
                 <div class="dli-pack-body">
@@ -19094,7 +19116,7 @@ function buildLiveCard(drop) {
             <a class="dli-pack dli-pack--card${p.soldOut ? ' dli-pack--sold' : ''}${isBestDeal ? ' dli-pack--best' : ''}" href="${packUrl}" target="_blank" rel="noopener"${p.color ? ` data-card-color="${p.color.toLowerCase()}"` : ''}>
               ${isBestDeal ? '<span class="dli-pack-ribbon">BEST DEAL</span>' : ''}
               <div class="dli-pack-img-wrap dli-pack-img-wrap--lg">
-                <img class="dli-pack-img" src="${p.cover}" alt="${p.name}" loading="lazy"/>
+                <img class="dli-pack-img" src="${p.cover}" alt="${p.name}" loading="lazy" decoding="async"/>
                 ${p.soldOut ? '<div class="dli-pack-sold-overlay"><span class="dli-pack-sold-stripe">SOLD OUT</span></div>' : ''}
               </div>
               <div class="dli-pack-body">
@@ -19232,7 +19254,7 @@ function buildUpcomingCard(drop) {
       <!-- BANNIERE HORIZONTALE -->
       <div class="drop-banner-media">
         <div class="drop-live-media-overlay"></div>
-        <img class="drop-banner-img drop-card-img--static" src="${drop.cover}" alt="${drop.name}" loading="lazy"/>
+        <img class="drop-banner-img drop-card-img--static" src="${drop.cover}" alt="${drop.name}" loading="lazy" decoding="async"/>
         ${drop.video ? `<video class="drop-banner-video" src="${drop.video}" loop muted playsinline preload="metadata"></video>` : ''}
         <div class="drop-card-badges drop-card-badges--media">
           <span class="drop-badge drop-badge--upcoming">UPCOMING</span>
@@ -19338,7 +19360,7 @@ function buildEndedCard(drop) {
   card.rel = 'noopener';
   card.innerHTML = `
     <div class="drop-card-img-wrap">
-      <img class="drop-card-img" src="${drop.cover}" alt="${drop.name}" loading="lazy"/>
+      <img class="drop-card-img" src="${drop.cover}" alt="${drop.name}" loading="lazy" decoding="async"/>
       <div class="drop-card-gradient drop-card-gradient--ended"></div>
       <span class="drop-badge drop-badge--ended">ENDED</span>
     </div>
@@ -19460,7 +19482,7 @@ function buildTimeline(data) {
     node.innerHTML = `
       <span class="drop-badge tl-status-badge drop-badge--${badgeVariant}">${badgeText}</span>
       <div class="tl-img-wrap${drop.status === 'ended' ? ' tl-img-wrap--ended' : ''}${drop.status === 'soldout' ? ' tl-img-wrap--soldout' : ''}">
-        <img class="tl-img" src="${drop.logo || drop.cover}" alt="${drop.name}" loading="lazy" draggable="false"/>
+        <img class="tl-img" src="${drop.logo || drop.cover}" alt="${drop.name}" loading="lazy" decoding="async" draggable="false"/>
       </div>
       <div class="tl-dot tl-dot--${drop.status}"></div>
       <div class="tl-info">
@@ -20202,7 +20224,7 @@ window.initDropsPanel = async function() {
       const url = colId ? `https://crypto.com/nft/collection/${colId}/${a.id}` : '#';
       return `
         <a class="dli-sample" href="${url}" target="_blank" rel="noopener" title="${safeName}">
-          <img class="dli-sample-img" src="${a.cover?.url || ''}" alt="${safeName}" loading="lazy"/>
+          <img class="dli-sample-img" src="${a.cover?.url || ''}" alt="${safeName}" loading="lazy" decoding="async"/>
           <span class="dli-sample-name">${safeName}</span>
         </a>`;
     };
@@ -22598,7 +22620,7 @@ function buildHolderRow(h, i) {
     : `https://crypto.com/nft/profile/${h.username}`;
 
   const avatarSrc = h.avatar || DEFAULT_AVATAR_URL;
-  const avatarHtml = `<img class="snap-holder-avatar" src="${avatarSrc}" alt="" loading="lazy" onerror="this.src='${DEFAULT_AVATAR_URL}'"/>`;
+  const avatarHtml = `<img class="snap-holder-avatar" src="${avatarSrc}" alt="" loading="lazy" decoding="async" onerror="this.src='${DEFAULT_AVATAR_URL}'"/>`;
   const verifiedBadge = h.verified ? verifiedSvg : '';
   const creatorBadge = h.isCreator ? '<span class="snap-holder-creator-badge" title="Collection creator">CREATOR</span>' : '';
 
@@ -23669,7 +23691,7 @@ window.initSnapshotPanel = function() {
             const logo  = col.logo?.url   || '';
             const items = col.metrics?.items;
             card.innerHTML = `
-                ${logo ? `<img class="home-feat-logo" src="${escapeHtml(logo)}" alt="${escapeHtml(col.name)}" loading="lazy" onerror="this.style.display='none'"/>` : ''}
+                ${logo ? `<img class="home-feat-logo" src="${escapeHtml(logo)}" alt="${escapeHtml(col.name)}" loading="lazy" decoding="async" onerror="this.style.display='none'"/>` : ''}
                 <span class="home-feat-name">${escapeHtml(col.name || '—')}${col.verified ? ' <span class="cb-verified" title="Verified">✓</span>' : ''}</span>
                 ${items ? `<span class="cb-feat-items">${fmtNum(items)} items</span>` : ''}
                 <span class="home-feat-cta">Explore →</span>`;
@@ -23797,7 +23819,7 @@ window.initSnapshotPanel = function() {
             '</td>' +
             '<td class="stats-td home-top-name-cell">' +
                 '<span class="home-top-name-inner">' +
-                    (c.logo?.url ? '<img class="home-top-logo" src="' + escapeHtml(c.logo.url) + '" alt="" loading="lazy"/>' : '<div class="home-top-logo home-top-logo--empty"></div>') +
+                    (c.logo?.url ? '<img class="home-top-logo" src="' + escapeHtml(c.logo.url) + '" alt="" loading="lazy" decoding="async"/>' : '<div class="home-top-logo home-top-logo--empty"></div>') +
                     '<span class="home-top-col-texts">' +
                         '<span class="home-top-name">' + escapeHtml(c.name || '—') + '</span>' +
                         '<div class="stats-col-sub-row">' +
@@ -24003,7 +24025,7 @@ window.initSnapshotPanel = function() {
                     '</td>' +
                     '<td class="sb-td cb-ticker-item-cell">' +
                         '<span class="cb-ticker-item-info">' +
-                            (img ? '<img class="cb-ticker-img" src="' + escapeHtml(img) + '" alt="" loading="lazy"/>' : '') +
+                            (img ? '<img class="cb-ticker-img" src="' + escapeHtml(img) + '" alt="" loading="lazy" decoding="async"/>' : '') +
                             '<span class="cb-ticker-asset">' + escapeHtml(e.asset?.name || '—') + '</span>' +
                         '</span>' +
                     '</td>' +
@@ -25988,7 +26010,7 @@ window.initSnapshotPanel = function() {
         var samplesHtml = samples.length
             ? '<div class="home-fd-card-samples">' +
                   samples.map(function (s) {
-                      return '<span class="home-fd-card-sample"><img src="' + escHtml(s) + '" alt="" loading="lazy"/></span>';
+                      return '<span class="home-fd-card-sample"><img src="' + escHtml(s) + '" alt="" loading="lazy" decoding="async"/></span>';
                   }).join('') +
               '</div>'
             : '';
@@ -26017,7 +26039,7 @@ window.initSnapshotPanel = function() {
                     : 'Visit drop';
         card.innerHTML =
             '<div class="home-fd-card-banner">' +
-                (item.cover ? '<img src="' + escHtml(item.cover) + '" alt="" loading="lazy"/>' : '') +
+                (item.cover ? '<img src="' + escHtml(item.cover) + '" alt="" loading="lazy" decoding="async"/>' : '') +
                 '<div class="home-fd-card-banner-tint"></div>' +
             '</div>' +
             '<div class="home-fd-card-info">' +
@@ -26123,7 +26145,7 @@ window.initSnapshotPanel = function() {
                 var samplesEl = document.createElement('div');
                 samplesEl.className = 'home-fd-card-samples';
                 samplesEl.innerHTML = urls.map(function(url) {
-                    return '<span class="home-fd-card-sample"><img src="' + escHtml(url) + '" alt="" loading="lazy"/></span>';
+                    return '<span class="home-fd-card-sample"><img src="' + escHtml(url) + '" alt="" loading="lazy" decoding="async"/></span>';
                 }).join('');
                 infoEl.appendChild(samplesEl);
             });
