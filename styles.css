@@ -29,6 +29,85 @@
     --transition: all 0.3s ease;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   SKELETON SHIMMER — système réutilisable pour les états de chargement.
+   Remplace les anciens "3 dots" pulsants par des placeholders en forme
+   du contenu final qui shimmer en cyan. Plus premium → impression que
+   le contenu "se révèle" plutôt que "se télécharge".
+   Usage : <div class="skel skel-text"></div>
+           <div class="skel skel-banner"></div>
+           <div class="skel" style="width: 40%; height: 18px;"></div>
+   Les éléments .skel peuvent être stylés directement via inline style
+   ou via les modifiers ci-dessous pour les formes communes.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes skel-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+.skel {
+    position: relative;
+    overflow: hidden;
+    background-color: rgba(11, 20, 38, 0.55);
+    background-image: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.00) 0%,
+        rgba(255, 255, 255, 0.00) 30%,
+        rgba(0, 179, 255, 0.14) 50%,
+        rgba(255, 255, 255, 0.00) 70%,
+        rgba(255, 255, 255, 0.00) 100%
+    );
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    animation: skel-shimmer 1.6s linear infinite;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    display: block;
+}
+@media (prefers-reduced-motion: reduce) {
+    .skel { animation: none; }
+}
+/* Variantes de forme — toutes paramétrables davantage via inline style. */
+.skel-text       { height: 12px; border-radius: 4px; }
+.skel-text-lg    { height: 22px; border-radius: 5px; }
+.skel-text-sm    { height: 9px;  border-radius: 3px; }
+.skel-circle     { border-radius: 50%; }
+.skel-pill       { height: 24px; border-radius: 999px; }
+.skel-thumb      { aspect-ratio: 1 / 1; border-radius: 8px; }
+.skel-banner     { aspect-ratio: 21 / 7; border-radius: 12px; }
+.skel-cta        { height: 38px; border-radius: 8px; }
+/* Wrapper card placeholder : reprend la silhouette d'une card du home. */
+.skel-card {
+    background: rgba(11, 20, 38, 0.7);
+    border: 1px solid var(--home-halo-border);
+    border-radius: 14px;
+    overflow: hidden;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+.skel-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 18px 18px;
+}
+.skel-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.skel-row--between { justify-content: space-between; }
+/* Grille de mini-thumbs pour skeleton showcase (Featured Collections). */
+.skel-thumbs-row {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+}
+.skel-thumbs-row--5 {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+}
+
 [data-theme="cdc"] {
     --collection-bg: #0b1426;
     --page-bg: #0f1a30;
