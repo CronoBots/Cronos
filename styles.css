@@ -4530,20 +4530,19 @@ body.view--profile .app-main {
   padding-bottom: 24px !important;
 }
 
-/* ── Écart latéral uniforme — tous les panneaux fullscreen ──
+/* ── Écart latéral uniforme — tous les panneaux fullscreen (hors profil) ──
    Contrecarre le padding:0 posé en JS par _showFullscreenPanel / showStatsView.
    La valeur 24px s'additionne au padding interne de chaque panneau (~20px)
    pour un écart visuel total d'environ 44px de chaque côté.
 
-   On laisse les variantes plus spécifiques body.view--profile .app-main
-   (gutter NFT 56px) et body.is-collage-view .app-main (padding: 0)
-   override naturellement par cascade : leur sélecteur (0,2,1) bat le
-   nôtre (0,1,1) malgré le !important commun. Auparavant la règle était
-   gated par body:not(.view--profile) — ce qui faisait disparaître les
-   40px de padding-top dès qu'une classe view--profile traînait sur le
-   body après une navigation collection → home avec nettoyage incomplet
-   des classes. */
-.app-main {
+   IMPORTANT : sélecteur body:not(.view--profile) .app-main (spécificité
+   0,2,1) OBLIGATOIRE. Le passer à .app-main (0,1,0) — tentative ratée
+   en #123 — laissait la media query @media (max-width: 768px)
+   .app-main { padding: 20px ... !important } (même 0,1,0, déclarée plus
+   tard) gagner sur mobile → padding-top tombait à 20px en initial.
+   Avec la spécificité 0,2,1, on bat la media query, et le 40px s'applique
+   bien sur tous les viewports. */
+body:not(.view--profile) .app-main {
   padding-top: 40px !important;
   padding-left: 55px !important;
   padding-right: 55px !important;
