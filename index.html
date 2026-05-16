@@ -16022,8 +16022,19 @@ async function sha256hex(str) {
     // ── Helpers partagés ──────────────────────────────────────────────────────
 
     function _hideAllPanels() {
-        // Nettoyer la classe de vue profil à chaque changement d'onglet
+        // Nettoyer toutes les classes d'état susceptibles d'affecter
+        // .app-main à chaque changement d'onglet :
+        //   • view--profile : posée par showProfileView, override CSS pour
+        //                     padding-top (56px via --nft-hover-gutter)
+        //   • is-collage-view : posée par applySize('collage') quand on
+        //                       browse une collection en mode collage,
+        //                       écrase padding: 0 !important sur .app-main
+        // L'oubli de l'une de ces classes après navigation collection →
+        // home laissait .app-main padding-top à 0, donc le titre de la
+        // home (CRONOS.WTF) collait au topnav au lieu du 40px attendu.
         document.body.classList.remove('view--profile');
+        document.body.classList.remove('is-collage-view');
+        if (appMain) appMain.classList.remove('is-collage-view');
         if (statsPanel) statsPanel.style.display = 'none';
         const collectionsPanel = document.getElementById('collectionsPanel');
         if (collectionsPanel) collectionsPanel.style.display = 'none';
