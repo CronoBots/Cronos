@@ -27082,26 +27082,27 @@ a.snap-holder-username:hover {
     background:
         radial-gradient(120% 80% at 85% -10%, var(--accent-soft) 0%, transparent 55%),
         linear-gradient(120deg, rgba(11,20,38,0.85) 0%, rgba(7,14,28,0.95) 60%, rgba(7,14,28,1) 100%);
-    /* Halo : base = recette de référence du home (cyan unifié),
-       mais on infuse ~32% de l'accent actif dans le contour et
-       on ajoute un glow extérieur subtil teinté à l'accent. Le
-       cadre garde son identité cyan tout en suivant la lumière
-       du Spotlight quand le user cycle entre les features. */
-    border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--home-halo-border));
+    /* Border identique aux autres cards du home (var --home-halo-border).
+       Pas d'infusion d'accent sur la border : avec color-mix qui poussait
+       jusqu'à 32% de la couleur de slide active, le trait apparaissait
+       plus épais que celui des autres cards, ce qui cassait l'unification
+       demandée par l'utilisateur. L'identité de slide reste portée par
+       le background (radial accent-soft) + le titre coloré. */
+    border: 1px solid var(--home-halo-border);
     border-radius: 24px;
     overflow: hidden;
     isolation: isolate;
-    box-shadow:
-        var(--home-halo-shadow),
-        0 0 32px color-mix(in srgb, var(--accent) 18%, transparent);
+    /* Halo strictement identique aux autres cards — pas de glow extra
+       teinté à l'accent (l'ancien `0 0 32px color-mix(...)` se cumulait
+       au halo standard et donnait au spotlight un trait visuellement
+       plus large que les autres frames). */
+    box-shadow: var(--home-halo-shadow);
     cursor: pointer;
     transition: border-color 0.6s ease, background 0.6s ease, box-shadow 0.6s ease;
 }
 .home-spotlight:hover {
-    border-color: color-mix(in srgb, var(--accent) 55%, var(--home-halo-border));
-    box-shadow:
-        var(--home-halo-shadow),
-        0 0 44px color-mix(in srgb, var(--accent) 28%, transparent);
+    border-color: var(--home-halo-border);
+    box-shadow: var(--home-halo-shadow);
 }
 
 /* Halo radial coloré (suit l'accent actif), positionné en haut à droite. */
