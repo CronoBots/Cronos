@@ -4530,11 +4530,20 @@ body.view--profile .app-main {
   padding-bottom: 24px !important;
 }
 
-/* ── Écart latéral uniforme — tous les panneaux fullscreen (hors profil) ──
+/* ── Écart latéral uniforme — tous les panneaux fullscreen ──
    Contrecarre le padding:0 posé en JS par _showFullscreenPanel / showStatsView.
    La valeur 24px s'additionne au padding interne de chaque panneau (~20px)
-   pour un écart visuel total d'environ 44px de chaque côté. */
-body:not(.view--profile) .app-main {
+   pour un écart visuel total d'environ 44px de chaque côté.
+
+   On laisse les variantes plus spécifiques body.view--profile .app-main
+   (gutter NFT 56px) et body.is-collage-view .app-main (padding: 0)
+   override naturellement par cascade : leur sélecteur (0,2,1) bat le
+   nôtre (0,1,1) malgré le !important commun. Auparavant la règle était
+   gated par body:not(.view--profile) — ce qui faisait disparaître les
+   40px de padding-top dès qu'une classe view--profile traînait sur le
+   body après une navigation collection → home avec nettoyage incomplet
+   des classes. */
+.app-main {
   padding-top: 40px !important;
   padding-left: 55px !important;
   padding-right: 55px !important;
@@ -13194,9 +13203,9 @@ body.is-profile-loading #profileLoadingOverlay * {
     width: 24px; height: 24px; border-radius: 50%;
     object-fit: cover; flex-shrink: 0;
     background: rgba(0,179,255,0.15);
-    /* Cadre blanc 0.85 — match .home-chat-msg-avatar, plus visible
-       que l'ancien cyan 0.35 qui se confondait avec la background
-       tinted des bulles. */
+    /* Cadre blanc 0.85 — à 0.55 (tentative précédente, #122) le
+       contour lisait gris sur le fond foncé. Match avec
+       .home-chat-msg-avatar pour cohérence chat ↔ panel members. */
     border: 1px solid rgba(255, 255, 255, 0.85);
 }
 .home-chat-member-initial {
@@ -13268,13 +13277,13 @@ body.is-profile-loading #profileLoadingOverlay * {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    /* Hauteur + line-height explicites pour que le texte (Geomanist
-       caps anchored haut) soit visuellement centré dans la pill —
-       avant on avait un padding asymétrique 2/1 qui poussait le texte
-       en haut de la pill. */
-    height: 16px;
-    line-height: 16px;
-    padding: 0 8px;
+    /* Padding asymétrique 3/1 (top/bottom) + line-height: 1 pour
+       compenser le fait que Geomanist-Bold ancre les caps en haut de
+       la line-box : sans ça (height + line-height symétrique de #116)
+       les capitales apparaissent visuellement hautes dans le pill. Le
+       2px d'écart top/bottom pousse les caps vers le centre optique. */
+    padding: 3px 8px 1px;
+    line-height: 1;
     border-radius: 8px;
     background: rgba(255, 200, 0, 0.16);
     color: #FFC800;
@@ -13292,7 +13301,14 @@ body.is-profile-loading #profileLoadingOverlay * {
 /* Variant pour la liste des membres : un peu plus tassé pour ne pas
    pousser la ligne au-delà de la largeur de la sidebar. */
 .chat-patron-badge--member {
-    padding: 2px 6px 1px;
+    /* Reprend la technique height + line-height + padding horizontal
+       only de .chat-patron-badge (base), juste compactée pour la
+       sidebar. Avant on avait padding: 2px 6px 1px asymétrique qui
+       remettait le texte trop haut dans le pill (le base avait été
+       corrigé dans #116, le --member avait été oublié). */
+    height: 13px;
+    line-height: 13px;
+    padding: 0 6px;
     font-size: 7.5px;
     margin-left: 2px;
 }
@@ -13304,11 +13320,10 @@ body.is-profile-loading #profileLoadingOverlay * {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    /* Même technique que .chat-patron-badge : height + line-height
-       explicites pour centrer le texte. */
-    height: 16px;
-    line-height: 16px;
-    padding: 0 8px;
+    /* Même technique que .chat-patron-badge : padding asymétrique 3/1
+       + line-height: 1 pour compenser le cap-anchor haut de Geomanist. */
+    padding: 3px 8px 1px;
+    line-height: 1;
     border-radius: 8px;
     background: rgba(239, 68, 68, 0.18);
     color: #fca5a5;
@@ -13330,10 +13345,10 @@ body.is-profile-loading #profileLoadingOverlay * {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    /* Même technique que .chat-creator-badge / .chat-patron-badge. */
-    height: 16px;
-    line-height: 16px;
-    padding: 0 8px;
+    /* Même technique que .chat-creator-badge / .chat-patron-badge :
+       padding asymétrique 3/1 + line-height: 1. */
+    padding: 3px 8px 1px;
+    line-height: 1;
     border-radius: 8px;
     background: rgba(74, 222, 128, 0.18);
     color: #86efac;
@@ -14085,8 +14100,8 @@ body.is-profile-loading #profileLoadingOverlay * {
     border-radius: 50%;
     object-fit: cover;
     /* Blanc plus marqué (0.85) que les 0.55 d'une tentative
-       précédente : à 0.55 le contour lisait gris sur fond sombre.
-       Match avec .home-chat-member-avatar. */
+       précédente (#122) : à 0.55 le contour lisait gris sur fond
+       sombre. Match avec .home-chat-member-avatar. */
     border: 1px solid rgba(255, 255, 255, 0.85);
     background: rgba(255, 255, 255, 0.05);
     flex-shrink: 0;
@@ -14412,9 +14427,8 @@ body.is-profile-loading #profileLoadingOverlay * {
     .chat-og-badge,
     .chat-patron-badge {
         font-size: 9px;
-        height: 15px;
-        line-height: 15px;
-        padding: 0 6px;
+        padding: 3px 6px 1px;
+        line-height: 1;
         transform: translateY(-1.5px);
     }
     /* Mention pill garde le clamp à la taille du pseudo. */
@@ -26171,90 +26185,100 @@ a.snap-holder-username:hover {
     background-size: cover;
     background-position: center;
 }
-/* Tint très léger sur la bannière — l'identité (logo + nom) n'est
-   plus en overlay donc le contraste n'a plus besoin d'être agressif.
-   On garde un soupçon de gradient en bas uniquement pour aider la
-   lisibilité du badge +%. */
+/* Tint discret en bas de bannière : assez pour que le nom centré
+   reste lisible sur les bannières claires, mais sans le voile sombre
+   agressif qui "écrasait" la bannière (l'utilisateur trouvait l'effet
+   derrière le nom incohérent avec l'image). Gradient 0→25% top→bot,
+   donc le haut reste intact et seul le centre/bas — où atterrit le
+   texte — est légèrement assombri. */
 .home-fc-spotlight .home-feat-v3-hero-tint {
     background: linear-gradient(
         180deg,
-        rgba(8, 14, 28, 0.0) 0%,
-        rgba(8, 14, 28, 0.08) 100%);
+        rgba(8, 14, 28, 0.0)  0%,
+        rgba(8, 14, 28, 0.18) 50%,
+        rgba(8, 14, 28, 0.28) 100%);
 }
-/* Identity = strip dédié SOUS la bannière (plus en overlay). Layout
-   "profile header" type Twitter/Discord :
-     - logo carré positionné absolute en bas-gauche, qui chevauche la
-       bannière de moitié (top: -36px sur 72px de hauteur)
-     - nom + créateur centrés horizontalement dans le strip
-   Le strip a sa propre hauteur (~40px) qui accueille la moitié basse
-   du logo + une marge sous le texte. */
-.home-fc-spotlight .home-feat-v3-identity {
+/* Wrapper hero — son seul rôle est de fournir un référentiel à
+   position:relative dont overflow est VISIBLE, pour que le logo
+   (sibling du hero) puisse déborder visuellement vers le bas et
+   chevaucher la frontière bannière/stats. Le hero lui-même garde
+   overflow:hidden (le bg blurry en scale 1.4 doit rester clippé). */
+.home-fc-spotlight .home-feat-v3-hero-wrap {
     position: relative;
-    padding: 8px 16px 12px;
-    text-align: center;
-    min-height: 44px;
     flex-shrink: 0;
+}
+/* Identity = OVERLAY centrée H+V sur la bannière. Le logo n'est
+   plus dans ce bloc (il vit comme sibling du hero pour pouvoir
+   déborder). On laisse un padding-left généreux pour que le texte
+   ne vienne pas heurter visuellement le logo à gauche. */
+.home-fc-spotlight .home-feat-v3-identity {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 32px;
+    text-align: center;
     pointer-events: none;
 }
+/* Logo "profile avatar" : positionné absolute relativement au
+   hero-wrap, chevauche la frontière hero/stats avec un bottom: -36px
+   (sur 72px de hauteur → 36px sur bannière, 36px sur stats). UN SEUL
+   contour cyan, plus de double bordure sombre (l'utilisateur a
+   demandé de retirer le 2ème contour foncé). */
 .home-fc-spotlight .home-feat-v3-logo {
-    /* Positionné absolute en bas-gauche, chevauche la bannière à 50%. */
     position: absolute;
-    top: -36px;
+    bottom: -36px;
     left: 16px;
     width: 72px;
     height: 72px;
     border-radius: 14px;
-    /* Double bordure : fin contour cyan + anneau sombre extérieur pour
-       détacher proprement le logo de la bannière (sinon l'image se
-       fond dans l'image de fond). */
-    border: 2px solid rgba(0, 179, 255, 0.7);
+    border: 2px solid rgba(0, 179, 255, 0.75);
     box-shadow:
-        0 0 0 2px rgba(8, 14, 28, 0.95),
         0 6px 18px rgba(0, 0, 0, 0.55),
-        0 0 12px rgba(0, 179, 255, 0.3);
+        0 0 14px rgba(0, 179, 255, 0.35);
     background: rgba(11, 20, 38, 0.9);
-    z-index: 2;
-}
-.home-fc-spotlight .home-feat-v3-id-text {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-    min-width: 0;
-    max-width: 100%;
-    /* Décale légèrement le centre du texte vers la droite pour qu'il
-       n'entre pas visuellement en collision avec le logo à gauche. */
-    padding-left: 56px;
+    z-index: 3;
+    object-fit: cover;
 }
 .home-fc-spotlight .home-feat-v3-name {
     font-family: 'Geomanist-Bold', sans-serif;
-    /* Taille réduite (vs 26-48px de l'ancien overlay) — le nom n'est
-       plus posé sur la bannière, donc plus besoin d'être énorme pour
-       dominer l'image. */
-    font-size: clamp(17px, 2.4vw, 26px);
+    /* Le nom redevient l'élément dominant de la bannière, on le
+       remonte en taille. */
+    font-size: clamp(22px, 3.2vw, 38px);
     font-weight: 800;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #fff;
-    line-height: 1.1;
+    line-height: 1.08;
     white-space: normal;
-    /* Plus de text-shadow lourd : le nom est sur fond uniforme. */
-    text-shadow: none;
+    /* Shadow en couches : un drop net pour détacher la silhouette
+       du texte de l'image, un halo flou pour adoucir. Pas de voile
+       large derrière (c'est ça que l'utilisateur trouvait moche). */
+    text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.85),
+        0 2px 8px rgba(0, 0, 0, 0.55);
 }
 .home-fc-spotlight .home-feat-v3-creator {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: clamp(10px, 1vw, 12px);
+    font-size: clamp(11px, 1.1vw, 14px);
     font-weight: 700;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.85);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    text-shadow: none;
+    max-width: 100%;
+    text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.85),
+        0 1px 6px rgba(0, 0, 0, 0.5);
 }
 .home-fc-spotlight .home-feat-v3-creator-text { display: inline; }
 .home-fc-spotlight .home-feat-v3-creator strong {
@@ -26277,7 +26301,10 @@ a.snap-holder-username:hover {
     display: flex;
     flex-wrap: nowrap;
     gap: 0;
-    padding: 12px 16px;
+    /* padding-left renforcé (104px) pour laisser passer la moitié
+       basse du logo (16px gauche + 72px largeur + 16px marge avec
+       le 1er stat = 104px). Sinon le logo recouvre le label "Floor". */
+    padding: 12px 16px 12px 104px;
     background: rgba(11, 20, 38, 0.5);
     border: none;
     border-bottom: 1px solid rgba(0, 179, 255, 0.12);
@@ -26343,11 +26370,10 @@ a.snap-holder-username:hover {
     padding: 12px;
     background: rgba(11, 20, 38, 0.35);
     flex: 1;
-    /* Plus de strip de samples (8 vignettes) — la zone se contente des
-       4 tuiles premium en 2×2. min-height réduite en conséquence pour
-       réserver pile la place de la grille pendant le chargement (sinon
-       layout shift quand l'API renvoie). */
-    min-height: 160px;
+    /* Réserve la place du contenu (4 tuiles 2×2 verticales + strip de
+       8 vignettes en bas) DÈS le chargement initial pour éviter le
+       layout shift quand l'API renvoie. */
+    min-height: 220px;
     min-width: 0;
 }
 .home-feat-showcase-loading {
@@ -26357,6 +26383,42 @@ a.snap-holder-username:hover {
     justify-content: center;
     gap: 6px;
     opacity: 0.4;
+}
+/* Strip de samples en bas du showcase : 8 vignettes carrées sur UNE
+   seule ligne. Le nom du NFT s'affiche au hover via le tooltip natif
+   (attribut title). Donne un aperçu visuel de la variété de la
+   collection au-delà des 4 highlights catégorisés. */
+.home-feat-showcase-samples {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+.home-feat-showcase-strip-label {
+    /* Label "Sample NFTs" caché : la zone parle d'elle-même. */
+    display: none;
+}
+.home-feat-showcase-samples-row {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+}
+.home-feat-showcase-sample {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    margin: 0 auto;
+    border-radius: 6px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    cursor: default;
+}
+.home-feat-showcase-sample img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 /* Grille 2×2 "premium" : 4 tuiles VERTICALES — Top rank, Most viewed,
    Most liked, Floor. L'image NFT prend toute la largeur de la tuile en
@@ -26469,29 +26531,30 @@ a.snap-holder-username:hover {
 .home-fc-spotlight .home-feat-v3-cta { display: none; }
 
 @media (max-width: 720px) {
-    /* Mobile : layout vertical (banner → identity strip → stats →
-       showcase). L'identity est désormais un strip dédié sous la
-       bannière (plus en overlay) avec logo absolute en bas-gauche
-       qui chevauche la bannière. On resserre juste les tailles. */
-    .home-fc-spotlight .home-feat-v3-identity { padding: 6px 14px 10px; min-height: 36px; }
+    /* Mobile : layout vertical (banner+identity overlay → stats →
+       showcase). Identity reste en overlay centré sur la bannière,
+       logo absolute en sibling du hero qui chevauche la bannière/
+       stats. On resserre juste les tailles. */
+    .home-fc-spotlight .home-feat-v3-identity { padding: 12px 16px; gap: 6px; }
     .home-fc-spotlight .home-feat-v3-logo {
-        top: -30px;
-        left: 14px;
-        width: 60px;
-        height: 60px;
+        bottom: -28px;
+        left: 12px;
+        width: 56px;
+        height: 56px;
         border-radius: 12px;
     }
-    .home-fc-spotlight .home-feat-v3-id-text { padding-left: 48px; }
-    .home-fc-spotlight .home-feat-v3-name { font-size: 18px; }
+    .home-fc-spotlight .home-feat-v3-name { font-size: 22px; }
     .home-fc-spotlight .home-feat-v3-creator { font-size: 10.5px; letter-spacing: 0.1em; }
-    .home-fc-spotlight .home-feat-v3-stats { padding: 10px 12px; }
+    /* Padding-left ajusté en miroir du logo (12 + 56 + 12 = 80px). */
+    .home-fc-spotlight .home-feat-v3-stats { padding: 10px 12px 10px 80px; }
     .home-fc-spotlight .home-feat-v3-stat-val { font-size: 14px; }
-    .home-fc-spotlight .home-feat-v3-showcase { padding: 10px; min-height: 140px; }
+    .home-fc-spotlight .home-feat-v3-showcase { padding: 10px; min-height: 200px; }
     /* Tile verticale resserrée sur mobile : padding texte réduit,
        valeur un poil plus petite. */
     .home-feat-showcase-tile-text { padding: 6px 8px 8px; gap: 3px; }
     .home-feat-showcase-tile-label { font-size: 8.5px; }
     .home-feat-showcase-tile-val { font-size: 13px; }
+    .home-feat-showcase-samples-row { gap: 4px; }
     .home-fc-controls { gap: 10px; padding: 8px 12px; }
 }
 
