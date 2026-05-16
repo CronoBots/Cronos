@@ -4,7 +4,9 @@
 
 1. **Update `HOME_UPDATES`** in `index.html` with a new entry at the top of the array. Format: `{ date, type ('improvement' | 'feature'), title, text }`. Match the tone and length of existing entries — one short paragraph that an end user can parse.
 
-2. **Open a PR** from a fresh branch off `origin/main`. One PR per modification — do not bundle unrelated changes. Branch naming: `claude/<short-task-name>`.
+2. **Open a PR** from a fresh branch off `origin/main`. **One PR per user message**, not one PR per modification — if a single user message lists several changes to make, they all go in the SAME PR. Branch naming: `claude/<short-task-name>`.
+
+   Once the PR for a user message is opened, do not push follow-up commits to its branch — the user merges PRs within seconds, so later commits land on a closed branch and never reach `main`. If a follow-up request comes in (a NEW user message), open a fresh branch + fresh PR. This was the root cause of multiple lost-commit incidents (#109→#110, #112→#120, #115→#117→#119, #124→#126).
 
 3. **PR description in French** when summarising user-facing changes, with a `## Summary` and a `## Test plan`.
 
