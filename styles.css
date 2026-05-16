@@ -18090,38 +18090,39 @@ code.sup-card-address {
     gap: 24px;
 }
 
-/* ── Carte commune ── */
+/* ── Carte commune ── Aligne sur la recette unifiée du site (chat,
+   pulse, market bot results, snapshot, etc.) : background à 0.4,
+   border-color via var --home-halo-border, halo soft via la var
+   --home-halo-shadow. Avant : bg gradient sombre + bordure blanche
+   0.06 + aucun halo → cards visuellement étrangères au reste du
+   site. Les variantes --live / --upcoming / --ended ci-dessous ne
+   redéfinissent QUE leur border-color pour signaler le statut, le
+   reste de la recette reste identique. */
 .drop-card {
-    background: linear-gradient(180deg, rgba(14,24,48,0.95), rgba(8,15,32,0.98));
-    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(11, 20, 38, 0.4);
+    border: 1px solid var(--home-halo-border);
     border-radius: 16px;
     overflow: hidden;
     text-decoration: none;
     display: flex;
     flex-direction: column;
-    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    box-shadow: var(--home-halo-shadow);
+    transition: border-color 0.2s, transform 0.2s;
     position: relative;
 }
 .drop-card--ended { cursor: pointer; }
-.drop-card:hover {
-    border-color: rgba(0,179,255,0.4);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,179,255,0.15);
-}
 
-/* Halo PERMANENT sur les cartes LIVE (état hover appliqué en continu) */
+/* Cartes LIVE : border-color cyan plus marquée pour signaler l'état
+   actif (le halo cumule avec le standard) — pas de box-shadow
+   override avec `0 0 0 1px` qui créait le fameux "2e trait sharp". */
 .drop-card--live {
-    border-color: rgba(0,179,255,0.5);
-    box-shadow: 0 0 0 1px rgba(0,179,255,0.55), 0 0 40px rgba(0,179,255,0.35), 0 0 80px rgba(0,179,255,0.18);
-}
-.drop-card--live:hover {
-    border-color: rgba(0,179,255,0.5);
-    box-shadow: 0 0 0 1px rgba(0,179,255,0.55), 0 0 40px rgba(0,179,255,0.35), 0 0 80px rgba(0,179,255,0.18);
+    border-color: rgba(0, 179, 255, 0.85);
 }
 
-/* Glow statique doux sur les cartes UPCOMING */
+/* Cartes UPCOMING : border-color muted blanc — état non-actif, le
+   halo reste pour rester cohérent avec les autres cards. */
 .drop-card--upcoming {
-    border-color: rgba(255,255,255,0.1);
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.4);
+    border-color: rgba(255, 255, 255, 0.18);
 }
 
 /* Image wrap */
@@ -25967,7 +25968,7 @@ a.snap-holder-username:hover {
     border: 1px solid var(--home-halo-border);
     border-radius: 16px;
     box-shadow: var(--home-halo-shadow);
-    background: rgba(11, 20, 38, 0.85);
+    background: rgba(11, 20, 38, 0.4);
     overflow: hidden;
 }
 .home-featured-grid {
@@ -27767,7 +27768,7 @@ body { box-sizing: border-box; }
 .home-live-card {
     display: flex;
     flex-direction: column;
-    background: rgba(11, 20, 38, 0.85);
+    background: rgba(11, 20, 38, 0.4);
     /* Halo unifié home (variables --home-halo-*). */
     border: 1px solid var(--home-halo-border);
     border-radius: 18px;
@@ -30291,7 +30292,7 @@ body { box-sizing: border-box; }
 
 .home-crypto-card {
     position: relative;
-    background: rgba(11, 20, 38, 0.7);
+    background: rgba(11, 20, 38, 0.4);
     /* Halo unifié home (variables --home-halo-*). */
     border: 1px solid var(--home-halo-border);
     border-radius: 14px;
@@ -31107,7 +31108,7 @@ body { box-sizing: border-box; }
 }
 .home-fd-card {
     position: relative;
-    background: rgba(11, 20, 38, 0.7);
+    background: rgba(11, 20, 38, 0.4);
     /* Halo unifié home (variables --home-halo-*). */
     border: 1px solid var(--home-halo-border);
     border-radius: 14px;
@@ -32167,6 +32168,10 @@ body { box-sizing: border-box; }
        reste — incohérence relevée en revue mobile. */
     border: 1px solid var(--home-halo-border);
     border-radius: 10px;
+    /* Halo unifié pour matcher les autres cards du home (chat, market
+       bot, featured…) — avant la pulse-card avait border mais pas de
+       halo, ce qui la rendait visuellement plus "froide" que le reste. */
+    box-shadow: var(--home-halo-shadow);
     padding: 12px 14px 14px;
     display: flex;
     flex-direction: column;
