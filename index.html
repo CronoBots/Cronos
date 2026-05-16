@@ -3609,8 +3609,8 @@ async function switchProfileAssetMode(nextMode) {
 // ── Requête officielle crypto.com NFT : getSearchPreviewResults ─────────────
 
 const getSearchPreviewResultsQuery = `
-    query getSearchPreviewResults($keyWord: String!) {
-        public {
+    query getSearchPreviewResults($cacheId: ID, $keyWord: String!) {
+        public(cacheId: $cacheId) {
             dropDown(keyWord: $keyWord) {
                 collectibles {
                     id
@@ -3651,7 +3651,7 @@ async function fetchDropDown(keyWord, signal) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 operationName: 'getSearchPreviewResults',
-                variables: { keyWord },
+                variables: { keyWord, cacheId: 'getSearchPreviewResults-' + keyWord.toLowerCase() },
                 query: getSearchPreviewResultsQuery
             }),
             signal
@@ -8312,8 +8312,8 @@ document.addEventListener('DOMContentLoaded', initialize);
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         operationName: 'GetFeatStats',
-                        variables: { id, withStats: true },
-                        query: `query GetFeatStats($id:ID!,$withStats:Boolean!){public{collection(id:$id){id name description verified logo{url} banner{url} creator{username verified} metrics{items owners totalSalesDecimal minSaleListingPriceDecimal listedCollectiblesCount} stats@include(if:$withStats){floorPriceDecimal oneDayVolumeDecimal oneDayVolumeDecimalChange sevenDayVolumeDecimal}}}}`
+                        variables: { id, withStats: true, cacheId: 'GetFeatStats-' + id },
+                        query: `query GetFeatStats($cacheId:ID,$id:ID!,$withStats:Boolean!){public(cacheId:$cacheId){collection(id:$id){id name description verified logo{url} banner{url} creator{username verified} metrics{items owners totalSalesDecimal minSaleListingPriceDecimal listedCollectiblesCount} stats@include(if:$withStats){floorPriceDecimal oneDayVolumeDecimal oneDayVolumeDecimalChange sevenDayVolumeDecimal}}}}`
                     })
                 });
                 const json = await res.json();
@@ -8618,7 +8618,7 @@ document.addEventListener('DOMContentLoaded', initialize);
     const _GCA_QUERY = `fragment AssetBaseDetail on Asset {id name cover{url} main{url} defaultRarityRank likes views}
 fragment AssetListing on Listing {priceDecimal salePriceDecimalUSD currency}
 fragment DefaultListingV2WithFilter on Asset {defaultListingV2(where:$where, listingTypes:$listingTypes, sort:$sort){...AssetListing}}
-query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsSearch,$sort:[SingleFieldSort!],$listingTypes:[ListingType!]){public{assets(collectionId:$collectionId,first:$first,skip:$skip,where:$where,sort:$sort,listingTypes:$listingTypes){...AssetBaseDetail ...DefaultListingV2WithFilter latestPurchasedEdition{priceUSD}}}}`;
+query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsSearch,$sort:[SingleFieldSort!],$listingTypes:[ListingType!]){public(cacheId:$cacheId){assets(collectionId:$collectionId,first:$first,skip:$skip,where:$where,sort:$sort,listingTypes:$listingTypes){...AssetBaseDetail ...DefaultListingV2WithFilter latestPurchasedEdition{priceUSD}}}}`;
     const _GCA_QUERY_NOVIEWS = _GCA_QUERY.replace(' views', '');
 
     function _fetchCollectionAssetsSorted(collectionId, sortField, order, first, skip) {
@@ -8631,7 +8631,8 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 // sortField=null/undefined → on omet le sort (utile pour les
                 // collections où aucun sort field standard n'est supporté).
                 sort: sortField ? [{ order, field: sortField }] : [],
-                listingTypes: []
+                listingTypes: [],
+                cacheId: 'GetCollectionAssets-' + collectionId + '-' + (sortField || 'none') + '-' + (order || '') + '-' + (first || 1) + '-' + (skip || 0)
             },
             query: q
         });
@@ -9085,8 +9086,8 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
        totalSalesDecimal (= all-time vol en USD), totalSupply, floor. */
     async function fetchCollectionMetric(collectionId) {
         if (!collectionId) return null;
-        const Q = `query GetCollectionMetric($collectionId: ID!) {
-            public {
+        const Q = `query GetCollectionMetric($cacheId: ID, $collectionId: ID!) {
+            public(cacheId: $cacheId) {
                 collectionMetric(id: $collectionId) {
                     minSaleListingPriceDecimal
                     owners
@@ -9103,7 +9104,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                 body: JSON.stringify({
                     operationName: 'GetCollectionMetric',
                     query: Q,
-                    variables: { collectionId }
+                    variables: { collectionId, cacheId: 'GetCollectionMetric-' + collectionId }
                 })
             });
             const json = await res.json();
@@ -11233,7 +11234,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         // Requête GraphQL pour les métriques collection — Floor +
         // Owners + Volume total. Inlined pour ne pas dépendre du
         // Q_METRIC encapsulé dans un autre IIFE.
-        const _CHAT_GQL_FLOOR_Q = 'query GetCollectionMetric($collectionId: ID!) { public { collectionMetric(id: $collectionId) { minSaleListingPriceDecimal owners totalSalesDecimal totalSupply } } }';
+        const _CHAT_GQL_FLOOR_Q = 'query GetCollectionMetric($cacheId: ID, $collectionId: ID!) { public(cacheId: $cacheId) { collectionMetric(id: $collectionId) { minSaleListingPriceDecimal owners totalSalesDecimal totalSupply } } }';
         const _CHAT_GQL_ENDPOINT = (typeof graphqlEndpoint === 'string')
             ? graphqlEndpoint
             : 'https://crypto.com/nft-api/graphql';
@@ -11305,7 +11306,7 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         operationName: 'GetCollectionMetric',
-                        variables: { collectionId: id },
+                        variables: { collectionId: id, cacheId: 'GetCollectionMetric-' + id + '-chat' },
                         query: _CHAT_GQL_FLOOR_Q
                     })
                 });
@@ -13169,8 +13170,8 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
     let _sbInit = false;
     let _autoRefreshTimer = null;
 
-    const Q = `query getCollectionEventHistory($collectionId:ID!,$first:Int!,$after:String,$naturesIn:[String!]){
-        public{collection(id:$collectionId){id totalSupply metrics{minSaleListingPriceDecimal} eventHistory(first:$first,after:$after,naturesIn:$naturesIn){
+    const Q = `query getCollectionEventHistory($cacheId:ID,$collectionId:ID!,$first:Int!,$after:String,$naturesIn:[String!]){
+        public(cacheId:$cacheId){collection(id:$collectionId){id totalSupply metrics{minSaleListingPriceDecimal} eventHistory(first:$first,after:$after,naturesIn:$naturesIn){
             edges{node{id
             asset{id name copies copiesInCirculation kind isExternalNft cover{url} defaultRarityRank likes}
             edition{index}
@@ -13195,7 +13196,13 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 operationName: 'getCollectionEventHistory',
-                variables: { collectionId: colId, first: 20, after: after || null, naturesIn: _sbMode === 'all' ? ['transferred','listed'] : _sbMode === 'auction' ? ['transferred','listed'] : [_sbMode] },
+                variables: (() => {
+                    const naturesIn = _sbMode === 'all' ? ['transferred','listed'] : _sbMode === 'auction' ? ['transferred','listed'] : [_sbMode];
+                    return {
+                        collectionId: colId, first: 20, after: after || null, naturesIn,
+                        cacheId: 'getCollectionEventHistory-' + colId + '-' + (after || 'head') + '-' + naturesIn.join(',')
+                    };
+                })(),
                 query: Q
             })
         });
@@ -13540,10 +13547,10 @@ query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$where:AssetsS
         try {
             const res = await fetch(graphqlEndpoint, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ operationName: 'GetColLogo', variables: { id },
+                body: JSON.stringify({ operationName: 'GetColLogo', variables: { id, cacheId: 'GetColLogo-' + id },
                     // Étend pour récupérer aussi creator → permet de grouper
                     // les collections par artiste dans le dropdown.
-                    query: 'query GetColLogo($id:ID!){public{collection(id:$id){name logo{url} creator{uuid id displayName username verified}}}}' })
+                    query: 'query GetColLogo($cacheId:ID,$id:ID!){public(cacheId:$cacheId){collection(id:$id){name logo{url} creator{uuid id displayName username verified}}}}' })
             });
             const j = await res.json();
             return j?.data?.public?.collection || null;
@@ -16127,8 +16134,8 @@ async function sha256hex(str) {
         try {
             const res = await fetch(graphqlEndpoint, {
                 method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({operationName:'GetColLogo', variables:{id:'5855701d43bc9a7fea90bd254ebd4b6e'},
-                    query:'query GetColLogo($id:ID!){public{collection(id:$id){logo{url}}}}'})
+                body: JSON.stringify({operationName:'GetColLogo', variables:{id:'5855701d43bc9a7fea90bd254ebd4b6e', cacheId:'GetColLogo-5855701d43bc9a7fea90bd254ebd4b6e-logo'},
+                    query:'query GetColLogo($cacheId:ID,$id:ID!){public(cacheId:$cacheId){collection(id:$id){logo{url}}}}'})
             });
             const j = await res.json();
             const url = j?.data?.public?.collection?.logo?.url;
@@ -16496,6 +16503,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-17T05:30:00Z',
+            type:  'improvement',
+            title: 'Faster data loads',
+            text:  'Most calls to the Crypto.com NFT API now hit the edge cache instead of going all the way to the backend. Repeated views of the same collection, artist or drop come back near-instant.'
+        },
         {
             date:  '2026-05-17T04:30:00Z',
             type:  'improvement',
@@ -17318,7 +17331,7 @@ async function sha256hex(str) {
     const _resolvingCollectionNames = new Set();
     async function _resolveCollectionNames(ids) {
         if (!Array.isArray(ids) || !ids.length) return;
-        const Q = `query GetCollectionName($id:ID!){public{collection(id:$id){id name}}}`;
+        const Q = `query GetCollectionName($cacheId:ID,$id:ID!){public(cacheId:$cacheId){collection(id:$id){id name}}}`;
         await Promise.all(ids.map(async id => {
             if (_resolvingCollectionNames.has(id)) return;
             _resolvingCollectionNames.add(id);
@@ -17330,7 +17343,7 @@ async function sha256hex(str) {
                     body: JSON.stringify({
                         operationName: 'GetCollectionName',
                         query: Q,
-                        variables: { id }
+                        variables: { id, cacheId: 'GetCollectionName-' + id }
                     })
                 });
                 const json = await res.json();
@@ -17905,7 +17918,8 @@ fragment CollectionStatsData on Collection {
             verifiedOnly: verifiedOnly === true,
             hideEmpty: hideEmpty,
             withStats: true,
-            networks: [network]
+            networks: [network],
+            cacheId: 'GetCollectionsPage-' + network + '-' + apiTimeRange + '-' + sortField + '-v' + (verifiedOnly === true ? '1' : '0')
         };
 
         // Try primary network name, then fallback aliases if 400
@@ -19990,8 +20004,8 @@ window.initDropsPanel = async function() {
   (async function fetchSupportLiveData() {
     const COL_ID = '2ec243b8746154fd9dc1c892d7f54fe9';
     // Use the exact same query format as the site itself (GetCollectionAssets)
-    const Q = `query GetSupportNFTs($collectionId:ID,$first:Int!,$skip:Int!,$sort:[SingleFieldSort!]){
-      public{
+    const Q = `query GetSupportNFTs($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$sort:[SingleFieldSort!]){
+      public(cacheId:$cacheId){
         assets(collectionId:$collectionId,first:$first,skip:$skip,sort:$sort){
           id name copies copiesInCirculation
           cover{url} main{url}
@@ -20011,7 +20025,7 @@ window.initDropsPanel = async function() {
           body: JSON.stringify({
             operationName: 'GetSupportNFTs',
             query: Q,
-            variables: { collectionId: COL_ID, first: 40, skip, sort: [{ field: 'price', order: 'ASC' }] }
+            variables: { collectionId: COL_ID, first: 40, skip, sort: [{ field: 'price', order: 'ASC' }], cacheId: 'GetSupportNFTs-' + COL_ID + '-' + skip }
           })
         });
         const j = await r.json();
@@ -23037,8 +23051,8 @@ window._snapshotRun = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             operationName: 'GetCollectionName',
-            query: 'query GetCollectionName($id:ID!){public{collection(id:$id){name}}}',
-            variables: { id }
+            query: 'query GetCollectionName($cacheId:ID,$id:ID!){public(cacheId:$cacheId){collection(id:$id){name}}}',
+            variables: { id, cacheId: 'GetCollectionName-' + id + '-snap' }
           })
         })
         .then(r => r.json())
@@ -25971,8 +25985,8 @@ window.initSnapshotPanel = function() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     operationName: 'GetFDSamples',
-                    variables: { collectionId: collectionId, first: 20, skip: 0 },
-                    query: 'query GetFDSamples($collectionId:ID,$first:Int!,$skip:Int!){public{assets(collectionId:$collectionId,first:$first,skip:$skip){cover{url}}}}'
+                    variables: { collectionId: collectionId, first: 20, skip: 0, cacheId: 'GetFDSamples-' + collectionId },
+                    query: 'query GetFDSamples($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!){public(cacheId:$cacheId){assets(collectionId:$collectionId,first:$first,skip:$skip){cover{url}}}}'
                 })
             });
             var json = await res.json();
