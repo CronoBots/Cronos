@@ -15563,7 +15563,14 @@ async function sha256hex(str) {
                 span.className = 'chat-patron-badge chat-patron-badge--member';
                 span.title = 'Official Patron — supporter of CRONOS.WTF';
                 span.textContent = 'WTF PATRON';
-                el.appendChild(span);
+                // Insère AVANT le pill "Xh ago" (.home-chat-member-lastseen,
+                // qui porte margin-left: auto et part à droite). Sinon
+                // appendChild le pousse APRÈS le lastseen → badge au bout
+                // de la ligne, désaligné des autres rôles (WTF OG / WTF
+                // CREATOR rendus initialement à côté du pseudo).
+                const anchor = el.querySelector('.home-chat-member-lastseen');
+                if (anchor) el.insertBefore(span, anchor);
+                else el.appendChild(span);
             } else if (!should && existing) {
                 existing.remove();
             }
