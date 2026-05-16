@@ -6,6 +6,8 @@
 
 2. **Open a PR** from a fresh branch off `origin/main`. One PR per modification — do not bundle unrelated changes. Branch naming: `claude/<short-task-name>`.
 
+   **Each new request = new PR.** Once a PR is opened (whether merged or not), don't push follow-up commits to its branch — open a fresh branch + a fresh PR for the next request. The user merges PRs quickly, so later commits on an already-opened branch often miss the merge window and never reach `main` (this was the root cause of PRs #109 → #110, #112 → #120, #115 → #117 → #119, #124 → #126 — every time a second commit landed on a still-open branch, it got orphaned when the PR was merged).
+
 3. **PR description in French** when summarising user-facing changes, with a `## Summary` and a `## Test plan`.
 
 ## HOME_UPDATES is a public feed
