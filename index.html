@@ -16334,6 +16334,12 @@ async function sha256hex(str) {
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
         {
+            date:  '2026-05-16T22:00:00Z',
+            type:  'improvement',
+            title: 'Featured Drops redesigned — editorial style',
+            text:  'The Featured Drops cards now follow the same magazine grammar as Featured Collections and Featured Artists: a "Featured Drop · 01 / 05" eyebrow at the top (or "Editor\'s Pick" for the pinned CRONOS.WTF card), a coloured status pill on the right (LIVE NOW with a pulsing green dot, SOON in amber, SOLD OUT muted), bigger sample thumbnails across the full width instead of cramped 48px tiles on the side, and a contextual outlined CTA at the bottom that reads "Mint now", "See details" or "View drop" depending on the drop\'s state.'
+        },
+        {
             date:  '2026-05-16T21:00:00Z',
             type:  'improvement',
             title: 'Featured Collections redesigned — editorial style',
@@ -25800,12 +25806,13 @@ window.initSnapshotPanel = function() {
 
     function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]); }); }
 
-    function buildCard(item) {
+    function buildCard(item, idx, total) {
         /* On utilise un <div> au lieu d'<a> pour pouvoir intercepter le click
            et faire scroll vers la card du drop dans l'onglet Drops, plutôt
            que d'ouvrir un nouvel onglet vers Crypto.com. */
         var card = document.createElement('div');
-        card.className = 'home-fd-card' + (item.badge === 'FEATURED' ? ' home-fd-card--featured' : '');
+        var isPinned = item.badge === 'FEATURED';
+        card.className = 'home-fd-card' + (isPinned ? ' home-fd-card--featured' : '');
         card.dataset.dropId = item.id || '';
         card.dataset.url = item.url || '';
         var b = item.badge ? { text: item.badge, cls: item.badgeCls || '' } : badgeForStatus(item.status);
@@ -25817,17 +25824,51 @@ window.initSnapshotPanel = function() {
                   }).join('') +
               '</div>'
             : '';
+        /* Numérotation éditoriale "01 / 05" style magazine — mirroir des
+           cards Featured Collections / Featured Artists. */
+        var num    = String((idx || 0) + 1).padStart(2, '0');
+        var totalS = String(total || 0).padStart(2, '0');
+        /* Le badge de statut devient une pastille à droite de l'eyebrow
+           dans le header de la card. La pinned (cronos.wtf) garde un
+           libellé "EDITOR'S PICK" plus distinctif que "FEATURED". */
+        var eyebrowLabel = isPinned ? "Editor's Pick" : 'Featured Drop';
+        var statusCls = item.status === 'live'     ? 'home-fd-card-status--live'
+                      : item.status === 'upcoming' ? 'home-fd-card-status--soon'
+                      : item.status === 'soldout'  ? 'home-fd-card-status--soldout'
+                      : 'home-fd-card-status--featured';
+        var isLive = item.status === 'live';
+        var statusHtml = '<span class="home-fd-card-status ' + statusCls + '">' +
+            (isLive ? '<span class="home-fd-card-status-dot" aria-hidden="true"></span>' : '') +
+            '<span class="home-fd-card-status-text">' + escHtml(b.text) + '</span>' +
+        '</span>';
+        /* CTA contextuel — "Mint now" pour live, "See details" pour
+           upcoming, "Visit drop" pour featured / soldout. */
+        var ctaText = item.status === 'live'     ? 'Mint now'
+                    : item.status === 'upcoming' ? 'See details'
+                    : item.status === 'soldout'  ? 'View drop'
+                    : 'Visit drop';
         card.innerHTML =
             '<div class="home-fd-card-banner">' +
                 (item.cover ? '<img src="' + escHtml(item.cover) + '" alt="" loading="lazy"/>' : '') +
-                (b.text ? '<span class="home-fd-card-badge ' + b.cls + '">' + escHtml(b.text) + '</span>' : '') +
+                '<div class="home-fd-card-banner-tint"></div>' +
             '</div>' +
             '<div class="home-fd-card-info">' +
-                '<div>' +
+                '<div class="home-fd-card-header">' +
+                    '<div class="home-fd-card-eyebrow">' +
+                        '<span class="home-fd-card-eyebrow-label">' + escHtml(eyebrowLabel) + '</span>' +
+                        '<span class="home-fd-card-eyebrow-num">' + num + '<span class="home-fd-card-eyebrow-total"> / ' + totalS + '</span></span>' +
+                    '</div>' +
+                    statusHtml +
+                '</div>' +
+                '<div class="home-fd-card-identity">' +
                     '<div class="home-fd-card-name">' + escHtml(item.name || '—') + '</div>' +
                     (item.sub ? '<div class="home-fd-card-sub">' + escHtml(item.sub) + '</div>' : '') +
                 '</div>' +
                 samplesHtml +
+                '<span class="home-fd-card-cta">' +
+                    '<span class="home-fd-card-cta-label">' + escHtml(ctaText) + '</span>' +
+                    '<span class="home-fd-card-cta-arrow">→</span>' +
+                '</span>' +
             '</div>';
         /* Click → switch sur l'onglet Drops puis scroll vers la card du drop */
         card.addEventListener('click', function () {
@@ -25900,7 +25941,7 @@ window.initSnapshotPanel = function() {
             }
         } catch (e) { /* ignore — au pire on n'affiche que CRONOS.WTF */ }
         grid.innerHTML = '';
-        items.forEach(function (it) { grid.appendChild(buildCard(it)); });
+        items.forEach(function (it, idx) { grid.appendChild(buildCard(it, idx, items.length)); });
 
         /* Charge les samples de CRONOS.WTF depuis l'API (les chemins locaux ont été supprimés) */
         var cronosCard = grid.querySelector('[data-drop-id="' + FEATURED_CRONOS.id + '"]');

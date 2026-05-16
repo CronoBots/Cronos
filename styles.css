@@ -31424,10 +31424,14 @@ body { box-sizing: border-box; }
     gap: 16px;
     margin-bottom: 14px;
 }
+/* Card = spread magazine vertical (banner top + corps éditorial). Mirroir
+   de la grammaire Featured Collections / Artists : eyebrow, status pill,
+   identité, samples, CTA. Le layout en grid 2-col historique a été retiré
+   pour partout adopter le mode vertical (l'override !important plus bas
+   forçait déjà ce comportement à tous les viewports). */
 .home-fd-card {
     position: relative;
     background: rgba(11, 20, 38, 0.7);
-    /* Halo unifié home (variables --home-halo-*). */
     border: 1px solid var(--home-halo-border);
     border-radius: 14px;
     padding: 0;
@@ -31435,21 +31439,31 @@ body { box-sizing: border-box; }
     box-shadow: var(--home-halo-shadow);
     overflow: hidden;
     text-decoration: none;
-    display: grid;
-    grid-template-columns: minmax(280px, 1.3fr) minmax(0, 2fr);
-    gap: 0;
-    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
+@media (hover: hover) and (pointer: fine) {
+    .home-fd-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(0, 179, 255, 0.75);
+    }
+}
+/* La pinned (CRONOS.WTF) garde sa bordure cyan plus marquée pour la
+   distinguer comme "editor's pick". */
 .home-fd-card--featured {
     border-color: rgba(0, 179, 255, 0.7);
 }
+
+/* ── Banner — image cover en haut, ratio 21:7 (wide editorial).
+   Tint en dégradé pour fusionner avec le body éditorial qui suit. */
 .home-fd-card-banner {
     width: 100%;
-    height: 100%;
     overflow: hidden;
     background: linear-gradient(135deg, #060e1e 0%, #0a1a3a 60%, #071020 100%);
     position: relative;
-    min-height: 220px;
+    aspect-ratio: 21 / 7;
+    flex-shrink: 0;
 }
 .home-fd-card-banner img {
     width: 100%;
@@ -31457,47 +31471,135 @@ body { box-sizing: border-box; }
     object-fit: cover;
     display: block;
 }
-.home-fd-card-badge {
+.home-fd-card-banner-tint {
     position: absolute;
-    top: 8px;
-    left: 8px;
-    background: rgba(0, 179, 255, 0.25);
-    color: #00B3FF;
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    padding: 4px 8px;
-    border-radius: 5px;
-    border: 1px solid rgba(0, 179, 255, 0.45);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    inset: 0;
+    background: linear-gradient(180deg,
+        rgba(8, 14, 28, 0.0)  0%,
+        rgba(8, 14, 28, 0.15) 60%,
+        rgba(8, 14, 28, 0.55) 100%);
+    pointer-events: none;
 }
-.home-fd-card-badge--live {
-    background: rgba(74, 222, 128, 0.2);
-    color: #4ade80;
-    border-color: rgba(74, 222, 128, 0.45);
-}
-.home-fd-card-badge--soon {
-    background: rgba(251, 191, 36, 0.18);
-    color: #fbbf24;
-    border-color: rgba(251, 191, 36, 0.4);
-}
+
+/* ── Info body — flex column qui empile header / identity / samples / CTA. */
 .home-fd-card-info {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 18px 20px;
+    gap: 12px;
+    padding: 16px 18px 18px;
     min-width: 0;
+}
+
+/* ── Header éditorial = eyebrow gauche + status pill droite. Filet
+   blanc fin en dessous pour le look "une de magazine". */
+.home-fd-card-header {
+    display: flex;
+    align-items: center;
     justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.home-fd-card-eyebrow {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
+}
+.home-fd-card-eyebrow-label {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.home-fd-card--featured .home-fd-card-eyebrow-label {
+    color: #00B3FF;
+}
+.home-fd-card-eyebrow-num {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #00B3FF;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+.home-fd-card-eyebrow-total {
+    color: rgba(255, 255, 255, 0.35);
+    font-weight: 400;
+    font-size: 11px;
+}
+
+/* ── Status pill — variants colorés selon l'état du drop. Le dot
+   live a une animation pulse pour signaler "ça vit". */
+.home-fd-card-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px 5px 9px;
+    border-radius: 999px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    line-height: 1;
+}
+.home-fd-card-status-text { line-height: 1; }
+.home-fd-card-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 0 currentColor;
+    animation: home-fd-pulse 1.6s ease-in-out infinite;
+}
+@keyframes home-fd-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.55); }
+    70%  { box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+}
+.home-fd-card-status--live {
+    color: #4ade80;
+    background: rgba(74, 222, 128, 0.14);
+    border: 1px solid rgba(74, 222, 128, 0.4);
+}
+.home-fd-card-status--soon {
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.14);
+    border: 1px solid rgba(251, 191, 36, 0.38);
+}
+.home-fd-card-status--soldout {
+    color: rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.home-fd-card-status--featured {
+    color: #00B3FF;
+    background: rgba(0, 179, 255, 0.14);
+    border: 1px solid rgba(0, 179, 255, 0.4);
+}
+
+/* ── Identity = nom (gros, bold) + sub (artiste / tagline). */
+.home-fd-card-identity {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
 }
 .home-fd-card-name {
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 22px;
     font-weight: 800;
     color: #fff;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.03em;
+    line-height: 1.15;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -31505,22 +31607,33 @@ body { box-sizing: border-box; }
 .home-fd-card-sub {
     font-size: 12px;
     color: rgba(255, 255, 255, 0.55);
+    letter-spacing: 0.02em;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-/* Mini-thumbnails samples du drop */
+
+/* ── Samples — strip de 5 vignettes en grille, full-width. Tailles
+   plus généreuses que l'ancienne version 48px pour donner un vrai
+   aperçu visuel du drop. */
 .home-fd-card-samples {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 6px;
-    margin-top: 8px;
+    gap: 8px;
+    margin-top: 2px;
 }
 .home-fd-card-sample {
     aspect-ratio: 1 / 1;
-    border-radius: 6px;
+    border-radius: 8px;
     overflow: hidden;
     background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: border-color 0.18s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+    .home-fd-card:hover .home-fd-card-sample {
+        border-color: rgba(0, 179, 255, 0.25);
+    }
 }
 .home-fd-card-sample img {
     width: 100%;
@@ -31528,18 +31641,55 @@ body { box-sizing: border-box; }
     object-fit: cover;
     display: block;
 }
-/* Mobile : la carte se remet en colonne */
+
+/* ── CTA outlined — la card entière reste cliquable, le bouton
+   signale clairement l'affordance "explore". Le texte est
+   contextuel (Mint now / See details / View drop). */
+.home-fd-card-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    align-self: stretch;
+    padding: 9px 22px;
+    margin-top: 4px;
+    background: rgba(0, 179, 255, 0.12);
+    border: 1px solid rgba(0, 179, 255, 0.38);
+    border-radius: 8px;
+    color: #00B3FF;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: background 0.2s, border-color 0.2s;
+}
+.home-fd-card-cta-arrow {
+    transition: transform 0.2s ease;
+    display: inline-block;
+}
+@media (hover: hover) and (pointer: fine) {
+    .home-fd-card:hover .home-fd-card-cta {
+        background: rgba(0, 179, 255, 0.22);
+        border-color: rgba(0, 179, 255, 0.65);
+    }
+    .home-fd-card:hover .home-fd-card-cta-arrow {
+        transform: translateX(3px);
+    }
+}
+
+/* Mobile : banner un peu plus haut, samples plus serrés, paddings
+   réduits — tout reste sur 5 colonnes pour préserver le layout. */
 @media (max-width: 720px) {
-    .home-fd-card {
-        grid-template-columns: 1fr;
-        min-height: auto;
-    }
-    .home-fd-card-banner {
-        aspect-ratio: 16 / 9;
-        min-height: auto;
-    }
+    .home-fd-card-banner { aspect-ratio: 16 / 7; }
+    .home-fd-card-info { padding: 14px 14px 16px; gap: 11px; }
     .home-fd-card-name { font-size: 18px; }
-    .home-fd-card-samples { grid-template-columns: repeat(4, 1fr); }
+    .home-fd-card-header { padding-bottom: 6px; }
+    .home-fd-card-eyebrow-label { font-size: 9px; letter-spacing: 0.18em; }
+    .home-fd-card-eyebrow-num { font-size: 12px; }
+    .home-fd-card-status { font-size: 9px; padding: 4px 8px 4px 7px; letter-spacing: 0.12em; }
+    .home-fd-card-samples { gap: 6px; }
+    .home-fd-card-cta { padding: 8px 18px; font-size: 10px; }
 }
 .home-fd-card-stats {
     display: flex;
@@ -31864,47 +32014,10 @@ body { box-sizing: border-box; }
     border-bottom: 1px solid rgba(255,255,255,0.15) !important;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   FIX : Featured Drops — bannière pleine largeur + layout colonne
-   La bannière passe en haut et s'étend sur toute la largeur disponible.
-   Les samples + infos descendent en dessous.
-   ══════════════════════════════════════════════════════════════════════════ */
-.home-fd-card {
-    display: flex !important;
-    flex-direction: column !important;
-    grid-template-columns: unset !important;
-    min-height: unset !important;
-}
-.home-fd-card-banner {
-    width: 100% !important;
-    height: auto !important;
-    min-height: unset !important;
-    aspect-ratio: 21 / 7;
-    flex-shrink: 0;
-}
-.home-fd-card-info {
-    padding: 16px 20px !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    gap: 16px !important;
-}
-.home-fd-card-samples {
-    margin-top: 0 !important;
-    grid-template-columns: repeat(5, 48px) !important;
-    gap: 6px !important;
-    flex-shrink: 0;
-}
-/* Mobile — déjà colonne, on ajuste juste les samples */
-@media (max-width: 720px) {
-    .home-fd-card-banner {
-        aspect-ratio: 16 / 7 !important;
-    }
-    .home-fd-card-info {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-    }
-}
+/* L'ancien bloc de !important qui forçait .home-fd-card-info en row
+   avec samples 48px fixes a été supprimé : les règles de base éditoriales
+   plus haut gèrent désormais nativement le layout column + samples
+   fluides 5 colonnes pleins, pas besoin de surcharger. */
 
 /* ══════════════════════════════════════════════════════════════════════════
    Home Top Collections — zebra, titres bleus, logo+nom fusionnés, centrage
