@@ -41,9 +41,9 @@
      jusqu'aux bords physiques de l'écran en mode standalone iOS pour
      que la status bar puisse se superposer proprement. -->
 <link rel="manifest" href="/manifest.webmanifest"/>
-<meta name="application-name" content="Cronos.wtf"/>
+<meta name="application-name" content="CRONOS.WTF"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-title" content="Cronos.wtf"/>
+<meta name="apple-mobile-web-app-title" content="CRONOS.WTF"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <!-- Favicon et icônes : icon.png est le logo source 1024x1024, navigateurs
@@ -26924,6 +26924,137 @@ window.initSnapshotPanel = function() {
         tab.addEventListener('click', () => setTimeout(syncTitle, 0));
     });
     window.addEventListener('hashchange', () => setTimeout(syncTitle, 0));
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PWA INSTALL SHARE LINK
+     ──────────────────────────────────────────────────────────────────────
+     L'utilisateur peut partager cronos.wtf/?install=1 à un contact. À
+     l'ouverture, une modal explique comment ajouter CRONOS.WTF à
+     l'écran d'accueil :
+       • Android Chrome  : bouton "Install" (utilise l'API
+                            beforeinstallprompt si capturée).
+       • iOS Safari       : instructions visuelles (bouton Partage →
+                            "Sur l'écran d'accueil").
+       • Desktop / autres : message générique "ouvre ce lien sur ton
+                            téléphone".
+     La modal apparaît seulement avec ?install=1. Sinon, transparent.
+     ────────────────────────────────────────────────────────────────── -->
+<div class="pwa-install-overlay" id="pwaInstallOverlay" role="dialog" aria-modal="true" aria-labelledby="pwaInstallTitle" style="display:none;">
+  <div class="pwa-install-card">
+    <button class="pwa-install-close" id="pwaInstallClose" type="button" aria-label="Close">×</button>
+    <div class="pwa-install-icon">
+      <img src="/icons/icon-192.png" alt="" width="64" height="64"/>
+    </div>
+    <h2 class="pwa-install-title" id="pwaInstallTitle">Install CRONOS.WTF</h2>
+    <p class="pwa-install-sub">Get the app on your home screen — opens fullscreen, no browser bar.</p>
+    <!-- Slot dynamique : Android bouton, iOS instructions, autres message. -->
+    <div class="pwa-install-body" id="pwaInstallBody"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    // Détection plateforme
+    const ua = navigator.userAgent || '';
+    const isIOS = /iPad|iPhone|iPod/i.test(ua) && !window.MSStream;
+    const isAndroid = /Android/i.test(ua);
+    const isStandalone =
+        (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+        window.navigator.standalone === true;
+
+    // Capture beforeinstallprompt (Android Chrome) — pour pouvoir
+    // déclencher le prompt natif plus tard via bouton custom.
+    let _deferredInstall = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        _deferredInstall = e;
+    });
+
+    // Cherche ?install=1 dans l'URL.
+    function hasInstallParam() {
+        try {
+            return new URLSearchParams(window.location.search).get('install') === '1';
+        } catch (_) { return false; }
+    }
+
+    function openInstallModal() {
+        const overlay = document.getElementById('pwaInstallOverlay');
+        const body    = document.getElementById('pwaInstallBody');
+        if (!overlay || !body) return;
+        body.innerHTML = '';
+
+        if (isStandalone) {
+            // L'app est déjà ouverte EN tant que PWA. Pas besoin
+            // d'installer. Message court rassurant + close.
+            body.innerHTML = '<p class="pwa-install-already">You\'re already on the installed app. ✓</p>';
+        } else if (isIOS) {
+            // iOS Safari n'a pas d'API d'install. On donne les
+            // instructions visuelles avec l'icône Share Apple.
+            body.innerHTML =
+                '<ol class="pwa-install-steps">' +
+                  '<li>Tap the <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true" style="vertical-align:-3px;"><path d="M12 2.5l4 4-1.4 1.4L13 6.3V15h-2V6.3L9.4 7.9 8 6.5l4-4zM5 12h2v7h10v-7h2v8a1 1 0 01-1 1H6a1 1 0 01-1-1v-8z"/></svg> share button in Safari\'s toolbar.</li>' +
+                  '<li>Scroll and pick <strong>Add to Home Screen</strong>.</li>' +
+                  '<li>Tap <strong>Add</strong>. Done!</li>' +
+                '</ol>';
+        } else if (isAndroid && _deferredInstall) {
+            // Android Chrome — on a capturé beforeinstallprompt,
+            // bouton custom qui déclenche le prompt natif.
+            body.innerHTML = '<button class="pwa-install-btn" type="button" id="pwaInstallBtn">Install on this phone</button>';
+            const btn = document.getElementById('pwaInstallBtn');
+            if (btn) btn.addEventListener('click', async () => {
+                try {
+                    _deferredInstall.prompt();
+                    const choice = await _deferredInstall.userChoice;
+                    _deferredInstall = null;
+                    if (choice && choice.outcome === 'accepted') {
+                        closeInstallModal();
+                    }
+                } catch (_) { /* user dismissed */ }
+            });
+        } else if (isAndroid) {
+            // Android sans prompt capturé (ex: déjà installé +
+            // désinstallé récemment, ou autre navigateur).
+            body.innerHTML =
+                '<ol class="pwa-install-steps">' +
+                  '<li>Open Chrome\'s menu (⋮ top-right).</li>' +
+                  '<li>Tap <strong>Install app</strong> or <strong>Add to Home Screen</strong>.</li>' +
+                '</ol>';
+        } else {
+            // Desktop / autres.
+            body.innerHTML =
+                '<p class="pwa-install-other">' +
+                  'Open <strong>cronos.wtf/?install=1</strong> on your phone (Safari for iPhone, Chrome for Android) to install the app on your home screen.' +
+                '</p>';
+        }
+
+        overlay.style.display = 'flex';
+    }
+
+    function closeInstallModal() {
+        const overlay = document.getElementById('pwaInstallOverlay');
+        if (overlay) overlay.style.display = 'none';
+    }
+
+    const closeBtn = document.getElementById('pwaInstallClose');
+    if (closeBtn) closeBtn.addEventListener('click', closeInstallModal);
+    const overlay = document.getElementById('pwaInstallOverlay');
+    if (overlay) overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeInstallModal();
+    });
+
+    // Auto-ouverture si ?install=1.
+    if (hasInstallParam()) {
+        // Petit délai pour laisser la home charger d'abord.
+        setTimeout(openInstallModal, 600);
+    }
+
+    // Expose pour permettre d'ouvrir manuellement (futur bouton
+    // settings / lien dans le footer / etc.).
+    window.CronosInstall = { open: openInstallModal, close: closeInstallModal };
 })();
 </script>
 </body>
