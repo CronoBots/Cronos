@@ -26576,13 +26576,13 @@ a.snap-holder-username:hover {
 .home-fc-spotlight .home-feat-v3-hero-img {
     background-size: cover;
     background-position: center;
-    /* Blur léger + baisse de luminosité : l'image bannière reste
-       reconnaissable (couleurs, formes, ambiance) mais les détails
-       nets (wordmarks comme "LOADED MUSHROOM", textes tronqués sur
-       les côtés) s'effacent — ne concurrence plus l'identity centré
-       (logo + nom + creator) qui doit ressortir comme repère visuel
+    /* Blur fort + baisse de luminosité : l'image bannière reste
+       reconnaissable comme ambiance (couleurs, palette) mais les
+       détails (wordmarks "LOADED LIONS", textures, personnages
+       sur les côtés) s'effacent — ne concurrence plus l'identity
+       centré (logo + nom + creator) qui doit être le repère visuel
        principal. */
-    filter: blur(2.5px) brightness(0.7) saturate(1.05);
+    filter: blur(5px) brightness(0.55) saturate(1.1);
 }
 /* Tint qui fade le hero vers le bas pour garantir la lisibilité du
    nom de collection + creator qui apparaissent maintenant SUR la
@@ -26886,6 +26886,41 @@ a.snap-holder-username:hover {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+/* État expanded : retire le clamp, affiche la desc complète. Toggle
+   via le bouton .home-feat-v3-desc-toggle (Read more / Read less). */
+.home-fc-spotlight .home-feat-v3-desc.is-expanded {
+    -webkit-line-clamp: unset;
+    display: block;
+    overflow: visible;
+    text-overflow: clip;
+}
+/* Bouton "Read more / Read less" — affiché sous la desc uniquement
+   si la desc overflow le clamp 3 lignes (calcul JS dans
+   renderFeatStats). Style discret cyan, transition douce. */
+.home-fc-spotlight .home-feat-v3-desc-toggle {
+    display: block;
+    margin: 4px auto 0;
+    padding: 4px 10px;
+    background: transparent;
+    border: none;
+    color: var(--color1);
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.15s ease;
+}
+.home-fc-spotlight .home-feat-v3-desc-toggle:hover {
+    opacity: 1;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.home-fc-spotlight .home-feat-v3-desc-toggle:focus-visible {
+    outline: 2px solid var(--color1);
+    outline-offset: 2px;
+}
 
 /* Eyebrow "From the collection" placé au-dessus des 8 vignettes
    du showcase. Petit label uppercase éditorial avec compteur en
@@ -27153,30 +27188,44 @@ a.snap-holder-username:hover {
         border-radius: 50%;
         margin: 2px 0 2px;
     }
-    /* Name + creator : on n'override PAS sur mobile pour hériter du
-       clamp() desktop (clamp(18px, 2.4vw, 26px)) et de la taille 10px
-       cyan, identiques aux .home-fa-name / .home-fa-role.
-       (Anciennes overrides "font-size: 20px" et "10.5px" retirées.) */
-    .home-fc-spotlight .home-feat-v3-creator { gap: 6px; }
+    /* Name : passe à clamp(20, 5vw, 24) sur mobile pour plus de
+       présence en tant que titre principal. À 360px viewport,
+       5vw = 18 → clamp à 20px. À 720px (limite media query),
+       5vw = 36 → clamp à 24px. */
+    .home-fc-spotlight .home-feat-v3-name { font-size: clamp(20px, 5vw, 24px); }
+    .home-fc-spotlight .home-feat-v3-creator { gap: 6px; font-size: 10.5px; }
     .home-fc-spotlight .home-feat-v3-creator-avatar { width: 22px; height: 22px; }
-    /* Eyebrow mobile : reste en flow normal (premier enfant du
-       content) — juste resserrer le padding-bottom. */
+    /* Eyebrow mobile : padding-right 6px (au lieu de 0) pour que
+       "01 / 04" ne touche pas le bord droit. font-size remonté à
+       10/13/10.5 pour plus de présence vs la précédente version
+       (9/12/10) qui paraissait maigre. */
     .home-fc-spotlight .home-feat-v3-eyebrow {
-        padding: 0 0 5px 0;
+        padding: 0 6px 5px 6px;
         margin: 0;
         min-height: 20px;
     }
-    .home-fc-spotlight .home-feat-v3-eyebrow-label { font-size: 9px; letter-spacing: 0.18em; }
-    .home-fc-spotlight .home-feat-v3-eyebrow-num   { font-size: 12px; }
-    .home-fc-spotlight .home-feat-v3-eyebrow-total { font-size: 10px; }
+    .home-fc-spotlight .home-feat-v3-eyebrow-label { font-size: 10px; letter-spacing: 0.18em; }
+    .home-fc-spotlight .home-feat-v3-eyebrow-num   { font-size: 13px; }
+    .home-fc-spotlight .home-feat-v3-eyebrow-total { font-size: 10.5px; }
     /* Stats / desc / showcase / browse : margins lateral retirées
-       (ils vivent dans .home-feat-v3-content qui a déjà son padding). */
+       (ils vivent dans .home-feat-v3-content qui a déjà son padding).
+       Stats : passage en CSS grid 3 colonnes sur mobile pour un
+       layout 3+2 (5 stats) ou 3+3 (6 stats si TOTAL visible)
+       proprement équilibré au lieu d'un flex-wrap aléatoire qui
+       donnait 4+1 déséquilibré. Les séparateurs verticaux sont
+       cachés sur mobile (le grid sépare déjà via gap). */
     .home-fc-spotlight .home-feat-v3-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px 10px;
         margin: 0;
-        padding: 8px 10px;
-        gap: 6px;
+        padding: 10px 12px;
         font-size: 10px;
         border-radius: 14px;
+    }
+    .home-fc-spotlight .home-feat-v3-stat-sep { display: none; }
+    .home-fc-spotlight .home-feat-v3-stat {
+        justify-content: center;
     }
     .home-fc-spotlight .home-feat-v3-stat strong { font-size: 12px; }
     .home-fc-spotlight .home-feat-v3-desc {

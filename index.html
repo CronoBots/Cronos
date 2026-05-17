@@ -8428,6 +8428,17 @@ document.addEventListener('DOMContentLoaded', initialize);
                      totalSalesDecimal, exactement la même valeur que Total
                      affichait — doublon parfait sur les collections sans
                      ventes récentes). -->
+                <!-- Stats — grid 3 colonnes : sur mobile la 6e stat
+                     "Total" (si affichée) wrap proprement en 3+2+1 ou
+                     3+3 selon largeur. Sur desktop large, les 6 entrées
+                     tiennent sur 2 lignes équilibrées.
+
+                     La stat "Total" est conditionnellement affichée par
+                     renderFeatStats : visible si volLabel ≠ 'All-time'
+                     (donc Volume montre du récent, et Total apporte le
+                     cumulé all-time en plus). Cachée sinon pour éviter
+                     le doublon Volume = Total sur les collections sans
+                     activité récente (Loaded Mushroom etc). -->
                 <div class="home-feat-v3-stats">
                     <span class="home-feat-v3-stat"><strong data-stat="floor">—</strong> Floor</span>
                     <span class="home-feat-v3-stat-sep"></span>
@@ -8438,6 +8449,8 @@ document.addEventListener('DOMContentLoaded', initialize);
                     <span class="home-feat-v3-stat"><strong data-stat="listed">—</strong> Listed</span>
                     <span class="home-feat-v3-stat-sep"></span>
                     <span class="home-feat-v3-stat"><strong data-stat="vol">—</strong> <span data-label="vol">Volume</span></span>
+                    <span class="home-feat-v3-stat-sep" data-sep="traded"></span>
+                    <span class="home-feat-v3-stat" data-wrap="traded" style="display:none;"><strong data-stat="traded">—</strong> Total</span>
                 </div>
                 <!-- Showcase : eyebrow "From the collection" + 8 NFTs random
                      intégrant les 4 highlights. Le label est injecté par
@@ -8606,6 +8619,18 @@ document.addEventListener('DOMContentLoaded', initialize);
         setStat(elListed, listed,   'num');
         setStat(elVol,    volValue, 'money');
         if (elVolLbl) elVolLbl.textContent = volLabel;
+        // TOTAL stat — affichée uniquement si Volume montre du récent
+        // (24h ou 7d). Sinon Volume tomberait sur all-time et Total
+        // serait un doublon parfait. La stat ET son séparateur sont
+        // toggles ensemble pour ne pas laisser un "|" orphelin.
+        const elTraded    = card.querySelector('[data-stat="traded"]');
+        const elTradedBox = card.querySelector('[data-wrap="traded"]');
+        const elTradedSep = card.querySelector('[data-sep="traded"]');
+        const showTotal = volLabel !== 'All-time' && volLabel !== 'Volume';
+        const totalVal = Number(data.metrics?.totalSalesDecimal) || 0;
+        if (elTradedBox) elTradedBox.style.display = (showTotal && totalVal > 0) ? '' : 'none';
+        if (elTradedSep) elTradedSep.style.display = (showTotal && totalVal > 0) ? '' : 'none';
+        if (showTotal) setStat(elTraded, totalVal, 'money');
         // Marker : stats prêtes pour la slide. Lu par animateSlideStats
         // au moment du reveal pour décider si on peut lancer le count-up.
         card.dataset.cwtfStatsReady = '1';
@@ -8616,16 +8641,45 @@ document.addEventListener('DOMContentLoaded', initialize);
             window._cwtfAnimateSlide(card);
         }
 
-        // Description — injectée si l'API la renvoie. Le CSS clamp à 3
-        // lignes pour ne pas exploser la hauteur de la card.
+        // Description — injectée si l'API la renvoie. CSS clamp 3 lignes
+        // par défaut. Si le texte déborde du clamp (souvent sur mobile
+        // où une ligne contient moins de caractères), un bouton "Read
+        // more" expand inline (toggle .is-expanded). Sur desktop où la
+        // desc tient déjà en 3 lignes, le bouton reste caché.
         const descEl = card.querySelector('[data-desc]');
         const desc   = (data.description || '').trim();
         if (descEl) {
             if (desc) {
                 descEl.textContent = desc;
                 descEl.style.display = '';
+                descEl.classList.remove('is-expanded');
+                // Mesure post-layout : décide si on a besoin du toggle.
+                requestAnimationFrame(() => {
+                    const overflows = descEl.scrollHeight > descEl.clientHeight + 1;
+                    let toggle = card.querySelector('.home-feat-v3-desc-toggle');
+                    if (overflows) {
+                        if (!toggle) {
+                            toggle = document.createElement('button');
+                            toggle.type = 'button';
+                            toggle.className = 'home-feat-v3-desc-toggle';
+                            toggle.textContent = 'Read more';
+                            toggle.addEventListener('click', (ev) => {
+                                ev.stopPropagation();
+                                const expanded = descEl.classList.toggle('is-expanded');
+                                toggle.textContent = expanded ? 'Read less' : 'Read more';
+                            });
+                            descEl.insertAdjacentElement('afterend', toggle);
+                        }
+                        toggle.style.display = '';
+                        toggle.textContent = 'Read more';
+                    } else if (toggle) {
+                        toggle.style.display = 'none';
+                    }
+                });
             } else {
                 descEl.style.display = 'none';
+                const toggle = card.querySelector('.home-feat-v3-desc-toggle');
+                if (toggle) toggle.style.display = 'none';
             }
         }
 
@@ -16683,6 +16737,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-17T14:00:00Z',
+            type:  'improvement',
+            title: 'Featured Collection mobile + PC polish',
+            text:  'Total stat is back when it adds info (e.g. on Loaded Lions where 24h Vol $1.4K and Total $59.5M tell different stories), hidden when redundant (when Volume already falls back on all-time). Description gets a "Read more" toggle on mobile so the full text is one tap away without making every card massive. Banner image is now properly blurred (5px) so the logo and name stand out. Stats are laid out in a 3-column grid on mobile for a balanced look instead of an uneven 4+1 wrap. The eyebrow numbering "01 / 04" no longer hugs the right edge on small screens.'
+        },
         {
             date:  '2026-05-17T13:00:00Z',
             type:  'improvement',
