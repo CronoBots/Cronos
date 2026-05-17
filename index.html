@@ -18,6 +18,23 @@
 <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/><meta content="#0a1a3a" name="theme-color"/>
 <meta content="Browse smarter. Collect better – Developed by Unscoop" name="description"/>
 <title>CRONOS.WTF | Developed by Unscoop</title>
+<!-- ── Open Graph / Twitter Card ──
+     Métadonnées pour les prévisualisations partagées (Discord, X,
+     Slack, iMessage, etc.). Sans ça, le lien apparaît "nu" sans
+     image ni description. -->
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="CRONOS.WTF"/>
+<meta property="og:title" content="CRONOS.WTF — Browse smarter. Collect better."/>
+<meta property="og:description" content="Live stats, drops, snapshots and community for the Cronos NFT ecosystem."/>
+<meta property="og:url" content="https://cronos.wtf/"/>
+<meta property="og:image" content="https://cronos.wtf/icons/icon-512.png"/>
+<meta property="og:image:width" content="512"/>
+<meta property="og:image:height" content="512"/>
+<meta property="og:locale" content="en_US"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="CRONOS.WTF — Browse smarter. Collect better."/>
+<meta name="twitter:description" content="Live stats, drops, snapshots and community for the Cronos NFT ecosystem."/>
+<meta name="twitter:image" content="https://cronos.wtf/icons/icon-512.png"/>
 <!-- ── PWA install / standalone mode ──
      Manifest + meta tags pour rendre l'app installable sur Android,
      iOS, Windows. `viewport-fit=cover` (au-dessus) étend la zone safe
@@ -151,15 +168,15 @@
 
     <!-- Modal connexion -->
     <div class="login-modal-backdrop" id="loginModalBackdrop" style="display:none;">
-      <div class="login-modal" id="loginModal">
-        <button class="login-modal-close" id="loginModalClose" type="button">×</button>
+      <div class="login-modal" id="loginModal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+        <button class="login-modal-close" id="loginModalClose" type="button" aria-label="Close login modal">×</button>
         <div class="login-modal-icon">
           <svg width="32" height="32" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="7" r="3.5"/><path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/></svg>
         </div>
-        <h3 class="login-modal-title">Sign in to CRONOS.WTF</h3>
+        <h3 class="login-modal-title" id="loginModalTitle">Sign in to CRONOS.WTF</h3>
         <p class="login-modal-sub">Enter your Crypto.com NFT username to access your profile directly.</p>
         <div class="login-modal-input-wrap">
-          <input class="login-modal-input" id="loginModalInput" type="text" placeholder="Search your Crypto.com NFT username…" autocomplete="off" spellcheck="false" autocorrect="off"/>
+          <input class="login-modal-input" id="loginModalInput" type="text" placeholder="Search your Crypto.com NFT username…" aria-label="Crypto.com NFT username" autocomplete="off" spellcheck="false" autocorrect="off"/>
           <!-- Suggestions live (mêmes data que la search-bar — fetchDropDown).
                Clic sur une ligne = sélection définitive du profil → login direct. -->
           <div class="login-modal-suggestions" id="loginModalSuggestions" style="display:none;"></div>
@@ -302,6 +319,7 @@
     <div class="lm-verify-input-row" style="margin-top:14px;">
       <input class="login-modal-input lm-verify-key-input" id="lmVerifyKeyInput"
              type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+             aria-label="Verification key (UUID format)"
              autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off"/>
     </div>
     <div class="lm-verify-status" id="lmVerifyStatus" aria-live="polite"></div>
@@ -472,7 +490,7 @@
 <div class="profile-info profile-info--center">
 <div class="username-container">
 <h2 class="username" id="username"></h2>
-<img alt="Verified" class="verified-badge" decoding="async" id="verifiedBadge" loading="lazy" decoding="async" onerror="this.src='/assets/fallback-verified.png'" src="https://parspng.com/wp-content/uploads/2022/07/tickpng.parspng.com-4-1024x1024.png" style="display: none;"/>
+<span class="verified-badge" id="verifiedBadge" role="img" aria-label="Verified account" title="Verified account" style="display: none;"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M22.5 12.5l-2.4-2.7.3-3.6-3.5-.8-1.8-3.1L12 3.7 8.9 2.3 7.1 5.4l-3.5.8.3 3.6L1.5 12.5l2.4 2.7-.3 3.6 3.5.8 1.8 3.1L12 21.3l3.1 1.4 1.8-3.1 3.5-.8-.3-3.6 2.4-2.7zm-12 4.5L6 12.5l1.6-1.6 2.9 2.9 6-6L18.1 9.4l-7.6 7.6z" fill="currentColor"/></svg></span>
 </div>
 <p class="display-name" id="displayName"></p>
 <div class="social-container" id="socialContainer" style="display: none;">
@@ -576,7 +594,7 @@
       <div class="cp-welcome-search-icon">
         <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><line x1="13.5" y1="13.5" x2="18" y2="18"/></svg>
       </div>
-      <input class="cp-welcome-input" id="pfWelcomeInput" type="text" placeholder="Search profiles or collections…" autocomplete="off" spellcheck="false" autocorrect="off"/>
+      <input class="cp-welcome-input" id="pfWelcomeInput" type="text" placeholder="Search profiles or collections…" aria-label="Search profiles or collections" autocomplete="off" spellcheck="false" autocorrect="off"/>
       <button class="cp-welcome-btn" id="pfWelcomeBtn" type="button">Search</button>
     </div>
     <div class="cp-welcome-hint">↑ Start typing to see suggestions — profiles, collections, or individual NFTs</div>
@@ -715,7 +733,7 @@
         <div class="snapshot-filters-left">
           <div class="stats-search-wrap snapshot-id-wrap">
             <svg class="stats-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="5.5"/><line x1="13" y1="13" x2="17" y2="17"/></svg>
-            <input class="stats-search-input" id="snapshotColIdInput" type="text" placeholder="Search a collection" autocomplete="off" spellcheck="false"/>
+            <input class="stats-search-input" id="snapshotColIdInput" type="text" placeholder="Search a collection" aria-label="Search a collection" autocomplete="off" spellcheck="false"/>
             <div class="snapshot-id-suggestions" id="snapshotIdSuggestions" role="listbox" aria-label="Collection suggestions"></div>
           </div>
           <button class="snapshot-run-btn" id="snapshotRunBtn" type="button" onclick="if(window._snapshotRun)window._snapshotRun()">
@@ -834,7 +852,7 @@
             <svg class="snapshot-table-search-icon" width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="9" cy="9" r="6"/><path d="M14 14l4 4"/>
             </svg>
-            <input class="snapshot-table-search-input" id="snapshotTableSearch" type="text" placeholder="Filter holders by name or username…" autocomplete="off" spellcheck="false"/>
+            <input class="snapshot-table-search-input" id="snapshotTableSearch" type="text" placeholder="Filter holders by name or username…" aria-label="Filter holders by name or username" autocomplete="off" spellcheck="false"/>
             <button class="snapshot-table-search-clear" id="snapshotTableSearchClear" type="button" aria-label="Clear search" style="display:none">×</button>
           </div>
           <span class="snapshot-table-result-count" id="snapshotTableResultCount"></span>
@@ -1332,7 +1350,7 @@
               <span class="home-chat-typing-text" id="homeChatTypingText"></span>
             </div>
             <div class="home-chat-input-row" id="homeChatInputRow">
-              <input class="home-chat-input" id="homeChatInput" type="text" placeholder="WTF is up?" autocomplete="off" spellcheck="false" maxlength="500"/>
+              <input class="home-chat-input" id="homeChatInput" type="text" placeholder="WTF is up?" aria-label="Send a chat message" autocomplete="off" spellcheck="false" maxlength="500"/>
               <!-- Toggle son notification : off par défaut, persisté en
                    localStorage (key cwtf-chat-sound). Click bascule l'état. -->
               <button class="home-chat-sound-toggle" id="homeChatSoundToggle" type="button" aria-label="Toggle notification sound" title="Notification sound off">
@@ -1652,7 +1670,7 @@
             <span class="home-crypto-picker-title">Add a token</span>
             <button class="home-crypto-picker-close" id="cryptoPickerClose" type="button" aria-label="Close">×</button>
           </div>
-          <input class="home-crypto-picker-search" id="cryptoPickerSearch" type="text" placeholder="Search BTC, ETH, SOL…" autocomplete="off" spellcheck="false"/>
+          <input class="home-crypto-picker-search" id="cryptoPickerSearch" type="text" placeholder="Search BTC, ETH, SOL…" aria-label="Search a cryptocurrency" autocomplete="off" spellcheck="false"/>
           <div class="home-crypto-picker-list" id="cryptoPickerList"></div>
         </div>
       </dialog>
@@ -1833,7 +1851,7 @@
         <div class="cp-welcome-search-icon">
           <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><line x1="13.5" y1="13.5" x2="18" y2="18"/></svg>
         </div>
-        <input class="cp-welcome-input" id="cpWelcomeInput" type="text" placeholder="e.g. Loaded Lions, Dark Lions…" autocomplete="off" spellcheck="false" autocorrect="off"/>
+        <input class="cp-welcome-input" id="cpWelcomeInput" type="text" placeholder="e.g. Loaded Lions, Dark Lions…" aria-label="Search a collection" autocomplete="off" spellcheck="false" autocorrect="off"/>
         <button class="cp-welcome-btn" id="cpWelcomeBtn" type="button">Search</button>
       </div>
       <div class="cp-welcome-hint">↑ Type a collection name and press Search</div>
@@ -1976,7 +1994,7 @@
       <div class="cp-filters-search-row">
         <div class="stats-search-wrap cp-search-wrap">
           <svg class="stats-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="5.5"/><line x1="13" y1="13" x2="17" y2="17"/></svg>
-          <input class="stats-search-input" id="cpSearchInput" type="text" placeholder="Search NFT…" autocomplete="off" spellcheck="false"/>
+          <input class="stats-search-input" id="cpSearchInput" type="text" placeholder="Search NFT…" aria-label="Search NFT" autocomplete="off" spellcheck="false"/>
           <button class="stats-search-clear" id="cpSearchClear" type="button" style="display:none;">×</button>
         </div>
       </div>
@@ -2014,7 +2032,7 @@
       <div class="sb-filters-left">
         <div class="stats-search-wrap sb-search-wrap">
           <svg class="stats-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="5.5"/><line x1="13" y1="13" x2="17" y2="17"/></svg>
-          <input class="stats-search-input" id="sbSearchInput" type="text" placeholder="Search a profile or a NFT" autocomplete="off" spellcheck="false"/>
+          <input class="stats-search-input" id="sbSearchInput" type="text" placeholder="Search a profile or a NFT" aria-label="Search a profile or a NFT" autocomplete="off" spellcheck="false"/>
           <button class="stats-search-clear" id="sbSearchClear" type="button" style="display:none;">×</button>
         </div>
         <span class="sb-result-count" id="sbResultCount"></span>
@@ -2098,7 +2116,7 @@
             <!-- Barre de recherche -->
             <div class="stats-search-wrap sb-addcol-search-wrap">
               <svg class="stats-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="5.5"/><line x1="13" y1="13" x2="17" y2="17"/></svg>
-              <input class="stats-search-input" id="sbAddColInput" type="text" placeholder="Search a collection…" autocomplete="off" spellcheck="false"/>
+              <input class="stats-search-input" id="sbAddColInput" type="text" placeholder="Search a collection…" aria-label="Search and add a collection" autocomplete="off" spellcheck="false"/>
               <button class="stats-search-clear" id="sbAddColClear" type="button" style="display:none;">×</button>
             </div>
             <!-- Suggestions -->
@@ -2404,6 +2422,12 @@
   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <use href="#icon-chevron-down" xlink:href="#icon-chevron-down"></use>
   </svg>
+</button>
+<!-- Hint discret pour découvrir les raccourcis clavier. Affiché
+     uniquement sur desktop (hover possible). Cliquer ouvre la cheat
+     sheet — ou raccourci ? au clavier. -->
+<button class="kbd-hint" id="kbdHint" type="button" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">
+  <kbd>?</kbd>
 </button>
 <script crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script><script crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script>
         const cache = new Map();
@@ -4142,7 +4166,7 @@ function updateProfileUI(profileData, profileTotals = null) {
     displayName.style.display = profileData.displayName ? 'block' : 'none';
     currentDisplayName = profileData.displayName || profileData.username || 'Unknown';
 
-    verifiedBadge.style.display = profileData.verified === true ? 'inline-block' : 'none';
+    verifiedBadge.style.display = profileData.verified === true ? 'inline-flex' : 'none';
     profilePicture.src = profileData.avatar?.url || '';
     profilePicture.style.display = profileData.avatar?.url ? 'block' : 'none';
 
@@ -16504,6 +16528,30 @@ async function sha256hex(str) {
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
         {
+            date:  '2026-05-17T06:30:00Z',
+            type:  'feature',
+            title: 'Keyboard shortcuts',
+            text:  'j/k to cycle between tabs, g+h/s/m/d/x to jump straight to a section, / to focus the search, t/b to scroll top/bottom, ? to open the cheat sheet, Esc to close anything open. A small ? button in the bottom-left also opens the panel on desktop.'
+        },
+        {
+            date:  '2026-05-17T06:15:00Z',
+            type:  'improvement',
+            title: 'Scroll progress bar',
+            text:  'Thin cyan bar at the very top of the page that tracks how far down you are on long pages (Drops, Top, Snapshot).'
+        },
+        {
+            date:  '2026-05-17T06:00:00Z',
+            type:  'improvement',
+            title: 'Dynamic tab title',
+            text:  'The browser tab title now reflects the active section ("Drops — CRONOS.WTF", "Top Collections — CRONOS.WTF"…) so you can tell tabs apart when you keep several open.'
+        },
+        {
+            date:  '2026-05-17T05:45:00Z',
+            type:  'improvement',
+            title: 'Smaller fixes',
+            text:  'Search bar no longer overflows on iPhone SE, verified badge is now a crisp inline SVG instead of a hosted PNG, link previews on Discord / X show a proper card, and the login modal is now fully accessible to screen readers.'
+        },
+        {
             date:  '2026-05-17T05:30:00Z',
             type:  'improvement',
             title: 'Faster data loads',
@@ -26194,6 +26242,319 @@ window.initSnapshotPanel = function() {
     } else {
         init();
     }
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     KEYBOARD SHORTCUTS + SCROLL PROGRESS BAR
+     ──────────────────────────────────────────────────────────────────────
+     Power-user navigation : j/k pour cycler entre les onglets topnav,
+     g+lettre pour aller direct à un onglet, / pour focus la recherche,
+     ? pour afficher la cheat sheet, Esc pour fermer modals/overlays,
+     t/b pour scroll top/bottom.
+
+     Tous les handlers sont court-circuités si l'utilisateur est en train
+     de taper dans un input/textarea/contenteditable — pas d'interférence
+     avec la saisie.
+
+     La scroll progress bar (1 px en haut du viewport) reflète la
+     position scroll de la page entière. Hardware-accelerated (transform
+     scaleX) pour rester smooth même sur les longues pages (Drops,
+     Snapshot, Stats). Respecte prefers-reduced-motion.
+     ────────────────────────────────────────────────────────────────── -->
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<div class="kbd-cheatsheet" id="kbdCheatsheet" role="dialog" aria-modal="true" aria-labelledby="kbdCheatsheetTitle" style="display:none;">
+  <div class="kbd-cheatsheet-inner">
+    <div class="kbd-cheatsheet-header">
+      <h3 class="kbd-cheatsheet-title" id="kbdCheatsheetTitle">Keyboard shortcuts</h3>
+      <button class="kbd-cheatsheet-close" id="kbdCheatsheetClose" type="button" aria-label="Close shortcuts">×</button>
+    </div>
+    <div class="kbd-cheatsheet-grid">
+      <div class="kbd-cheatsheet-section">
+        <div class="kbd-cheatsheet-section-title">Navigation</div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>j</kbd></span><span class="kbd-row-desc">Next tab</span></div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>k</kbd></span><span class="kbd-row-desc">Previous tab</span></div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>g</kbd> <kbd>h</kbd></span><span class="kbd-row-desc">Spotlight (home)</span></div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>g</kbd> <kbd>s</kbd></span><span class="kbd-row-desc">Top collections</span></div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>g</kbd> <kbd>m</kbd></span><span class="kbd-row-desc">Market bot</span></div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>g</kbd> <kbd>d</kbd></span><span class="kbd-row-desc">Drops</span></div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>g</kbd> <kbd>x</kbd></span><span class="kbd-row-desc">Snapshot</span></div>
+      </div>
+      <div class="kbd-cheatsheet-section">
+        <div class="kbd-cheatsheet-section-title">Actions</div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>/</kbd></span><span class="kbd-row-desc">Focus search</span></div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>t</kbd></span><span class="kbd-row-desc">Scroll to top</span></div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>b</kbd></span><span class="kbd-row-desc">Scroll to bottom</span></div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>?</kbd></span><span class="kbd-row-desc">Toggle this panel</span></div>
+        <div class="kbd-row"><span class="kbd-row-keys"><kbd>Esc</kbd></span><span class="kbd-row-desc">Close any panel</span></div>
+      </div>
+    </div>
+    <div class="kbd-cheatsheet-footer">Press <kbd>?</kbd> anytime to bring this back.</div>
+  </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    /* ── SCROLL PROGRESS BAR ──────────────────────────────────────────── */
+    const bar = document.getElementById('scrollProgress');
+    if (bar) {
+        let raf = 0;
+        function paint() {
+            raf = 0;
+            const max = (document.documentElement.scrollHeight - window.innerHeight);
+            const pct = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+            bar.style.transform = 'scaleX(' + pct + ')';
+        }
+        window.addEventListener('scroll', () => {
+            if (!raf) raf = requestAnimationFrame(paint);
+        }, { passive: true });
+        window.addEventListener('resize', paint, { passive: true });
+        paint();
+    }
+
+    /* ── KEYBOARD SHORTCUTS ───────────────────────────────────────────── */
+    const TABS_ORDER = ['collections', 'stats', 'salesbot', 'drops', 'snapshot', 'support'];
+    const GO_TARGETS = { h: 'collections', s: 'stats', m: 'salesbot', d: 'drops', x: 'snapshot', u: 'support' };
+
+    function isTypingTarget(el) {
+        if (!el) return false;
+        if (el.isContentEditable) return true;
+        const tag = el.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+        return false;
+    }
+
+    function activateTab(name) {
+        const btn = document.querySelector('.topnav-tab[data-tab="' + name + '"]');
+        if (btn && !btn.classList.contains('topnav-tab--disabled')) {
+            btn.click();
+            return true;
+        }
+        return false;
+    }
+
+    function cycleTab(direction) {
+        const active = document.querySelector('.topnav-tab--active');
+        if (!active) return;
+        const current = active.getAttribute('data-tab');
+        const idx = TABS_ORDER.indexOf(current);
+        if (idx < 0) return;
+        // Boucle sur les tabs visibles uniquement
+        const enabled = TABS_ORDER.filter(t => {
+            const b = document.querySelector('.topnav-tab[data-tab="' + t + '"]');
+            return b && !b.classList.contains('topnav-tab--disabled') && b.offsetParent !== null;
+        });
+        const enIdx = enabled.indexOf(current);
+        if (enIdx < 0) return;
+        const next = enabled[(enIdx + direction + enabled.length) % enabled.length];
+        activateTab(next);
+    }
+
+    function focusSearch() {
+        // Préfère la searchbar topnav si visible, sinon le panneau actif
+        const candidates = [
+            document.getElementById('usernameInput'),
+            document.getElementById('cpWelcomeInput'),
+            document.getElementById('pfWelcomeInput'),
+            document.getElementById('snapshotColIdInput'),
+            document.getElementById('sbSearchInput')
+        ];
+        const target = candidates.find(el => el && el.offsetParent !== null);
+        if (target) {
+            target.focus();
+            target.select && target.select();
+            return true;
+        }
+        return false;
+    }
+
+    /* ── Cheat sheet modal ────────────────────────────────────────────── */
+    const sheet = document.getElementById('kbdCheatsheet');
+    const sheetClose = document.getElementById('kbdCheatsheetClose');
+    let sheetLastFocus = null;
+    function showSheet() {
+        if (!sheet) return;
+        sheetLastFocus = document.activeElement;
+        sheet.style.display = 'flex';
+        // Donner le focus au bouton close — Tab restera dans la modal
+        // (un seul élément focusable suffit ici pour la cheat sheet),
+        // Esc / click backdrop / click × pour fermer.
+        if (sheetClose) {
+            // setTimeout pour laisser le navigateur peindre la modal d'abord
+            setTimeout(() => sheetClose.focus(), 0);
+        }
+    }
+    function hideSheet() {
+        if (!sheet) return;
+        sheet.style.display = 'none';
+        // Restaure le focus sur l'élément qui avait le focus avant l'ouverture
+        if (sheetLastFocus && typeof sheetLastFocus.focus === 'function') {
+            try { sheetLastFocus.focus(); } catch (_) {}
+        }
+        sheetLastFocus = null;
+    }
+    function isSheetVisible() {
+        return sheet && sheet.style.display !== 'none';
+    }
+    if (sheetClose) sheetClose.addEventListener('click', hideSheet);
+    if (sheet) sheet.addEventListener('click', (e) => {
+        if (e.target === sheet) hideSheet();
+    });
+    // Hint button bottom-right (desktop only via CSS) → toggle sheet
+    const hintBtn = document.getElementById('kbdHint');
+    if (hintBtn) hintBtn.addEventListener('click', () => {
+        if (isSheetVisible()) hideSheet(); else showSheet();
+    });
+
+    /* ── Esc → ferme tous les overlays détectables ────────────────────── */
+    function closeOverlays() {
+        // Cheat sheet
+        if (isSheetVisible()) { hideSheet(); return true; }
+        // Login modal
+        const lmBackdrop = document.getElementById('loginModalBackdrop');
+        if (lmBackdrop && lmBackdrop.style.display !== 'none') {
+            const close = document.getElementById('loginModalClose');
+            if (close) { close.click(); return true; }
+        }
+        // Settings modal
+        const settings = document.getElementById('settingsPanel');
+        if (settings && settings.style.display !== 'none') {
+            const close = document.getElementById('settingsClose');
+            if (close) { close.click(); return true; }
+        }
+        // Certify dropdown
+        const cd = document.getElementById('certifyDropdown');
+        if (cd && cd.style.display !== 'none') {
+            const close = document.getElementById('certifyDropdownClose');
+            if (close) { close.click(); return true; }
+        }
+        // NFT preview modal (s'il a une close button standard)
+        const preview = document.querySelector('.nft-preview-panel');
+        if (preview && preview.offsetParent !== null) {
+            const close = preview.querySelector('.preview-close, [aria-label="Close"]');
+            if (close) { close.click(); return true; }
+        }
+        return false;
+    }
+
+    /* ── 'g' prefix : 'g h' / 'g s' / etc. (vim-style) ───────────────── */
+    let goPending = false;
+    let goTimer = 0;
+    function resetGo() {
+        goPending = false;
+        if (goTimer) { clearTimeout(goTimer); goTimer = 0; }
+        document.documentElement.classList.remove('kbd-go-pending');
+    }
+
+    document.addEventListener('keydown', function (e) {
+        // Modifiers actifs (Cmd/Ctrl/Alt) → on laisse passer
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+        // Esc gère même quand on est dans un input (utile pour close suggestions)
+        if (e.key === 'Escape') {
+            if (closeOverlays()) { e.preventDefault(); resetGo(); }
+            return;
+        }
+
+        // Si on tape dans un input, ne pas intercepter
+        if (isTypingTarget(e.target)) return;
+
+        // Pas de shortcuts pendant qu'un overlay critique est ouvert (sauf Esc)
+        const lmOpen = document.getElementById('loginModalBackdrop');
+        if (lmOpen && lmOpen.style.display !== 'none' && !isSheetVisible()) {
+            resetGo();
+            return;
+        }
+
+        const k = e.key;
+
+        // Si on est en 'g pending', la lettre suivante doit être une cible
+        if (goPending) {
+            const target = GO_TARGETS[k.toLowerCase()];
+            resetGo();
+            if (target) {
+                e.preventDefault();
+                activateTab(target);
+            }
+            return;
+        }
+
+        // Touche '?' (avec ou sans Shift) → cheat sheet
+        if (k === '?') {
+            e.preventDefault();
+            if (isSheetVisible()) hideSheet(); else showSheet();
+            return;
+        }
+
+        switch (k) {
+            case 'j':
+                e.preventDefault();
+                cycleTab(1);
+                break;
+            case 'k':
+                e.preventDefault();
+                cycleTab(-1);
+                break;
+            case 'g':
+                e.preventDefault();
+                goPending = true;
+                document.documentElement.classList.add('kbd-go-pending');
+                goTimer = setTimeout(resetGo, 1200);
+                break;
+            case '/':
+                if (focusSearch()) e.preventDefault();
+                break;
+            case 't':
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                break;
+            case 'b':
+                e.preventDefault();
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+                break;
+        }
+    });
+
+    /* ── Expose pour debug + futurs hooks ─────────────────────────────── */
+    window.CronosKbd = { showSheet, hideSheet, cycleTab, activateTab };
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     DYNAMIC TITLE — reflète l'onglet actif dans l'onglet navigateur.
+     Avant : tous les onglets affichaient "CRONOS.WTF | Developed by Unscoop".
+     Après : "Top Collections — CRONOS.WTF", "Drops — CRONOS.WTF", etc.
+     Utile quand l'utilisateur a plusieurs onglets ouverts.
+     ────────────────────────────────────────────────────────────────── -->
+<script>
+(function () {
+    'use strict';
+    const BASE = 'CRONOS.WTF';
+    const TAB_TITLES = {
+        collections: 'Spotlight',
+        stats:       'Top Collections',
+        salesbot:    'Market Bot',
+        drops:       'Drops',
+        snapshot:    'Snapshot',
+        support:     'Support',
+        myprofil:    'My Profile'
+    };
+    function syncTitle() {
+        const active = document.querySelector('.topnav-tab--active');
+        const tab = active && active.getAttribute('data-tab');
+        const label = tab && TAB_TITLES[tab];
+        document.title = label ? (label + ' — ' + BASE) : BASE;
+    }
+    // Sync initial après que le routing pre-paint a placé la bonne tab active.
+    syncTitle();
+    // Sync sur chaque changement d'onglet (click ou hashchange).
+    document.querySelectorAll('.topnav-tab').forEach(tab => {
+        tab.addEventListener('click', () => setTimeout(syncTitle, 0));
+    });
+    window.addEventListener('hashchange', () => setTimeout(syncTitle, 0));
 })();
 </script>
 </body>
