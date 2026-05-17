@@ -26547,22 +26547,31 @@ a.snap-holder-username:hover {
    Le hero ne participe plus au flex flow — il est juste un fond pour
    le haut, et le content (eyebrow + logo + nom + creator + stats…)
    flow par-dessus.
-   Hauteur fixe en px (au lieu de %) pour que la zone bannière reste
-   prédictible quel que soit le contenu du content (desc longue ou
-   courte, showcase chargé ou non). Suffisant pour contenir l'eyebrow
-   + portrait (96 px) + name + creator. */
+
+   Stratégie de dimensionnement :
+     - aspect-ratio 3/1 : ratio natif des bannières Crypto.com NFT
+       (1500×500). Le hero scale proportionnellement avec la largeur
+       de la card → pas de crop hard sur les bannières standard.
+     - min-height 220px : garantit que l'identity (eyebrow + portrait
+       96px + name + creator) tient dans le hero, même sur très petit
+       écran où aspect-ratio donnerait <100px.
+     - max-height 360px : sur écrans larges (carde 1200px+), évite
+       que le hero prenne trop de hauteur et écrase le content. */
 .home-fc-spotlight .home-feat-v3-hero {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 280px;
+    aspect-ratio: 3 / 1;
+    min-height: 220px;
+    max-height: 360px;
     overflow: hidden;
     z-index: 0;
-    /* Fin trait cyan en bas du hero — délimite la zone bannière du
-       reste de la card visuellement. */
-    border-bottom: 1px solid rgba(0, 179, 255, 0.55);
-    box-shadow: 0 1px 0 0 rgba(0, 179, 255, 0.18);
+    /* Pas de border-bottom : le tint fade vers le dark en bas du hero
+       fait office de transition propre vers le content (miroir
+       Featured Artists). Avec une border, on aurait eu un trait
+       visible au milieu de la card quand le hero est plus grand que
+       la zone identity. */
 }
 .home-fc-spotlight .home-feat-v3-hero-img {
     background-size: cover;
@@ -26856,14 +26865,14 @@ a.snap-holder-username:hover {
 /* Description : traitée en pull-quote magazine avec filet cyan
    vertical à gauche. line-clamp à 3 lignes pour borner la hauteur. */
 .home-fc-spotlight .home-feat-v3-desc {
-    margin: 14px 16px 4px;
-    padding: 2px 0 2px 14px;
-    border-left: 2px solid rgba(0, 179, 255, 0.55);
+    margin: 4px 0 0;
+    padding: 0;
     font-family: 'Geomanist', sans-serif;
     font-style: italic;
     font-size: 12.5px;
     line-height: 1.5;
     color: rgba(255, 255, 255, 0.7);
+    text-align: center;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
@@ -27105,9 +27114,8 @@ a.snap-holder-username:hover {
        (eyebrow → portrait circulaire → identity centered → stats → ...)
        et on resserre juste les tailles + paddings pour les petits
        écrans. */
-    /* Hero plus court sur mobile (suffisant pour eyebrow + portrait
-       96px + name + creator, soit ~210px de contenu). */
-    .home-fc-spotlight .home-feat-v3-hero { height: 220px; }
+    /* Pas d'override hero ici — le min-height: 220px global du hero
+       garantit déjà une zone bannière suffisante sur petit écran. */
     .home-fc-spotlight .home-feat-v3-content { padding: 12px 12px 14px; gap: 10px; }
     .home-fc-spotlight .home-feat-v3-portrait { margin-top: 0; }
     /* Logo collection mobile = MÊME taille que .home-fa-avatar (96px).
@@ -27149,7 +27157,7 @@ a.snap-holder-username:hover {
     .home-fc-spotlight .home-feat-v3-desc {
         margin: 2px 0;
         font-size: 12px;
-        padding-left: 10px;
+        padding: 0;
     }
     .home-fc-spotlight .home-feat-v3-showcase { padding: 10px; margin: 0; min-height: 100px; }
     .home-feat-v3-showcase-label { font-size: 9px; letter-spacing: 0.15em; }
