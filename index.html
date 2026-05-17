@@ -26958,10 +26958,23 @@ window.initSnapshotPanel = function() {
 (function () {
     'use strict';
 
-    // Détection plateforme
+    // Détection plateforme — robuste face aux navigateurs iOS non-Safari
+    // (Chrome iOS, Brave, Firefox iOS, Yandex…) et au mode "Request
+    // Desktop Site" qui modifie le User Agent.
     const ua = navigator.userAgent || '';
-    const isIOS = /iPad|iPhone|iPod/i.test(ua) && !window.MSStream;
+    const platform = navigator.platform || '';
+    const touchPoints = navigator.maxTouchPoints || 0;
+    const isTouch = touchPoints > 0 || 'ontouchstart' in window;
     const isAndroid = /Android/i.test(ua);
+    // iOS direct : UA explicite OU iPad iOS 13+ qui pose un platform
+    // 'MacIntel' avec touchpoints (Apple a aligné iPad sur Mac dans
+    // ce header) OU un touch device avec 'Mac' dans l'UA (mode
+    // Desktop Site activé qui masque iPhone derrière un Mac UA).
+    const isIOS =
+        /iPad|iPhone|iPod/i.test(ua) ||
+        /iPad|iPhone|iPod/i.test(platform) ||
+        (platform === 'MacIntel' && touchPoints > 0) ||
+        (isTouch && !isAndroid && /Mac/i.test(ua));
     const isStandalone =
         (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
         window.navigator.standalone === true;
@@ -26996,7 +27009,7 @@ window.initSnapshotPanel = function() {
             // instructions visuelles avec l'icône Share Apple.
             body.innerHTML =
                 '<ol class="pwa-install-steps">' +
-                  '<li>Tap the <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true" style="vertical-align:-3px;"><path d="M12 2.5l4 4-1.4 1.4L13 6.3V15h-2V6.3L9.4 7.9 8 6.5l4-4zM5 12h2v7h10v-7h2v8a1 1 0 01-1 1H6a1 1 0 01-1-1v-8z"/></svg> share button in Safari\'s toolbar.</li>' +
+                  '<li>Tap the <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true" style="vertical-align:-3px;"><path d="M12 2.5l4 4-1.4 1.4L13 6.3V15h-2V6.3L9.4 7.9 8 6.5l4-4zM5 12h2v7h10v-7h2v8a1 1 0 01-1 1H6a1 1 0 01-1-1v-8z"/></svg> share button in your browser\'s toolbar.</li>' +
                   '<li>Scroll and pick <strong>Add to Home Screen</strong>.</li>' +
                   '<li>Tap <strong>Add</strong>. Done!</li>' +
                 '</ol>';
@@ -27022,6 +27035,17 @@ window.initSnapshotPanel = function() {
                 '<ol class="pwa-install-steps">' +
                   '<li>Open Chrome\'s menu (⋮ top-right).</li>' +
                   '<li>Tap <strong>Install app</strong> or <strong>Add to Home Screen</strong>.</li>' +
+                '</ol>';
+        } else if (isTouch) {
+            // Touch device qu'on n'a pas pu classer Android/iOS via UA
+            // (browser exotique, mode Desktop Site, etc.). On donne des
+            // instructions iOS-like qui marchent pour la quasi-totalité
+            // des mobiles non-Android encore actifs (= iOS).
+            body.innerHTML =
+                '<ol class="pwa-install-steps">' +
+                  '<li>Tap your browser\'s <strong>Share</strong> or <strong>Menu</strong> button (toolbar).</li>' +
+                  '<li>Pick <strong>Add to Home Screen</strong> or <strong>Install app</strong>.</li>' +
+                  '<li>Confirm. The CRONOS.WTF icon lands on your home screen.</li>' +
                 '</ol>';
         } else {
             // Desktop / autres.

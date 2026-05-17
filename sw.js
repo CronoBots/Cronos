@@ -19,7 +19,7 @@
 
 'use strict';
 
-const CACHE_VERSION = 'v10';
+const CACHE_VERSION = 'v11';
 const CACHE_NAME    = 'cronos-wtf-' + CACHE_VERSION;
 
 /* Liste des assets statiques pré-cachés à l'install pour offline-ready
