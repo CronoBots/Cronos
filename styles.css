@@ -26556,110 +26556,114 @@ a.snap-holder-username:hover {
         rgba(8, 14, 28, 0.18) 50%,
         rgba(8, 14, 28, 0.28) 100%);
 }
-/* Wrapper hero — son seul rôle est de fournir un référentiel à
-   position:relative dont overflow est VISIBLE, pour que le logo
-   (sibling du hero) puisse déborder visuellement vers le bas et
-   chevaucher la frontière bannière/stats. Le hero lui-même garde
-   overflow:hidden (le bg blurry en scale 1.4 doit rester clippé). */
-.home-fc-spotlight .home-feat-v3-hero-wrap {
-    position: relative;
-    flex-shrink: 0;
-}
-/* Identity = OVERLAY centrée H+V sur la bannière. Le logo n'est
-   plus dans ce bloc (il vit comme sibling du hero pour pouvoir
-   déborder). On laisse un padding-left généreux pour que le texte
-   ne vienne pas heurter visuellement le logo à gauche. */
+/* (Ancien .home-feat-v3-hero-wrap retiré — le logo n'est plus en
+    overlap absolute, il vit maintenant comme portrait centré dans
+    le content. Le hero est désormais direct child de la card.) */
+/* Identity = nom + verified + creator, centré sous le portrait dans
+   le content (flux normal). Miroir de .home-fa-identity pour Featured
+   Artists. Plus d'overlay absolute sur la bannière. */
 .home-fc-spotlight .home-feat-v3-identity {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 16px 32px;
+    gap: 4px;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
     text-align: center;
-    pointer-events: none;
-    /* Backdrop radial doux centré derrière le texte — joue le rôle
-       de "spotlight" magazine cover : assure la lisibilité du titre
-       sur des bannières claires sans s'appuyer sur une text-shadow
-       dure. Ellipse plus large que haute pour épouser le bloc nom +
-       creator centré. Le fade en transparent en bordure évite toute
-       transition visible avec le tint sous-jacent. */
-    background: radial-gradient(
-        ellipse 65% 55% at 50% 50%,
-        rgba(8, 14, 28, 0.45) 0%,
-        rgba(8, 14, 28, 0.25) 45%,
-        rgba(8, 14, 28, 0.00) 80%
-    );
 }
-/* Logo "profile avatar" : positionné absolute relativement au
-   hero-wrap, chevauche la frontière hero/stats avec un bottom: -36px
-   (sur 72px de hauteur → 36px sur bannière, 36px sur stats). UN SEUL
-   contour cyan, plus de double bordure sombre (l'utilisateur a
-   demandé de retirer le 2ème contour foncé). */
+/* Content wrapper : tout ce qui vit sous le hero — eyebrow, portrait,
+   identity, stats, desc, showcase, browse. Flex column avec gap pour
+   l'espace vertical entre blocs. Padding aligné sur les autres cards
+   home. Miroir conceptuel de .home-fa-content. */
+.home-fc-spotlight .home-feat-v3-content {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px 16px;
+    align-items: stretch;
+    min-width: 0;
+}
+
+/* Portrait wrapper — sert juste à isoler le logo pour le centrer
+   horizontalement, miroir de .home-fa-portrait pour Featured Artists. */
+.home-fc-spotlight .home-feat-v3-portrait {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+/* Logo collection : maintenant un portrait CIRCULAIRE centré (joue le
+   rôle de l'avatar artiste), halo blanc doux — miroir exact de
+   .home-fa-avatar. Plus d'absolute / chevauchement de bannière :
+   il vit dans le content comme premier élément visuel sous l'eyebrow.
+   border-radius: 50% pour le rond complet, halo box-shadow blanc. */
 .home-fc-spotlight .home-feat-v3-logo {
-    position: absolute;
-    bottom: -36px;
-    left: 16px;
-    width: 72px;
-    height: 72px;
-    border-radius: 14px;
-    border: 2px solid rgba(0, 179, 255, 0.75);
-    box-shadow:
-        0 6px 18px rgba(0, 0, 0, 0.55),
-        0 0 14px rgba(0, 179, 255, 0.35);
-    background: rgba(11, 20, 38, 0.9);
-    z-index: 3;
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
     object-fit: cover;
+    border: 1.5px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.45),
+                0 0 30px rgba(255, 255, 255, 0.18);
+    background: rgba(11, 20, 38, 0.9);
+    display: block;
+    margin: 4px 0 4px;
+    transition: box-shadow 0.3s ease;
+}
+/* Override le hover générique .home-feat-v3:hover .home-feat-v3-logo
+   qui mettait un rim cyan : on garde le halo blanc et on AJOUTE un
+   liseré cyan subtil, plutôt que de remplacer. */
+.home-fc-spotlight .home-feat-v3:hover .home-feat-v3-logo {
+    box-shadow: 0 0 18px rgba(255, 255, 255, 0.55),
+                0 0 34px rgba(255, 255, 255, 0.22),
+                0 0 0 2px rgba(0, 179, 255, 0.35);
+}
+/* Name sous le portrait : taille fluide modérée, miroir de
+   .home-fa-name. Plus d'uppercase massif ni de text-shadow lourd
+   (le name vit maintenant sur fond sombre, plus sur une bannière
+   contrastée — la lisibilité ne demande plus de halo). */
+.home-fc-spotlight .home-feat-v3-name-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
 }
 .home-fc-spotlight .home-feat-v3-name {
     font-family: 'Geomanist-Bold', sans-serif;
-    /* Le nom redevient l'élément dominant de la bannière, on le
-       remonte en taille. */
-    font-size: clamp(22px, 3.2vw, 38px);
+    font-size: clamp(18px, 2.4vw, 26px);
     font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
     color: #fff;
-    /* line-height: 1.15 (vs 1 strict) — un line-height plus généreux
-       redonne de l'air au-dessus et en dessous des capitales, ce qui
-       aligne mieux le CENTRE VISUEL des glyphes avec le centre
-       géométrique de la boîte centrée par flex. Avec line-height: 1
-       l'ascender métrique de la police poussait subtilement le rendu
-       vers le haut → texte qui paraissait "haut perché" même si la
-       box flex était bien centrée. */
+    letter-spacing: 0.02em;
     line-height: 1.15;
     white-space: normal;
-    /* Halo doux symétrique — uniquement du blur, pas d'offset
-       directionnel. Détache le texte de la bannière sans l'effet
-       "stroke" / "drop hard" de l'ancienne version qui faisait
-       trop brut. Look magazine cover. */
-    text-shadow:
-        0 0 22px rgba(0, 0, 0, 0.75),
-        0 0 8px rgba(0, 0, 0, 0.55);
+    text-transform: none;
+    text-shadow: none;
+    overflow: visible;
+    text-overflow: clip;
 }
+/* Creator sous le nom : ton cyan discret, mêmes proportions que
+   .home-fa-role pour la cohérence visuelle. */
 .home-fc-spotlight .home-feat-v3-creator {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: clamp(11px, 1.1vw, 14px);
+    font-size: 10px;
     font-weight: 700;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.85);
-    /* Même line-height généreux que .home-feat-v3-name pour
-       cohérence du centrage visuel. */
-    line-height: 1.15;
+    color: #00B3FF;
+    line-height: 1.3;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
-    text-shadow:
-        0 0 16px rgba(0, 0, 0, 0.7),
-        0 0 6px rgba(0, 0, 0, 0.5);
+    text-shadow: none;
 }
 .home-fc-spotlight .home-feat-v3-creator-text { display: inline; }
 .home-fc-spotlight .home-feat-v3-creator strong {
@@ -26683,17 +26687,20 @@ a.snap-holder-username:hover {
    visuelle propre aux collections (logo overlap, bannière 3:1). */
 
 /* Eyebrow magazine : label gauche + numéro éditorial droite, filet
-   blanc fin en dessous. padding-left dégage la zone occupée par
-   le logo qui chevauche la bannière (16 + 72 + 16 = 104px). */
+   blanc fin en dessous. Maintenant placé en HAUT du content (au-dessus
+   du portrait centré), miroir exact de la slide Featured Artists
+   (.home-fa-eyebrow). Plus de padding-left:104px : le logo ne déborde
+   plus depuis le hero, il vit comme un portrait centré dans le content. */
 .home-fc-spotlight .home-feat-v3-eyebrow {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    padding: 14px 16px 6px 104px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    margin: 0 16px;
+    padding: 0 0 4px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin: 0;
     flex-shrink: 0;
-    min-height: 36px;
+    min-height: 22px;
+    width: 100%;
 }
 .home-fc-spotlight .home-feat-v3-eyebrow-label {
     font-family: 'Geomanist-Bold', sans-serif;
