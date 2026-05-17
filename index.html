@@ -8717,27 +8717,41 @@ document.addEventListener('DOMContentLoaded', initialize);
                 descEl.textContent = desc;
                 descEl.style.display = '';
                 descEl.classList.remove('is-expanded');
-                // Mesure post-layout : décide si on a besoin du toggle.
+                // Mesure post-layout : si la desc déborde du clamp 3
+                // lignes → bouton "Read more" cliquable. Si elle tient
+                // déjà, on garde QUAND MÊME le bouton dans le DOM mais
+                // en visibility:hidden — il occupe l'espace mais n'est
+                // pas visible/cliquable. Sans ça, les cards avec desc
+                // courte (Loaded Mushroom) étaient ~24 px plus courtes
+                // que celles avec Read more (Loaded Pixel) → vide
+                // visible entre les samples et le Browse CTA.
                 requestAnimationFrame(() => {
                     const overflows = descEl.scrollHeight > descEl.clientHeight + 1;
                     let toggle = card.querySelector('.home-feat-v3-desc-toggle');
-                    if (overflows) {
-                        if (!toggle) {
-                            toggle = document.createElement('button');
-                            toggle.type = 'button';
-                            toggle.className = 'home-feat-v3-desc-toggle';
-                            toggle.textContent = 'Read more';
-                            toggle.addEventListener('click', (ev) => {
-                                ev.stopPropagation();
-                                const expanded = descEl.classList.toggle('is-expanded');
-                                toggle.textContent = expanded ? 'Read less' : 'Read more';
-                            });
-                            descEl.insertAdjacentElement('afterend', toggle);
-                        }
-                        toggle.style.display = '';
+                    if (!toggle) {
+                        toggle = document.createElement('button');
+                        toggle.type = 'button';
+                        toggle.className = 'home-feat-v3-desc-toggle';
                         toggle.textContent = 'Read more';
-                    } else if (toggle) {
-                        toggle.style.display = 'none';
+                        toggle.addEventListener('click', (ev) => {
+                            ev.stopPropagation();
+                            const expanded = descEl.classList.toggle('is-expanded');
+                            toggle.textContent = expanded ? 'Read less' : 'Read more';
+                        });
+                        descEl.insertAdjacentElement('afterend', toggle);
+                    }
+                    toggle.style.display = '';
+                    if (overflows) {
+                        toggle.style.visibility = 'visible';
+                        toggle.setAttribute('aria-hidden', 'false');
+                        toggle.removeAttribute('tabindex');
+                        toggle.textContent = 'Read more';
+                    } else {
+                        // Bouton conservé dans le flow pour réserver
+                        // sa hauteur → toutes les cards alignées.
+                        toggle.style.visibility = 'hidden';
+                        toggle.setAttribute('aria-hidden', 'true');
+                        toggle.setAttribute('tabindex', '-1');
                     }
                 });
             } else {
