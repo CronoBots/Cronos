@@ -13516,6 +13516,21 @@ body.is-profile-loading #profileLoadingOverlay * {
     .home-two-col { grid-template-columns: 1fr; gap: 16px; }
 }
 
+/* Featured Collections + Featured Artists côte à côte uniquement sur
+   écrans larges (>= 1100px). En dessous : 1 col pour préserver les
+   8 NFT thumbnails du showcase FC qui deviendraient trop petits si
+   compressés à 50% de largeur. */
+.home-two-col--featured-pair {
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+@media (min-width: 1100px) {
+    .home-two-col--featured-pair {
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+}
+
 /* ── COMMUNITY CHAT — carte flex-row avec sidebar membres ── */
 .home-community-section { display: flex; flex-direction: column; }
 
@@ -27087,18 +27102,22 @@ a.snap-holder-username:hover {
        avec le nouveau layout depuis PR #159. */
     .home-fc-spotlight .home-feat-v3-content { padding: 12px 12px 14px; gap: 10px; }
     .home-fc-spotlight .home-feat-v3-portrait { margin-top: 0; }
-    /* Logo collection : circulaire (cohérent desktop), juste plus petit
-       sur mobile. PLUS d'absolute / bottom / left / border-radius:12px
-       qui remettaient l'ancien layout. */
+    /* Logo collection mobile = MÊME taille que .home-fa-avatar (96px).
+       L'utilisateur veut un alignement strict FC ↔ FA sur les tailles
+       photo de profil. PR précédente avait réduit à 78px en mobile —
+       restauré à 96px. */
     .home-fc-spotlight .home-feat-v3-logo {
-        width: 78px;
-        height: 78px;
+        width: 96px;
+        height: 96px;
         border-radius: 50%;
         margin: 2px 0 2px;
     }
-    .home-fc-spotlight .home-feat-v3-name { font-size: 20px; }
-    .home-fc-spotlight .home-feat-v3-creator { font-size: 10.5px; letter-spacing: 0.1em; gap: 6px; }
-    .home-fc-spotlight .home-feat-v3-creator-avatar { width: 20px; height: 20px; }
+    /* Name + creator : on n'override PAS sur mobile pour hériter du
+       clamp() desktop (clamp(18px, 2.4vw, 26px)) et de la taille 10px
+       cyan, identiques aux .home-fa-name / .home-fa-role.
+       (Anciennes overrides "font-size: 20px" et "10.5px" retirées.) */
+    .home-fc-spotlight .home-feat-v3-creator { gap: 6px; }
+    .home-fc-spotlight .home-feat-v3-creator-avatar { width: 22px; height: 22px; }
     /* Eyebrow : reste en absolute overlay sur la bannière (mobile),
        juste resserrer les positions. */
     .home-fc-spotlight .home-feat-v3-eyebrow {
