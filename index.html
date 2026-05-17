@@ -9061,7 +9061,7 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
                 body: JSON.stringify({
                     operationName: 'GetCreatorProfile',
                     variables: { id: username },
-                    query: `query GetCreatorProfile($id:ID!){public{user(id:$id){uuid username displayName bio verified isCreator avatar{url} cover{url}}}}`
+                    query: `query GetCreatorProfile($id:ID!){public{user(id:$id){uuid username displayName bio verified isCreator avatar{url} cover{url} instagramUsername facebookUsername twitterUsername}}}`
                 })
             });
             const json = await res.json();
@@ -9255,6 +9255,51 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
         const num = String((slideIdx ?? 0) + 1).padStart(2, '0');
         const total = String(totalSlides ?? 0).padStart(2, '0');
 
+        /* Infos étendues optionnelles — bio + socials + likes/views.
+           Toutes proviennent de la même slide config + GetCreatorProfile
+           + UserMetrics, déjà fetchés. On les affiche seulement si elles
+           sont présentes (graceful empty state — pas de "—" ni de bloc
+           vide qui craque). */
+        const bio = (data?.bio || '').trim();
+        const twitter   = (data?.twitterUsername || '').trim();
+        const instagram = (data?.instagramUsername || '').trim();
+        const facebook  = (data?.facebookUsername || '').trim();
+        const totalLikes = Number(userMetrics?.likes) || 0;
+        const totalViews = Number(userMetrics?.views) || 0;
+
+        /* Format compact pour les chiffres "likes" / "views" sans préfixe $.
+           Ex. 12_300 → "12.3K", 1_200_000 → "1.2M". */
+        const fmtCount = n => {
+            const v = Number(n) || 0;
+            if (!v) return '—';
+            if (v >= 1_000_000) return (v / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+            if (v >= 1_000)     return (v / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+            return String(v);
+        };
+
+        /* Socials — on construit la row uniquement si au moins un handle
+           est présent. Icônes SVG inline (pas de PNG tiers : cf. PR #158
+           verified badge). Liens externes (Twitter/X, Instagram, Facebook). */
+        const socialItems = [];
+        if (twitter) {
+            socialItems.push(`<a class="home-fa-social-link" href="https://twitter.com/${encodeURIComponent(twitter)}" target="_blank" rel="noopener" aria-label="Twitter / X profile" title="@${_fcEsc(twitter)}">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="currentColor"/></svg>
+            </a>`);
+        }
+        if (instagram) {
+            socialItems.push(`<a class="home-fa-social-link" href="https://instagram.com/${encodeURIComponent(instagram)}" target="_blank" rel="noopener" aria-label="Instagram profile" title="@${_fcEsc(instagram)}">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.71 3.71 0 0 1-1.38-.9 3.71 3.71 0 0 1-.9-1.38c-.16-.42-.36-1.06-.41-2.23C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16zm0 2.16c-3.14 0-3.5.01-4.74.07-1.07.05-1.65.23-2.04.38-.51.2-.88.44-1.26.83-.39.39-.63.75-.83 1.26-.15.39-.33.97-.38 2.04C2.7 9.99 2.7 10.35 2.7 12s.01 2.01.07 3.26c.05 1.07.23 1.65.38 2.04.2.51.44.88.83 1.26.39.39.75.63 1.26.83.39.15.97.33 2.04.38 1.25.06 1.61.07 4.74.07s3.5-.01 4.74-.07c1.07-.05 1.65-.23 2.04-.38.51-.2.88-.44 1.26-.83.39-.39.63-.75.83-1.26.15-.39.33-.97.38-2.04.06-1.25.07-1.61.07-3.26s-.01-3.5-.07-4.74c-.05-1.07-.23-1.65-.38-2.04-.2-.51-.44-.88-.83-1.26-.39-.39-.75-.63-1.26-.83-.39-.15-.97-.33-2.04-.38C15.5 4.33 15.14 4.32 12 4.32zm0 3.68a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm0 6.6a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2zm5.1-6.8a.94.94 0 1 1-1.88 0 .94.94 0 0 1 1.88 0z" fill="currentColor"/></svg>
+            </a>`);
+        }
+        if (facebook) {
+            socialItems.push(`<a class="home-fa-social-link" href="https://facebook.com/${encodeURIComponent(facebook)}" target="_blank" rel="noopener" aria-label="Facebook profile" title="@${_fcEsc(facebook)}">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5.02 3.66 9.19 8.44 9.94v-7.03H7.9v-2.91h2.54V9.85c0-2.52 1.49-3.92 3.78-3.92 1.1 0 2.24.2 2.24.2v2.47h-1.26c-1.24 0-1.63.78-1.63 1.57v1.88h2.78l-.45 2.91h-2.33V22c4.78-.75 8.44-4.92 8.44-9.94z" fill="currentColor"/></svg>
+            </a>`);
+        }
+        const socialsHtml = socialItems.length
+            ? `<div class="home-fa-socials">${socialItems.join('')}</div>`
+            : '';
+
         slide.innerHTML = `
             <div class="home-fa-hero" ${heroSource ? `style="background-image:url('${_fcEsc(heroSource)}')"` : ''}></div>
             <div class="home-fa-hero-tint"></div>
@@ -9273,12 +9318,16 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
                     </div>
                     <span class="home-fa-role">${_fcEsc(cfg.role)}</span>
                 </div>
+                ${socialsHtml}
+                ${bio ? `<p class="home-fa-bio">${_fcEsc(bio)}</p>` : ''}
                 <div class="home-fa-stats-inline">
                     <span><strong>${totalCols}</strong> collections</span>
                     <span class="home-fa-stats-sep"></span>
                     <span><strong>${fmtNum(totalNfts)}</strong> NFTs</span>
                     <span class="home-fa-stats-sep"></span>
                     <span><strong>${fmt(totalVol)}</strong> vol</span>
+                    ${totalLikes ? `<span class="home-fa-stats-sep"></span><span><strong>${fmtCount(totalLikes)}</strong> likes</span>` : ''}
+                    ${totalViews ? `<span class="home-fa-stats-sep"></span><span><strong>${fmtCount(totalViews)}</strong> views</span>` : ''}
                 </div>
                 ${top4.length ? `
                 <div class="home-fa-cols-grid">${colsHtml}</div>` : ''}
@@ -16534,6 +16583,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-17T08:30:00Z',
+            type:  'improvement',
+            title: 'Featured Artist — more info',
+            text:  'The Featured Artist card now shows the artist bio, Twitter / Instagram / Facebook links when available, plus total likes and views in the stats line. All optional — empty handles or missing bios just don\'t render.'
+        },
         {
             date:  '2026-05-17T07:30:00Z',
             type:  'improvement',
