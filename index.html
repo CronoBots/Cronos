@@ -8532,7 +8532,7 @@ document.addEventListener('DOMContentLoaded', initialize);
                         <span class="home-feat-v3-creator-text">Contact me to claim it</span>
                     </span>
                 </div>
-                <p class="home-feat-v3-desc home-feat-v3-cta-desc">Want your Crypto.com NFT collection featured on the home? Contact me on Discord or X to request it.</p>
+                <p class="home-feat-v3-desc home-feat-v3-cta-desc">Put your Crypto.com NFT collection in front of every visitor of cronos.wtf — banner, logo, stats and a strip of your best pieces, right next to Loaded Lions. DM me on Discord or X and let's get yours featured.</p>
                 <!-- Placeholder Read more invisible — réserve la
                      hauteur du bouton "Read more" que les autres
                      slides peuvent avoir, pour que la CTA card ait
@@ -8642,6 +8642,16 @@ document.addEventListener('DOMContentLoaded', initialize);
             if (v >= 1e3) return '$' + (v / 1e3).toFixed(1) + 'K';
             return '$' + v.toFixed(v < 10 ? 2 : 0);
         };
+        // Floor : variante fmtMoney sans décimales (demande utilisateur :
+        // "Il ne faut pas de chiffre après la virgule pour floor").
+        // $9.00 → $9, $1,250.50 → $1.3K, $0.85 → $1 (rounding).
+        const fmtFloor = (n) => {
+            const v = Number(n);
+            if (!v || v <= 0) return '—';
+            if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
+            if (v >= 1e3) return '$' + (v / 1e3).toFixed(1) + 'K';
+            return '$' + Math.round(v);
+        };
         const fmtNum = (n) => {
             const v = Number(n);
             if (!v || v <= 0) return '—';
@@ -8676,7 +8686,9 @@ document.addEventListener('DOMContentLoaded', initialize);
            puisse re-formater chaque frame intermédiaire. */
         const setStat = (el, value, fmtType) => {
             if (!el) return;
-            const fmt = fmtType === 'num' ? fmtNum : fmtMoney;
+            const fmt = fmtType === 'num'   ? fmtNum
+                      : fmtType === 'floor' ? fmtFloor
+                      : fmtMoney;
             el.textContent = fmt(value);
             el.dataset.cwtfTgt = String(value);
             el.dataset.cwtfFmt = fmtType;
@@ -8685,7 +8697,7 @@ document.addEventListener('DOMContentLoaded', initialize);
         // · 24h Vol · Volume (totalSalesDecimal all-time).
         setStat(elItems,  items,    'num');
         setStat(elOwners, owners,   'num');
-        setStat(elFloor,  floor,    'money');
+        setStat(elFloor,  floor,    'floor');
         setStat(elListed, listed,   'num');
         setStat(elVol24,  vol24,    'money');
         const totalVal = Number(data.metrics?.totalSalesDecimal) || 0;
@@ -8787,9 +8799,11 @@ document.addEventListener('DOMContentLoaded', initialize);
         const avatarSlot = card.querySelector('.home-feat-v3-creator-avatar-slot');
         if (avatarSlot) {
             const avatarUrl = data.creator?.avatar?.url || '';
+            // Fallback SVG silhouette si l'API ne renvoie pas
+            // d'avatar — évite un trou visible dans la ligne creator.
             avatarSlot.innerHTML = avatarUrl
                 ? `<img class="home-feat-v3-creator-avatar" src="${avatarUrl}" alt="" loading="lazy" decoding="async"/>`
-                : '';
+                : '<span class="home-feat-v3-creator-avatar home-feat-v3-creator-avatar--placeholder" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.4 0-8 2-8 5v1h16v-1c0-3-3.6-5-8-5z"/></svg></span>';
         }
 
         // Creator line — supports brand override via dataset.creatorOverride
@@ -9151,11 +9165,19 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
         const fill     = document.getElementById('homeFeaturedProgress');
         const dotsHost = document.getElementById('homeFeaturedDots');
 
-        // Build dots ; one per slide.
+        // Build dots ; one per slide. La dernière slide est la
+        // "Get featured" CTA card (classe home-feat-v3--cta) — son dot
+        // reçoit une classe modifier dédiée pour être affiché en VERT,
+        // pour distinguer visuellement le slot disponible des slides
+        // de collections existantes.
         if (dotsHost) {
-            dotsHost.innerHTML = slides.map((_, i) =>
-                `<button class="home-fc-dot${i === 0 ? ' is-active' : ''}" type="button" data-idx="${i}" aria-label="Slide ${i + 1}"></button>`
-            ).join('');
+            dotsHost.innerHTML = slides.map((slide, i) => {
+                const isCta = slide.classList.contains('home-feat-v3--cta');
+                const cls = 'home-fc-dot' +
+                            (i === 0 ? ' is-active' : '') +
+                            (isCta ? ' home-fc-dot--cta' : '');
+                return `<button class="${cls}" type="button" data-idx="${i}" aria-label="Slide ${i + 1}${isCta ? ' (open featured slot)' : ''}"></button>`;
+            }).join('');
         }
         const dots = dotsHost ? Array.from(dotsHost.children) : [];
 
@@ -9176,6 +9198,13 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
             if (v >= 1e3) return '$' + (v / 1e3).toFixed(1) + 'K';
             if (v >= 10)  return '$' + Math.round(v);
             return '$' + v.toFixed(2);
+        }
+        // Variante "floor" : jamais de décimales, même pour les petits
+        // montants (cohérence avec fmtFloor dans renderFeatStats).
+        function fmtTweenFloor(v) {
+            if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
+            if (v >= 1e3) return '$' + (v / 1e3).toFixed(1) + 'K';
+            return '$' + Math.round(v);
         }
         function fmtTweenNum(v) {
             if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
@@ -9199,9 +9228,10 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
                     const tgt = parseFloat(el.dataset.cwtfTgt) || 0;
                     if (!tgt) return;
                     const v = tgt * eased;
-                    el.textContent = el.dataset.cwtfFmt === 'num'
-                        ? fmtTweenNum(v)
-                        : fmtTweenMoney(v);
+                    const fmt = el.dataset.cwtfFmt;
+                    el.textContent = fmt === 'num'   ? fmtTweenNum(v)
+                                   : fmt === 'floor' ? fmtTweenFloor(v)
+                                   : fmtTweenMoney(v);
                 });
                 if (t < 1) requestAnimationFrame(frame);
             }
@@ -9241,6 +9271,22 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
             paused = false;
             cycleStart = performance.now() - (parseFloat(fill?.style.width || '0') / 100) * FC_CYCLE_MS;
         });
+        // Mobile : pas de hover. On pause au touchstart et on relance
+        // ~6 s après touchend pour laisser le user lire la card touchée
+        // tranquillement avant que le carousel ne reparte.
+        let _touchResumeT = 0;
+        root.addEventListener('touchstart', () => {
+            paused = true;
+            if (_touchResumeT) { clearTimeout(_touchResumeT); _touchResumeT = 0; }
+        }, { passive: true });
+        root.addEventListener('touchend', () => {
+            if (_touchResumeT) clearTimeout(_touchResumeT);
+            _touchResumeT = setTimeout(() => {
+                paused = false;
+                cycleStart = performance.now() - (parseFloat(fill?.style.width || '0') / 100) * FC_CYCLE_MS;
+                _touchResumeT = 0;
+            }, 6000);
+        }, { passive: true });
 
         prev?.addEventListener('click', (e) => { e.stopPropagation(); show(active - 1); });
         next?.addEventListener('click', (e) => { e.stopPropagation(); show(active + 1); });
