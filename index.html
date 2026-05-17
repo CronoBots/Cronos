@@ -8337,7 +8337,7 @@ document.addEventListener('DOMContentLoaded', initialize);
                     body: JSON.stringify({
                         operationName: 'GetFeatStats',
                         variables: { id, withStats: true, cacheId: 'GetFeatStats-' + id },
-                        query: `query GetFeatStats($cacheId:ID,$id:ID!,$withStats:Boolean!){public(cacheId:$cacheId){collection(id:$id){id name description verified logo{url} banner{url} creator{username verified} metrics{items owners totalSalesDecimal minSaleListingPriceDecimal listedCollectiblesCount} stats@include(if:$withStats){floorPriceDecimal oneDayVolumeDecimal oneDayVolumeDecimalChange sevenDayVolumeDecimal}}}}`
+                        query: `query GetFeatStats($cacheId:ID,$id:ID!,$withStats:Boolean!){public(cacheId:$cacheId){collection(id:$id){id name description verified logo{url} banner{url} creator{username verified avatar{url}} metrics{items owners totalSalesDecimal minSaleListingPriceDecimal listedCollectiblesCount} stats@include(if:$withStats){floorPriceDecimal oneDayVolumeDecimal oneDayVolumeDecimalChange sevenDayVolumeDecimal}}}}`
                     })
                 });
                 const json = await res.json();
@@ -8396,6 +8396,9 @@ document.addEventListener('DOMContentLoaded', initialize);
                         <span class="home-feat-v3-name">${col.name || '—'}</span>
                     </span>
                     <span class="home-feat-v3-creator home-feat-v3-creator--loading">
+                        <!-- Avatar mini de l'artiste créateur (slot hydraté
+                             par renderFeatStats avec data.creator.avatar.url) -->
+                        <span class="home-feat-v3-creator-avatar-slot"></span>
                         <span class="home-feat-v3-creator-text">Loading…</span>
                         <span class="home-feat-v3-verified-slot"></span>
                     </span>
@@ -8612,6 +8615,19 @@ document.addEventListener('DOMContentLoaded', initialize);
         if (vSlot) {
             vSlot.innerHTML = data.creator?.verified
                 ? '<svg class="home-feat-v3-verified" viewBox="0 0 20 20" fill="none" aria-label="Creator verified"><circle cx="10" cy="10" r="10" fill="#1DA1F2"/><path d="M5.5 10.5L8.5 13.5L14.5 7" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+                : '';
+        }
+
+        // Avatar mini de l'artiste créateur. Fetché via GetFeatStats étendu
+        // (creator{avatar{url}}). Affiché à GAUCHE du nom de creator, comme
+        // une attribution visuelle. La photo de profil renforce l'identité
+        // de l'artiste à côté du logo de collection (qui, lui, identifie
+        // la collection). Si pas d'avatar, le slot reste vide (graceful).
+        const avatarSlot = card.querySelector('.home-feat-v3-creator-avatar-slot');
+        if (avatarSlot) {
+            const avatarUrl = data.creator?.avatar?.url || '';
+            avatarSlot.innerHTML = avatarUrl
+                ? `<img class="home-feat-v3-creator-avatar" src="${avatarUrl}" alt="" loading="lazy" decoding="async"/>`
                 : '';
         }
 
@@ -16583,6 +16599,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-17T09:00:00Z',
+            type:  'improvement',
+            title: 'Featured Collection — artist avatar',
+            text:  'Small round avatar of the collection\'s creator now appears next to their name on the Featured Collection card. Easier to recognize the artist behind the collection at a glance.'
+        },
         {
             date:  '2026-05-17T08:30:00Z',
             type:  'improvement',
