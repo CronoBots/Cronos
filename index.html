@@ -8482,16 +8482,26 @@ document.addEventListener('DOMContentLoaded', initialize);
                         <span class="skel skel-thumb"></span>
                     </div>
                 </div>
-                <!-- CTA outlined — toute la card est déjà cliquable, mais
-                     le bouton signale clairement l'affordance "explore". -->
-                <span class="home-feat-v3-browse">Browse collection<span class="home-feat-v3-browse-arrow"> →</span></span>
+                <!-- CTA outlined — SEUL élément cliquable de la card.
+                     Le user veut que la card entière ne soit PAS un lien
+                     (anti-mistap). Seul ce bouton ouvre la collection. -->
+                <button class="home-feat-v3-browse" type="button">Browse collection<span class="home-feat-v3-browse-arrow"> →</span></button>
             </div>
         `;
-        card.addEventListener('click', () => {
-            if (typeof window.loadCollectionById === 'function') {
-                window.loadCollectionById(col.id);
-            }
-        });
+        // Seul le bouton "Browse collection →" déclenche l'ouverture
+        // de la collection — la card entière n'est plus cliquable
+        // (anti-mistap quand on swipe ou hover, et plus respectueux
+        // du focus clavier — le clic ne se déclenche plus par
+        // accident sur la zone large de la card).
+        const browseBtn = card.querySelector('.home-feat-v3-browse');
+        if (browseBtn) {
+            browseBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (typeof window.loadCollectionById === 'function') {
+                    window.loadCollectionById(col.id);
+                }
+            });
+        }
         return card;
     }
 
