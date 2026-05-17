@@ -26576,6 +26576,13 @@ a.snap-holder-username:hover {
 .home-fc-spotlight .home-feat-v3-hero-img {
     background-size: cover;
     background-position: center;
+    /* Blur léger + baisse de luminosité : l'image bannière reste
+       reconnaissable (couleurs, formes, ambiance) mais les détails
+       nets (wordmarks comme "LOADED MUSHROOM", textes tronqués sur
+       les côtés) s'effacent — ne concurrence plus l'identity centré
+       (logo + nom + creator) qui doit ressortir comme repère visuel
+       principal. */
+    filter: blur(2.5px) brightness(0.7) saturate(1.05);
 }
 /* Tint qui fade le hero vers le bas pour garantir la lisibilité du
    nom de collection + creator qui apparaissent maintenant SUR la
@@ -26991,7 +26998,25 @@ a.snap-holder-username:hover {
     overflow: hidden;
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.10);
-    cursor: default;
+    cursor: pointer;
+    /* Transition smooth pour le hover effect (zoom + halo cyan).
+       transform et box-shadow only → hardware-accelerated, pas de
+       reflow. */
+    transition: transform 0.18s cubic-bezier(0.2, 0.7, 0.2, 1),
+                box-shadow 0.18s ease,
+                border-color 0.18s ease;
+}
+/* Hover : zoom subtil + halo cyan + bordure cyan. Gated par
+   @media (hover: hover) pour éviter l'effet "collé" après tap
+   sur mobile. */
+@media (hover: hover) {
+    .home-feat-showcase-sample:hover {
+        transform: scale(1.06);
+        box-shadow: 0 4px 18px rgba(0, 179, 255, 0.35),
+                    0 0 0 1px rgba(0, 179, 255, 0.6);
+        border-color: rgba(0, 179, 255, 0.7);
+        z-index: 1;
+    }
 }
 .home-feat-showcase-sample img {
     width: 100%;

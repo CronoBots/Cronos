@@ -8420,7 +8420,14 @@ document.addEventListener('DOMContentLoaded', initialize);
                      côté CSS. -->
                 <p class="home-feat-v3-desc" data-desc style="display:none;"></p>
                 <!-- Stats en pastille inline — chaque chiffre porte son label
-                     directement à côté (style éditorial type "fact sheet"). -->
+                     directement à côté (style éditorial type "fact sheet").
+                     5 stats (FC) ↔ 5 stats (FA) pour cohérence visuelle.
+                     L'ancienne stat "Total" était redondante avec "Volume"
+                     quand pas d'activité 24h/7d (cf. logique volLabel : si
+                     vol24=0 et vol7d=0, Volume fallback sur volAll =
+                     totalSalesDecimal, exactement la même valeur que Total
+                     affichait — doublon parfait sur les collections sans
+                     ventes récentes). -->
                 <div class="home-feat-v3-stats">
                     <span class="home-feat-v3-stat"><strong data-stat="floor">—</strong> Floor</span>
                     <span class="home-feat-v3-stat-sep"></span>
@@ -8431,8 +8438,6 @@ document.addEventListener('DOMContentLoaded', initialize);
                     <span class="home-feat-v3-stat"><strong data-stat="listed">—</strong> Listed</span>
                     <span class="home-feat-v3-stat-sep"></span>
                     <span class="home-feat-v3-stat"><strong data-stat="vol">—</strong> <span data-label="vol">Volume</span></span>
-                    <span class="home-feat-v3-stat-sep"></span>
-                    <span class="home-feat-v3-stat"><strong data-stat="traded">—</strong> Total</span>
                 </div>
                 <!-- Showcase : eyebrow "From the collection" + 8 NFTs random
                      intégrant les 4 highlights. Le label est injecté par
@@ -8582,16 +8587,34 @@ document.addEventListener('DOMContentLoaded', initialize);
         const elListed = card.querySelector('[data-stat="listed"]');
         const elVol    = card.querySelector('[data-stat="vol"]');
         const elVolLbl = card.querySelector('[data-label="vol"]');
-        const elTraded = card.querySelector('[data-stat="traded"]');
-        if (elFloor)  elFloor.textContent  = fmtMoney(floor);
-        if (elItems)  elItems.textContent  = fmtNum(items);
-        if (elOwners) elOwners.textContent = fmtNum(owners);
-        if (elListed) elListed.textContent = fmtNum(listed);
-        if (elVol)    elVol.textContent    = fmtMoney(volValue);
+        /* On stocke la valeur brute + le type de format en dataset pour
+           que animateSlideStats() (count-up sur activation de slide)
+           puisse re-formater chaque frame intermédiaire. Le textContent
+           initial reste la valeur finale formatée — si l'animation est
+           sautée (reduced-motion, slide déjà comptée), l'utilisateur
+           voit directement la valeur. */
+        const setStat = (el, value, fmtType) => {
+            if (!el) return;
+            const fmt = fmtType === 'num' ? fmtNum : fmtMoney;
+            el.textContent = fmt(value);
+            el.dataset.cwtfTgt = String(value);
+            el.dataset.cwtfFmt = fmtType;
+        };
+        setStat(elFloor,  floor,    'money');
+        setStat(elItems,  items,    'num');
+        setStat(elOwners, owners,   'num');
+        setStat(elListed, listed,   'num');
+        setStat(elVol,    volValue, 'money');
         if (elVolLbl) elVolLbl.textContent = volLabel;
-        // Volume traded = somme cumulative de toutes les ventes (USD) sur
-        // toute la durée de vie de la collection.
-        if (elTraded) elTraded.textContent = fmtMoney(Number(data.metrics?.totalSalesDecimal) || 0);
+        // Marker : stats prêtes pour la slide. Lu par animateSlideStats
+        // au moment du reveal pour décider si on peut lancer le count-up.
+        card.dataset.cwtfStatsReady = '1';
+        // Si cette card est la slide actuellement active du carrousel,
+        // déclencher le count-up tout de suite (cas du premier load
+        // où la slide 0 est active avant que renderFeatStats finisse).
+        if (card.classList.contains('is-active') && window._cwtfAnimateSlide) {
+            window._cwtfAnimateSlide(card);
+        }
 
         // Description — injectée si l'API la renvoie. Le CSS clamp à 3
         // lignes pour ne pas exploser la hauteur de la card.
@@ -9014,6 +9037,53 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
         let paused = false;
         let cycleStart = performance.now();
 
+        /* Count-up animation des chiffres au reveal d'une slide.
+           Première activation seulement (flag cwtfCounted) — un retour
+           sur une slide déjà vue affiche la valeur finale directement.
+           Respecte prefers-reduced-motion. */
+        const prefersReduceMotion = window.matchMedia
+            ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+            : false;
+        function fmtTweenMoney(v) {
+            if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
+            if (v >= 1e3) return '$' + (v / 1e3).toFixed(1) + 'K';
+            if (v >= 10)  return '$' + Math.round(v);
+            return '$' + v.toFixed(2);
+        }
+        function fmtTweenNum(v) {
+            if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
+            if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+            return String(Math.round(v));
+        }
+        function animateSlideStats(card) {
+            if (!card || card.dataset.cwtfCounted === '1') return;
+            if (card.dataset.cwtfStatsReady !== '1') return;
+            card.dataset.cwtfCounted = '1';
+            if (prefersReduceMotion) return; // values already final, just skip animation
+            const els = Array.from(card.querySelectorAll('[data-cwtf-tgt]'));
+            if (!els.length) return;
+            const start = performance.now();
+            const dur = 750;
+            function frame(now) {
+                const t = Math.min(1, (now - start) / dur);
+                // ease-out cubic — démarrage rapide qui ralentit en fin
+                const eased = 1 - Math.pow(1 - t, 3);
+                els.forEach(el => {
+                    const tgt = parseFloat(el.dataset.cwtfTgt) || 0;
+                    if (!tgt) return;
+                    const v = tgt * eased;
+                    el.textContent = el.dataset.cwtfFmt === 'num'
+                        ? fmtTweenNum(v)
+                        : fmtTweenMoney(v);
+                });
+                if (t < 1) requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+        }
+        // Expose pour que renderFeatStats puisse déclencher le tween
+        // sur la slide initiale dès que ses stats sont prêtes.
+        window._cwtfAnimateSlide = animateSlideStats;
+
         function show(idx) {
             idx = (idx + slides.length) % slides.length;
             slides.forEach((s, i) => s.classList.toggle('is-active', i === idx));
@@ -9021,6 +9091,9 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
             active = idx;
             root.dataset.active = String(idx);
             cycleStart = performance.now();
+            // Déclenche le count-up sur la slide qui devient active.
+            // Idempotent (flag cwtfCounted) → re-cycles ne re-animent pas.
+            animateSlideStats(slides[idx]);
         }
 
         function tick(now) {
@@ -16610,6 +16683,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-17T13:00:00Z',
+            type:  'improvement',
+            title: 'Featured Collection polish',
+            text:  'Stats count up from zero when a slide is revealed, the banner image is gently blurred so the logo + name stand out instead of fighting with wordmarks behind, hovering an NFT thumbnail lifts it with a cyan halo, and the redundant "Total" stat (always equal to Volume when no recent sales) is gone. Five clean stats: Floor, Items, Owners, Listed, Volume.'
+        },
         {
             date:  '2026-05-17T12:00:00Z',
             type:  'improvement',
