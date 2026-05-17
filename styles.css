@@ -26574,15 +26574,22 @@ a.snap-holder-username:hover {
        la zone identity. */
 }
 .home-fc-spotlight .home-feat-v3-hero-img {
-    background-size: cover;
-    background-position: center;
-    /* Blur fort + baisse de luminosité : l'image bannière reste
-       reconnaissable comme ambiance (couleurs, palette) mais les
-       détails (wordmarks "LOADED LIONS", textures, personnages
-       sur les côtés) s'effacent — ne concurrence plus l'identity
-       centré (logo + nom + creator) qui doit être le repère visuel
-       principal. */
-    filter: blur(5px) brightness(0.55) saturate(1.1);
+    /* contain : la bannière est affichée ENTIÈRE dans la zone hero
+       (pas de crop latéral ni vertical). Sur mobile où le hero
+       devient ~320×220 mais la bannière source fait 1500×500 (3:1),
+       cover croppait les bords gauche/droite — l'utilisateur voyait
+       en bordure des wordmarks tronqués ("FT COLLE", "MU"). Avec
+       contain, l'image entière s'affiche centrée, et les bandes
+       restantes (haut/bas si bannière plus large que hero ratio,
+       gauche/droite si plus haute) sont remplies par le hero-bg
+       flou qui vit derrière (z-index inférieur). */
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center center;
+    /* Blur plus léger maintenant que l'image est entière (visible
+       de haut en bas). On a juste besoin d'un voile doux pour
+       qu'elle reste subordonnée à l'identity centré. */
+    filter: blur(1.5px) brightness(0.68) saturate(1.1);
 }
 /* Tint qui fade le hero vers le bas pour garantir la lisibilité du
    nom de collection + creator qui apparaissent maintenant SUR la
@@ -26949,7 +26956,14 @@ a.snap-holder-username:hover {
     justify-content: center;
     align-self: center;
     padding: 9px 26px;
-    margin: 10px 16px 16px;
+    /* margin-top: auto → pousse le CTA en bas de la card. Le grid
+       carousel force toutes les slides à la hauteur de la plus
+       grande (grid-area:1/1) ; les slides plus courtes (Loaded
+       Mushroom sans Total stat, get-featured slot…) auraient sinon
+       un trou visible en bas. Avec auto, l'espace libre se loge
+       AU-DESSUS du CTA (entre le showcase et le CTA) au lieu de
+       LAISSER un grand vide visible après. */
+    margin: auto 16px 0;
     background: rgba(0, 179, 255, 0.12);
     border: 1px solid rgba(0, 179, 255, 0.38);
     border-radius: 8px;
@@ -27237,7 +27251,9 @@ a.snap-holder-username:hover {
     .home-feat-v3-showcase-label { font-size: 9px; letter-spacing: 0.15em; }
     .home-fc-spotlight .home-feat-v3-browse {
         padding: 8px 20px;
-        margin: 4px 0 0;
+        /* margin-top: auto pour pousser le CTA en bas même en mobile
+           (égalise les heights de toutes les slides). */
+        margin: auto 0 0;
         font-size: 10px;
     }
     /* Tile verticale resserrée sur mobile : padding texte réduit,
