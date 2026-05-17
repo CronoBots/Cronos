@@ -26999,6 +26999,10 @@ a.snap-holder-username:hover {
     align-items: center;
     justify-content: center;
     align-self: center;
+    /* Le span est devenu <button> : on rend explicitement cliquable
+       et on évite la sélection texte au double-click. */
+    cursor: pointer;
+    user-select: none;
     padding: 9px 26px;
     /* margin-top: auto → pousse le CTA en bas de la card. Le grid
        carousel force toutes les slides à la hauteur de la plus
@@ -27322,8 +27326,10 @@ a.snap-holder-username:hover {
     overflow: hidden;
     /* Pas de border / shadow / radius / bg ici : c'est désormais le wrapper
        .home-fc-spotlight qui porte le halo, pour englober card + controls
-       dans le même cadre. La card reste juste un conteneur flex column. */
-    cursor: pointer;
+       dans le même cadre. La card reste juste un conteneur flex column.
+       Pas de cursor:pointer : la card n'est plus cliquable, seul le
+       bouton "Browse collection →" ouvre la collection. */
+    cursor: default;
     min-height: 320px;
     display: flex;
     flex-direction: column;
@@ -27746,12 +27752,11 @@ a.snap-holder-username:hover {
     opacity: 0.55;
     pointer-events: none;
 }
-.home-fc-spotlight .home-feat-v3-showcase--ghost .home-feat-v3-showcase-label {
-    color: rgba(0, 179, 255, 0.55);
-    font-style: italic;
-    text-transform: none;
-    letter-spacing: 0.02em;
-}
+/* Pas d'override sur le label ghost : il hérite directement du style
+   de .home-feat-v3-showcase-label (Geomanist-Bold 9.5px uppercase
+   letter-spacing 0.18em rgba(255,255,255,0.5)) — exactement la
+   même typo, taille et couleur que "FROM THE COLLECTION · N NFTS"
+   des autres slides. Plus de cyan italic différent. */
 .home-feat-showcase-sample--ghost {
     background:
         repeating-linear-gradient(
@@ -27760,8 +27765,9 @@ a.snap-holder-username:hover {
             rgba(255, 255, 255, 0.04) 6px,
             rgba(255, 255, 255, 0.08) 6px,
             rgba(255, 255, 255, 0.08) 12px);
-    border-style: dashed;
-    border-color: rgba(0, 179, 255, 0.22);
+    /* Même bordure que les vrais NFT samples (.home-feat-showcase-sample
+       hérite "border: 1px solid rgba(255, 255, 255, 0.10)") — plus de
+       dashed cyan qui marquait artificiellement les placeholders. */
 }
 @media (hover: hover) {
     .home-feat-showcase-sample--ghost:hover {
