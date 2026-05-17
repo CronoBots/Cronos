@@ -2457,12 +2457,10 @@ let allNFTs = [];
 let assetsLoaded = false;
 let currentUsername = '';
 let currentDisplayName = '';
-let lastSearchedUsername = '';
 let debounceTimeout = null;
 let isDownloadCancelled = false;
 let isProfileLoadingCancelled = false;
 let activeSearch = null;
-let hasSelectedSpecificCollection = false;
 
 // Asset list mode (collected vs liked)
 let currentAssetMode = 'collected';
@@ -4464,7 +4462,6 @@ async function fetchProfileAndNFTs() {
     collectionFilter.disabled = false; // Ne pas désactiver initialement
 
     currentUsername = username;
-    lastSearchedUsername = currentUsername;
     resetLikedNFTsStateForProfile(currentUsername);
     clearSuggestions();
 
@@ -4693,7 +4690,6 @@ function filterNFTs() {
     // Keep chain and curation filters usable; don't auto-lock values.
     chainFilter.disabled = false;
     curatedFilter.disabled = false;
-    hasSelectedSpecificCollection = !!collectionValue;
 
     // Ensure filters are enabled if any NFTs exist
     const hasCollections = allNFTs.some(nft => nft.collection?.name || nft.collection);
@@ -18428,13 +18424,6 @@ fragment CollectionStatsData on Collection {
         return { text: sign + formatted, cls };
     }
 
-    function chainBadge(network) {
-        const isCronos = network === 'CRONOS';
-        const label = isCronos ? 'CRO' : 'POS';
-        const cls   = isCronos ? 'stats-chain--cronos' : 'stats-chain--pos';
-        return '<span class="stats-chain-badge ' + cls + '">' + label + '</span>';
-    }
-
     // Apply chain filter + column sort to _allRows and re-render
     function applyFilterSort() {
         _statsVisible = 50;
@@ -18582,38 +18571,6 @@ fragment CollectionStatsData on Collection {
         }
 
         // Listed % badge
-        function listedBadge(pct) {
-            if (pct <= 0) return '<span class="stats-listed-badge stats-listed-badge--none">—</span>';
-            const p = pct.toFixed(1) + '%';
-            if (pct < 5)  return `<span class="stats-listed-badge stats-listed-badge--low">${p}</span>`;
-            if (pct > 30) return `<span class="stats-listed-badge stats-listed-badge--high">${p}</span>`;
-            return `<span class="stats-listed-badge stats-listed-badge--mid">${p}</span>`;
-        }
-
-        // Mini sparkline SVG (7-day vol points using available data)
-        function sparkline(col, floorField) {
-            // Build 4-point proxy from available period data
-            const s = col.stats || {};
-            const points = [
-                Number(s.oneDayVolumeDecimal) || 0,
-                Number(s.sevenDayVolumeDecimal) || 0,
-                Number(s.thirtyDayVolumeDecimal) || 0,
-                Number(col.metrics?.totalSalesDecimal) || 0,
-            ].filter((_, i, arr) => arr.some(v => v > 0));
-            if (points.length < 2) return '<span class="stats-spark-empty">·</span>';
-            const max = Math.max(...points) || 1;
-            const W = 48, H = 18;
-            const step = W / (points.length - 1);
-            const pts = points.map((v, i) => `${(i * step).toFixed(1)},${(H - (v / max) * H).toFixed(1)}`).join(' ');
-            const last = points[points.length - 1];
-            const first = points[0];
-            const color = last >= first ? '#4ade80' : '#f87171';
-            return `<svg class="stats-spark" viewBox="0 0 ${W} ${H}" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <polyline points="${pts}" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="${((points.length-1)*step).toFixed(1)}" cy="${(H-(last/max)*H).toFixed(1)}" r="2" fill="${color}"/>
-            </svg>`;
-        }
-
         tbody.innerHTML = '';
 
         // Reset to 50 only on a fresh render (new filter/sort), not on load more
