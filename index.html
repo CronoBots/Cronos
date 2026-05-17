@@ -46,14 +46,19 @@
 <meta name="apple-mobile-web-app-title" content="CRONOS.WTF"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="mobile-web-app-capable" content="yes"/>
-<!-- Favicon et icônes : icon.png est le logo source 1024x1024, navigateurs
-     scalent automatiquement à 16/32px. /icons/* contient les versions
-     pré-calculées pour iOS (180x180 aplati contre brand color) et
-     Android (192/512 + variantes maskable avec safe-area 80%). -->
-<link href="icon.png?v=2" rel="icon" type="image/png" sizes="any"/>
+<!-- Favicon et icônes :
+     • favicon-32 pour les onglets navigateur (1.6 KB, suffisant pour le
+       rendu 16/32 px de l'onglet).
+     • icon-192 (24 KB) comme fallback any-size pour navigateurs qui
+       l'utilisent comme rich icon (Android Chrome PWA preview etc.)
+     • apple-touch-icon pour iOS Home Screen.
+     L'ancien icon.png (1.5 MB, 1024×1024) référencé ici servait au
+     même usage mais surdimensionné ×60 vs besoin réel. Remplacé par
+     les versions /icons/* déjà optimisées. -->
 <link href="/icons/favicon-32.png" rel="icon" type="image/png" sizes="32x32"/>
+<link href="/icons/icon-192.png" rel="icon" type="image/png" sizes="192x192"/>
 <link href="/icons/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180"/>
-<link as="image" href="icon.png?v=2" rel="preload"/>
+<link as="image" href="/icons/icon-192.png" rel="preload"/>
 <!-- Preload WOFF2 quand dispo (3x plus léger), sinon le @font-face fallback OTF.
      fetchpriority="high" sur la font qui rend 90% des textes premium
      du site (titres, stats, prix, boutons) — évite que le browser
@@ -151,7 +156,7 @@
 
     <!-- Logo -->
     <div class="topnav-brand" role="button" tabindex="0" title="Back to Home" id="topnavBrand" style="cursor:pointer;">
-      <img src="icon.png?v=2" alt="CRONOS.WTF logo" class="topnav-logo-img"/>
+      <img src="/icons/icon-192.png" alt="CRONOS.WTF logo" class="topnav-logo-img" width="32" height="32" decoding="async"/>
       <span class="topnav-logo-text">CRONOS<span class="topnav-logo-dot">.WTF</span></span>
     </div>
 
@@ -16291,8 +16296,8 @@ async function sha256hex(str) {
                 const body  = verb + ' at ' + price + ' (≤ your threshold)';
                 const n = new Notification(title, {
                     body,
-                    icon: 'icon.png',
-                    badge: 'icon.png',
+                    icon: '/icons/icon-192.png',
+                    badge: '/icons/icon-192.png',
                     tag: 'cronos-alarm-' + details.colId + '-' + details.channel,
                     renotify: true,
                     silent: true   // l'audio ci-dessus suffit, on évite le double-bip
