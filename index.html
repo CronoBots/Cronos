@@ -5960,7 +5960,16 @@ async function generateCollageBlobFromValidCards(validCards, {
         headerTextContainer.style.whiteSpace = 'nowrap';
         headerTextContainer.style.margin = '0';
         headerTextContainer.style.padding = '0';
-        headerTextContainer.innerHTML = `<span style="color: ${color1}">${usernameText}</span> / ${collectionText.toUpperCase()}`;
+        // Pas d'innerHTML — usernameText et collectionText viennent de
+        // l'API user et pourraient contenir du HTML/JS. DOM API garantit
+        // qu'ils sont traités comme texte pur. color1 reste contrôlée par
+        // notre code (couleur CSS hex/rgba), passée via style.color.
+        const _hSpan = document.createElement('span');
+        _hSpan.style.color = color1;
+        _hSpan.textContent = usernameText;
+        headerTextContainer.textContent = '';
+        headerTextContainer.appendChild(_hSpan);
+        headerTextContainer.appendChild(document.createTextNode(' / ' + (collectionText || '').toUpperCase()));
         header.appendChild(headerTextContainer);
 
         const nftCountText = document.createElement('div');
@@ -8619,7 +8628,17 @@ document.addEventListener('DOMContentLoaded', initialize);
             if (meta) {
                 const override = card.dataset.creatorOverride || '';
                 const textEl = meta.querySelector('.home-feat-v3-creator-text') || meta;
-                textEl.innerHTML = override ? `<strong>${override}</strong>` : '&nbsp;';
+                // DOM API au lieu d'innerHTML : override vient de dataset
+                // (sous notre contrôle) mais on traite défensivement comme
+                // user-provided pour rester safe XSS.
+                textEl.textContent = '';
+                if (override) {
+                    const _s = document.createElement('strong');
+                    _s.textContent = override;
+                    textEl.appendChild(_s);
+                } else {
+                    textEl.appendChild(document.createTextNode(' '));
+                }
             }
             return;
         }
@@ -8829,9 +8848,18 @@ document.addEventListener('DOMContentLoaded', initialize);
             // On écrit dans le sous-span dédié (.home-feat-v3-creator-text)
             // pour ne pas écraser le verified-slot voisin.
             const textEl = meta.querySelector('.home-feat-v3-creator-text') || meta;
-            // Pas de "by " devant — le nom de l'artiste se suffit à
-            // lui-même, accompagné du checkmark vérifié (slot voisin).
-            textEl.innerHTML = creator ? `<strong>${creator}</strong>` : '&nbsp;';
+            // DOM API au lieu d'innerHTML : creator vient de l'API
+            // Crypto.com (data.creator.username) → potentiellement
+            // attacker-controlled. textContent garantit qu'on n'injecte
+            // jamais du HTML/JS même si l'API renvoyait du code.
+            textEl.textContent = '';
+            if (creator) {
+                const _s = document.createElement('strong');
+                _s.textContent = creator;
+                textEl.appendChild(_s);
+            } else {
+                textEl.appendChild(document.createTextNode(' '));
+            }
         }
     }
 
