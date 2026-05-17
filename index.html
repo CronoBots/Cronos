@@ -2,7 +2,18 @@
 
 <html data-theme="cdc" lang="en">
 <head>
-<meta charset="utf-8"/><link crossorigin="anonymous" href="https://upload.wikimedia.org" rel="preconnect"/><link href="https://upload.wikimedia.org" rel="dns-prefetch"/><link crossorigin="anonymous" href="https://crypto.com" rel="preconnect"/><link href="https://crypto.com" rel="dns-prefetch"/><link crossorigin="anonymous" href="https://cdnjs.cloudflare.com" rel="preconnect"/><link href="https://cdnjs.cloudflare.com" rel="dns-prefetch"/>
+<meta charset="utf-8"/><link crossorigin="anonymous" href="https://crypto.com" rel="preconnect"/><link href="https://crypto.com" rel="dns-prefetch"/>
+<!-- Preconnects retirés (audit perf) :
+     • upload.wikimedia.org → utilisé seulement pour les icônes social
+       Facebook/Instagram du profil header (loading=lazy). Pas critique
+       au boot, le preconnect ouvrait une connexion TLS inutile.
+     • cdnjs.cloudflare.com → jszip/FileSaver/html2canvas sont utilisés
+       uniquement par les actions Download/Export (event handlers post
+       DOMContentLoaded). Les scripts passent maintenant en `defer`
+       (chargement en parallèle, exécution après le HTML parse) — le
+       preconnect ne sert plus à grand-chose. -->
+<link href="https://upload.wikimedia.org" rel="dns-prefetch"/>
+<link href="https://cdnjs.cloudflare.com" rel="dns-prefetch"/>
 <!-- Preconnect supplémentaires : ouvre la connexion TLS aux hosts qu'on
      sollicite immédiatement après le first paint. Économie de ~150-300ms
      sur le premier round-trip (TCP + TLS handshake fait pendant que le
@@ -2451,7 +2462,12 @@
 <button class="kbd-hint" id="kbdHint" type="button" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">
   <kbd>?</kbd>
 </button>
-<script crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script><script crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script>
+<!-- Librairies tierces utilisées UNIQUEMENT par les actions
+     Download (zip NFTs) et Export (PNG du collage). Aucune n'est
+     nécessaire au parsing initial ni au First Paint → defer pour
+     que le HTML continue d'être parsé pendant que les libs
+     téléchargent en parallèle. -->
+<script defer crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script defer crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script><script defer crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script>
         const cache = new Map();
 let allNFTs = [];
 let assetsLoaded = false;
