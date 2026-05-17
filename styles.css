@@ -11542,7 +11542,15 @@ body.is-profile-loading #profileLoadingOverlay * {
     top: 0;
     width: 100%;
     flex-shrink: 0;
-    height: var(--topnav-height);
+    /* En mode PWA standalone iOS (app installée), la status bar et
+       le notch / dynamic island occupent les ~44–48 px du haut. Sans
+       padding safe-area, la topnav passe DERRIÈRE et ses icônes
+       deviennent intappables (cf. screenshot user iOS 21:45).
+       Solution : padding-top: env(safe-area-inset-top) + hauteur
+       totale qui inclut ce padding. En mode browser normal,
+       env() = 0 → aucun changement. */
+    padding-top: env(safe-area-inset-top);
+    height: calc(var(--topnav-height) + env(safe-area-inset-top));
     background: var(--collection-bg);
     border-bottom: 1px solid rgba(0, 179, 255, 0.15);
     z-index: 1100;
@@ -11792,13 +11800,16 @@ body.is-profile-loading #profileLoadingOverlay * {
     display: none;
 }
 
-/* ── Layout offsets ── */
+/* ── Layout offsets ──
+   Tous les éléments qui se positionnent juste sous la topnav doivent
+   inclure env(safe-area-inset-top) car la topnav prend cette hauteur
+   supplémentaire en mode PWA standalone iOS. */
 .navbar {
-    top: var(--topnav-height) !important;
+    top: calc(var(--topnav-height) + env(safe-area-inset-top)) !important;
 }
 
 .left-sidebar {
-    top: var(--topnav-height) !important;
+    top: calc(var(--topnav-height) + env(safe-area-inset-top)) !important;
 }
 
 .main-content {
@@ -18250,7 +18261,9 @@ code.sup-card-address {
     display: none;
     position: fixed;
     inset: 0;
-    top: var(--topnav-height, 52px);
+    /* PWA standalone iOS : la topnav inclut env(safe-area-inset-top)
+       maintenant — l'overlay doit commencer juste en dessous. */
+    top: calc(var(--topnav-height, 52px) + env(safe-area-inset-top));
     z-index: 400;
     background: var(--bg, #0a1428);
     align-items: center;
@@ -29941,7 +29954,8 @@ body { box-sizing: border-box; }
     .topnav-search-wrap.is-mobile-open {
         display: flex !important;
         position: fixed;
-        top: var(--topnav-height, 52px);
+        /* PWA standalone iOS : la topnav inclut env(safe-area-inset-top). */
+        top: calc(var(--topnav-height, 52px) + env(safe-area-inset-top));
         left: 0;
         right: 0;
         z-index: 9000;
