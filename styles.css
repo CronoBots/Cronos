@@ -26542,15 +26542,25 @@ a.snap-holder-username:hover {
 /* Bannière : ratio 3:1 = format natif 1500×500 des bannières Crypto.com NFT.
    Max-height 500px pour laisser respirer sur écrans larges sans déformer
    le ratio source. */
+/* Bannière de la collection : background absolu sur la zone haute de
+   la card (mirroir exact du pattern Featured Artist .home-fa-hero).
+   Le hero ne participe plus au flex flow — il est juste un fond pour
+   le haut, et le content (eyebrow + logo + nom + creator + stats…)
+   flow par-dessus.
+   Hauteur fixe en px (au lieu de %) pour que la zone bannière reste
+   prédictible quel que soit le contenu du content (desc longue ou
+   courte, showcase chargé ou non). Suffisant pour contenir l'eyebrow
+   + portrait (96 px) + name + creator. */
 .home-fc-spotlight .home-feat-v3-hero {
-    position: relative;
-    aspect-ratio: 3 / 1;
-    width: 100%;
-    max-height: 500px;
-    flex-shrink: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 280px;
     overflow: hidden;
-    /* Fin trait bleu sous la bannière — délimite la zone hero du reste
-       de la card (stats / showcase). */
+    z-index: 0;
+    /* Fin trait cyan en bas du hero — délimite la zone bannière du
+       reste de la card visuellement. */
     border-bottom: 1px solid rgba(0, 179, 255, 0.55);
     box-shadow: 0 1px 0 0 rgba(0, 179, 255, 0.18);
 }
@@ -26558,18 +26568,18 @@ a.snap-holder-username:hover {
     background-size: cover;
     background-position: center;
 }
-/* Tint discret en bas de bannière : assez pour que le nom centré
-   reste lisible sur les bannières claires, mais sans le voile sombre
-   agressif qui "écrasait" la bannière (l'utilisateur trouvait l'effet
-   derrière le nom incohérent avec l'image). Gradient 0→25% top→bot,
-   donc le haut reste intact et seul le centre/bas — où atterrit le
-   texte — est légèrement assombri. */
+/* Tint qui fade le hero vers le bas pour garantir la lisibilité du
+   nom de collection + creator qui apparaissent maintenant SUR la
+   bannière (bas du hero), miroir exact de .home-fa-hero-tint. Top
+   transparent (l'image reste claire pour l'eyebrow), opaque sombre
+   en bas (transition propre vers le content). */
 .home-fc-spotlight .home-feat-v3-hero-tint {
     background: linear-gradient(
         180deg,
-        rgba(8, 14, 28, 0.0)  0%,
-        rgba(8, 14, 28, 0.18) 50%,
-        rgba(8, 14, 28, 0.28) 100%);
+        rgba(8, 14, 28, 0.10) 0%,
+        rgba(8, 14, 28, 0.45) 55%,
+        rgba(8, 14, 28, 0.92) 95%,
+        rgba(8, 14, 28, 1.00) 100%);
 }
 /* (Ancien .home-feat-v3-hero-wrap retiré — le logo n'est plus en
     overlap absolute, il vit maintenant comme portrait centré dans
@@ -26587,12 +26597,15 @@ a.snap-holder-username:hover {
     margin: 0 auto;
     text-align: center;
 }
-/* Content wrapper : tout ce qui vit sous le hero — eyebrow, portrait,
-   identity, stats, desc, showcase, browse. Flex column avec gap pour
-   l'espace vertical entre blocs. Padding aligné sur les autres cards
-   home. Miroir conceptuel de .home-fa-content. */
+/* Content wrapper : contient TOUT (eyebrow, portrait, identity, stats,
+   desc, showcase, browse) en flex column. Comme le hero est en
+   position:absolute background derrière, le content COMMENCE en haut
+   de la card et flow par-dessus le hero — l'identity (eyebrow + logo +
+   nom + creator) apparait donc visuellement SUR la bannière, miroir
+   exact de .home-fa-content. */
 .home-fc-spotlight .home-feat-v3-content {
     position: relative;
+    z-index: 1;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -26656,7 +26669,11 @@ a.snap-holder-username:hover {
     line-height: 1.15;
     white-space: normal;
     text-transform: none;
-    text-shadow: none;
+    /* Text-shadow doux : le nom apparait maintenant SUR la bannière
+       (pas sur fond sombre uniforme), donc on protège la lisibilité
+       même si le tint laisse percer un peu d'image en bas. */
+    text-shadow: 0 0 14px rgba(0, 0, 0, 0.65),
+                 0 0 4px rgba(0, 0, 0, 0.55);
     overflow: visible;
     text-overflow: clip;
 }
@@ -26728,22 +26745,11 @@ a.snap-holder-username:hover {
    visuelle propre aux collections (logo overlap, bannière 3:1). */
 
 /* Eyebrow magazine : label gauche + numéro éditorial droite, filet
-   blanc fin en dessous. Maintenant placé en HAUT du content (au-dessus
-   du portrait centré), miroir exact de la slide Featured Artists
-   (.home-fa-eyebrow). Plus de padding-left:104px : le logo ne déborde
-   plus depuis le hero, il vit comme un portrait centré dans le content. */
-/* Eyebrow : OVERLAY sur la bannière (en haut), par-dessus l'image.
-   Miroir exact de la mise en page Featured Artists où le label
-   "FEATURED ARTIST · 01/04" vit sur la zone hero. Position absolute
-   dans le hero (qui est position:relative). text-shadow doux pour
-   garantir la lisibilité sur les bannières claires sans dépendre
-   d'un fond plein. */
+   blanc fin en dessous. Premier enfant du content — visuellement
+   apparaît SUR la bannière car le content flow par-dessus le hero
+   (qui est en position:absolute background). Miroir exact de
+   .home-fa-eyebrow. */
 .home-fc-spotlight .home-feat-v3-eyebrow {
-    position: absolute;
-    top: 14px;
-    left: 18px;
-    right: 18px;
-    z-index: 3;
     display: flex;
     align-items: baseline;
     justify-content: space-between;
@@ -26751,6 +26757,8 @@ a.snap-holder-username:hover {
     border-bottom: 1px solid rgba(255, 255, 255, 0.28);
     margin: 0;
     min-height: 22px;
+    width: 100%;
+    flex-shrink: 0;
 }
 /* Text-shadow doux sur label/num/total : assure la lisibilité
    sur bannières claires sans halo dur. */
@@ -27096,10 +27104,10 @@ a.snap-holder-username:hover {
     /* Mobile : on garde le layout vertical "artist-style" du desktop
        (eyebrow → portrait circulaire → identity centered → stats → ...)
        et on resserre juste les tailles + paddings pour les petits
-       écrans. AVANT cette fix : la media query gardait l'ancien
-       layout (logo absolute carré chevauchant, identity en overlay
-       sur bannière, eyebrow décalé padding-left:80px) — incohérent
-       avec le nouveau layout depuis PR #159. */
+       écrans. */
+    /* Hero plus court sur mobile (suffisant pour eyebrow + portrait
+       96px + name + creator, soit ~210px de contenu). */
+    .home-fc-spotlight .home-feat-v3-hero { height: 220px; }
     .home-fc-spotlight .home-feat-v3-content { padding: 12px 12px 14px; gap: 10px; }
     .home-fc-spotlight .home-feat-v3-portrait { margin-top: 0; }
     /* Logo collection mobile = MÊME taille que .home-fa-avatar (96px).
@@ -27118,12 +27126,9 @@ a.snap-holder-username:hover {
        (Anciennes overrides "font-size: 20px" et "10.5px" retirées.) */
     .home-fc-spotlight .home-feat-v3-creator { gap: 6px; }
     .home-fc-spotlight .home-feat-v3-creator-avatar { width: 22px; height: 22px; }
-    /* Eyebrow : reste en absolute overlay sur la bannière (mobile),
-       juste resserrer les positions. */
+    /* Eyebrow mobile : reste en flow normal (premier enfant du
+       content) — juste resserrer le padding-bottom. */
     .home-fc-spotlight .home-feat-v3-eyebrow {
-        top: 10px;
-        left: 12px;
-        right: 12px;
         padding: 0 0 5px 0;
         margin: 0;
         min-height: 20px;
