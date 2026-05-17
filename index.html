@@ -8358,83 +8358,90 @@ document.addEventListener('DOMContentLoaded', initialize);
         // la slide Featured Artists. idx/total sont passés par buildFeatured().
         const num    = String((idx ?? 0) + 1).padStart(2, '0');
         const totalS = String(total ?? 0).padStart(2, '0');
-        // Layout éditorial — la card est un spread magazine vertical :
-        //   1) HERO : bannière 3:1 + overlay nom + creator centrés.
-        //   2) Logo absolute qui chevauche la frontière hero/body.
-        //   3) EYEBROW : "FEATURED COLLECTION · 01 / 04" (filet sous).
-        //   4) STATS PILL : 6 chiffres en pastille inline (Floor /
-        //      Items / Owners / Listed / Volume / Total) avec
-        //      séparateurs verticaux.
-        //   5) DESC : pull-quote avec barre cyan à gauche (éditorial).
-        //   6) SHOWCASE : 8 NFTs random avec petit eyebrow au-dessus.
-        //   7) CTA : bouton "Browse collection →" outlined cyan.
+        // Layout MIROIR de Featured Artists (cf. buildArtistSlide) :
+        //   1) HERO : background diffus de la collection (juste un fond
+        //      d'ambiance, plus aucun texte par-dessus).
+        //   2) CONTENT centré qui contient, dans l'ordre :
+        //      • EYEBROW "FEATURED COLLECTION · 01 / 04" (filet blanc fin)
+        //      • PORTRAIT : logo collection circulaire avec halo blanc
+        //        (look profil, comme l'avatar artiste)
+        //      • IDENTITY : nom de collection + verified + creator
+        //      • STATS pill, DESC pull-quote, SHOWCASE 8 NFTs, CTA outlined.
         card.innerHTML = `
-            <div class="home-feat-v3-hero-wrap">
-                <div class="home-feat-v3-hero">
-                    <div class="home-feat-v3-hero-bg"  style="background-image:url('${safeLogo}');"></div>
-                    <div class="home-feat-v3-hero-img" style="background-image:url('${safeLogo}');"></div>
-                    <div class="home-feat-v3-hero-tint"></div>
-                    <span class="home-feat-v3-change" style="display:none;"></span>
-                    <div class="home-feat-v3-identity">
-                        <span class="home-feat-v3-name-row">
-                            <span class="home-feat-v3-name">${col.name || '—'}</span>
-                        </span>
-                        <span class="home-feat-v3-creator home-feat-v3-creator--loading">
-                            <span class="home-feat-v3-creator-text">Loading…</span>
-                            <span class="home-feat-v3-verified-slot"></span>
-                        </span>
+            <div class="home-feat-v3-hero">
+                <div class="home-feat-v3-hero-bg"  style="background-image:url('${safeLogo}');"></div>
+                <div class="home-feat-v3-hero-img" style="background-image:url('${safeLogo}');"></div>
+                <div class="home-feat-v3-hero-tint"></div>
+                <span class="home-feat-v3-change" style="display:none;"></span>
+            </div>
+            <div class="home-feat-v3-content">
+                <!-- Eyebrow éditorial "FEATURED COLLECTION · 01 / 04" en HAUT.
+                     Symétrique à .home-fa-eyebrow de Featured Artists. -->
+                <div class="home-feat-v3-eyebrow">
+                    <span class="home-feat-v3-eyebrow-label">Featured Collection</span>
+                    <span class="home-feat-v3-eyebrow-num">${num}<span class="home-feat-v3-eyebrow-total"> / ${totalS}</span></span>
+                </div>
+                <!-- Portrait : logo collection circulaire halo blanc, joue
+                     le rôle de l'avatar de Featured Artists. Centré. -->
+                <div class="home-feat-v3-portrait">
+                    <img class="home-feat-v3-logo" src="${safeLogo}" alt="" loading="lazy" decoding="async" onerror="this.style.opacity='0.25';this.style.background='rgba(255,255,255,0.05)';"/>
+                </div>
+                <!-- Identity = nom de collection (gros, centré) + creator
+                     (cyan, petit) sous le portrait. Miroir de .home-fa-identity.
+                     Le verified-slot reste accroché au creator (sémantiquement
+                     c'est l'artiste qui est vérifié, pas la collection) — cf.
+                     commentaire JS ligne ~8606 dans renderFeatStats. -->
+                <div class="home-feat-v3-identity">
+                    <span class="home-feat-v3-name-row">
+                        <span class="home-feat-v3-name">${col.name || '—'}</span>
+                    </span>
+                    <span class="home-feat-v3-creator home-feat-v3-creator--loading">
+                        <span class="home-feat-v3-creator-text">Loading…</span>
+                        <span class="home-feat-v3-verified-slot"></span>
+                    </span>
+                </div>
+                <!-- Stats en pastille inline — chaque chiffre porte son label
+                     directement à côté (style éditorial type "fact sheet"). -->
+                <div class="home-feat-v3-stats">
+                    <span class="home-feat-v3-stat"><strong data-stat="floor">—</strong> Floor</span>
+                    <span class="home-feat-v3-stat-sep"></span>
+                    <span class="home-feat-v3-stat"><strong data-stat="items">—</strong> Items</span>
+                    <span class="home-feat-v3-stat-sep"></span>
+                    <span class="home-feat-v3-stat"><strong data-stat="owners">—</strong> Owners</span>
+                    <span class="home-feat-v3-stat-sep"></span>
+                    <span class="home-feat-v3-stat"><strong data-stat="listed">—</strong> Listed</span>
+                    <span class="home-feat-v3-stat-sep"></span>
+                    <span class="home-feat-v3-stat"><strong data-stat="vol">—</strong> <span data-label="vol">Volume</span></span>
+                    <span class="home-feat-v3-stat-sep"></span>
+                    <span class="home-feat-v3-stat"><strong data-stat="traded">—</strong> Total</span>
+                </div>
+                <!-- Description : traitée en pull-quote (filet cyan à gauche,
+                     italique) — donne un ton éditorial, plus "lecture longue"
+                     que stats brutes. Cachée tant que l'API n'a pas renvoyé
+                     de texte. Clamp à 3 lignes côté CSS. -->
+                <p class="home-feat-v3-desc" data-desc style="display:none;"></p>
+                <!-- Showcase : eyebrow "From the collection" + 8 NFTs random
+                     intégrant les 4 highlights. Le label est injecté par
+                     updateShowcase quand on a au moins 1 item. -->
+                <div class="home-feat-v3-showcase" data-showcase>
+                    <div class="home-feat-v3-showcase-label" style="opacity: 0.55;">
+                        <span class="skel skel-text-sm" style="width: 160px; display: inline-block; vertical-align: middle;"></span>
+                    </div>
+                    <div class="skel-thumbs-row">
+                        <span class="skel skel-thumb"></span>
+                        <span class="skel skel-thumb"></span>
+                        <span class="skel skel-thumb"></span>
+                        <span class="skel skel-thumb"></span>
+                        <span class="skel skel-thumb"></span>
+                        <span class="skel skel-thumb"></span>
+                        <span class="skel skel-thumb"></span>
+                        <span class="skel skel-thumb"></span>
                     </div>
                 </div>
-                <img class="home-feat-v3-logo" src="${safeLogo}" alt="" loading="lazy" decoding="async" onerror="this.style.opacity='0.25';this.style.background='rgba(255,255,255,0.05)';"/>
+                <!-- CTA outlined — toute la card est déjà cliquable, mais
+                     le bouton signale clairement l'affordance "explore". -->
+                <span class="home-feat-v3-browse">Browse collection<span class="home-feat-v3-browse-arrow"> →</span></span>
             </div>
-            <!-- Eyebrow éditorial "FEATURED COLLECTION · 01 / 04". Le
-                 padding-left dégage la zone occupée par le logo qui
-                 chevauche depuis la bannière. -->
-            <div class="home-feat-v3-eyebrow">
-                <span class="home-feat-v3-eyebrow-label">Featured Collection</span>
-                <span class="home-feat-v3-eyebrow-num">${num}<span class="home-feat-v3-eyebrow-total"> / ${totalS}</span></span>
-            </div>
-            <!-- Stats en pastille inline — chaque chiffre porte son label
-                 directement à côté (style éditorial type "fact sheet"). -->
-            <div class="home-feat-v3-stats">
-                <span class="home-feat-v3-stat"><strong data-stat="floor">—</strong> Floor</span>
-                <span class="home-feat-v3-stat-sep"></span>
-                <span class="home-feat-v3-stat"><strong data-stat="items">—</strong> Items</span>
-                <span class="home-feat-v3-stat-sep"></span>
-                <span class="home-feat-v3-stat"><strong data-stat="owners">—</strong> Owners</span>
-                <span class="home-feat-v3-stat-sep"></span>
-                <span class="home-feat-v3-stat"><strong data-stat="listed">—</strong> Listed</span>
-                <span class="home-feat-v3-stat-sep"></span>
-                <span class="home-feat-v3-stat"><strong data-stat="vol">—</strong> <span data-label="vol">Volume</span></span>
-                <span class="home-feat-v3-stat-sep"></span>
-                <span class="home-feat-v3-stat"><strong data-stat="traded">—</strong> Total</span>
-            </div>
-            <!-- Description : traitée en pull-quote (filet cyan à gauche,
-                 italique) — donne un ton éditorial, plus "lecture longue"
-                 que stats brutes. Cachée tant que l'API n'a pas renvoyé
-                 de texte. Clamp à 3 lignes côté CSS. -->
-            <p class="home-feat-v3-desc" data-desc style="display:none;"></p>
-            <!-- Showcase : eyebrow "From the collection" + 8 NFTs random
-                 intégrant les 4 highlights. Le label est injecté par
-                 updateShowcase quand on a au moins 1 item. -->
-            <div class="home-feat-v3-showcase" data-showcase>
-                <div class="home-feat-v3-showcase-label" style="opacity: 0.55;">
-                    <span class="skel skel-text-sm" style="width: 160px; display: inline-block; vertical-align: middle;"></span>
-                </div>
-                <div class="skel-thumbs-row">
-                    <span class="skel skel-thumb"></span>
-                    <span class="skel skel-thumb"></span>
-                    <span class="skel skel-thumb"></span>
-                    <span class="skel skel-thumb"></span>
-                    <span class="skel skel-thumb"></span>
-                    <span class="skel skel-thumb"></span>
-                    <span class="skel skel-thumb"></span>
-                    <span class="skel skel-thumb"></span>
-                </div>
-            </div>
-            <!-- CTA outlined — toute la card est déjà cliquable, mais
-                 le bouton signale clairement l'affordance "explore". -->
-            <span class="home-feat-v3-browse">Browse collection<span class="home-feat-v3-browse-arrow"> →</span></span>
         `;
         card.addEventListener('click', () => {
             if (typeof window.loadCollectionById === 'function') {
@@ -16527,6 +16534,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-17T07:30:00Z',
+            type:  'improvement',
+            title: 'Featured Collection layout',
+            text:  'Same vertical rhythm as Featured Artist: "FEATURED COLLECTION · 01/04" label at the top, round collection logo centered, then collection name and creator. Easier to scan at a glance.'
+        },
         {
             date:  '2026-05-17T06:30:00Z',
             type:  'feature',
