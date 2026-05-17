@@ -26414,22 +26414,32 @@ a.snap-holder-username:hover {
     display: grid;
     grid-template-columns: 1fr;
     grid-template-rows:    auto;
-    /* Every child sits in the same cell : we get a clean stack without
-       absolute positioning, so the container auto-sizes to the tallest
-       slide and we keep regular flex inside each card. `auto` (au lieu
-       de 1fr) garantit que la rangée prend la hauteur réelle des cards
-       même quand le parent n'a pas de hauteur explicite — sinon en
-       mobile (flex:none) la rangée pouvait se collapser et faire
-       chevaucher la section suivante. */
+    /* `position: relative` pour servir d'ancrage aux slides inactives
+       qui passent en position:absolute (cf. règle ci-dessous). La
+       hauteur du grid reflète DÉSORMAIS la hauteur de la slide active
+       — fini le "vide en bas" sur les slides plus courtes (Loaded
+       Mushroom sans Total stat, get-featured slot) qui était causé
+       par `grid-area: 1/1` qui forçait toutes les slides à la
+       hauteur de la plus grande. */
+    position: relative;
 }
 .home-featured-grid > * {
     grid-area: 1 / 1;
+    /* Slide inactive : retirée du flow via position:absolute pour
+       ne pas peser dans la hauteur du grid. */
+    position: absolute;
+    top: 0; left: 0; right: 0;
     opacity: 0;
     pointer-events: none;
     transform: translateY(8px) scale(0.992);
     transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .home-featured-grid > .is-active {
+    /* Slide active : revient dans le flow → détermine la hauteur du
+       grid (= hauteur naturelle du content de CETTE slide, plus de
+       grand espace mort en bas). */
+    position: relative;
+    top: auto; left: auto; right: auto;
     opacity: 1;
     pointer-events: auto;
     transform: none;
@@ -27676,7 +27686,10 @@ a.snap-holder-username:hover {
 .home-feat-v3-cta-links {
     display: flex;
     gap: 10px;
-    margin-top: 6px;
+    /* margin-top: auto → colle les boutons EN BAS de la card, au
+       même niveau que le CTA "Browse collection →" des autres
+       slides. Symétrie visuelle. */
+    margin-top: auto;
     width: 100%;
     justify-content: center;
     padding-top: 4px;
