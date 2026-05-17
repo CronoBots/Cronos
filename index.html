@@ -1452,29 +1452,40 @@
         </div>
         <div class="pulse-wrap home-cp-wrap">
           <div class="pulse-content home-cp-content">
-            <!-- KPIs community : registered / online / messages / signed-in.
-                 Mêmes IDs que dans Pulse → renderPulseCharts les remplit
-                 automatiquement quand initPulse() tourne. -->
+            <!-- KPIs community : registered + signed-in share. "Online
+                 now" retiré (déjà visible dans le chat à côté). "Messages
+                 (30d)" retiré aussi : le total apparaît comme sub-total
+                 au-dessus de "Top contributors". -->
             <div class="pulse-kpis-group">
               <span class="pulse-kpis-group-label">Community</span>
               <div class="pulse-kpis">
                 <div class="pulse-kpi" title="Total members who have signed in to the community chat at least once."><span class="pulse-kpi-label">Registered members</span><span class="pulse-kpi-value" id="pulseKpiMembers">—</span></div>
-                <div class="pulse-kpi" title="Members currently signed in and connected to the chat right now (live, refreshes automatically)."><span class="pulse-kpi-label">Online now</span><span class="pulse-kpi-value pulse-kpi-value--live" id="pulseKpiOnline">—</span></div>
-                <div class="pulse-kpi" title="Chat messages sent over the last 30 days (system join announces excluded)."><span class="pulse-kpi-label">Messages (30d)</span><span class="pulse-kpi-value" id="pulseKpiMessages">—</span></div>
                 <div class="pulse-kpi" title="Share of sessions from visitors who were signed in to a Crypto.com NFT account."><span class="pulse-kpi-label">Signed-in share</span><span class="pulse-kpi-value" id="pulseKpiSigned">—</span></div>
               </div>
             </div>
-            <!-- Charts + top contributors. En full-width vu la place dispo.
-                 "New members per week" est déplacée dans le Pulse du bas
-                 (sub-section Audience) pour ne pas dupliquer un même
-                 chart deux fois dans la home. -->
+            <!-- Charts + top contributors. "Sessions per day" est
+                 désormais affichée ICI (à côté de Chat activity) pour
+                 permettre la comparaison directe trafic ↔ activité
+                 chat. Top contributors affiche un sub-total Messages
+                 au-dessus de la liste (qui remplace l'ancien KPI
+                 Messages (30d) retiré du bloc Community). -->
             <div class="pulse-grid home-cp-grid">
               <div class="pulse-card pulse-card--full">
                 <h3 class="pulse-card-title">Chat activity</h3>
                 <div class="pulse-card-body"><canvas id="pulseChartChat"></canvas></div>
               </div>
               <div class="pulse-card pulse-card--full">
-                <h3 class="pulse-card-title">Top contributors</h3>
+                <h3 class="pulse-card-title">Sessions per day</h3>
+                <div class="pulse-card-body"><canvas id="pulseChartDaily"></canvas></div>
+              </div>
+              <div class="pulse-card pulse-card--full">
+                <h3 class="pulse-card-title">
+                  Top contributors
+                  <span class="pulse-card-subtotal" title="Chat messages sent over the last 30 days (system join announces excluded).">
+                    <span class="pulse-card-subtotal-label">Messages 30d</span>
+                    <span class="pulse-card-subtotal-value" id="pulseKpiMessages">—</span>
+                  </span>
+                </h3>
                 <div class="pulse-card-body"><ol class="pulse-list" id="pulseTopContributors"></ol></div>
               </div>
             </div>
@@ -1744,15 +1755,15 @@
           <!-- KPI row 2 (Community) déplacée dans la section Community
                Pulse en haut de la home, à côté du chat. -->
 
-          <!-- ── Sub-section 1 : Traffic over time ── -->
+          <!-- ── Sub-section 1 : Traffic over time ──
+               "Sessions per day" est désormais affichée à côté de Chat
+               activity dans la section Community Pulse (en haut), pour
+               permettre la comparaison directe trafic ↔ activité chat
+               sans devoir scroller. -->
           <div class="pulse-subsection">
             <span class="pulse-subsection-label">Traffic over time</span>
             <div class="pulse-grid">
               <div class="pulse-card pulse-card--wide">
-                <h3 class="pulse-card-title">Sessions per day</h3>
-                <div class="pulse-card-body"><canvas id="pulseChartDaily"></canvas></div>
-              </div>
-              <div class="pulse-card">
                 <h3 class="pulse-card-title">By hour of day</h3>
                 <div class="pulse-card-body"><canvas id="pulseChartHourly"></canvas></div>
               </div>
@@ -8435,29 +8446,23 @@ document.addEventListener('DOMContentLoaded', initialize);
                      totalSalesDecimal, exactement la même valeur que Total
                      affichait — doublon parfait sur les collections sans
                      ventes récentes). -->
-                <!-- Stats — grid 3 colonnes : sur mobile la 6e stat
-                     "Total" (si affichée) wrap proprement en 3+2+1 ou
-                     3+3 selon largeur. Sur desktop large, les 6 entrées
-                     tiennent sur 2 lignes équilibrées.
-
-                     La stat "Total" est conditionnellement affichée par
-                     renderFeatStats : visible si volLabel ≠ 'All-time'
-                     (donc Volume montre du récent, et Total apporte le
-                     cumulé all-time en plus). Cachée sinon pour éviter
-                     le doublon Volume = Total sur les collections sans
-                     activité récente (Loaded Mushroom etc). -->
+                <!-- Stats — ordre fixe demandé par l'utilisateur :
+                     Supply, Owners, Floor Price, Listed, 24h Vol, Volume.
+                     Tous toujours affichés (pas de hide conditionnel).
+                     Volume (dernière) = totalSalesDecimal all-time.
+                     24h Vol affiche vol24 si présent, sinon "—". -->
                 <div class="home-feat-v3-stats">
-                    <span class="home-feat-v3-stat"><strong data-stat="floor">—</strong> Floor</span>
-                    <span class="home-feat-v3-stat-sep"></span>
-                    <span class="home-feat-v3-stat"><strong data-stat="items">—</strong> Items</span>
+                    <span class="home-feat-v3-stat"><strong data-stat="items">—</strong> Supply</span>
                     <span class="home-feat-v3-stat-sep"></span>
                     <span class="home-feat-v3-stat"><strong data-stat="owners">—</strong> Owners</span>
                     <span class="home-feat-v3-stat-sep"></span>
+                    <span class="home-feat-v3-stat"><strong data-stat="floor">—</strong> Floor</span>
+                    <span class="home-feat-v3-stat-sep"></span>
                     <span class="home-feat-v3-stat"><strong data-stat="listed">—</strong> Listed</span>
                     <span class="home-feat-v3-stat-sep"></span>
-                    <span class="home-feat-v3-stat"><strong data-stat="vol">—</strong> <span data-label="vol">Volume</span></span>
-                    <span class="home-feat-v3-stat-sep" data-sep="traded"></span>
-                    <span class="home-feat-v3-stat" data-wrap="traded" style="display:none;"><strong data-stat="traded">—</strong> Total</span>
+                    <span class="home-feat-v3-stat"><strong data-stat="vol24">—</strong> 24h Vol</span>
+                    <span class="home-feat-v3-stat-sep"></span>
+                    <span class="home-feat-v3-stat"><strong data-stat="traded">—</strong> Volume</span>
                 </div>
                 <!-- Showcase : eyebrow "From the collection" + 8 NFTs random
                      intégrant les 4 highlights. Le label est injecté par
@@ -8528,17 +8533,26 @@ document.addEventListener('DOMContentLoaded', initialize);
                     </span>
                 </div>
                 <p class="home-feat-v3-desc home-feat-v3-cta-desc">Want your Crypto.com NFT collection featured on the home? Contact me on Discord or X to request it.</p>
-                <!-- Stats "ghost" : 5 entrées avec valeur "—" pour
-                     préserver le rythme vertical des autres slides FC.
-                     Pas hydratées (pas d'API call), pas d'animation. -->
+                <!-- Placeholder Read more invisible — réserve la
+                     hauteur du bouton "Read more" que les autres
+                     slides peuvent avoir, pour que la CTA card ait
+                     la même hauteur de zone desc qu'elles. -->
+                <button class="home-feat-v3-desc-toggle" type="button"
+                        style="visibility:hidden;" aria-hidden="true" tabindex="-1">Read more</button>
+                <!-- Stats "ghost" : 6 entrées dans le MÊME ordre que
+                     les slides FEATURED (Supply · Owners · Floor ·
+                     Listed · 24h Vol · Volume). Pas hydratées (pas
+                     d'API call), pas d'animation. -->
                 <div class="home-feat-v3-stats home-feat-v3-stats--ghost">
-                    <span class="home-feat-v3-stat"><strong>—</strong> Floor</span>
-                    <span class="home-feat-v3-stat-sep"></span>
-                    <span class="home-feat-v3-stat"><strong>—</strong> Items</span>
+                    <span class="home-feat-v3-stat"><strong>—</strong> Supply</span>
                     <span class="home-feat-v3-stat-sep"></span>
                     <span class="home-feat-v3-stat"><strong>—</strong> Owners</span>
                     <span class="home-feat-v3-stat-sep"></span>
+                    <span class="home-feat-v3-stat"><strong>—</strong> Floor</span>
+                    <span class="home-feat-v3-stat-sep"></span>
                     <span class="home-feat-v3-stat"><strong>—</strong> Listed</span>
+                    <span class="home-feat-v3-stat-sep"></span>
+                    <span class="home-feat-v3-stat"><strong>—</strong> 24h Vol</span>
                     <span class="home-feat-v3-stat-sep"></span>
                     <span class="home-feat-v3-stat"><strong>—</strong> Volume</span>
                 </div>
@@ -8641,14 +8655,11 @@ document.addEventListener('DOMContentLoaded', initialize);
                    || Number(data.metrics?.minSaleListingPriceDecimal)
                    || 0;
 
-        // Smart volume
+        // 24h volume (utilisé directement par la stat "24h Vol").
+        // vol7d / volAll ne sont plus nécessaires : les 6 stats ont
+        // un ordre fixe (Supply · Owners · Floor · Listed · 24h Vol
+        // · Volume=totalSalesDecimal), pas de fallback dynamique.
         const vol24 = Number(data.stats?.oneDayVolumeDecimal) || 0;
-        const vol7d = Number(data.stats?.sevenDayVolumeDecimal) || 0;
-        const volAll = Number(data.metrics?.totalSalesDecimal) || 0;
-        let volValue = 0, volLabel = 'Volume';
-        if (vol24 > 0)      { volValue = vol24;  volLabel = '24h Vol'; }
-        else if (vol7d > 0) { volValue = vol7d;  volLabel = '7d Vol'; }
-        else if (volAll > 0){ volValue = volAll; volLabel = 'Total'; }
 
         const owners = Number(data.metrics?.owners) || 0;
         const items  = Number(data.metrics?.items) || 0;
@@ -8658,14 +8669,11 @@ document.addEventListener('DOMContentLoaded', initialize);
         const elItems  = card.querySelector('[data-stat="items"]');
         const elOwners = card.querySelector('[data-stat="owners"]');
         const elListed = card.querySelector('[data-stat="listed"]');
-        const elVol    = card.querySelector('[data-stat="vol"]');
-        const elVolLbl = card.querySelector('[data-label="vol"]');
+        const elVol24  = card.querySelector('[data-stat="vol24"]');
+        const elTraded = card.querySelector('[data-stat="traded"]');
         /* On stocke la valeur brute + le type de format en dataset pour
            que animateSlideStats() (count-up sur activation de slide)
-           puisse re-formater chaque frame intermédiaire. Le textContent
-           initial reste la valeur finale formatée — si l'animation est
-           sautée (reduced-motion, slide déjà comptée), l'utilisateur
-           voit directement la valeur. */
+           puisse re-formater chaque frame intermédiaire. */
         const setStat = (el, value, fmtType) => {
             if (!el) return;
             const fmt = fmtType === 'num' ? fmtNum : fmtMoney;
@@ -8673,28 +8681,15 @@ document.addEventListener('DOMContentLoaded', initialize);
             el.dataset.cwtfTgt = String(value);
             el.dataset.cwtfFmt = fmtType;
         };
-        setStat(elFloor,  floor,    'money');
+        // Ordre fixe demandé : Supply (items) · Owners · Floor · Listed
+        // · 24h Vol · Volume (totalSalesDecimal all-time).
         setStat(elItems,  items,    'num');
         setStat(elOwners, owners,   'num');
+        setStat(elFloor,  floor,    'money');
         setStat(elListed, listed,   'num');
-        setStat(elVol,    volValue, 'money');
-        if (elVolLbl) elVolLbl.textContent = volLabel;
-        // TOTAL stat — affichée uniquement si Volume montre du récent
-        // (24h ou 7d). Sinon Volume tomberait sur all-time et Total
-        // serait un doublon parfait. La stat ET son séparateur sont
-        // toggles ensemble pour ne pas laisser un "|" orphelin.
-        const elTraded    = card.querySelector('[data-stat="traded"]');
-        const elTradedBox = card.querySelector('[data-wrap="traded"]');
-        const elTradedSep = card.querySelector('[data-sep="traded"]');
-        // Show the separate TOTAL stat only when Volume is showing
-        // recent activity (24h or 7d). If Volume already falls back
-        // on the lifetime total (volLabel === 'Total'), the dedicated
-        // TOTAL stat would be a doublon → hidden.
-        const showTotal = volLabel !== 'Total' && volLabel !== 'Volume';
+        setStat(elVol24,  vol24,    'money');
         const totalVal = Number(data.metrics?.totalSalesDecimal) || 0;
-        if (elTradedBox) elTradedBox.style.display = (showTotal && totalVal > 0) ? '' : 'none';
-        if (elTradedSep) elTradedSep.style.display = (showTotal && totalVal > 0) ? '' : 'none';
-        if (showTotal) setStat(elTraded, totalVal, 'money');
+        setStat(elTraded, totalVal, 'money');
         // Marker : stats prêtes pour la slide. Lu par animateSlideStats
         // au moment du reveal pour décider si on peut lancer le count-up.
         card.dataset.cwtfStatsReady = '1';
