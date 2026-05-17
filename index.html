@@ -8489,18 +8489,36 @@ document.addEventListener('DOMContentLoaded', initialize);
     function buildContactCard() {
         const card = document.createElement('div');
         card.className = 'home-feat-v3 home-feat-v3--cta';
+        // Mirror exact de la structure buildFeaturedCard : hero en
+        // background absolute, content avec eyebrow → portrait →
+        // identity → desc → boutons. Cohérence visuelle complète
+        // avec les 4 slides FEATURED qui précèdent.
         card.innerHTML = `
-            <div class="home-feat-v3-hero home-feat-v3-cta-hero">
-                <div class="home-feat-v3-cta-pattern"></div>
-                <div class="home-feat-v3-cta-icon-wrap">
-                    <svg class="home-feat-v3-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M12 5v14M5 12h14"/>
-                    </svg>
-                </div>
+            <div class="home-feat-v3-hero">
+                <div class="home-feat-v3-hero-bg"></div>
+                <div class="home-feat-v3-hero-tint"></div>
             </div>
-            <div class="home-feat-v3-body home-feat-v3-cta-body">
-                <h3 class="home-feat-v3-cta-title">Get your collection featured</h3>
-                <p class="home-feat-v3-cta-desc">Want your Cronos collection here? Reach out and I'll add it to the home page.</p>
+            <div class="home-feat-v3-content">
+                <div class="home-feat-v3-eyebrow">
+                    <span class="home-feat-v3-eyebrow-label">Featured Slot</span>
+                    <span class="home-feat-v3-eyebrow-num">Open</span>
+                </div>
+                <!-- Portrait : "+" cyan dans un cercle halo blanc, joue
+                     le rôle du logo collection sur les autres slides. -->
+                <div class="home-feat-v3-portrait">
+                    <div class="home-feat-v3-cta-portrait" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                    </div>
+                </div>
+                <div class="home-feat-v3-identity">
+                    <span class="home-feat-v3-name-row">
+                        <span class="home-feat-v3-name">Your collection here</span>
+                    </span>
+                    <span class="home-feat-v3-creator">
+                        <span class="home-feat-v3-creator-text">Claim this slot</span>
+                    </span>
+                </div>
+                <p class="home-feat-v3-desc home-feat-v3-cta-desc">Want your Cronos collection featured on the home? Drop me a message on Discord or X and I'll add it.</p>
                 <div class="home-feat-v3-cta-links">
                     <a class="home-feat-v3-cta-link home-feat-v3-cta-link--discord" href="https://discord.gg/Cronos_WTF" target="_blank" rel="noopener" onclick="event.stopPropagation()">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
@@ -16738,64 +16756,22 @@ async function sha256hex(str) {
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
         {
+            date:  '2026-05-17T14:30:00Z',
+            type:  'improvement',
+            title: 'Get-featured slot matches the rest',
+            text:  'The "claim a slot" slide at the end of Featured Collections now uses the same layout as the others — eyebrow, round portrait, name, and Discord/X links below.'
+        },
+        {
             date:  '2026-05-17T14:00:00Z',
             type:  'improvement',
-            title: 'Featured Collection mobile + PC polish',
-            text:  'Total stat is back when it adds info (e.g. on Loaded Lions where 24h Vol $1.4K and Total $59.5M tell different stories), hidden when redundant (when Volume already falls back on all-time). Description gets a "Read more" toggle on mobile so the full text is one tap away without making every card massive. Banner image is now properly blurred (5px) so the logo and name stand out. Stats are laid out in a 3-column grid on mobile for a balanced look instead of an uneven 4+1 wrap. The eyebrow numbering "01 / 04" no longer hugs the right edge on small screens.'
-        },
-        {
-            date:  '2026-05-17T13:00:00Z',
-            type:  'improvement',
-            title: 'Featured Collection polish',
-            text:  'Stats count up from zero when a slide is revealed, the banner image is gently blurred so the logo + name stand out instead of fighting with wordmarks behind, hovering an NFT thumbnail lifts it with a cyan halo, and the redundant "Total" stat (always equal to Volume when no recent sales) is gone. Five clean stats: Floor, Items, Owners, Listed, Volume.'
-        },
-        {
-            date:  '2026-05-17T12:00:00Z',
-            type:  'improvement',
-            title: 'Featured Collection — description and banner tweaks',
-            text:  'Description now sits before the stats (more context first, numbers after). Cyan bar on the left of the description is gone — the text is just centered italic under the identity. Banner kept its native 3:1 aspect ratio with min/max bounds so it scales properly on every screen size.'
-        },
-        {
-            date:  '2026-05-17T11:30:00Z',
-            type:  'improvement',
-            title: 'Featured Collection — identity over the banner',
-            text:  'Eyebrow, collection logo, collection name and artist name all now sit on top of the banner (same layout as Featured Artist). The banner became the visual base of the card instead of a separate strip above the content.'
-        },
-        {
-            date:  '2026-05-17T11:00:00Z',
-            type:  'improvement',
-            title: 'Featured Collections & Artists side-by-side',
-            text:  'On wide screens (≥1100px) the Featured Collection and Featured Artist cards now sit in two columns instead of stacking vertically. Mobile and laptops keep the stacked layout so the 8-NFT showcase strip stays readable. Mobile sizes of the collection logo and name now match Featured Artist exactly (same 96px round portrait, same clamp font for the name).'
-        },
-        {
-            date:  '2026-05-17T10:30:00Z',
-            type:  'improvement',
-            title: 'Featured Collection label moved up',
-            text:  '"FEATURED COLLECTION · 01/04" now sits on top of the banner (same spot as on Featured Artist) instead of below it. Tighter, less wasted vertical space, and the rhythm matches the Artist card.'
-        },
-        {
-            date:  '2026-05-17T10:00:00Z',
-            type:  'fix',
-            title: 'Featured Collection on mobile',
-            text:  'Mobile was still showing the old layout (square logo overlapping the banner, offset eyebrow) instead of the round-portrait artist-style layout introduced a few hours ago. Now consistent with desktop.'
-        },
-        {
-            date:  '2026-05-17T09:00:00Z',
-            type:  'improvement',
-            title: 'Featured Collection — artist avatar',
-            text:  'Small round avatar of the collection\'s creator now appears next to their name on the Featured Collection card. Easier to recognize the artist behind the collection at a glance.'
+            title: 'Featured Collection refresh',
+            text:  'New layout aligned on Featured Artist: label and round logo over the banner, name + creator below, description before stats. On wide screens both cards now sit side by side. Mobile: blurred banner, Read more toggle, 3-column stats grid.'
         },
         {
             date:  '2026-05-17T08:30:00Z',
             type:  'improvement',
             title: 'Featured Artist — more info',
-            text:  'The Featured Artist card now shows the artist bio, Twitter / Instagram / Facebook links when available, plus total likes and views in the stats line. All optional — empty handles or missing bios just don\'t render.'
-        },
-        {
-            date:  '2026-05-17T07:30:00Z',
-            type:  'improvement',
-            title: 'Featured Collection layout',
-            text:  'Same vertical rhythm as Featured Artist: "FEATURED COLLECTION · 01/04" label at the top, round collection logo centered, then collection name and creator. Easier to scan at a glance.'
+            text:  'Bio, Twitter / Instagram / Facebook links, plus likes and views in the stats line. All optional — missing fields just don\'t render.'
         },
         {
             date:  '2026-05-17T06:30:00Z',
