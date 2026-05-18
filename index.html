@@ -76,7 +76,7 @@
      downgrade la priorité parce qu'il découvre la font tardivement
      en parcourant la CSS. -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
-<link href="styles.css?v=1778320000" rel="stylesheet"/>
+<link href="styles.css?v=1778350000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -5357,58 +5357,115 @@ function renderGroupLegend(groups, groupBy) {
             return;
         }
 
-const list = document.createElement('ul');
-        list.className = 'group-legend-list';
-        list.setAttribute('role', 'list');
-        // Legend columns are handled by CSS grid auto-flow; keep DOM order by rank.
+        /* ── Ranking façon Market Stats : card (sb-results-wrap) + table avec
+              thead "# | Collection | NFTs" + tr.stats-tr / td.stats-td.
+              On réutilise les classes du tableau Top Collections pour hériter
+              du halo, des séparateurs verticaux et du style des cellules. ── */
+        const wrap = document.createElement('div');
+        wrap.className = 'sb-results-wrap sb-results-wrap--table profile-legend-wrap';
+
+        const tableScroll = document.createElement('div');
+        tableScroll.className = 'sb-table-wrap';
+
+        const table = document.createElement('table');
+        table.className = 'stats-table profile-legend-table';
+
+        const colHeader = groupBy === 'artist' ? 'Artist' : 'Collection';
+        const thead = document.createElement('thead');
+        thead.innerHTML =
+            '<tr>' +
+                '<th class="stats-th stats-th--rank">#</th>' +
+                '<th class="stats-th stats-th--collection stats-th--sep">' + colHeader + '</th>' +
+                '<th class="stats-th profile-legend-th-count">NFTs</th>' +
+            '</tr>';
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
         groups.forEach((group, groupIndex) => {
-
             const anchorId = `group-${groupBy}-${slugifyGroupKey(group.key)}-${groupIndex}`;
+            const cleanName = stripEmojiForLegend(group.key) || group.key;
 
-            const li = document.createElement('li');
-            li.className = 'group-legend-li';
+            /* Pas de logo de collection dans la payload assets du profil, on
+               fallback sur le cover du 1er NFT (toujours dispo). Sur les
+               artistes, idem — c'est l'image du 1er NFT de l'artiste. */
+            const firstAsset = group.assets[0]?.asset;
+            const logoUrl = firstAsset?.cover?.url || '';
 
-            const item = document.createElement('button');
-            item.type = 'button';
-            item.className = 'group-legend-item';
-            item.setAttribute('data-rank', String(groupIndex + 1));
-            item.setAttribute('aria-label', `Aller à ${group.key}`);
-            item.innerHTML = `
-                <span class="group-legend-tip"></span>
-                <span class="group-legend-name"></span>
-                <span class="group-legend-count">
-                    <span class="group-legend-num"></span>
-                    <span class="group-legend-label"></span>
-                </span>
-            `;
+            const row = document.createElement('tr');
+            row.className = 'stats-tr profile-legend-tr' + (groupIndex % 2 === 1 ? ' profile-legend-tr--alt' : '');
+            row.setAttribute('data-rank', String(groupIndex + 1));
+            row.setAttribute('role', 'button');
+            row.setAttribute('tabindex', '0');
+            row.setAttribute('aria-label', `Aller à ${group.key}`);
+            /* Structure statique (pas d'interpolation user-input) — les champs
+               dynamiques (nom, count, logo src) sont injectés via textContent /
+               .src ci-dessous pour éviter l'XSS sans dépendre d'un escapeHtml
+               global (qui n'existe pas dans ce closure). */
+            row.innerHTML =
+                '<td class="stats-td stats-td--center stats-td--rank"></td>' +
+                '<td class="stats-td profile-legend-name-cell">' +
+                    '<span class="home-top-name-inner">' +
+                        '<span class="profile-legend-logo-slot"></span>' +
+                        '<span class="home-top-col-texts">' +
+                            '<span class="home-top-name profile-legend-name"></span>' +
+                        '</span>' +
+                    '</span>' +
+                '</td>' +
+                '<td class="stats-td profile-legend-count-cell">' +
+                    '<span class="profile-legend-count-num"></span> ' +
+                    '<span class="profile-legend-count-label">NFTs</span>' +
+                '</td>';
 
-            item.querySelector('.group-legend-tip').textContent = String(groupIndex + 1);
+            // Rank badge (top 3 medal emoji, else plain number)
+            const rankCell = row.querySelector('.stats-td--rank');
+            const rankSpan = document.createElement('span');
             if (groupIndex < 3) {
-                /* Top 3 : emoji médaille (🥇/🥈/🥉) à la place du numéro, cohérent
-                   avec le rendu Market Stats. La classe --medal neutralise
-                   l'arrière-plan bulle gold/silver/bronze pour laisser
-                   respirer le glyphe. */
-                const tipEl = item.querySelector('.group-legend-tip');
-                tipEl.textContent = ['🥇', '🥈', '🥉'][groupIndex];
-                tipEl.classList.add('group-legend-tip--medal');
+                rankSpan.className = 'stats-rank stats-rank--medal';
+                rankSpan.textContent = ['🥇', '🥈', '🥉'][groupIndex];
+            } else {
+                rankSpan.className = 'stats-rank';
+                const numSpan = document.createElement('span');
+                numSpan.className = 'stats-rank-num';
+                numSpan.textContent = String(groupIndex + 1);
+                rankSpan.appendChild(numSpan);
             }
-            item.querySelector('.group-legend-name').textContent = stripEmojiForLegend(group.key) || group.key;
-            item.querySelector('.group-legend-num').textContent = String(group.assets.length);
-            item.querySelector('.group-legend-label').textContent = 'NFTs';
+            rankCell.appendChild(rankSpan);
 
-            item.addEventListener('click', () => {
+            // Logo (cover du 1er NFT, fallback bloc vide)
+            const logoSlot = row.querySelector('.profile-legend-logo-slot');
+            if (logoUrl) {
+                const img = document.createElement('img');
+                img.className = 'home-top-logo profile-legend-logo';
+                img.src = logoUrl;
+                img.alt = '';
+                img.loading = 'lazy';
+                img.decoding = 'async';
+                logoSlot.replaceWith(img);
+            } else {
+                const empty = document.createElement('div');
+                empty.className = 'home-top-logo home-top-logo--empty profile-legend-logo';
+                logoSlot.replaceWith(empty);
+            }
+
+            row.querySelector('.profile-legend-name').textContent = cleanName;
+            row.querySelector('.profile-legend-count-num').textContent = String(group.assets.length);
+
+            const goTo = () => {
                 const target = document.getElementById(anchorId);
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            };
+            row.addEventListener('click', goTo);
+            row.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goTo(); }
             });
 
-            li.appendChild(item);
-            list.appendChild(li);
+            tbody.appendChild(row);
         });
+        table.appendChild(tbody);
 
-        legendEl.appendChild(title);
-        legendEl.appendChild(list);
+        tableScroll.appendChild(table);
+        wrap.appendChild(tableScroll);
+        legendEl.appendChild(wrap);
 
         startGroupLegendSync();
         requestAnimationFrame(syncGroupLegendToResults);
@@ -17031,6 +17088,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-19T04:00:00Z',
+            type:  'improvement',
+            title: 'Profile rankings now look like Market Stats',
+            text:  'Profile rankings sit in the same card/table as Top Collections — header row "# | Collection | NFTs", thumbnails on the left, top 3 with gold/silver/bronze medals. Collection names in normal case (no more all caps). Also fixed the double separator next to the mobile search icon.'
+        },
         {
             date:  '2026-05-19T03:00:00Z',
             type:  'improvement',
