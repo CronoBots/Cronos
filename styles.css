@@ -502,10 +502,16 @@
     margin: 0 2px;
 }
 
-/* Petit bouton "?" en bas-droite qui ouvre la cheat sheet. Permet de
-   découvrir les shortcuts sans connaître la touche ? d'avance.
-   Caché sur mobile (où le clavier physique n'est pas utilisé). */
+/* Bouton flottant "?" en bas-gauche — masqué : la liste des raccourcis
+   vit maintenant dans le panneau Settings (.settings-shortcuts-section).
+   L'utilisateur peut toujours ouvrir la cheat sheet complète avec `?`
+   au clavier. */
 .kbd-hint {
+    display: none !important;
+}
+/* (ancien styling .kbd-hint conservé ci-dessous pour référence historique —
+   neutralisé par le display:none ci-dessus.) */
+._kbd-hint-legacy-styling-noop {
     position: fixed;
     bottom: 22px;
     left: 22px;
@@ -5118,10 +5124,24 @@ body.is-collage-view #collectionTitle {
    profil/explorer (NFT cards avec zoom au hover). Les panneaux fullscreen
    (Home, Stats, Drops, Snapshot…) n'en ont pas besoin. */
 body.view--profile .app-main {
+  /* Écarts L/R symétriques alignés sur Home (.home-body : 75px chaque
+     côté sur desktop). Avant : padding-left 25px / padding-right 75px
+     → asymétrique, profil "collé à gauche" par rapport aux autres
+     onglets ; en plus la spécificité (0,1,1) gagnait contre la règle
+     mobile `.app-main { padding 20px 16px 24px !important }` (0,1,0),
+     donc même sur mobile le profil hérite de 25/75 — d'où l'effet
+     "collé aux bords" rapporté par l'utilisateur.
+     Maintenant : 75/75 sur desktop, 16/16 sur mobile (match home). */
   padding-top: calc(0px + var(--nft-hover-gutter)) !important;
-  padding-left: 25px !important;
+  padding-left: 75px !important;
   padding-right: 75px !important;
   padding-bottom: 24px !important;
+}
+@media (max-width: 768px) {
+    body.view--profile .app-main {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
 }
 
 /* ── Écart latéral uniforme — tous les panneaux fullscreen (hors profil) ──
@@ -13737,32 +13757,65 @@ body.is-profile-loading #profileLoadingOverlay * {
     .home-two-col { grid-template-columns: 1fr; gap: 16px; }
 }
 
-/* ── HOME LAYOUT PRINCIPAL (PC) — 2 colonnes : LEFT chat-pulse-patrons
-      / RIGHT featured-collection-featured-artists. Sur écran < 1100px on
-      empile tout sur 1 col pour garder de la place aux 8 NFT thumbnails
-      des showcases Featured. ── */
+/* ── HOME LAYOUT PRINCIPAL (PC ≥1100px) — Grille 4 zones :
+      Row 1 : chat (3/5)             | featured-collection (2/5)
+      Row 2 : bottom-left (pulse +   | featured-artists
+              patrons stackés)       |
+      `align-items: stretch` (default) → chat et featured-collection ont
+      la même hauteur (même row), pulse+patrons et featured-artists aussi.
+      Sur écran <1100px : 1 col, sections empilées dans l'ordre du DOM
+      (chat → pulse+patrons → featured-coll → featured-artists). ── */
 .home-two-col--main {
     grid-template-columns: 1fr;
     gap: 16px;
 }
 @media (min-width: 1100px) {
     .home-two-col--main {
-        grid-template-columns: 1fr 1fr;
-        gap: 24px;
-        align-items: start;
+        grid-template-columns: 3fr 2fr;
+        grid-template-areas:
+            "chat featured-col"
+            "bottom-left featured-art";
+        column-gap: 24px;
+        row-gap: 28px;
+        align-items: stretch;
     }
+    .home-two-col--main > .home-community-section    { grid-area: chat; }
+    .home-two-col--main > .home-section--featured    { grid-area: featured-col; }
+    .home-two-col--main > .home-bottom-left-wrap     { grid-area: bottom-left; }
+    .home-two-col--main > .home-section--featured-artists { grid-area: featured-art; }
 }
 
-/* Une colonne du layout principal : sections empilées verticalement avec
-   le même gap que .home-body (~28px). */
-.home-col {
+/* Wrapper "bottom-left" : flex column pour empiler Pulse + Patrons. */
+.home-bottom-left-wrap {
     display: flex;
     flex-direction: column;
     gap: 28px;
-    min-width: 0; /* évite que le contenu force la colonne à dépasser */
+    min-width: 0;
 }
 @media (max-width: 720px) {
-    .home-col { gap: 20px; }
+    .home-bottom-left-wrap { gap: 20px; }
+}
+
+/* Chat et Featured Collection : hauteur 100% de leur cellule grid pour
+   matcher la stretch. Le max-height: 540px hérité du chat est annulé sur
+   ≥1100px pour laisser le grid décider de la hauteur. */
+@media (min-width: 1100px) {
+    .home-two-col--main > .home-community-section,
+    .home-two-col--main > .home-section--featured {
+        height: 100%;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    .home-two-col--main > .home-community-section .home-community-card {
+        max-height: none;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+    .home-two-col--main > .home-section--featured .home-fc-spotlight {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
 }
 
 
@@ -14018,6 +14071,28 @@ body.is-profile-loading #profileLoadingOverlay * {
     flex-shrink: 0;
     cursor: default;
     transform: translateY(-2px);
+}
+
+/* ── Uniformisation des badges dans la sidebar membres ──
+   Dans la sidebar (.home-chat-members-sidebar), les badges WTF CREATOR,
+   WTF OG et WTF PATRON étaient à des tailles différentes :
+     - .chat-patron-badge.chat-patron-badge--member → 7.5px (compact)
+     - .chat-creator-badge / .chat-og-badge        → 9.5px (base) — pas
+       de variant --member défini, donc trop gros pour la sidebar.
+   On harmonise : tous les badges dans la sidebar utilisent les mêmes
+   dimensions / typo / placement que la variant --member. */
+.home-chat-members-sidebar .chat-creator-badge,
+.home-chat-members-sidebar .chat-og-badge,
+.home-chat-members-sidebar .chat-patron-badge {
+    height: 13px;
+    line-height: 13px;
+    padding: 0 6px;
+    font-size: 7.5px;
+    margin-left: 2px;
+    transform: none;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-weight: 800;
+    letter-spacing: 0.05em;
 }
 
 /* ── Badge "WTF OG" — vert, réservé aux OGs (snipe13 / The Photograph).
@@ -30691,6 +30766,65 @@ body { box-sizing: border-box; }
 .settings-lang-select:focus { border-color: rgba(0,179,255,0.4); }
 .settings-lang-select option { background: #0d1830; color: #fff; }
 
+/* ── Keyboard shortcuts (section du panneau Settings — remplace
+      l'ancien bouton flottant .kbd-hint en bas d'écran) ── */
+.settings-shortcuts-section {
+    /* Hérite du padding/border de .settings-section. */
+}
+.settings-shortcuts-group {
+    margin-top: 8px;
+}
+.settings-shortcuts-group:first-of-type {
+    margin-top: 4px;
+}
+.settings-shortcuts-group-title {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(0, 179, 255, 0.65);
+    margin: 4px 0 6px;
+}
+.settings-shortcut-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 5px 0;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.65);
+    line-height: 1;
+}
+.settings-shortcut-keys {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.settings-shortcut-keys kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1;
+}
+.settings-shortcut-desc {
+    text-align: right;
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* ── Logout ── */
 .settings-footer { padding: 8px 14px 12px; border-top: 1px solid rgba(255,255,255,0.06); }
 .settings-logout-btn {
@@ -33773,12 +33907,43 @@ body.view--profile .navbar.navbar--floating-controls {
     margin-top: 6px;
     gap: 10px;
     justify-content: center;
+    display: flex;
+    align-items: center;
+}
+/* Les <p id="croLink"> et <p id="twitterLink"> wrappent les <a> sociaux —
+   on neutralise leur padding/margin de balise <p> pour pouvoir styler
+   le <a> comme une vraie pill button. */
+.profile-page-title-block .profile-header--page .social-container > p {
+    margin: 0;
+    padding: 0;
+    display: inline-flex;
+}
+/* Boutons sociaux profil — même look que dans Featured Artists
+   (.home-fa-social-link) : pill 30×30, border subtle, hover cyan. */
+.profile-page-title-block .profile-header--page .social-container a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.75);
+    transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    box-sizing: border-box;
+}
+.profile-page-title-block .profile-header--page .social-container a:hover {
+    transform: translateY(-1px);
+    border-color: rgba(0, 179, 255, 0.5);
+    background: rgba(0, 179, 255, 0.08);
 }
 .profile-page-title-block .profile-header--page .social-icon {
-    width: 22px !important;
-    height: 22px !important;
-    border-radius: 4px !important;
-    box-shadow: none;
+    width: 14px !important;
+    height: 14px !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    display: block;
 }
 .profile-page-title-block .profile-header--page .profile-bio {
     max-width: 640px;
@@ -34536,30 +34701,41 @@ body.is-group-stats-view
 .profile-legend-wrap {
     margin-top: 4px;
     margin-bottom: 16px;
-    /* Pas de cadre — aucun background, aucune bordure. */
     background: transparent;
     border: none;
     box-shadow: none;
     padding: 0;
-}
-
-.profile-legend-table-scroll {
-    /* Évite l'overflow accidentel sur petit écran sans cadre visible. */
-    overflow-x: hidden;
     width: 100%;
 }
 
-.profile-legend-table {
-    width: 100%;
-    table-layout: auto;
-    border-collapse: collapse;
+/* Liste : 1 col (mobile / tablette), 3 cols (PC ≥1100px) via CSS multi-
+   column. Chaque rang (.profile-legend-tr) reste un flex row [rank | body
+   | count]. column-fill: balance répartit équitablement entre les 3 cols. */
+.profile-legend-list {
+    column-count: 1;
+    column-gap: 32px;
+    column-fill: balance;
     font-family: 'Geomanist-Bold', sans-serif;
 }
+@media (min-width: 1100px) {
+    .profile-legend-list {
+        column-count: 3;
+    }
+}
 
-/* Rangées cliquables — curseur + hover subtil + focus visible. */
+/* Rang = flex row à 1 ligne. break-inside: avoid empêche qu'un rang soit
+   coupé en deux entre 2 colonnes. */
 .profile-legend-tr {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 4px;
     cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     transition: background 0.15s ease;
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
 }
 .profile-legend-tr:hover {
     background: rgba(255, 255, 255, 0.04);
@@ -34569,35 +34745,26 @@ body.is-group-stats-view
     outline-offset: -2px;
 }
 
-/* Cellules — padding compact, séparateur fin entre rangs (pas sur le
-   dernier pour ne pas créer une ligne flottante en bas). */
-.profile-legend-table tbody .stats-td {
-    padding: 10px 6px;
-    vertical-align: middle;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-.profile-legend-table tbody .stats-tr:last-child .stats-td {
-    border-bottom: none;
-}
-/* Cellule rank : largeur fixe, centrée. */
-.profile-legend-table .stats-td--rank {
-    width: 48px;
-    text-align: center;
-    padding-left: 0;
-    padding-right: 0;
+/* Cellule rank — largeur fixe, contenu centré. */
+.profile-legend-rank-cell {
+    flex: 0 0 auto;
+    width: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Nom + logo — pattern .home-top-name-inner inline. */
-.profile-legend-name-cell {
+/* Cellule body — logo + nom. flex 1 pour prendre la place restante. */
+.profile-legend-body-cell {
+    flex: 1 1 0;
     min-width: 0;
-}
-.profile-legend-name-cell .home-top-name-inner {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    min-width: 0;
-    width: 100%;
+    overflow: hidden;
 }
+
+/* Logo collection — 36px carré arrondi, fallback bloc vide en gradient. */
 .profile-legend-logo {
     width: 36px;
     height: 36px;
@@ -34607,12 +34774,12 @@ body.is-group-stats-view
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
-.profile-legend-logo.home-top-logo--empty {
+.profile-legend-logo--empty {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(0, 179, 255, 0.06));
 }
+
+/* Nom collection — casse normale (pas d'uppercase forcé), Geomanist Bold. */
 .profile-legend-name {
-    /* Casse normale (pas d'uppercase forcé) + Geomanist Bold, cohérent
-       avec le reste du site. */
     font-family: 'Geomanist-Bold', sans-serif;
     font-weight: 700;
     font-size: 14px;
@@ -34622,16 +34789,15 @@ body.is-group-stats-view
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    display: inline-block;
-    max-width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
 }
 
-/* Count "N NFTs" à droite — chiffre blanc, label cyan, format chip-like. */
+/* Cellule count "N NFTs" à droite. */
 .profile-legend-count-cell {
+    flex: 0 0 auto;
     text-align: right;
     white-space: nowrap;
-    width: 90px;
-    padding-right: 6px;
 }
 .profile-legend-count-num {
     font-family: 'Geomanist-Bold', sans-serif;
@@ -34648,27 +34814,22 @@ body.is-group-stats-view
     margin-left: 4px;
 }
 
-/* Médaille / numéro — réutilise .stats-rank de Market Stats. Légère
-   touche pour qu'elle soit verticalement centrée dans la cellule. */
-.profile-legend-tr .stats-rank,
-.profile-legend-tr .stats-rank--medal {
-    margin: 0 auto;
-}
-
-/* Mobile : padding réduit, logo et police plus petits. */
+/* Mobile : padding réduit, logo et police plus petits, gap entre items
+   plus serré. */
 @media (max-width: 640px) {
     .profile-legend-wrap {
         margin-top: 4px;
         margin-bottom: 12px;
     }
-    .profile-legend-table .stats-td--rank {
-        width: 38px;
+    .profile-legend-tr {
+        padding: 8px 2px;
+        gap: 8px;
     }
-    .profile-legend-table tbody .stats-td {
-        padding: 8px 4px;
+    .profile-legend-rank-cell {
+        width: 30px;
     }
-    .profile-legend-count-cell {
-        width: 70px;
+    .profile-legend-body-cell {
+        gap: 8px;
     }
     .profile-legend-logo {
         width: 32px;
@@ -34680,9 +34841,6 @@ body.is-group-stats-view
     .profile-legend-count-num,
     .profile-legend-count-label {
         font-size: 11px;
-    }
-    .profile-legend-name-cell .home-top-name-inner {
-        gap: 8px;
     }
 }
 
