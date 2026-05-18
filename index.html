@@ -76,7 +76,7 @@
      downgrade la priorité parce qu'il découvre la font tardivement
      en parcourant la CSS. -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
-<link href="styles.css?v=1778290000" rel="stylesheet"/>
+<link href="styles.css?v=1778320000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -5383,6 +5383,15 @@ const list = document.createElement('ul');
             `;
 
             item.querySelector('.group-legend-tip').textContent = String(groupIndex + 1);
+            if (groupIndex < 3) {
+                /* Top 3 : emoji médaille (🥇/🥈/🥉) à la place du numéro, cohérent
+                   avec le rendu Market Stats. La classe --medal neutralise
+                   l'arrière-plan bulle gold/silver/bronze pour laisser
+                   respirer le glyphe. */
+                const tipEl = item.querySelector('.group-legend-tip');
+                tipEl.textContent = ['🥇', '🥈', '🥉'][groupIndex];
+                tipEl.classList.add('group-legend-tip--medal');
+            }
             item.querySelector('.group-legend-name').textContent = stripEmojiForLegend(group.key) || group.key;
             item.querySelector('.group-legend-num').textContent = String(group.assets.length);
             item.querySelector('.group-legend-label').textContent = 'NFTs';
@@ -17022,6 +17031,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-19T03:00:00Z',
+            type:  'improvement',
+            title: 'Profile rankings + mobile polish',
+            text:  'Profile rankings now look like the Market Stats ones — no dark bubble around each row, top 3 as gold/silver/bronze medal emojis. On mobile the download / collage buttons share the same row as the size filter (smaller). Also a thin separator between the mobile search icon and the Home tab that sometimes disappeared.'
+        },
         {
             date:  '2026-05-19T02:00:00Z',
             type:  'improvement',
