@@ -33612,3 +33612,363 @@ body { box-sizing: border-box; }
     }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   PROFILE VIEW — Redesign aligné sur Sales Bot / Market Stats
+   ───────────────────────────────────────────────────────────────────────────
+   Structure :
+     #profileViewContent
+       .profile-page-inner
+         .profile-page-title-block   ← titre centré (profile OR collection)
+         .profile-filters-bar        ← chips horizontaux (stats cliquables)
+         .profile-results-wrap       ← halo bleu, contient le grid NFT
+
+   La sidebar gauche a disparu : on neutralise --sidebar-width et
+   .app-main margin-left en vue profil.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Plus de sidebar : neutralise le décalage horizontal hérité, en vue profil
+   ET en vue collection (qui réutilise le même profileViewContent). */
+body.view--profile {
+    --sidebar-width: 0px;
+}
+body.view--profile .app-main,
+body.view--profile.view--collection .app-main {
+    margin-left: 0 !important;
+    /* La sidebar à disparu : on ne réserve plus 100px de gouttière latérale.
+       Le padding latéral interne (profile-page-inner) prend le relai et
+       reste aligné sur Sales Bot / Market Stats. */
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+body.view--profile .navbar.navbar--floating-controls {
+    left: 0 !important;
+    width: 100% !important;
+}
+
+/* Conteneur interne aligné sur .sb-inner / .stats-panel pour matcher
+   le padding latéral et le rythme vertical des autres onglets. */
+.profile-page-inner {
+    width: 100%;
+    box-sizing: border-box;
+    padding: clamp(4px, 0.6vh, 10px) 20px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* ── Bloc titre centré (avatar + username + socials OU collection mode) ──
+   Aligné sur .stats-page-title-block du Market Stats panel. */
+.profile-page-title-block {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+/* Profile header en mode "page redesign" — centré, compact. On garde la même
+   classe .profile-header--page mais on ajoute un override doux qui prend la
+   priorité grâce à la spécificité de .profile-page-title-block (cascade). */
+.profile-page-title-block .profile-header--page {
+    display: block;
+    width: 100%;
+}
+.profile-page-title-block .profile-header--page .profile-header-content--center {
+    margin: 0 auto;
+    padding: 0 16px;
+    gap: 10px;
+    width: min(900px, 100%);
+}
+.profile-page-title-block .profile-header--page .profile-picture--round img {
+    width: 88px;
+    height: 88px;
+    border-radius: 9999px;
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    object-fit: cover;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+.profile-page-title-block .profile-header--page .username {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: clamp(28px, 3.5vw, 48px);
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #fff;
+    line-height: 1.05;
+    margin: 0;
+}
+.profile-page-title-block .profile-header--page .display-name {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 2px 0 0;
+}
+.profile-page-title-block .profile-header--page .verified-badge {
+    width: 18px;
+    height: 18px;
+}
+.profile-page-title-block .profile-header--page .social-container {
+    margin-top: 6px;
+    gap: 10px;
+}
+.profile-page-title-block .profile-header--page .social-icon {
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 4px !important;
+    box-shadow: none;
+}
+.profile-page-title-block .profile-header--page .profile-bio {
+    max-width: 640px;
+    margin: 8px auto 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.45;
+    text-align: center;
+}
+
+/* Collection mode header dans la même position que le profile header */
+.profile-page-title-block .collection-mode-header {
+    display: none; /* contrôlé par JS via inline display:flex */
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 16px;
+    text-align: left;
+}
+.profile-page-title-block .collection-mode-header .collection-mode-logo-wrap {
+    flex-shrink: 0;
+}
+.profile-page-title-block .collection-mode-header .collection-mode-logo {
+    width: 72px;
+    height: 72px;
+    border-radius: 14px;
+    object-fit: cover;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+.profile-page-title-block .collection-mode-header .collection-mode-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+.profile-page-title-block .collection-mode-header .collection-mode-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.profile-page-title-block .collection-mode-header .collection-mode-title {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: clamp(24px, 3vw, 40px);
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #fff;
+    line-height: 1.05;
+}
+.profile-page-title-block .collection-mode-header .collection-mode-verified-svg {
+    width: 18px;
+    height: 18px;
+}
+.profile-page-title-block .collection-mode-header .collection-mode-items {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+.profile-page-title-block .collection-mode-header .collection-mode-links .social-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+}
+
+/* ── Barre de filtres : chips horizontaux ──
+   Mêmes paddings que .sb-filters-bar pour matcher le rythme vertical. */
+.profile-filters-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 8px 0 12px;
+    margin-bottom: 12px;
+}
+
+/* Container des stat chips — scroll horizontal sur mobile, wrap sur desktop. */
+.profile-stats-chips {
+    width: 100%;
+}
+.profile-stats-chips .stats-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    grid-template-columns: none;
+    width: 100%;
+}
+
+/* Stat card → chip horizontal compact. Style aligné sur les pills
+   .stats-tr-btn / .sb-transfer-filter-btn (button group de Sales Bot). */
+.profile-stats-chips .stat-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    height: 32px;
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 7px;
+    text-align: left;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.profile-stats-chips .stat-card .stat-value {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1;
+    color: #fff;
+    letter-spacing: 0.02em;
+    margin: 0;
+}
+.profile-stats-chips .stat-card .stat-label {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.profile-stats-chips .stat-card[data-stat-action]:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.18);
+}
+.profile-stats-chips .stat-card[data-stat-action]:hover .stat-label {
+    color: rgba(255, 255, 255, 0.85);
+}
+.profile-stats-chips .stat-card.is-active-stat {
+    background: rgba(0, 179, 255, 0.12);
+    border-color: rgba(0, 179, 255, 0.5);
+    color: #00B3FF;
+}
+.profile-stats-chips .stat-card.is-active-stat .stat-value,
+.profile-stats-chips .stat-card.is-active-stat .stat-label {
+    color: #00B3FF;
+}
+
+/* "Favorite" chips (collection / artist / NFT récent) — affichent un nom long :
+   on autorise plus de largeur et on garde value + label sur deux lignes mini. */
+.profile-stats-chips .stat-card--full {
+    height: auto;
+    min-height: 32px;
+    padding: 6px 12px;
+    grid-column: auto;
+    max-width: 280px;
+}
+.profile-stats-chips .stat-card--full .stat-value {
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+}
+.profile-stats-chips .stat-card--full .stat-label {
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* ── Conteneur résultats avec halo bleu ──
+   Réutilise la même esthétique que .sb-results-wrap (Sales Bot / Market Stats). */
+.profile-results-wrap {
+    border: 1px solid rgba(0, 179, 255, 0.5);
+    border-radius: 14px;
+    box-shadow:
+        0 0 0 1px rgba(0, 179, 255, 0.55),
+        0 0 40px rgba(0, 179, 255, 0.35),
+        0 0 80px rgba(0, 179, 255, 0.18);
+    padding: 16px;
+    background: rgba(11, 20, 38, 0.4);
+    margin-top: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* À l'intérieur du halo, le .profile-section et l'asset-count-bar
+   reprennent un layout en colonne, sans largeur fixe ni marge externe.
+   On garde display:flex pour rester compatible avec _showProfileContent
+   qui force .profile-section à display:flex. */
+.profile-results-wrap .profile-section {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    width: 100%;
+    margin: 0 0 12px;
+    padding: 0;
+}
+.profile-results-wrap .asset-count-bar {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* Le grid NFT vit dans le halo : pas de margin-left hérité, largeur plein
+   conteneur (les 50px de marge latérale hérités du layout sidebar ne sont
+   plus pertinents — le padding du halo joue déjà ce rôle). */
+.profile-results-wrap #nftContainer {
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Group legend (titre + liste des groupes) — même override que pour
+   #nftContainer : pas de marges latérales héritées du layout sidebar. */
+.profile-results-wrap .group-legend {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Mobile : padding latéral réduit pour gagner de la place. */
+@media (max-width: 640px) {
+    .profile-page-inner {
+        padding: clamp(4px, 0.6vh, 10px) 12px 64px;
+    }
+    .profile-page-title-block {
+        margin-bottom: 16px;
+    }
+    .profile-page-title-block .profile-header--page .profile-picture--round img {
+        width: 72px;
+        height: 72px;
+    }
+    .profile-stats-chips .stats-grid {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        justify-content: flex-start;
+        scrollbar-width: none;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+    }
+    .profile-stats-chips .stats-grid::-webkit-scrollbar {
+        display: none;
+    }
+    .profile-stats-chips .stat-card {
+        flex-shrink: 0;
+    }
+    .profile-results-wrap {
+        padding: 12px;
+        margin-left: -4px;
+        margin-right: -4px;
+    }
+}
+
+/* Sécurité : empêcher tout flash de la sidebar disparue. La règle
+   #leftSidebar{display:none} du <head> critique reste valide, mais
+   on couvre aussi le cas où le sélecteur ne s'applique pas. */
+#leftSidebar { display: none !important; }
+
