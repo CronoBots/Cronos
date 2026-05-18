@@ -16511,8 +16511,13 @@ body.is-profile-loading #profileLoadingOverlay * {
     justify-content: space-between;
     gap: 10px;
     flex-wrap: wrap;
-    padding: 8px 0 12px;
-    margin-bottom: 12px;
+    /* Espacement filtres → cadre résultats aligné sur Market Stats (~8px).
+       Avant : padding 8px 0 12px + margin-bottom 12px → ~24px de gap avant
+       .sb-results-wrap. Market Stats utilise .stats-panel-controls sans
+       margin-bottom et le seul gap vient du .sb-results-wrap { margin-top:
+       8px }. On reproduit le même rythme. */
+    padding: 8px 0 0;
+    margin-bottom: 0;
 }
 .sb-filters-left {
     display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
@@ -30942,79 +30947,72 @@ body { box-sizing: border-box; }
        Layout mobile cible (du haut vers le bas) :
          Row 1 : sort (Recent | Price | Rank)
          Row 2 : mode (Sales | Listings | Auctions | All)
-         Row 3 : col-selector | add-collection | alert
-         Row 4 : hide-$1
-         Row 5 : search-bar | view-toggle
-         Row 6 : "SALES 20 DISPLAYED" centré
+         Row 3 : col-selector | Add collection           (50% / 50%)
+         Row 4 : Hide $1 | Alert | view-toggle           (auto sizes)
+         Row 5 : "SALES N DISPLAYED" centré
+         (Search bar masquée sur mobile — demande user)
 
-       Pour mettre le view-toggle (qui est DANS .sb-filters-right en HTML)
-       à côté du search (qui est DANS .sb-filters-left en HTML), on passe
-       les deux wrappers en `display: contents` : leurs enfants deviennent
-       direct flex children de .sb-filters-bar et on les place via `order`
-       sans toucher au DOM. */
+       Pour mélanger des items qui vivent dans .sb-filters-left vs
+       .sb-filters-right sans toucher au DOM : `display: contents` sur les
+       deux wrappers → leurs enfants deviennent direct flex children de
+       .sb-filters-bar et on les place via `order`. */
     .sb-filters-bar {
         flex-wrap: wrap;
         gap: 7px;
     }
-    /* "Flatten" les 2 wrappers : leurs enfants deviennent direct flex
-       children de .sb-filters-bar — order et flex-basis individuels
-       contrôlent ensuite chaque ligne. */
+    /* "Flatten" les 2 wrappers — leurs enfants deviennent direct flex
+       children de .sb-filters-bar. */
     .sb-filters-left,
     .sb-filters-right {
         display: contents;
     }
-    /* Row 1 : sort group (4 boutons) — full width, déjà à flex-basis 100%
-       via .stats-timerange dans le @media plus haut. */
+    /* Barre de recherche cachée sur mobile (demande user). */
+    .sb-filters-bar .sb-search-wrap {
+        display: none !important;
+    }
+    /* Row 1 : sort — full width (déjà à flex-basis 100% via .stats-
+       timerange dans le @media plus bas). */
     .sb-sort-group { order: 1; }
-    /* Row 2 : mode group — full width. */
+    /* Row 2 : mode — full width. */
     .sb-mode-group { order: 2; }
-    /* Row 3 : "2 collections" + "Add collection" + Alert sur la même ligne.
-       Le col-selector prend la place restante. Add-collection et Alert
-       gardent leur taille auto. */
+    /* Row 3 : col-selector | Add collection (50% / 50%). On force chacun
+       à `calc(50% - 4px)` (4 = moitié de gap:7px) pour qu'ils tiennent
+       sur la même ligne et que le suivant wrap. */
     .stats-col-selector-wrap {
         order: 3;
-        flex: 1 1 auto !important;
+        flex: 1 1 calc(50% - 4px) !important;
+        max-width: calc(50% - 4px) !important;
         min-width: 0 !important;
     }
     .sb-request-wrap {
         order: 4;
-        flex: 0 0 auto !important;
+        flex: 1 1 calc(50% - 4px) !important;
+        max-width: calc(50% - 4px) !important;
+    }
+    /* Row 4 : Hide $1 | Alert | view-toggle (auto sizes, gap 7px). */
+    .sb-hide-dollar-toggle {
+        order: 5;
+        flex: 0 1 auto !important;
     }
     .sb-alarm-wrap {
-        order: 5;
-        flex: 0 0 auto !important;
-    }
-    /* Row 4 : Hide $1 toggle, seul sur sa ligne. */
-    .sb-hide-dollar-toggle {
         order: 6;
-        flex-basis: 100% !important;
-    }
-    /* Row 5 : search bar + view-toggle sur la même ligne. Le search
-       prend la place restante (flex 1 1 0), le view-toggle reste auto. */
-    .sb-filters-bar .sb-search-wrap {
-        order: 7;
-        flex: 1 1 0 !important;
-        flex-basis: auto !important;
-        width: auto !important;
-        max-width: none !important;
-        min-width: 0 !important;
+        flex: 0 0 auto !important;
     }
     .sb-view-toggle {
-        order: 8;
+        order: 7;
         flex: 0 0 auto !important;
     }
-    /* Row 6 : "SALES N DISPLAYED" centré, sous le search/view-toggle. */
+    /* Row 5 : "SALES N DISPLAYED" centré. */
     .sb-result-count {
-        order: 9;
+        order: 8;
         flex-basis: 100% !important;
         width: 100%;
         display: flex;
         justify-content: center;
         text-align: center;
     }
-    /* Les autres barres de recherche (Top Collections / Drops) gardent
-       le comportement full-width (elles ne partagent leur ligne avec
-       rien d'autre). */
+    /* Les autres barres de recherche (Top Collections / Drops / Add-col
+       popup) gardent le comportement full-width. */
     .cp-search-wrap,
     .stats-search-wrap:not(.sb-search-wrap) {
         width: 100% !important;
