@@ -76,7 +76,7 @@
      downgrade la priorité parce qu'il découvre la font tardivement
      en parcourant la CSS. -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
-<link href="styles.css?v=1778470000" rel="stylesheet"/>
+<link href="styles.css?v=1778500000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -369,6 +369,31 @@
         </div>
         <svg class="settings-row-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
       </button>
+    </div>
+    <!-- ── KEYBOARD SHORTCUTS — déplacé du bouton flottant `.kbd-hint`
+              en bas d'écran vers ce panneau Settings. Contenu identique au
+              .kbd-cheatsheet (Navigation + Actions), juste réorganisé
+              pour la largeur 260px du panneau. ── -->
+    <div class="settings-section settings-shortcuts-section" id="settingsShortcutsSection">
+      <div class="settings-section-label">Keyboard shortcuts</div>
+      <div class="settings-shortcuts-group">
+        <div class="settings-shortcuts-group-title">Navigation</div>
+        <div class="settings-shortcut-row"><span class="settings-shortcut-keys"><kbd>j</kbd></span><span class="settings-shortcut-desc">Next tab</span></div>
+        <div class="settings-shortcut-row"><span class="settings-shortcut-keys"><kbd>k</kbd></span><span class="settings-shortcut-desc">Previous tab</span></div>
+        <div class="settings-shortcut-row"><span class="settings-shortcut-keys"><kbd>g</kbd> <kbd>h</kbd></span><span class="settings-shortcut-desc">Home</span></div>
+        <div class="settings-shortcut-row"><span class="settings-shortcut-keys"><kbd>g</kbd> <kbd>s</kbd></span><span class="settings-shortcut-desc">Top collections</span></div>
+        <div class="settings-shortcut-row"><span class="settings-shortcut-keys"><kbd>g</kbd> <kbd>m</kbd></span><span class="settings-shortcut-desc">Market bot</span></div>
+        <div class="settings-shortcut-row"><span class="settings-shortcut-keys"><kbd>g</kbd> <kbd>d</kbd></span><span class="settings-shortcut-desc">Drops</span></div>
+        <div class="settings-shortcut-row"><span class="settings-shortcut-keys"><kbd>g</kbd> <kbd>x</kbd></span><span class="settings-shortcut-desc">Snapshot</span></div>
+      </div>
+      <div class="settings-shortcuts-group">
+        <div class="settings-shortcuts-group-title">Actions</div>
+        <div class="settings-shortcut-row"><span class="settings-shortcut-keys"><kbd>/</kbd></span><span class="settings-shortcut-desc">Focus search</span></div>
+        <div class="settings-shortcut-row"><span class="settings-shortcut-keys"><kbd>t</kbd></span><span class="settings-shortcut-desc">Scroll to top</span></div>
+        <div class="settings-shortcut-row"><span class="settings-shortcut-keys"><kbd>b</kbd></span><span class="settings-shortcut-desc">Scroll to bottom</span></div>
+        <div class="settings-shortcut-row"><span class="settings-shortcut-keys"><kbd>?</kbd></span><span class="settings-shortcut-desc">Show full cheatsheet</span></div>
+        <div class="settings-shortcut-row"><span class="settings-shortcut-keys"><kbd>Esc</kbd></span><span class="settings-shortcut-desc">Close any panel</span></div>
+      </div>
     </div>
     <div class="settings-section">
       <div class="settings-section-label">Language</div>
@@ -1301,15 +1326,18 @@
       </div>
     </section>
 
-    <!-- ══ HOME 2-COLONNES PRINCIPALE (PC) ══
-         LEFT  : Chat → Community Pulse (curaté) → Official Patrons
-         RIGHT : Featured Collections → Featured Artists
-         Sur mobile : tout passe en colonne unique via la media query
-         max-width:1100px sur .home-two-col--main. -->
+    <!-- ══ HOME LAYOUT PRINCIPAL (PC ≥1100px) ══
+         Grille 4 zones :
+            Row 1 : chat (3/5)         | featured-collection (2/5)
+            Row 2 : pulse + patrons    | featured-artists
+         La hauteur de chat est égale à celle de featured-collection
+         (align-items: stretch + même row). pulse + patrons sont stackés
+         dans un wrapper pour partager leur cellule.
+         Sur mobile (<1100px) : tout passe en colonne unique via
+         grid-template-columns: 1fr. -->
     <div class="home-two-col home-two-col--main">
-      <div class="home-col home-col--left">
 
-      <!-- COMMUNITY CHAT — colonne gauche, ligne 1 -->
+      <!-- COMMUNITY CHAT — col gauche row 1 (zone "chat") -->
       <section class="home-section home-community-section" id="homeCommunitySection">
         <div class="home-section-header">
           <h2 class="home-section-title">WTF CHAT</h2>
@@ -1464,7 +1492,12 @@
         </div>
       </div>
 
-      <!-- COMMUNITY PULSE — colonne droite ─────────────────────────────
+      <!-- Wrapper "bottom-left" : Community Pulse + Patrons stackés.
+           Grid-area = "bottom-left" sur PC, sous le chat. Sur mobile c'est
+           juste un flex column qui suit chat dans le flux. -->
+      <div class="home-bottom-left-wrap">
+
+      <!-- COMMUNITY PULSE — zone "bottom-left" (haut) ─────────────────────
            Compagnon stats du chat. Les éléments lisent les MÊMES IDs que
            ceux que renderPulseCharts() / setKpi() ciblent — ils ont été
            SORTIS du panneau Pulse principal en bas de la home pour vivre
@@ -1537,14 +1570,11 @@
         </div>
       </section>
 
-      </div><!-- fin home-col--left -->
+      </div><!-- fin home-bottom-left-wrap -->
 
-      <div class="home-col home-col--right">
-
-      <!-- Featured Collections — single-card spotlight (auto-rotate +
-           hover-pause + manual nav). Cartes injectées dans
-           #homeFeaturedGrid par buildFeatured(). Affiché en colonne
-           droite, au-dessus de Featured Artists. -->
+      <!-- Featured Collections — col droite row 1 (zone "featured-col"),
+           sur la même rangée que le chat → même hauteur via stretch.
+           Cartes injectées dans #homeFeaturedGrid par buildFeatured(). -->
       <section class="home-section home-section--featured">
         <div class="home-section-header">
           <h2 class="home-section-title">Featured Collections</h2>
@@ -1599,7 +1629,6 @@
         </div>
       </section>
 
-      </div><!-- fin home-col--right -->
     </div><!-- fin home-two-col--main -->
 
     <!-- Market Bot Live Feed — pleine largeur, sous les Featured. -->
@@ -5360,31 +5389,28 @@ function renderGroupLegend(groups, groupBy) {
             return;
         }
 
-        /* ── Ranking flat (pas de cadre / pas de header row) — juste le
-              tableau aligné à plat, mêmes classes de cellules (.stats-td,
-              .stats-rank) pour cohérence avec la suite et le hover. ── */
+        /* ── Ranking flat en 3 colonnes (PC) / 1 colonne (mobile) ──
+              On utilise CSS multi-column (column-count) pour distribuer les
+              rangs en 3 colonnes verticales sur PC. Chaque rang reste un
+              flex row [rank | logo + nom | count]. column-fill: balance
+              répartit les rangs équitablement entre les 3 colonnes. ── */
         const wrap = document.createElement('div');
         wrap.className = 'profile-legend-wrap';
 
-        const tableScroll = document.createElement('div');
-        tableScroll.className = 'profile-legend-table-scroll';
+        const list = document.createElement('div');
+        list.className = 'profile-legend-list';
 
-        const table = document.createElement('table');
-        table.className = 'profile-legend-table';
-
-        const tbody = document.createElement('tbody');
         groups.forEach((group, groupIndex) => {
             const anchorId = `group-${groupBy}-${slugifyGroupKey(group.key)}-${groupIndex}`;
             const cleanName = stripEmojiForLegend(group.key) || group.key;
 
             /* Pas de logo de collection dans la payload assets du profil, on
-               fallback sur le cover du 1er NFT (toujours dispo). Sur les
-               artistes, idem — c'est l'image du 1er NFT de l'artiste. */
+               fallback sur le cover du 1er NFT (toujours dispo). */
             const firstAsset = group.assets[0]?.asset;
             const logoUrl = firstAsset?.cover?.url || '';
 
-            const row = document.createElement('tr');
-            row.className = 'stats-tr profile-legend-tr' + (groupIndex % 2 === 1 ? ' profile-legend-tr--alt' : '');
+            const row = document.createElement('div');
+            row.className = 'profile-legend-tr';
             row.setAttribute('data-rank', String(groupIndex + 1));
             row.setAttribute('role', 'button');
             row.setAttribute('tabindex', '0');
@@ -5394,22 +5420,18 @@ function renderGroupLegend(groups, groupBy) {
                .src ci-dessous pour éviter l'XSS sans dépendre d'un escapeHtml
                global (qui n'existe pas dans ce closure). */
             row.innerHTML =
-                '<td class="stats-td stats-td--center stats-td--rank"></td>' +
-                '<td class="stats-td profile-legend-name-cell">' +
-                    '<span class="home-top-name-inner">' +
-                        '<span class="profile-legend-logo-slot"></span>' +
-                        '<span class="home-top-col-texts">' +
-                            '<span class="home-top-name profile-legend-name"></span>' +
-                        '</span>' +
-                    '</span>' +
-                '</td>' +
-                '<td class="stats-td profile-legend-count-cell">' +
+                '<span class="profile-legend-rank-cell"></span>' +
+                '<span class="profile-legend-body-cell">' +
+                    '<span class="profile-legend-logo-slot"></span>' +
+                    '<span class="profile-legend-name"></span>' +
+                '</span>' +
+                '<span class="profile-legend-count-cell">' +
                     '<span class="profile-legend-count-num"></span> ' +
                     '<span class="profile-legend-count-label">NFTs</span>' +
-                '</td>';
+                '</span>';
 
             // Rank badge (top 3 medal emoji, else plain number)
-            const rankCell = row.querySelector('.stats-td--rank');
+            const rankCell = row.querySelector('.profile-legend-rank-cell');
             const rankSpan = document.createElement('span');
             if (groupIndex < 3) {
                 rankSpan.className = 'stats-rank stats-rank--medal';
@@ -5427,7 +5449,7 @@ function renderGroupLegend(groups, groupBy) {
             const logoSlot = row.querySelector('.profile-legend-logo-slot');
             if (logoUrl) {
                 const img = document.createElement('img');
-                img.className = 'home-top-logo profile-legend-logo';
+                img.className = 'profile-legend-logo';
                 img.src = logoUrl;
                 img.alt = '';
                 img.loading = 'lazy';
@@ -5435,7 +5457,7 @@ function renderGroupLegend(groups, groupBy) {
                 logoSlot.replaceWith(img);
             } else {
                 const empty = document.createElement('div');
-                empty.className = 'home-top-logo home-top-logo--empty profile-legend-logo';
+                empty.className = 'profile-legend-logo profile-legend-logo--empty';
                 logoSlot.replaceWith(empty);
             }
 
@@ -5451,12 +5473,10 @@ function renderGroupLegend(groups, groupBy) {
                 if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goTo(); }
             });
 
-            tbody.appendChild(row);
+            list.appendChild(row);
         });
-        table.appendChild(tbody);
 
-        tableScroll.appendChild(table);
-        wrap.appendChild(tableScroll);
+        wrap.appendChild(list);
         legendEl.appendChild(wrap);
 
         startGroupLegendSync();
@@ -17110,6 +17130,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-19T08:00:00Z',
+            type:  'improvement',
+            title: 'Home + profile polish',
+            text:  'On desktop, chat takes 3/5 of the width with Featured Collections on the right at 2/5, both matching heights. Below the chat : Community Pulse + Patrons board ; below Featured Collections : Featured Artists. Collection rankings on the profile are back to 3 columns. Profile social buttons (Crypto.com, X) match the Featured Artists style. Keyboard shortcuts are now listed inside Settings instead of the floating button bottom-left. Profile left/right paddings now symmetric and aligned with the other tabs. Chat member badges (Creator / OG / Patron) are all the same size in the sidebar.'
+        },
         {
             date:  '2026-05-19T06:00:00Z',
             type:  'improvement',
