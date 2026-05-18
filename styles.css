@@ -12412,6 +12412,14 @@ body.is-profile-loading #profileLoadingOverlay * {
     color: rgba(255,255,255,0.85);
     font-family: 'Geomanist-Bold', sans-serif;
 }
+/* Suffixe après le compteur (ex. "20 displayed") — même look que label
+   mais en case naturelle (pas d'uppercase) pour bien différencier. */
+.stats-summary-suffix {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+}
 .stats-summary-sep {
     color: rgba(255,255,255,0.15);
     font-size: 13px;
@@ -14224,7 +14232,15 @@ body.is-profile-loading #profileLoadingOverlay * {
 @media (max-width: 700px) {
     .home-chat-members-sidebar   { display: none !important; }
     .home-chat-members-btn       { display: flex !important; }
-    .home-community-card { max-height: none; }
+    /* Sur mobile : max-height annulé (cf. ci-dessous) ET on garantit une
+       hauteur de chat utilisable (sinon avec peu de messages la carte se
+       réduisait à ~150px). 65vh = ~520px sur un iPhone 14, suffisamment
+       pour voir 5-7 messages sans scroll interne et sans bouffer toute
+       la home (l'utilisateur peut scroller la page pour voir le reste). */
+    .home-community-card {
+        max-height: none;
+        min-height: 65vh;
+    }
 }
 .home-chat-members-footer {
     display: flex; align-items: center; gap: 5px;
@@ -21121,9 +21137,12 @@ code.sup-card-address {
 .sb-floor-above { color: #4ade80; }
 .sb-floor-below { color: #f87171; }
 
-/* View toggle */
-.sb-view-toggle { display: flex; align-items: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 7px; overflow: hidden; }
-.sb-view-btn { display: flex; align-items: center; justify-content: center; width: 30px; height: 28px; background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.35); transition: color .15s, background .15s; }
+/* View toggle — height alignée sur .stats-col-selector-btn et .sb-request-btn
+   (les 2 pills à droite, à 32px). Avant : boutons à 28px → 4px d'écart visible
+   sur la même ligne. Maintenant : 30px de bouton + 1px border haut + 1px
+   border bas = 32px de container, parfaitement aligné. */
+.sb-view-toggle { display: flex; align-items: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 7px; overflow: hidden; height: 32px; box-sizing: border-box; }
+.sb-view-btn { display: flex; align-items: center; justify-content: center; width: 30px; height: 100%; background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.35); transition: color .15s, background .15s; }
 .sb-view-btn:hover { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.06); }
 .sb-view-btn--active { color: var(--color1) !important; background: rgba(0,179,255,0.12) !important; }
 
@@ -30938,6 +30957,11 @@ body { box-sizing: border-box; }
     .sb-filters-left .sb-result-count {
         order: 2;
         width: 100%;
+        /* display:flex + justify-content:center pour vraiment centrer le
+           contenu (avant : text-align center ne centrait pas le flex
+           interne .stats-summary-item qui restait flush left). */
+        display: flex;
+        justify-content: center;
         text-align: center;
     }
     .sb-filters-left .sb-search-wrap { order: 1; }
