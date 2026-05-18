@@ -34050,3 +34050,114 @@ body.view--profile .navbar.navbar--floating-controls {
    on couvre aussi le cas où le sélecteur ne s'applique pas. */
 #leftSidebar { display: none !important; }
 
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GROUP LEGEND — Fix colonne mobile (1 résultat par ligne)
+   ───────────────────────────────────────────────────────────────────────────
+   La règle mobile `--legend-columns: 1` (ligne ~6048) était définie AVANT
+   la règle de base (ligne ~6059 : `--legend-columns: 3`) → même spécificité
+   donc la règle SOURCE-ORDER LATER gagne, et le mobile finissait à 3 cols.
+   On redéfinit ici à la fin du fichier pour gagner le cascade.
+
+   Les médailles or/argent/bronze pour les rangs 1, 2, 3 sont déjà
+   appliquées par les règles existantes (data-rank=1/2/3) — pas de changement
+   nécessaire de ce côté.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 650px) {
+    .group-legend-list {
+        --legend-columns: 1 !important;
+    }
+    .group-legend-list::before,
+    .group-legend-list::after {
+        content: none !important;
+    }
+    /* Padding gauche réduit (38px → 34px) pour gagner de la place
+       en colonne unique avec le tip bubble + texte sur une ligne. */
+    .group-legend-item {
+        padding: 10px 12px 10px 36px;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PROFILE LOADING — Skeleton cards (remplace le circular overlay)
+   ───────────────────────────────────────────────────────────────────────────
+   Au lieu d'afficher #profileLoadingOverlay (full-screen circulaire opaque),
+   on injecte N skeletons dans #nftContainer pendant le fetch. Comportement
+   aligné sur Sales Bot / Market Stats : l'utilisateur voit la structure de
+   la page dès le 1er paint, le contenu remonte au fur et à mesure.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Overlay circulaire : neutralisé définitivement. La règle critique
+   #profileLoadingOverlay{display:none} reste, et on bloque toute
+   réactivation via .visible aussi pour les chemins existants qui
+   pourraient encore l'utiliser ailleurs (collection mode). */
+#profileLoadingOverlay,
+#profileLoadingOverlay.visible {
+    display: none !important;
+}
+
+/* Skeleton card : ratio carré (comme petites cards NFT en small-size),
+   bordure subtile, shimmer cyan léger. Réutilise l'animation
+   skel-shimmer / skeleton-shimmer déjà définies plus haut dans le fichier. */
+.nft-card--skeleton {
+    aspect-ratio: 1 / 1;
+    border-radius: 10px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    pointer-events: none;
+}
+.nft-card-skeleton-media {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.03) 0%,
+        rgba(0, 179, 255, 0.10) 50%,
+        rgba(255, 255, 255, 0.03) 100%
+    );
+    background-size: 200% 100%;
+    animation: profile-skel-shimmer 1.6s linear infinite;
+}
+@keyframes profile-skel-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Title block en chargement : si le profil n'est pas encore résolu,
+   l'avatar et le texte sont vides. On affiche un placeholder circulaire
+   shimmer + un trait shimmer sous l'avatar. Disparaît dès que
+   updateProfileUI() pose un src non vide / un textContent non vide. */
+body.is-profile-skeleton-loading .profile-page-title-block .profile-header--page .profile-picture--round img[src=""],
+body.is-profile-skeleton-loading .profile-page-title-block .profile-header--page .profile-picture--round img:not([src]) {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.04) 0%,
+        rgba(0, 179, 255, 0.10) 50%,
+        rgba(255, 255, 255, 0.04) 100%
+    );
+    background-size: 200% 100%;
+    animation: profile-skel-shimmer 1.6s linear infinite;
+    /* Garde la dimension de l'avatar même si src est vide. */
+    visibility: visible;
+    display: inline-block;
+}
+body.is-profile-skeleton-loading .profile-page-title-block .username:empty::before {
+    content: '';
+    display: inline-block;
+    width: 220px;
+    max-width: 60vw;
+    height: 28px;
+    border-radius: 6px;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.05) 0%,
+        rgba(0, 179, 255, 0.12) 50%,
+        rgba(255, 255, 255, 0.05) 100%
+    );
+    background-size: 200% 100%;
+    animation: profile-skel-shimmer 1.6s linear infinite;
+    margin-top: 4px;
+}
+
