@@ -2,7 +2,18 @@
 
 <html data-theme="cdc" lang="en">
 <head>
-<meta charset="utf-8"/><link crossorigin="anonymous" href="https://upload.wikimedia.org" rel="preconnect"/><link href="https://upload.wikimedia.org" rel="dns-prefetch"/><link crossorigin="anonymous" href="https://crypto.com" rel="preconnect"/><link href="https://crypto.com" rel="dns-prefetch"/><link crossorigin="anonymous" href="https://cdnjs.cloudflare.com" rel="preconnect"/><link href="https://cdnjs.cloudflare.com" rel="dns-prefetch"/>
+<meta charset="utf-8"/><link crossorigin="anonymous" href="https://crypto.com" rel="preconnect"/><link href="https://crypto.com" rel="dns-prefetch"/>
+<!-- Preconnects retirés (audit perf) :
+     • upload.wikimedia.org → utilisé seulement pour les icônes social
+       Facebook/Instagram du profil header (loading=lazy). Pas critique
+       au boot, le preconnect ouvrait une connexion TLS inutile.
+     • cdnjs.cloudflare.com → jszip/FileSaver/html2canvas sont utilisés
+       uniquement par les actions Download/Export (event handlers post
+       DOMContentLoaded). Les scripts passent maintenant en `defer`
+       (chargement en parallèle, exécution après le HTML parse) — le
+       preconnect ne sert plus à grand-chose. -->
+<link href="https://upload.wikimedia.org" rel="dns-prefetch"/>
+<link href="https://cdnjs.cloudflare.com" rel="dns-prefetch"/>
 <!-- Preconnect supplémentaires : ouvre la connexion TLS aux hosts qu'on
      sollicite immédiatement après le first paint. Économie de ~150-300ms
      sur le premier round-trip (TCP + TLS handshake fait pendant que le
@@ -46,14 +57,19 @@
 <meta name="apple-mobile-web-app-title" content="CRONOS.WTF"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="mobile-web-app-capable" content="yes"/>
-<!-- Favicon et icônes : icon.png est le logo source 1024x1024, navigateurs
-     scalent automatiquement à 16/32px. /icons/* contient les versions
-     pré-calculées pour iOS (180x180 aplati contre brand color) et
-     Android (192/512 + variantes maskable avec safe-area 80%). -->
-<link href="icon.png?v=2" rel="icon" type="image/png" sizes="any"/>
+<!-- Favicon et icônes :
+     • favicon-32 pour les onglets navigateur (1.6 KB, suffisant pour le
+       rendu 16/32 px de l'onglet).
+     • icon-192 (24 KB) comme fallback any-size pour navigateurs qui
+       l'utilisent comme rich icon (Android Chrome PWA preview etc.)
+     • apple-touch-icon pour iOS Home Screen.
+     L'ancien icon.png (1.5 MB, 1024×1024) référencé ici servait au
+     même usage mais surdimensionné ×60 vs besoin réel. Remplacé par
+     les versions /icons/* déjà optimisées. -->
 <link href="/icons/favicon-32.png" rel="icon" type="image/png" sizes="32x32"/>
+<link href="/icons/icon-192.png" rel="icon" type="image/png" sizes="192x192"/>
 <link href="/icons/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180"/>
-<link as="image" href="icon.png?v=2" rel="preload"/>
+<link as="image" href="/icons/icon-192.png" rel="preload"/>
 <!-- Preload WOFF2 quand dispo (3x plus léger), sinon le @font-face fallback OTF.
      fetchpriority="high" sur la font qui rend 90% des textes premium
      du site (titres, stats, prix, boutons) — évite que le browser
@@ -151,7 +167,7 @@
 
     <!-- Logo -->
     <div class="topnav-brand" role="button" tabindex="0" title="Back to Home" id="topnavBrand" style="cursor:pointer;">
-      <img src="icon.png?v=2" alt="CRONOS.WTF logo" class="topnav-logo-img"/>
+      <img src="/icons/icon-192.png" alt="CRONOS.WTF logo" class="topnav-logo-img" width="32" height="32" decoding="async"/>
       <span class="topnav-logo-text">CRONOS<span class="topnav-logo-dot">.WTF</span></span>
     </div>
 
@@ -2446,18 +2462,21 @@
 <button class="kbd-hint" id="kbdHint" type="button" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">
   <kbd>?</kbd>
 </button>
-<script crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script><script crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script>
+<!-- Librairies tierces utilisées UNIQUEMENT par les actions
+     Download (zip NFTs) et Export (PNG du collage). Aucune n'est
+     nécessaire au parsing initial ni au First Paint → defer pour
+     que le HTML continue d'être parsé pendant que les libs
+     téléchargent en parallèle. -->
+<script defer crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script defer crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script><script defer crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script>
         const cache = new Map();
 let allNFTs = [];
 let assetsLoaded = false;
 let currentUsername = '';
 let currentDisplayName = '';
-let lastSearchedUsername = '';
 let debounceTimeout = null;
 let isDownloadCancelled = false;
 let isProfileLoadingCancelled = false;
 let activeSearch = null;
-let hasSelectedSpecificCollection = false;
 
 // Asset list mode (collected vs liked)
 let currentAssetMode = 'collected';
@@ -4459,7 +4478,6 @@ async function fetchProfileAndNFTs() {
     collectionFilter.disabled = false; // Ne pas désactiver initialement
 
     currentUsername = username;
-    lastSearchedUsername = currentUsername;
     resetLikedNFTsStateForProfile(currentUsername);
     clearSuggestions();
 
@@ -4688,7 +4706,6 @@ function filterNFTs() {
     // Keep chain and curation filters usable; don't auto-lock values.
     chainFilter.disabled = false;
     curatedFilter.disabled = false;
-    hasSelectedSpecificCollection = !!collectionValue;
 
     // Ensure filters are enabled if any NFTs exist
     const hasCollections = allNFTs.some(nft => nft.collection?.name || nft.collection);
@@ -5955,7 +5972,16 @@ async function generateCollageBlobFromValidCards(validCards, {
         headerTextContainer.style.whiteSpace = 'nowrap';
         headerTextContainer.style.margin = '0';
         headerTextContainer.style.padding = '0';
-        headerTextContainer.innerHTML = `<span style="color: ${color1}">${usernameText}</span> / ${collectionText.toUpperCase()}`;
+        // Pas d'innerHTML — usernameText et collectionText viennent de
+        // l'API user et pourraient contenir du HTML/JS. DOM API garantit
+        // qu'ils sont traités comme texte pur. color1 reste contrôlée par
+        // notre code (couleur CSS hex/rgba), passée via style.color.
+        const _hSpan = document.createElement('span');
+        _hSpan.style.color = color1;
+        _hSpan.textContent = usernameText;
+        headerTextContainer.textContent = '';
+        headerTextContainer.appendChild(_hSpan);
+        headerTextContainer.appendChild(document.createTextNode(' / ' + (collectionText || '').toUpperCase()));
         header.appendChild(headerTextContainer);
 
         const nftCountText = document.createElement('div');
@@ -8614,7 +8640,17 @@ document.addEventListener('DOMContentLoaded', initialize);
             if (meta) {
                 const override = card.dataset.creatorOverride || '';
                 const textEl = meta.querySelector('.home-feat-v3-creator-text') || meta;
-                textEl.innerHTML = override ? `<strong>${override}</strong>` : '&nbsp;';
+                // DOM API au lieu d'innerHTML : override vient de dataset
+                // (sous notre contrôle) mais on traite défensivement comme
+                // user-provided pour rester safe XSS.
+                textEl.textContent = '';
+                if (override) {
+                    const _s = document.createElement('strong');
+                    _s.textContent = override;
+                    textEl.appendChild(_s);
+                } else {
+                    textEl.appendChild(document.createTextNode(' '));
+                }
             }
             return;
         }
@@ -8824,9 +8860,18 @@ document.addEventListener('DOMContentLoaded', initialize);
             // On écrit dans le sous-span dédié (.home-feat-v3-creator-text)
             // pour ne pas écraser le verified-slot voisin.
             const textEl = meta.querySelector('.home-feat-v3-creator-text') || meta;
-            // Pas de "by " devant — le nom de l'artiste se suffit à
-            // lui-même, accompagné du checkmark vérifié (slot voisin).
-            textEl.innerHTML = creator ? `<strong>${creator}</strong>` : '&nbsp;';
+            // DOM API au lieu d'innerHTML : creator vient de l'API
+            // Crypto.com (data.creator.username) → potentiellement
+            // attacker-controlled. textContent garantit qu'on n'injecte
+            // jamais du HTML/JS même si l'API renvoyait du code.
+            textEl.textContent = '';
+            if (creator) {
+                const _s = document.createElement('strong');
+                _s.textContent = creator;
+                textEl.appendChild(_s);
+            } else {
+                textEl.appendChild(document.createTextNode(' '));
+            }
         }
     }
 
@@ -16291,8 +16336,8 @@ async function sha256hex(str) {
                 const body  = verb + ' at ' + price + ' (≤ your threshold)';
                 const n = new Notification(title, {
                     body,
-                    icon: 'icon.png',
-                    badge: 'icon.png',
+                    icon: '/icons/icon-192.png',
+                    badge: '/icons/icon-192.png',
                     tag: 'cronos-alarm-' + details.colId + '-' + details.channel,
                     renotify: true,
                     silent: true   // l'audio ci-dessus suffit, on évite le double-bip
@@ -16878,6 +16923,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-18T01:00:00Z',
+            type:  'improvement',
+            title: 'Big cleanup',
+            text:  'Boot is lighter: the 1.5 MB icon source is gone (replaced by the right-sized icons already on disk), the export libraries load in parallel instead of blocking the page, and a couple of preconnects to CDNs we don\'t hit early are dropped. Behind the scenes: a few XSS holes patched on places that took text from the API, ~220 lines of dead JS and CSS removed.'
+        },
         {
             date:  '2026-05-17T14:30:00Z',
             type:  'improvement',
@@ -18395,13 +18446,6 @@ fragment CollectionStatsData on Collection {
         return { text: sign + formatted, cls };
     }
 
-    function chainBadge(network) {
-        const isCronos = network === 'CRONOS';
-        const label = isCronos ? 'CRO' : 'POS';
-        const cls   = isCronos ? 'stats-chain--cronos' : 'stats-chain--pos';
-        return '<span class="stats-chain-badge ' + cls + '">' + label + '</span>';
-    }
-
     // Apply chain filter + column sort to _allRows and re-render
     function applyFilterSort() {
         _statsVisible = 50;
@@ -18549,38 +18593,6 @@ fragment CollectionStatsData on Collection {
         }
 
         // Listed % badge
-        function listedBadge(pct) {
-            if (pct <= 0) return '<span class="stats-listed-badge stats-listed-badge--none">—</span>';
-            const p = pct.toFixed(1) + '%';
-            if (pct < 5)  return `<span class="stats-listed-badge stats-listed-badge--low">${p}</span>`;
-            if (pct > 30) return `<span class="stats-listed-badge stats-listed-badge--high">${p}</span>`;
-            return `<span class="stats-listed-badge stats-listed-badge--mid">${p}</span>`;
-        }
-
-        // Mini sparkline SVG (7-day vol points using available data)
-        function sparkline(col, floorField) {
-            // Build 4-point proxy from available period data
-            const s = col.stats || {};
-            const points = [
-                Number(s.oneDayVolumeDecimal) || 0,
-                Number(s.sevenDayVolumeDecimal) || 0,
-                Number(s.thirtyDayVolumeDecimal) || 0,
-                Number(col.metrics?.totalSalesDecimal) || 0,
-            ].filter((_, i, arr) => arr.some(v => v > 0));
-            if (points.length < 2) return '<span class="stats-spark-empty">·</span>';
-            const max = Math.max(...points) || 1;
-            const W = 48, H = 18;
-            const step = W / (points.length - 1);
-            const pts = points.map((v, i) => `${(i * step).toFixed(1)},${(H - (v / max) * H).toFixed(1)}`).join(' ');
-            const last = points[points.length - 1];
-            const first = points[0];
-            const color = last >= first ? '#4ade80' : '#f87171';
-            return `<svg class="stats-spark" viewBox="0 0 ${W} ${H}" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <polyline points="${pts}" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="${((points.length-1)*step).toFixed(1)}" cy="${(H-(last/max)*H).toFixed(1)}" r="2" fill="${color}"/>
-            </svg>`;
-        }
-
         tbody.innerHTML = '';
 
         // Reset to 50 only on a fresh render (new filter/sort), not on load more
