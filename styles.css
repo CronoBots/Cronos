@@ -11807,7 +11807,9 @@ body.is-profile-loading #profileLoadingOverlay * {
     display: flex;
     align-items: center;
     padding: 0 14px;
-    border-right: 1px solid rgba(255, 255, 255, 0.07);
+    /* Harmonisé avec les autres séparateurs de la topnav (.topnav-tab
+       border-left + .topnav-mobile-search-btn border-right). */
+    border-right: 1px solid rgba(255, 255, 255, 0.10);
     flex-shrink: 0;
     gap: 0;
 }
@@ -11904,7 +11906,10 @@ body.is-profile-loading #profileLoadingOverlay * {
     padding: 0 20px;
     background: none;
     border: none;
-    border-left: 1px solid rgba(255, 255, 255, 0.06);
+    /* Séparateur uniforme avec ceux des wraps (search desktop + loupe mobile).
+       Avant à 0.06 (parfois antialiasé à 0 → invisible) ; harmonisé à 0.10
+       pour rester sobre tout en étant visible de manière fiable. */
+    border-left: 1px solid rgba(255, 255, 255, 0.10);
     color: rgba(255, 255, 255, 0.4);
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 11px;
@@ -11952,7 +11957,10 @@ body.is-profile-loading #profileLoadingOverlay * {
 
 .topnav-tab--active {
     color: var(--color1) !important;
-    background: rgba(0, 179, 255, 0.04);
+    /* Bg cyan visible mais sobre. Avant à 0.04 (trop subtil — l'utilisateur
+       rapportait que l'effet bleuté ne s'affichait pas tout le temps sur
+       mobile, le bg se confondait avec le fond noir de la topnav). */
+    background: rgba(0, 179, 255, 0.10);
 }
 
 /* Underline cyan sous le tab actif. On le rend SUR TOUS les tabs avec
@@ -13729,20 +13737,34 @@ body.is-profile-loading #profileLoadingOverlay * {
     .home-two-col { grid-template-columns: 1fr; gap: 16px; }
 }
 
-/* Featured Collections + Featured Artists côte à côte uniquement sur
-   écrans larges (>= 1100px). En dessous : 1 col pour préserver les
-   8 NFT thumbnails du showcase FC qui deviendraient trop petits si
-   compressés à 50% de largeur. */
-.home-two-col--featured-pair {
+/* ── HOME LAYOUT PRINCIPAL (PC) — 2 colonnes : LEFT chat-pulse-patrons
+      / RIGHT featured-collection-featured-artists. Sur écran < 1100px on
+      empile tout sur 1 col pour garder de la place aux 8 NFT thumbnails
+      des showcases Featured. ── */
+.home-two-col--main {
     grid-template-columns: 1fr;
     gap: 16px;
 }
 @media (min-width: 1100px) {
-    .home-two-col--featured-pair {
+    .home-two-col--main {
         grid-template-columns: 1fr 1fr;
         gap: 24px;
+        align-items: start;
     }
 }
+
+/* Une colonne du layout principal : sections empilées verticalement avec
+   le même gap que .home-body (~28px). */
+.home-col {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    min-width: 0; /* évite que le contenu force la colonne à dépasser */
+}
+@media (max-width: 720px) {
+    .home-col { gap: 20px; }
+}
+
 
 /* ── COMMUNITY CHAT — carte flex-row avec sidebar membres ── */
 .home-community-section { display: flex; flex-direction: column; }
@@ -29986,11 +30008,10 @@ body { box-sizing: border-box; }
 @media (max-width: 600px) {
     .topnav-mobile-search-btn {
         display: flex;
-        /* Séparateur visible entre la loupe mobile et l'onglet Home.
-           Sans ça, le border-left du 1er .topnav-tab (rgba 0.06) est
-           parfois antialiasé à 0 et la ligne disparaît. Ici on force
-           un trait à 0.14 sur le côté droit du bouton loupe. */
-        border-right: 1px solid rgba(255, 255, 255, 0.14);
+        /* Séparateur entre la loupe mobile et le 1er onglet — alignée au
+           pixel près sur les autres séparateurs (.topnav-tab border-left
+           à 0.10), pour que toute la barre ait un rythme uniforme. */
+        border-right: 1px solid rgba(255, 255, 255, 0.10);
     }
     .topnav-search-wrap.is-mobile-open {
         display: flex !important;
