@@ -27640,13 +27640,11 @@ a.snap-holder-username:hover {
 /* ── CTA card "Get your collection featured" ── */
 .home-feat-v3--cta {
     cursor: default;
-    background: linear-gradient(
-        145deg,
-        rgba(0, 179, 255, 0.08) 0%,
-        rgba(11, 20, 38, 0.92) 60%);
-    /* Pas de border : la card CTA partage la même frame visuelle que
-       les 4 slides FEATURED, distinguée juste par son contenu "+"
-       et ses placeholders ghost. */
+    /* Pas de background ni border propre : la card CTA réutilise
+       EXACTEMENT la même frame visuelle que les 4 slides FEATURED
+       (héritée du wrapper .home-fc-spotlight + du hero gradient).
+       Le précédent linear-gradient et la dashed border créaient un
+       cadre différent — retirés pour alignment strict demandé. */
 }
 
 .home-feat-v3-cta-hero {
@@ -27654,11 +27652,14 @@ a.snap-holder-username:hover {
        générique, juste avec un background gradient cyan au lieu d'une
        image bannière. Voir les overrides ci-dessous. */
 }
-/* Hero de la slide CTA : gradient cyan diffus au lieu d'image bannière. */
+/* Hero de la slide CTA : fond neutre uniforme (identique aux autres
+   slides FC quand elles sont en état loading, avant l'arrivée de
+   la bannière API). Le précédent gradient cyan crée une frame
+   visiblement différente — retiré pour alignment strict. La slide
+   reste reconnaissable par son portrait "+" et son eyebrow
+   "Featured Slot · Open". */
 .home-feat-v3--cta .home-feat-v3-hero-bg {
-    background:
-        radial-gradient(110% 80% at 50% 35%, rgba(0, 179, 255, 0.20) 0%, transparent 65%),
-        linear-gradient(180deg, rgba(11, 20, 38, 0.85), rgba(7, 14, 28, 1));
+    background: rgba(0, 0, 0, 0.4);
     filter: none;
     opacity: 1;
     transform: none;
@@ -27768,18 +27769,22 @@ a.snap-holder-username:hover {
 .home-feat-v3-cta-link {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 9px 16px;
-    border-radius: 9px;
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    text-decoration: none;
+    justify-content: center;
+    /* Boutons ICÔNES UNIQUEMENT (pas de texte) : 40×40 carrés
+       arrondis, padding nul, SVG centré. */
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 10px;
     border: 1px solid transparent;
     transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
     cursor: pointer;
+    text-decoration: none;
+}
+.home-feat-v3-cta-link svg {
+    width: 16px;
+    height: 16px;
+    display: block;
 }
 .home-feat-v3-cta-link:hover {
     transform: translateY(-1px);
