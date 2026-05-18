@@ -76,7 +76,7 @@
      downgrade la priorité parce qu'il découvre la font tardivement
      en parcourant la CSS. -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
-<link href="styles.css?v=1778500000" rel="stylesheet"/>
+<link href="styles.css?v=1778530000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -2137,37 +2137,37 @@
             <div class="sb-col-rich-list" id="sbColList">
               <label class="sb-col-rich-item">
                 <input class="sb-col-cb" type="checkbox" value="0281887cff39c6e2d790a2e716f84686" checked/>
-                <img class="sb-col-rich-logo" src="" alt="" data-logo-id="0281887cff39c6e2d790a2e716f84686"/>
+                <img class="sb-col-rich-logo" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" data-logo-id="0281887cff39c6e2d790a2e716f84686"/>
                 <span class="sb-col-rich-name">CRONOS.WTF</span>
                 <span class="sb-col-rich-check">✓</span>
               </label>
               <label class="sb-col-rich-item">
                 <input class="sb-col-cb" type="checkbox" value="82421cf8e15df0edcaa200af752a344f" checked/>
-                <img class="sb-col-rich-logo" src="" alt="" data-logo-id="82421cf8e15df0edcaa200af752a344f"/>
+                <img class="sb-col-rich-logo" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" data-logo-id="82421cf8e15df0edcaa200af752a344f"/>
                 <span class="sb-col-rich-name">Loaded Lions</span>
                 <span class="sb-col-rich-check">✓</span>
               </label>
               <label class="sb-col-rich-item">
                 <input class="sb-col-cb" type="checkbox" value="40af4533404b6dc586cf847f46810372"/>
-                <img class="sb-col-rich-logo" src="" alt="" data-logo-id="40af4533404b6dc586cf847f46810372"/>
+                <img class="sb-col-rich-logo" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" data-logo-id="40af4533404b6dc586cf847f46810372"/>
                 <span class="sb-col-rich-name">Loaded Pixel</span>
                 <span class="sb-col-rich-check">✓</span>
               </label>
               <label class="sb-col-rich-item">
                 <input class="sb-col-cb" type="checkbox" value="366e1c3857fecce971703df888904e86"/>
-                <img class="sb-col-rich-logo" src="" alt="" data-logo-id="366e1c3857fecce971703df888904e86"/>
+                <img class="sb-col-rich-logo" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" data-logo-id="366e1c3857fecce971703df888904e86"/>
                 <span class="sb-col-rich-name" data-placeholder="1">…</span>
                 <span class="sb-col-rich-check">✓</span>
               </label>
               <label class="sb-col-rich-item">
                 <input class="sb-col-cb" type="checkbox" value="5855701d43bc9a7fea90bd254ebd4b6e"/>
-                <img class="sb-col-rich-logo" src="" alt="" data-logo-id="5855701d43bc9a7fea90bd254ebd4b6e"/>
+                <img class="sb-col-rich-logo" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" data-logo-id="5855701d43bc9a7fea90bd254ebd4b6e"/>
                 <span class="sb-col-rich-name">Dark Lions</span>
                 <span class="sb-col-rich-check">✓</span>
               </label>
               <label class="sb-col-rich-item">
                 <input class="sb-col-cb" type="checkbox" value="2ec243b8746154fd9dc1c892d7f54fe9"/>
-                <img class="sb-col-rich-logo" src="" alt="" data-logo-id="2ec243b8746154fd9dc1c892d7f54fe9"/>
+                <img class="sb-col-rich-logo" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" data-logo-id="2ec243b8746154fd9dc1c892d7f54fe9"/>
                 <span class="sb-col-rich-name" data-placeholder="1">…</span>
                 <span class="sb-col-rich-check">✓</span>
               </label>
@@ -14057,6 +14057,7 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
                 '<span class="stats-summary-item">'
                   + '<span class="stats-summary-label">' + label + '</span>'
                   + '<span class="stats-summary-val">' + filtered.length + '</span>'
+                  + '<span class="stats-summary-suffix">displayed</span>'
               + '</span>';
         }
         // Notifie le Live Feed home que les données ont changé
@@ -14181,6 +14182,12 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
             const col = await fetchColLogo(img.dataset.logoId);
             if (!col) return;
             if (col.logo?.url) {
+                /* Garde le placeholder transparent (1x1 GIF) si l'URL 404 →
+                   pas d'icône "?" broken-image. */
+                img.onerror = function () {
+                    img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+                    img.classList.remove('loaded');
+                };
                 img.src = col.logo.url;
                 img.classList.add('loaded');
             }
@@ -15271,6 +15278,9 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
 
         const img = document.createElement('img');
         img.className = 'sb-col-rich-logo'; img.alt = ''; img.dataset.logoId = id;
+        // Placeholder transparent par défaut (1x1 GIF) pour ne pas afficher
+        // l'icône "?" du broken-image tant que la vraie URL n'est pas fetchée.
+        img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
         // Pré-remplir src sans 'loaded' : loadDropdownLogos fetche quand
         // meme le creatorId/Name/Verified pour le groupement et les alarmes
         if (logoUrl) img.src = logoUrl;
@@ -17130,6 +17140,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-19T09:00:00Z',
+            type:  'improvement',
+            title: 'Chat + Sales Bot + collection picker polish',
+            text:  'Mobile chat is now tall enough to actually read a few messages without needing to zoom. Sales Bot count line says "SALES 20 displayed" and is centered on mobile. Display-type toggle (cards / table) lines up at the same height as the other filter pills. Collection picker dropdown no longer shows the broken "?" icon while logos are loading — clean dark placeholder instead.'
+        },
         {
             date:  '2026-05-19T08:00:00Z',
             type:  'improvement',
