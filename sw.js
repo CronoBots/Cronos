@@ -19,7 +19,7 @@
 
 'use strict';
 
-const CACHE_VERSION = 'v12';
+const CACHE_VERSION = 'v13';
 const CACHE_NAME    = 'cronos-wtf-' + CACHE_VERSION;
 
 /* Liste des assets statiques pré-cachés à l'install pour offline-ready
@@ -115,10 +115,22 @@ self.addEventListener('fetch', (event) => {
             /* On ne cache que les réponses 200 OK basic — les
                opaque / 5xx / 404 ne servent à rien. */
             if (res && res.status === 200 && res.type === 'basic') {
-                cache.put(req, res.clone()).catch(() => {});
+                cache.put(req, res.clone()).catch(err => {
+                    /* Log au lieu d'avaler silencieusement — utile
+                       pour debugger un quota exceeded, permission
+                       denied, etc. (avant on n'aurait pas su que
+                       cache.put avait échoué). */
+                    console.warn('[SW] cache.put failed:', err && err.message);
+                });
             }
             return res;
-        }).catch(() => cached); /* si offline et pas de cache → l'erreur remonte */
+        }).catch(err => {
+            /* Si offline et pas de cache → laisser remonter le
+               navigateur affiche son écran offline. On log juste
+               l'erreur pour debug. */
+            if (!cached) console.warn('[SW] fetch failed (no cache):', req.url, err && err.message);
+            return cached;
+        });
         return cached || fetchPromise;
     })());
 });
