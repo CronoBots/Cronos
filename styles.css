@@ -16511,13 +16511,12 @@ body.is-profile-loading #profileLoadingOverlay * {
     justify-content: space-between;
     gap: 10px;
     flex-wrap: wrap;
-    /* Espacement filtres → cadre résultats aligné sur Market Stats (~8px).
-       Avant : padding 8px 0 12px + margin-bottom 12px → ~24px de gap avant
-       .sb-results-wrap. Market Stats utilise .stats-panel-controls sans
-       margin-bottom et le seul gap vient du .sb-results-wrap { margin-top:
-       8px }. On reproduit le même rythme. */
-    padding: 8px 0 0;
-    margin-bottom: 0;
+    /* Espace avant le cadre des résultats : on garde le padding-bottom +
+       margin-bottom (~24px total avec .sb-results-wrap.margin-top:8px qui
+       collapse), demande user "remettre un espace plus grand avant le
+       cadre". */
+    padding: 8px 0 12px;
+    margin-bottom: 12px;
 }
 .sb-filters-left {
     display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
@@ -30947,64 +30946,82 @@ body { box-sizing: border-box; }
        Layout mobile cible (du haut vers le bas) :
          Row 1 : sort (Recent | Price | Rank)
          Row 2 : mode (Sales | Listings | Auctions | All)
-         Row 3 : col-selector | Add collection           (50% / 50%)
-         Row 4 : Hide $1 | Alert | view-toggle           (auto sizes)
-         Row 5 : "SALES N DISPLAYED" centré
-         (Search bar masquée sur mobile — demande user)
+         Row 3 : col-selector (gauche) ↔ Add collection (droite)  (full width)
+         Row 4 : Hide $1 | Alert | view-toggle (expand)
+         Row 5 : search bar
+         Row 6 : "SALES N DISPLAYED" centré
 
        Pour mélanger des items qui vivent dans .sb-filters-left vs
        .sb-filters-right sans toucher au DOM : `display: contents` sur les
        deux wrappers → leurs enfants deviennent direct flex children de
-       .sb-filters-bar et on les place via `order`. */
+       .sb-filters-bar et on les place via `order`. Tous les overrides ici
+       sont scopés `.sb-filters-bar` pour ne PAS affecter Market Stats
+       (qui partage les mêmes classes .stats-col-selector-wrap etc.). */
     .sb-filters-bar {
         flex-wrap: wrap;
         gap: 7px;
     }
     /* "Flatten" les 2 wrappers — leurs enfants deviennent direct flex
        children de .sb-filters-bar. */
-    .sb-filters-left,
-    .sb-filters-right {
+    .sb-filters-bar > .sb-filters-left,
+    .sb-filters-bar > .sb-filters-right {
         display: contents;
-    }
-    /* Barre de recherche cachée sur mobile (demande user). */
-    .sb-filters-bar .sb-search-wrap {
-        display: none !important;
     }
     /* Row 1 : sort — full width (déjà à flex-basis 100% via .stats-
        timerange dans le @media plus bas). */
-    .sb-sort-group { order: 1; }
+    .sb-filters-bar .sb-sort-group { order: 1; }
     /* Row 2 : mode — full width. */
-    .sb-mode-group { order: 2; }
-    /* Row 3 : col-selector | Add collection (50% / 50%). On force chacun
-       à `calc(50% - 4px)` (4 = moitié de gap:7px) pour qu'ils tiennent
-       sur la même ligne et que le suivant wrap. */
-    .stats-col-selector-wrap {
+    .sb-filters-bar .sb-mode-group { order: 2; }
+    /* Row 3 : col-selector à gauche, Add collection à droite — ensemble
+       ils prennent toute la largeur. col-selector flex:1 absorbe l'espace
+       restant après Add collection. Le `flex: 1 1 auto` force aussi le
+       prochain enfant (Hide $1) à wrap car la row 3 est déjà pleine. */
+    .sb-filters-bar .stats-col-selector-wrap {
         order: 3;
-        flex: 1 1 calc(50% - 4px) !important;
-        max-width: calc(50% - 4px) !important;
+        flex: 1 1 auto !important;
         min-width: 0 !important;
+        max-width: none !important;
     }
-    .sb-request-wrap {
+    .sb-filters-bar .sb-request-wrap {
         order: 4;
-        flex: 1 1 calc(50% - 4px) !important;
-        max-width: calc(50% - 4px) !important;
+        flex: 0 0 auto !important;
+        max-width: none !important;
     }
-    /* Row 4 : Hide $1 | Alert | view-toggle (auto sizes, gap 7px). */
-    .sb-hide-dollar-toggle {
+    /* Row 4 : Hide $1 (auto) | Alert (auto) | view-toggle (expand pour
+       prendre la largeur restante). */
+    .sb-filters-bar .sb-hide-dollar-toggle {
         order: 5;
-        flex: 0 1 auto !important;
+        flex: 0 0 auto !important;
     }
-    .sb-alarm-wrap {
+    .sb-filters-bar .sb-alarm-wrap {
         order: 6;
         flex: 0 0 auto !important;
     }
-    .sb-view-toggle {
+    .sb-filters-bar .sb-view-toggle {
         order: 7;
-        flex: 0 0 auto !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
     }
-    /* Row 5 : "SALES N DISPLAYED" centré. */
-    .sb-result-count {
+    /* Les 2 boutons internes du view-toggle s'étirent à parts égales
+       quand le toggle est élargi (sinon ils restent à 30px et il y a un
+       trou vide à droite). */
+    .sb-filters-bar .sb-view-toggle .sb-view-btn {
+        flex: 1 1 0 !important;
+        width: auto !important;
+    }
+    /* Row 5 : search bar — pleine largeur, juste au-dessus du compteur. */
+    .sb-filters-bar .sb-search-wrap {
         order: 8;
+        display: flex !important;
+        flex: 1 1 100% !important;
+        flex-basis: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+    /* Row 6 : "SALES N DISPLAYED" centré. */
+    .sb-filters-bar .sb-result-count {
+        order: 9;
         flex-basis: 100% !important;
         width: 100%;
         display: flex;
