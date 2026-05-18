@@ -5973,16 +5973,17 @@ body.is-group-stats-view .nft-container--grouped .nft-group-header:first-child {
 .group-legend-tip {
     position: absolute;
     top: 50%;
-    left: 12px;
+    left: 8px;
     transform: translateY(-50%);
-    width: 18px;
-    height: 18px;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.90);
-    font-size: 11px;
-    font-weight: 700;
+    width: 32px;
+    height: 28px;
+    border-radius: 0;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -6081,23 +6082,46 @@ body.is-group-stats-view .nft-container--grouped .nft-group-header:first-child {
 .group-legend-item {
     appearance: none;
     width: 100%;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: rgba(255, 255, 255, 0.04);
+    border: none;
+    background: transparent;
     color: var(--text-dark);
-    border-radius: 12px;
-    padding: 10px 12px 10px 38px;
+    border-radius: 0;
+    padding: 8px 8px 8px 44px;
     cursor: pointer;
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: 12px;
-    transition: background 0.2s ease, transform 0.2s ease;
+    transition: background 0.15s ease;
     text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .group-legend-item:hover {
-    background: rgba(255, 255, 255, 0.07);
-    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.03);
+    transform: none;
+}
+
+.group-legend-li:last-child .group-legend-item {
+    border-bottom: none;
+}
+
+/* Médaille emoji (top 3) — neutralise les bg gradient gold/silver/bronze
+   hérités du sélecteur #groupLegend[data-legend-mode=…] [data-rank=N],
+   pour que le glyphe 🥇/🥈/🥉 s'affiche tel quel (style Market Stats). */
+#groupLegend .group-legend-item .group-legend-tip--medal {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: inherit !important;
+    font-size: 22px;
+    width: 32px;
+    height: 28px;
+    overflow: visible;
+    text-shadow: none !important;
+}
+#groupLegend .group-legend-item .group-legend-tip--medal::after {
+    content: none !important;
 }
 
 .group-legend-title {
@@ -29963,6 +29987,11 @@ body { box-sizing: border-box; }
 @media (max-width: 600px) {
     .topnav-mobile-search-btn {
         display: flex;
+        /* Séparateur visible entre la loupe mobile et l'onglet Home.
+           Sans ça, le border-left du 1er .topnav-tab (rgba 0.06) est
+           parfois antialiasé à 0 et la ligne disparaît. Ici on force
+           un trait à 0.14 sur le côté droit du bouton loupe. */
+        border-right: 1px solid rgba(255, 255, 255, 0.14);
     }
     .topnav-search-wrap.is-mobile-open {
         display: flex !important;
@@ -34442,10 +34471,37 @@ body.is-group-stats-view
     /* Réordonne la toolbar : downloads passent APRÈS le filtre de taille
        (à droite). Ordre visuel : sort → overlay → size → download → collage.
        L'ordre HTML reste downloads en premier (gardé pour le desktop). */
-    .nft-group-toolbar .nft-group-sort-btns    { order: 1; }
-    .nft-group-toolbar .nft-group-overlay-btns { order: 2; }
-    .nft-group-toolbar .nft-group-size-btns    { order: 3; }
-    .nft-group-toolbar .nft-group-download     { order: 4; }
-    .nft-group-toolbar .nft-group-download--collage { order: 5; }
+    .nft-group-toolbar .nft-group-sort-btns    { order: 1; flex: 1 1 100% !important; }
+    .nft-group-toolbar .nft-group-overlay-btns { order: 2; flex: 1 1 100% !important; }
+    /* Size partage sa ligne avec les downloads — override du défaut Market
+       Stats (.stats-timerange { flex-basis:100% } à ~30832) qui forçait
+       chaque groupe sur une ligne séparée. */
+    .nft-group-toolbar .nft-group-size-btns {
+        order: 3;
+        flex: 0 1 auto !important;
+        flex-basis: auto !important;
+        width: auto !important;
+    }
+    /* Size buttons plus compacts pour faire de la place aux downloads. */
+    .nft-group-toolbar .nft-group-size-btn {
+        flex: 0 0 auto !important;
+        min-width: 36px !important;
+        padding: 0 8px !important;
+    }
+    .nft-group-toolbar .nft-group-size-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+    /* Downloads collés au filtre size, même ligne. */
+    .nft-group-toolbar .nft-group-download {
+        order: 4;
+        flex: 0 0 auto !important;
+        min-width: 36px !important;
+        padding: 0 8px !important;
+    }
+    .nft-group-toolbar .nft-group-download--collage {
+        order: 5;
+        flex: 0 0 auto !important;
+    }
 }
 
