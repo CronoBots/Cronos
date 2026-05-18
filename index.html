@@ -5573,11 +5573,21 @@ const renderGrouped = (groupBy) => {
             nameEl.textContent = group.key;
             titleEl.appendChild(nameEl);
 
-            const countEl = document.createElement('span');
-            countEl.className = 'nft-group-count';
+            /* Count "N NFTs" — vit dans le titre maintenant (ligne 1), pour
+               libérer la 2e ligne aux contrôles (downloads + sort + size). */
+            const countInlineEl = document.createElement('span');
+            countInlineEl.className = 'nft-group-count-inline';
             const numEl = document.createElement('span'); numEl.className = 'nft-count-num'; numEl.textContent = String(group.assets.length);
             const lblEl = document.createElement('span'); lblEl.className = 'nft-count-label'; lblEl.textContent = 'NFTs';
-            countEl.appendChild(numEl); countEl.appendChild(lblEl);
+            countInlineEl.appendChild(numEl);
+            countInlineEl.appendChild(lblEl);
+            titleEl.appendChild(countInlineEl);
+
+            /* Toolbar (ligne 2) — downloads + sort + overlay + size, tous
+               sous forme de pills façon Sales Bot. La classe .nft-group-count
+               est conservée pour ne pas casser le sélecteur CSS existant. */
+            const countEl = document.createElement('div');
+            countEl.className = 'nft-group-count nft-group-toolbar';
 
             if (!forcedAssetIdFilter && (currentGroupingMode === 'collection' || currentGroupingMode === 'artist' || currentGroupingMode === 'all')) {
                 const dlBtn = document.createElement('button');
@@ -17024,6 +17034,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-18T22:00:00Z',
+            type:  'improvement',
+            title: 'Group headers polish',
+            text:  'Collection name stays on one line next to its medal, count "37 NFTs" sits inline. Sort / overlay / size pills and the download / collage buttons drop to a second row styled like the rest of the site. Top 3 medals more visible.'
+        },
         {
             date:  '2026-05-18T21:00:00Z',
             type:  'improvement',

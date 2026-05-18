@@ -34161,3 +34161,191 @@ body.is-profile-skeleton-loading .profile-page-title-block .username:empty::befo
     margin-top: 4px;
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NFT GROUP HEADER — Layout 2 lignes + médailles top 3 visibles
+   ───────────────────────────────────────────────────────────────────────────
+   Avant : tout sur une ligne (médaille + nom + count + downloads + sort +
+   overlay + size). Sur mobile ça wrap salement, le nom de collection se
+   coupe en deux. Maintenant :
+     Ligne 1 (.nft-group-title)   : médaille + nom + "N NFTs" inline
+     Ligne 2 (.nft-group-toolbar) : downloads + sort + overlay + size
+   Les boutons download deviennent des pills style Sales Bot (32px, border-
+   radius 7px) au lieu de cercles 26px.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Header : 2 lignes via flex-wrap. Sur très large desktop (≥1400px) on
+   peut autoriser tout sur une seule ligne — sinon on wrap. */
+.nft-group-header {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: center;
+    row-gap: 10px;
+    column-gap: 12px;
+}
+
+/* Titre prend toute la largeur disponible jusqu'à wrap des contrôles. */
+.nft-group-title {
+    flex: 1 1 100%;
+    min-width: 0;
+    align-items: baseline;
+    flex-wrap: wrap;
+    row-gap: 4px;
+}
+
+/* Nom de collection : peut tronquer mais NE wrap PAS sur 2 lignes
+   (lecture "[médaille] LOADED LIONS" sur une seule ligne). */
+.nft-group-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 0 1 auto;
+}
+
+/* "N NFTs" inline juste après le nom — petit, gris discret. */
+.nft-group-count-inline {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    flex: 0 0 auto;
+    margin-left: 4px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+}
+.nft-group-count-inline .nft-count-num {
+    color: #00B3FF;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+/* Toolbar (ligne 2) : flex pour aligner downloads + pills à la suite, wrap
+   sur mobile si pas assez de place. */
+.nft-group-toolbar {
+    flex: 1 1 100%;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    /* On retire white-space:nowrap hérité de .nft-group-count pour autoriser
+       le wrap des pills sur mobile. */
+    white-space: normal;
+    font-weight: normal;
+    letter-spacing: normal;
+    font-size: 12px;
+}
+
+/* Séparateur (ancien | vertical) — masqué dans le nouveau layout, les
+   button-groups (stats-timerange / stats-chain-filter) ont déjà leur
+   propre bordure. */
+.nft-group-toolbar .nft-group-controls-sep {
+    display: none;
+}
+
+/* ── Download pills — style Sales Bot (rectangle 32px, border-radius 7px) ── */
+.nft-group-toolbar .nft-group-download {
+    margin: 0;
+    width: auto;
+    min-width: 36px;
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 7px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: rgba(144, 238, 144, 0.18);
+    color: #90EE90;
+    opacity: 1;
+    box-shadow: none;
+    top: 0;
+    flex: 0 0 auto;
+    transition: background 0.15s, border-color 0.15s;
+}
+.nft-group-toolbar .nft-group-download:hover {
+    background-color: rgba(144, 238, 144, 0.28);
+    border-color: rgba(144, 238, 144, 0.45);
+    transform: none;
+}
+.nft-group-toolbar .nft-group-download--collage {
+    background-color: rgba(255, 212, 0, 0.16);
+    color: #FFD400;
+}
+.nft-group-toolbar .nft-group-download--collage:hover {
+    background-color: rgba(255, 212, 0, 0.26);
+    border-color: rgba(255, 212, 0, 0.45);
+}
+.nft-group-toolbar .nft-group-download svg {
+    width: 14px;
+    height: 14px;
+    color: inherit;
+    stroke: currentColor;
+    fill: none;
+}
+.nft-group-toolbar .nft-group-download--collage svg {
+    width: 15px;
+    height: 15px;
+    fill: currentColor;
+    stroke: currentColor;
+}
+
+/* ── Medal pop sur le badge du header (top 3) ──
+   Les règles existantes (gold/silver/bronze) sont déjà appliquées par
+   les sélecteurs `body.is-group-stats-view .nft-group-header[data-rank=…]`.
+   On les fait juste un peu plus grosses et plus contrastées. */
+.nft-group-header .group-legend-tip--result {
+    width: 22px;
+    height: 22px;
+    font-size: 12px;
+    border-width: 1.5px;
+}
+body.is-group-stats-view
+    .nft-group-header:is([data-group-by="collection"], [data-group-by="artist"]):is([data-rank="1"], [data-rank="2"], [data-rank="3"])
+    .group-legend-tip--result {
+    /* Ombre plus marquée pour que les médailles soient bien visibles sur le
+       fond sombre — important sur mobile où elles sont petites. */
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.35) inset,
+        0 0 14px rgba(212, 175, 55, 0.35),
+        0 2px 6px rgba(0, 0, 0, 0.5) !important;
+}
+body.is-group-stats-view
+    .nft-group-header:is([data-group-by="collection"], [data-group-by="artist"])[data-rank="2"]
+    .group-legend-tip--result {
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.35) inset,
+        0 0 14px rgba(192, 192, 192, 0.40),
+        0 2px 6px rgba(0, 0, 0, 0.5) !important;
+}
+body.is-group-stats-view
+    .nft-group-header:is([data-group-by="collection"], [data-group-by="artist"])[data-rank="3"]
+    .group-legend-tip--result {
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.35) inset,
+        0 0 14px rgba(205, 127, 50, 0.40),
+        0 2px 6px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+    .nft-group-header {
+        padding: 18px 0 6px;
+        margin-top: 12px;
+        row-gap: 8px;
+    }
+    .nft-group-title {
+        font-size: 16px;
+    }
+    .nft-group-toolbar {
+        gap: 6px;
+    }
+    /* Sur mobile les pills sort/overlay/size sont denses : on garde les
+       hauteurs 32px mais on réduit le padding. */
+    .nft-group-toolbar .stats-tr-btn,
+    .nft-group-toolbar .stats-cf-btn {
+        padding: 0 9px;
+        font-size: 10px;
+    }
+}
+
