@@ -3879,37 +3879,23 @@ async function fetchAndDisplayCollection(collectionData) {
         collectionHeader.style.display = 'block';
     }
 
-    // Loading overlay
+    /* Skeleton cards à la place de l'overlay circulaire (cohérent avec
+       fetchProfileAndNFTs). La page reste visible pendant le chargement. */
+    document.body.classList.add('is-profile-skeleton-loading');
+    if (typeof renderProfileNftSkeleton === 'function') renderProfileNftSkeleton(12);
+
+    /* Variables conservées pour compat (les autres branches du finally
+       et les éventuels listeners qui les lisent toujours). */
     const profileLoadingOverlay = document.getElementById('profileLoadingOverlay');
     const circularFill = document.getElementById('circularFill');
     const circularPct  = document.getElementById('circularPct');
-    const elementsToHide = [
-        document.querySelector('.navbar'),
-        document.getElementById('leftSidebar'),
-        document.getElementById('appMain'),
-        document.getElementById('scrollToTopButton'),
-        document.getElementById('scrollToBottomButton'),
-        document.getElementById('navbarRight'),
-    ].filter(Boolean);
-
-    if (profileLoadingOverlay) {
-        profileLoadingOverlay.classList.add('visible');
-        profileLoadingOverlay.style.visibility = 'visible';
-        profileLoadingOverlay.style.display = 'flex';
-        profileLoadingOverlay.style.zIndex = '99999';
-    }
-    elementsToHide.forEach(el => { el.style.visibility = 'hidden'; el.style.pointerEvents = 'none'; });
-    document.body.classList.add('is-profile-loading');
+    const elementsToHide = [];
 
     try {
         const totalExpected = collectionData.metrics?.items || 0;
         allNFTs = await fetchAllCollectionAssets(collectionId, (n) => {
             if (isProfileLoadingCancelled) return;
-            if (circularPct) circularPct.textContent = totalExpected > 0 ? `${Math.min(99, Math.round(n / totalExpected * 100))}%` : `${n}`;
-            if (circularFill && totalExpected > 0) {
-                const pct = Math.min(99, Math.round(n / totalExpected * 100));
-                circularFill.style.strokeDashoffset = 326.7 - (326.7 * pct / 100);
-            }
+            // Progress tracking conservé pour les autres consommateurs (n/a UI).
         });
 
         collectedNFTsCache = allNFTs;
@@ -3928,25 +3914,8 @@ async function fetchAndDisplayCollection(collectionData) {
         console.error('fetchAndDisplayCollection error:', e);
         if (errorDiv) errorDiv.textContent = `Error loading collection: ${e.message}`;
     } finally {
-        if (circularFill) circularFill.style.strokeDashoffset = 0;
-        if (circularPct)  circularPct.textContent = '100%';
-        setTimeout(() => {
-            if (profileLoadingOverlay) {
-                profileLoadingOverlay.classList.remove('visible');
-                profileLoadingOverlay.style.display = 'none';
-            }
-            elementsToHide.forEach(el => {
-                el.style.visibility = '';
-                el.style.pointerEvents = '';
-                // S'assurer que display n'est pas none (peut avoir été forcé par _hideAllPanels)
-                // Pour #leftSidebar spécifiquement : forcer block car CSS critique a display:none
-                if (el.id === 'leftSidebar') el.style.setProperty('display', 'block', 'important');
-                else if (el.style.display === 'none') el.style.display = '';
-            });
-            document.body.classList.remove('is-profile-loading');
-            if (circularFill) circularFill.style.strokeDashoffset = 326.7;
-            if (circularPct)  circularPct.textContent = '0%';
-        }, 400);
+        document.body.classList.remove('is-profile-skeleton-loading');
+        if (typeof clearProfileNftSkeleton === 'function') clearProfileNftSkeleton();
     }
 }
 
@@ -4429,6 +4398,80 @@ function populateCollectionFilter(nfts) {
     });
 }
 
+/* ──────────────────────────────────────────────────────────────────────────
+   Skeleton du grid NFT pendant le fetch profil. Remplace l'overlay
+   circulaire opaque par des cards shimmer dans #nftContainer.
+
+   N skeletons sont injectés au démarrage du fetch et automatiquement
+   remplacés quand displayNFTs() rebuild le contenu (innerHTML='').
+   `clearProfileNftSkeleton()` est un filet de sécurité (path d'erreur ou
+   "No results" où displayNFTs n'est pas appelé).
+   ────────────────────────────────────────────────────────────────────── */
+function renderProfileNftSkeleton(count) {
+    const container = document.getElementById('nftContainer');
+    if (!container) return;
+    // Le grid garde sa classe "small-size" (ou autre) pour que la grille
+    // CSS s'applique aux skeletons exactement comme aux vraies cards.
+    const n = Math.max(1, Math.min(48, count | 0));
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < n; i++) {
+        const card = document.createElement('div');
+        card.className = 'nft-card nft-card--skeleton';
+        card.setAttribute('aria-hidden', 'true');
+        const media = document.createElement('div');
+        media.className = 'nft-card-skeleton-media';
+        card.appendChild(media);
+        frag.appendChild(card);
+    }
+    container.innerHTML = '';
+    container.appendChild(frag);
+    container.style.display = 'grid';
+}
+function clearProfileNftSkeleton() {
+    const container = document.getElementById('nftContainer');
+    if (!container) return;
+    if (container.querySelector('.nft-card--skeleton')) {
+        container.innerHTML = '';
+    }
+}
+
+/* Prefetch profil + NFTs en arrière-plan (appelé après login). Warm les
+   mêmes cache keys que fetchProfileAndNFTs lit ensuite. Silencieux, ne
+   bloque pas l'UI, n'affiche pas d'erreur si network HS. */
+async function prefetchProfileForLogin(username) {
+    if (!username || typeof fetchWithCache !== 'function') return;
+    try {
+        // 1. Profile metadata
+        const profilePromise = fetchWithCache(`profile_${username}`, async (signal) => {
+            const r = await fetch(graphqlEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    query: profileQuery,
+                    variables: { id: username, cacheId: `getUserQuery-Profile-${username}` }
+                }),
+                signal
+            });
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            const j = await r.json();
+            if (j.errors) throw new Error(j.errors.map(e => e.message).join(', '));
+            return j.data?.public?.user;
+        }).catch(() => null);
+        // 2. Totals (collected / liked counts) — léger, en parallèle
+        const totalsPromise = (typeof fetchProfileTotalsSmart === 'function')
+            ? fetchProfileTotalsSmart(username).catch(() => null)
+            : Promise.resolve(null);
+        // 3. NFTs (lourd) — démarré dès que le profile metadata est résolu
+        profilePromise.then(profile => {
+            if (!profile) return;
+            // Réutilise le même cache key que fetchProfileAndNFTs (ligne 4612)
+            fetchWithCache(`nfts_${username}`, () => fetchAllNFTs(username)).catch(() => null);
+        });
+        await Promise.allSettled([profilePromise, totalsPromise]);
+    } catch (_) { /* silencieux — le fetch utilisateur fera le travail */ }
+}
+window.prefetchProfileForLogin = prefetchProfileForLogin;
+
 async function fetchProfileAndNFTs() {
     const usernameInput = document.getElementById('usernameInput');
     const errorDiv = document.getElementById('error');
@@ -4476,29 +4519,32 @@ async function fetchProfileAndNFTs() {
 
     console.log('Starting fetchProfileAndNFTs for:', username);
 
-    document.body.classList.add('is-profile-loading');
+    /* Mode skeleton : on n'utilise PAS la classe `is-profile-loading`
+       (qui cache tout le contenu de #appMain via !important — relique de
+       l'overlay full-screen). On pose juste `is-profile-skeleton-loading`
+       qui n'a comme effet que d'activer les shimmers sur title-block. */
+    document.body.classList.add('is-profile-skeleton-loading');
 
-    // Afficher l'overlay
+    /* Skeleton dans la grille NFT — injecté avant fetch, remplacé
+       automatiquement quand displayNFTs() reconstruit le grid
+       (innerHTML='' à l'intérieur de displayNFTs). */
+    renderProfileNftSkeleton(12);
+
+    /* Overlays/circular fill : on les force hors écran et on garde les
+       références pour ne pas casser le reste du code (catch / branches
+       conditionnelles ailleurs). */
     const profileLoadingOverlay = document.getElementById('profileLoadingOverlay');
     const circularFill = document.getElementById('circularFill');
     const circularPct = document.getElementById('circularPct');
     if (profileLoadingOverlay) {
-        profileLoadingOverlay.classList.add('visible');
-        profileLoadingOverlay.style.visibility = 'visible';
-        profileLoadingOverlay.style.display = 'flex';
-        profileLoadingOverlay.style.zIndex = '99999';
+        profileLoadingOverlay.classList.remove('visible');
+        profileLoadingOverlay.style.display = 'none';
     }
 
-    // Cacher tous les éléments sauf l'overlay
-    const elementsToHide = [
-        document.querySelector('.navbar'),
-        document.getElementById('leftSidebar'),
-        document.getElementById('appMain'),
-        document.getElementById('scrollToTopButton'),
-        document.getElementById('scrollToBottomButton'),
-        document.getElementById('navbarRight'),
-    ].filter(Boolean);
-    elementsToHide.forEach(el => { el.style.visibility = 'hidden'; el.style.pointerEvents = 'none'; });
+    /* Aucun élément de la page n'est masqué pendant le chargement — title
+       block et chips s'affichent au fur et à mesure que les données
+       arrivent (cache → instantané, network → quelques centaines de ms). */
+    const elementsToHide = [];
 
     resetProfileStatsViewToDefault();
 
@@ -4641,19 +4687,11 @@ async function fetchProfileAndNFTs() {
 
 
         progressBar.style.width = '100%';
-        if (circularFill) circularFill.style.strokeDashoffset = 0;
-        if (circularPct) circularPct.textContent = '100%';
-        setTimeout(() => {
-            if (profileLoadingOverlay) {
-                profileLoadingOverlay.classList.remove('visible');
-                profileLoadingOverlay.style.display = 'none';
-            }
-            elementsToHide.forEach(el => { el.style.visibility = ''; el.style.pointerEvents = ''; });
-            document.body.classList.remove('is-profile-loading');
-            if (circularFill) circularFill.style.strokeDashoffset = 326.7;
-            if (circularPct) circularPct.textContent = '0%';
-            resetViewport();
-        }, 400);
+        /* Plus de barre circulaire — les skeletons sont remplacés par les
+           vraies cards quand filterNFTs() rebuild le grid plus bas. */
+        document.body.classList.remove('is-profile-skeleton-loading');
+        clearProfileNftSkeleton();
+        resetViewport();
 
         if (allNFTs.length > 0) {
             populateCreatorFilter(allNFTs);
@@ -4678,6 +4716,9 @@ async function fetchProfileAndNFTs() {
 
             filterNFTs();
         } else {
+            /* 0 NFT : on retire les skeletons (filterNFTs ne sera pas
+               appelé) et on affiche le message vide. */
+            clearProfileNftSkeleton();
             noResultsDiv.style.display = 'block';
             collectionFilter.disabled = true;
             creatorFilter.disabled = true;
@@ -4693,6 +4734,9 @@ async function fetchProfileAndNFTs() {
                 : `Error: ${error.message}`;
             resetViewport();
         }
+        /* Toujours nettoyer les skeletons + classe loading, même en erreur. */
+        document.body.classList.remove('is-profile-skeleton-loading');
+        clearProfileNftSkeleton();
     }
 }
 
@@ -15363,6 +15407,13 @@ async function sha256hex(str) {
             try { window.dispatchEvent(new CustomEvent('cronos:auth', { detail: { action: 'login' } })); } catch(_) {}
             showUser(user.displayName || user.username, user.avatar?.url, data.verified);
             closeModal();
+            /* Préchauffe le cache profil en arrière-plan : profile metadata,
+               totals, et NFTs. Quand l'utilisateur clique sur "My Profile",
+               fetchProfileAndNFTs() lit le cache et affiche tout instantanément
+               (pas de skeleton perceptible). Silencieux si le network est HS. */
+            if (typeof window.prefetchProfileForLogin === 'function') {
+                window.prefetchProfileForLogin(user.username);
+            }
             /* Async: sync with Firebase as source of truth.
                If Firebase has a token that differs from localStorage (e.g. certified
                from another browser), update localStorage. If localStorage has a token
@@ -15647,7 +15698,17 @@ async function sha256hex(str) {
     /* ── Init from localStorage ── */
     try {
         const saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
-        if (saved?.username) showUser(saved.displayName || saved.username, saved.avatarUrl, saved.verified || false);
+        if (saved?.username) {
+            showUser(saved.displayName || saved.username, saved.avatarUrl, saved.verified || false);
+            /* Auto-login : préchauffe le cache profil pour un clic "My Profile"
+               instantané. Légèrement différé pour laisser la 1ère paint passer
+               sans concurrence réseau. */
+            setTimeout(() => {
+                if (typeof window.prefetchProfileForLogin === 'function') {
+                    window.prefetchProfileForLogin(saved.username);
+                }
+            }, 800);
+        }
     } catch(e) {}
 
     loginBtn?.addEventListener('click', openModal);
@@ -16963,6 +17024,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-18T21:00:00Z',
+            type:  'improvement',
+            title: 'Profile loading + mobile groups',
+            text:  'No more full-screen circular loader on profiles — skeleton cards inside the grid while NFTs load, like the other tabs. Group rankings (collections / artists) drop to one item per line on mobile, with gold / silver / bronze for the top 3. Profile data preloads when you sign in, so My Profile opens instantly.'
+        },
         {
             date:  '2026-05-18T20:00:00Z',
             type:  'improvement',
