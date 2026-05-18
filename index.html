@@ -3944,13 +3944,28 @@ function buildSuggestionSection(labelText, labelClass, items) {
     return section;
 }
 
-function makeThumb(url, alt, square) {
+// URL de l'avatar par défaut de Crypto.com — réutilisée pour les profils
+// qui n'ont pas défini de photo (sinon on tombait sur un placeholder gris
+// vide, peu sympa). Constante locale au block <script> (CLAUDE.md §
+// "Project structure note" — pas d'accès cross-script).
+const SUGGESTION_DEFAULT_AVATAR = 'https://crypto.com/nft/assets/images/profile/default-profile.jpg?d=lg-logo';
+
+function makeThumb(url, alt, square, fallback) {
     const img = document.createElement('img');
-    img.src = url || '';
+    img.src = url || fallback || '';
     img.alt = alt || '';
     img.className = square ? 'suggestion-thumb suggestion-thumb--square' : 'suggestion-thumb';
-    img.onerror = () => { img.style.display = 'none'; };
-    if (!url) img.style.display = 'none';
+    img.onerror = () => {
+        // Si la source primaire échoue et qu'on a un fallback différent,
+        // on retombe dessus (pour les profils : avatar Crypto.com par défaut).
+        // Sinon on cache l'élément.
+        if (fallback && img.src !== fallback) {
+            img.src = fallback;
+        } else {
+            img.style.display = 'none';
+        }
+    };
+    if (!url && !fallback) img.style.display = 'none';
     return img;
 }
 
@@ -4004,10 +4019,14 @@ function _buildSuggestionItems(dropDown, query) {
     const collections = sortByScore(dropDown?.collections || [], c => c.name || '');
     const users       = sortByScore(dropDown?.users       || [], u => u.username || '');
 
-    const makeItem = (className, thumbUrl, square, name, sub, onClickFn, verified) => {
+    const makeItem = (className, thumbUrl, square, name, sub, onClickFn, verified, fallbackUrl) => {
         const item = document.createElement('div');
         item.className = 'suggestion-item ' + className;
-        item.appendChild(thumbUrl ? makeThumb(thumbUrl, name, square) : makePlaceholder(square));
+        // Si on a un fallback (cas des profils), on passe TOUJOURS par makeThumb
+        // pour bénéficier du fallback img (default avatar) plutôt que du
+        // placeholder gris vide.
+        const effectiveUrl = thumbUrl || fallbackUrl;
+        item.appendChild(effectiveUrl ? makeThumb(thumbUrl, name, square, fallbackUrl) : makePlaceholder(square));
         const info = document.createElement('div');
         info.className = 'suggestion-item-info';
         const nameEl = document.createElement('span');
@@ -4053,7 +4072,8 @@ function _buildSuggestionItems(dropDown, query) {
             if (typeof window._markExplorerTabActive === 'function') window._markExplorerTabActive();
             selectSuggestion(u.username);
         },
-        u.verified
+        u.verified,
+        SUGGESTION_DEFAULT_AVATAR
     ));
 
     // Score de chaque catégorie = meilleur score parmi ses items.
@@ -16923,10 +16943,10 @@ async function sha256hex(str) {
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
         {
-            date:  '2026-05-18T09:00:00Z',
+            date:  '2026-05-18T10:30:00Z',
             type:  'improvement',
             title: 'Search dropdown easier to read',
-            text:  'Bigger thumbnails, clearer section headers (Profile / Collection / Asset), more spacing between rows. On mobile the search bar now sits on a solid background again.'
+            text:  'Bigger thumbnails, clearer section headers (Profile / Collection / Asset), more spacing between rows. Profiles without a picture now show the default Crypto.com avatar instead of an empty grey circle. On mobile the search bar sits on a solid background again.'
         },
         {
             date:  '2026-05-18T01:30:00Z',
