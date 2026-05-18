@@ -33994,7 +33994,10 @@ body.view--profile .navbar.navbar--floating-controls {
 }
 
 /* Mobile (≤640px) : photo à gauche, identité à droite, chips wrap multi-lignes
-   (toutes visibles d'un coup, plus de scroll horizontal). */
+   (toutes visibles d'un coup, plus de scroll horizontal).
+   On utilise CSS Grid plutôt que flex-direction:row pour garantir l'override
+   sans ambiguïté de cascade (les anciennes règles flex-direction:column de
+   .profile-header-content--center auraient pu gagner par source-order). */
 @media (max-width: 640px) {
     body.view--profile {
         --profile-picture-size: 72px;
@@ -34004,57 +34007,75 @@ body.view--profile .navbar.navbar--floating-controls {
     }
     .profile-page-title-block {
         margin-bottom: 14px;
-        /* Le bloc titre s'aligne à gauche pour matcher le layout horizontal
-           avatar+texte (au lieu de centré comme sur desktop). */
         text-align: left;
     }
 
-    /* ── Header profil : layout horizontal (avatar gauche + identité droite) ──
-       Override le layout colonne-centré de .profile-header-content--center. */
+    /* ── Header profil : layout horizontal via CSS Grid ── */
     .profile-page-title-block .profile-header--page .profile-header-content--center {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: flex-start;
-        text-align: left;
-        gap: 14px;
-        padding: 0 4px;
-        width: 100%;
-        max-width: none;
+        display: grid !important;
+        grid-template-areas: "avatar info" !important;
+        grid-template-columns: auto 1fr !important;
+        align-items: center !important;
+        column-gap: 14px !important;
+        row-gap: 0 !important;
+        text-align: left !important;
+        padding: 0 4px !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+        /* Annule flex-direction hérité (au cas où une règle plus spécifique
+           le re-set en column par cascade). */
+        flex-direction: row !important;
     }
     .profile-page-title-block .profile-header--page .profile-picture--round {
-        width: auto;
-        flex: 0 0 auto;
-        justify-content: flex-start;
+        grid-area: avatar !important;
+        width: auto !important;
+        max-width: none !important;
+        flex: 0 0 auto !important;
+        justify-content: flex-start !important;
+        margin: 0 !important;
     }
     .profile-page-title-block .profile-header--page .profile-info--center,
     .profile-page-title-block .profile-header--page .profile-info {
+        grid-area: info !important;
         flex: 1 1 auto;
         min-width: 0;
-        align-items: flex-start;
-        text-align: left;
-        max-width: none;
+        align-items: flex-start !important;
+        text-align: left !important;
+        max-width: none !important;
         gap: 2px;
+        /* Annule position:absolute hérité du layout mobile original. */
+        position: static !important;
     }
     .profile-page-title-block .profile-header--page .username-container {
-        justify-content: flex-start;
+        position: static !important;
+        justify-content: flex-start !important;
         flex-wrap: wrap;
         gap: 6px;
+        margin: 0 !important;
     }
     .profile-page-title-block .profile-header--page .username {
         font-size: clamp(20px, 6vw, 28px) !important;
-        text-align: left;
+        text-align: left !important;
     }
     .profile-page-title-block .profile-header--page .display-name {
-        text-align: left;
+        position: static !important;
+        text-align: left !important;
+        margin: 0 !important;
     }
+    /* Le social-container avait `position:absolute; bottom:0; left:135px` sur
+       mobile dans l'ancien layout. On le ré-ancre en statique dans le grid. */
     .profile-page-title-block .profile-header--page .social-container {
+        position: static !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
         justify-content: flex-start !important;
-        margin-top: 4px;
+        margin-top: 4px !important;
     }
     .profile-page-title-block .profile-header--page .profile-bio {
-        text-align: left;
-        margin: 6px 0 0;
+        text-align: left !important;
+        margin: 6px 0 0 !important;
         font-size: 12px;
     }
 
