@@ -34505,53 +34505,37 @@ body.is-group-stats-view
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   PROFILE LEGEND TABLE — Ranking façon Market Stats
+   PROFILE LEGEND TABLE — Ranking flat (pas de cadre, pas de header row)
    ═══════════════════════════════════════════════════════════════════════════
-   Le ranking des collections / artistes du profil utilise le même cadre
-   (sb-results-wrap.sb-results-wrap--table) et la même table (.stats-table)
-   que Top Collections, pour partager le halo, la bordure et le rendu des
-   cellules sans dupliquer le CSS. On ne définit ici que les ajustements
-   spécifiques au profil (3 colonnes au lieu de 16, count à droite, etc.).
+   Le ranking est rendu comme une simple table à plat — pas de halo cyan, pas
+   de bordure, pas de background, pas de thead. Juste les rangées (médaille
+   top 3 + numéro pour les autres + logo collection + nom + count NFTs).
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .profile-legend-wrap {
-    /* Hérite de sb-results-wrap (cadre + halo cyan + bordure 12px). On serre
-       juste un peu l'air interne pour que le titre "COLLECTIONS OWNED" reste
-       proche du tableau. */
-    margin-top: 8px;
+    margin-top: 4px;
     margin-bottom: 16px;
+    /* Pas de cadre — aucun background, aucune bordure. */
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
 }
 
-/* Table — réutilise .stats-table mais on neutralise les overrides de
-   layout fixe à 16 colonnes (Market Stats). Ici on veut 3 colonnes auto. */
+.profile-legend-table-scroll {
+    /* Évite l'overflow accidentel sur petit écran sans cadre visible. */
+    overflow-x: hidden;
+    width: 100%;
+}
+
 .profile-legend-table {
     width: 100%;
     table-layout: auto;
     border-collapse: collapse;
+    font-family: 'Geomanist-Bold', sans-serif;
 }
 
-.profile-legend-table colgroup { display: none; }
-
-/* Header — même look que Market Stats (.stats-th) mais on force le
-   centrage de "NFTs" et on garde le séparateur vertical entre #
-   et Collection (déjà fait par .stats-th--sep). */
-.profile-legend-table thead .stats-th {
-    text-align: left;
-    padding: 12px 10px;
-    font-size: 11px;
-    letter-spacing: 0.08em;
-}
-.profile-legend-table thead .stats-th--rank {
-    text-align: center;
-    width: 48px;
-}
-.profile-legend-th-count {
-    text-align: right;
-    width: 80px;
-    white-space: nowrap;
-}
-
-/* Rangs — cliquables (curseur + hover background subtil). */
+/* Rangées cliquables — curseur + hover subtil + focus visible. */
 .profile-legend-tr {
     cursor: pointer;
     transition: background 0.15s ease;
@@ -34564,18 +34548,25 @@ body.is-group-stats-view
     outline-offset: -2px;
 }
 
-/* Cellules — padding aéré, alignement vertical centré. */
+/* Cellules — padding compact, séparateur fin entre rangs (pas sur le
+   dernier pour ne pas créer une ligne flottante en bas). */
 .profile-legend-table tbody .stats-td {
-    padding: 10px 10px;
+    padding: 10px 6px;
     vertical-align: middle;
-    border-bottom: none;
-}
-.profile-legend-table tbody .stats-tr:not(:last-child) .stats-td {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
+.profile-legend-table tbody .stats-tr:last-child .stats-td {
+    border-bottom: none;
+}
+/* Cellule rank : largeur fixe, centrée. */
+.profile-legend-table .stats-td--rank {
+    width: 48px;
+    text-align: center;
+    padding-left: 0;
+    padding-right: 0;
+}
 
-/* Nom + logo — réutilise le pattern .home-top-name-inner du tableau
-   Top Collections (avatar 32px + bloc texte). */
+/* Nom + logo — pattern .home-top-name-inner inline. */
 .profile-legend-name-cell {
     min-width: 0;
 }
@@ -34599,8 +34590,8 @@ body.is-group-stats-view
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(0, 179, 255, 0.06));
 }
 .profile-legend-name {
-    /* Police = la même que partout sur le site (Geomanist Bold) au lieu de
-       l'ancien uppercase forcé qui ne ressemblait pas au reste. */
+    /* Casse normale (pas d'uppercase forcé) + Geomanist Bold, cohérent
+       avec le reste du site. */
     font-family: 'Geomanist-Bold', sans-serif;
     font-weight: 700;
     font-size: 14px;
@@ -34614,11 +34605,12 @@ body.is-group-stats-view
     max-width: 100%;
 }
 
-/* Count "N NFTs" à droite — chiffre blanc, label cyan, même style que
-   les chips de stats du header. */
+/* Count "N NFTs" à droite — chiffre blanc, label cyan, format chip-like. */
 .profile-legend-count-cell {
     text-align: right;
     white-space: nowrap;
+    width: 90px;
+    padding-right: 6px;
 }
 .profile-legend-count-num {
     font-family: 'Geomanist-Bold', sans-serif;
@@ -34635,25 +34627,27 @@ body.is-group-stats-view
     margin-left: 4px;
 }
 
-/* Mobile : padding réduit, logo plus petit, count plus serré. */
+/* Médaille / numéro — réutilise .stats-rank de Market Stats. Légère
+   touche pour qu'elle soit verticalement centrée dans la cellule. */
+.profile-legend-tr .stats-rank,
+.profile-legend-tr .stats-rank--medal {
+    margin: 0 auto;
+}
+
+/* Mobile : padding réduit, logo et police plus petits. */
 @media (max-width: 640px) {
     .profile-legend-wrap {
-        margin-top: 6px;
+        margin-top: 4px;
         margin-bottom: 12px;
     }
-    .profile-legend-table thead .stats-th {
-        padding: 10px 8px;
-        font-size: 10px;
-    }
-    .profile-legend-table thead .stats-th--rank {
-        width: 36px;
-    }
-    .profile-legend-th-count {
-        width: 64px;
-        font-size: 10px;
+    .profile-legend-table .stats-td--rank {
+        width: 38px;
     }
     .profile-legend-table tbody .stats-td {
-        padding: 8px 8px;
+        padding: 8px 4px;
+    }
+    .profile-legend-count-cell {
+        width: 70px;
     }
     .profile-legend-logo {
         width: 32px;
@@ -34669,6 +34663,159 @@ body.is-group-stats-view
     .profile-legend-name-cell .home-top-name-inner {
         gap: 8px;
     }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NFT GROUP HEADER — rank façon Market Stats + logo collection
+   ═══════════════════════════════════════════════════════════════════════════
+   Cohérence visuelle avec le legend ranking : médaille emoji 🥇🥈🥉 pour
+   top 3, numéro plain pour le reste. Plus de bulle circulaire gold/silver/
+   bronze. Logo de la collection (cover du 1er NFT) entre le rank et le nom.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Le titre du group doit aligner verticalement [rank, logo, nom, count]
+   — l'ancien align-items:baseline marchait pour [medal-bulle, texte] mais
+   décale visiblement l'image et l'emoji. On force center. */
+.nft-group-header .nft-group-title {
+    align-items: center;
+}
+
+.nft-group-header .stats-rank.nft-group-rank {
+    /* Taille un peu plus grosse que dans la table legend (où la cellule est
+       très compacte) — ici on est dans un header de section, ça respire plus. */
+    width: 36px;
+    height: 32px;
+    font-size: 14px;
+    margin: 0;
+}
+.nft-group-header .stats-rank--medal.nft-group-rank {
+    /* Emoji médaille rendu plus gros (iOS rend ces glyphes assez petits par
+       défaut dans un flex). */
+    font-size: 24px;
+}
+.nft-group-header .nft-group-rank .stats-rank-num {
+    color: rgba(255, 255, 255, 0.45);
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.nft-group-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    object-fit: cover;
+    flex: 0 0 auto;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    /* Aligné verticalement avec le texte du nom (qui est en baseline). */
+    align-self: center;
+}
+.nft-group-logo.nft-group-logo--empty {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(0, 179, 255, 0.06));
+}
+
+@media (max-width: 640px) {
+    .nft-group-header .stats-rank.nft-group-rank {
+        width: 30px;
+        height: 28px;
+        font-size: 13px;
+    }
+    .nft-group-header .stats-rank--medal.nft-group-rank {
+        font-size: 20px;
+    }
+    .nft-group-logo {
+        width: 30px;
+        height: 30px;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PROGRESS MODAL — restyle façon login modal
+   ═══════════════════════════════════════════════════════════════════════════
+   Avant : background `var(--collection-bg)`, padding 20px, border-radius 8px,
+   look standard "card". L'user veut le même style que les autres modales du
+   site (login). Override sur #progressModal — pas global sur .modal/.modal-
+   content pour ne pas casser d'autres usages futurs.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#progressModal {
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+}
+
+#progressModal .modal-content {
+    background: #0d1829;
+    border: 1px solid rgba(0, 179, 255, 0.2);
+    border-radius: 20px;
+    padding: 40px 36px 32px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+    box-sizing: border-box;
+    animation: loginModalIn 0.22s ease;
+}
+
+#progressModal #modalTitle {
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    text-align: center;
+    margin: 0 0 18px;
+}
+
+#progressModal .progress-bar {
+    background: rgba(255, 255, 255, 0.06);
+    height: 8px;
+    border-radius: 999px;
+    margin: 0 0 14px;
+    border: 1px solid rgba(0, 179, 255, 0.12);
+    overflow: hidden;
+}
+
+#progressModal .progress {
+    background: linear-gradient(90deg, rgba(0, 179, 255, 0.9), rgba(0, 179, 255, 1));
+    height: 100%;
+    border-radius: 999px;
+}
+
+#progressModal .progress-text {
+    font-family: sans-serif;
+    font-weight: normal;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+    line-height: 1.5;
+    margin: 0 0 22px;
+    white-space: pre-line;
+}
+
+#progressModal .modal-buttons {
+    justify-content: center;
+    margin-top: 0;
+    gap: 8px;
+}
+
+#progressModal .modal-buttons .cancel-button {
+    background: rgba(255, 70, 70, 0.12);
+    color: #ff7676;
+    border: 1px solid rgba(255, 70, 70, 0.25);
+    border-radius: 10px;
+    padding: 11px 26px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+#progressModal .modal-buttons .cancel-button:hover {
+    background: rgba(255, 70, 70, 0.2);
+    border-color: rgba(255, 70, 70, 0.4);
+    transform: none;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────

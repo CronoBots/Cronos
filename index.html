@@ -76,7 +76,7 @@
      downgrade la priorité parce qu'il découvre la font tardivement
      en parcourant la CSS. -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
-<link href="styles.css?v=1778350000" rel="stylesheet"/>
+<link href="styles.css?v=1778380000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -5357,28 +5357,17 @@ function renderGroupLegend(groups, groupBy) {
             return;
         }
 
-        /* ── Ranking façon Market Stats : card (sb-results-wrap) + table avec
-              thead "# | Collection | NFTs" + tr.stats-tr / td.stats-td.
-              On réutilise les classes du tableau Top Collections pour hériter
-              du halo, des séparateurs verticaux et du style des cellules. ── */
+        /* ── Ranking flat (pas de cadre / pas de header row) — juste le
+              tableau aligné à plat, mêmes classes de cellules (.stats-td,
+              .stats-rank) pour cohérence avec la suite et le hover. ── */
         const wrap = document.createElement('div');
-        wrap.className = 'sb-results-wrap sb-results-wrap--table profile-legend-wrap';
+        wrap.className = 'profile-legend-wrap';
 
         const tableScroll = document.createElement('div');
-        tableScroll.className = 'sb-table-wrap';
+        tableScroll.className = 'profile-legend-table-scroll';
 
         const table = document.createElement('table');
-        table.className = 'stats-table profile-legend-table';
-
-        const colHeader = groupBy === 'artist' ? 'Artist' : 'Collection';
-        const thead = document.createElement('thead');
-        thead.innerHTML =
-            '<tr>' +
-                '<th class="stats-th stats-th--rank">#</th>' +
-                '<th class="stats-th stats-th--collection stats-th--sep">' + colHeader + '</th>' +
-                '<th class="stats-th profile-legend-th-count">NFTs</th>' +
-            '</tr>';
-        table.appendChild(thead);
+        table.className = 'profile-legend-table';
 
         const tbody = document.createElement('tbody');
         groups.forEach((group, groupIndex) => {
@@ -5617,10 +5606,40 @@ const renderGrouped = (groupBy) => {
             if (groupBy === 'collection' || groupBy === 'artist') {
                 header.setAttribute('data-group-by', groupBy);
                 header.setAttribute('data-rank', String(groupIndex + 1));
+                /* Rank façon Market Stats : médaille emoji 🥇/🥈/🥉 pour top 3,
+                   numéro plain (.stats-rank-num) au-delà. Plus de bulle
+                   gold/silver/bronze. */
                 const rankEl = document.createElement('span');
-                rankEl.className = 'group-legend-tip group-legend-tip--result';
-                rankEl.textContent = String(groupIndex + 1);
+                if (groupIndex < 3) {
+                    rankEl.className = 'stats-rank stats-rank--medal nft-group-rank';
+                    rankEl.textContent = ['🥇', '🥈', '🥉'][groupIndex];
+                } else {
+                    rankEl.className = 'stats-rank nft-group-rank';
+                    const numSpan = document.createElement('span');
+                    numSpan.className = 'stats-rank-num';
+                    numSpan.textContent = String(groupIndex + 1);
+                    rankEl.appendChild(numSpan);
+                }
                 titleEl.appendChild(rankEl);
+            }
+            /* Photo de collection (cover du 1er NFT) — entre le rank et le nom,
+               comme dans le legend ranking. Inutile en mode "all" où il n'y a
+               qu'un seul groupe sans rang. */
+            if (groupBy === 'collection' || groupBy === 'artist') {
+                const logoUrl = group.assets[0]?.asset?.cover?.url || '';
+                if (logoUrl) {
+                    const logoEl = document.createElement('img');
+                    logoEl.className = 'nft-group-logo';
+                    logoEl.src = logoUrl;
+                    logoEl.alt = '';
+                    logoEl.loading = 'lazy';
+                    logoEl.decoding = 'async';
+                    titleEl.appendChild(logoEl);
+                } else {
+                    const logoEl = document.createElement('div');
+                    logoEl.className = 'nft-group-logo nft-group-logo--empty';
+                    titleEl.appendChild(logoEl);
+                }
             }
             const nameEl = document.createElement('span');
             nameEl.className = 'nft-group-name';
@@ -17088,6 +17107,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-19T05:00:00Z',
+            type:  'improvement',
+            title: 'Profile rankings + section headers',
+            text:  'Profile rankings now sit flat (no card / no header row) — just rank, thumbnail, name, NFTs count. Same look on the section headers inside the results : medal for top 3, plain number for the rest, plus a collection thumbnail next to the name. Download / collage progress popup restyled to match the login window.'
+        },
         {
             date:  '2026-05-19T04:00:00Z',
             type:  'improvement',
