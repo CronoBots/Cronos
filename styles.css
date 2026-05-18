@@ -34079,29 +34079,38 @@ body.view--profile .navbar.navbar--floating-controls {
         font-size: 12px;
     }
 
-    /* ── Chips : wrap multi-lignes, toutes visibles d'un coup ──
-       On retire scroll-x. On centre les chips sur l'axe horizontal. */
+    /* ── Chips : grid 2 colonnes uniforme, full width, plus d'effet escalier ──
+       On force display:grid (vs flex+center par défaut). Les chips remplissent
+       leur cellule (width:100%), donc les colonnes sont alignées au pixel près.
+       Les chips "favorite" (--full) traversent les 2 colonnes. */
     .profile-stats-chips .stats-grid {
-        flex-wrap: wrap;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 6px !important;
         overflow-x: visible;
-        justify-content: center;
+        justify-content: stretch !important;
         padding: 0;
         scroll-snap-type: none;
-        row-gap: 6px;
-        column-gap: 6px;
+        width: 100%;
     }
     .profile-stats-chips .stats-grid::-webkit-scrollbar {
         display: none;
     }
     .profile-stats-chips .stat-card {
-        flex: 0 0 auto;
+        flex: 1 1 auto;
+        width: 100% !important;
+        max-width: none !important;
+        justify-content: center;
         scroll-snap-align: none;
     }
-    /* Sur mobile, les chips "favorite" (collection / artiste / NFT récent)
-       prennent toute la largeur dispo pour rester lisibles. */
+    /* Chips "favorite" (collection / artiste / NFT récent) : span sur les 2
+       colonnes, contenu packé à gauche. NB : flex-direction est row-reverse
+       (hérité), donc flex-end = visuellement à gauche. */
     .profile-stats-chips .stat-card--full {
-        max-width: 100%;
+        grid-column: 1 / -1 !important;
+        max-width: none !important;
         flex: 1 1 auto;
+        justify-content: flex-end;
     }
     .profile-stats-chips .stat-card--full .stat-value {
         max-width: none;
