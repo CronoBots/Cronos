@@ -76,7 +76,7 @@
      downgrade la priorité parce qu'il découvre la font tardivement
      en parcourant la CSS. -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
-<link href="styles.css?v=1778380000" rel="stylesheet"/>
+<link href="styles.css?v=1778410000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -1301,13 +1301,15 @@
       </div>
     </section>
 
-    <!-- ══ 2 COLONNES : Community Chat (gauche) | Community Pulse (droite) ══
-         Le chat et ses stats vivent côte-à-côte : voir le classement
-         des contributeurs, le nombre de membres en ligne, le volume
-         de messages, etc. directement à côté de la conversation. -->
-    <div class="home-two-col home-two-col--chat-pulse">
+    <!-- ══ HOME 2-COLONNES PRINCIPALE (PC) ══
+         LEFT  : Chat → Community Pulse (curaté) → Official Patrons
+         RIGHT : Featured Collections → Featured Artists
+         Sur mobile : tout passe en colonne unique via la media query
+         max-width:1100px sur .home-two-col--main. -->
+    <div class="home-two-col home-two-col--main">
+      <div class="home-col home-col--left">
 
-      <!-- COMMUNITY CHAT — colonne gauche -->
+      <!-- COMMUNITY CHAT — colonne gauche, ligne 1 -->
       <section class="home-section home-community-section" id="homeCommunitySection">
         <div class="home-section-header">
           <h2 class="home-section-title">WTF CHAT</h2>
@@ -1515,70 +1517,90 @@
         </div>
       </section>
 
-    </div><!-- fin home-two-col--chat-pulse -->
-
-    <!-- Featured Collections + Featured Artists côte à côte sur PC.
-         Sur écran < 1100px : empilés verticalement (1 col).
-         Sur écran >= 1100px : 2 colonnes égales pour profiter de la
-         largeur sans rétrécir les 8 NFT thumbnails du showcase FC. -->
-    <div class="home-two-col home-two-col--featured-pair">
-    <!-- Featured Collections — single-card spotlight (auto-rotate +
-         hover-pause + manual nav). Cartes injectées dans
-         #homeFeaturedGrid par buildFeatured(). -->
-    <section class="home-section home-section--featured">
-      <div class="home-section-header">
-        <h2 class="home-section-title">Featured Collections</h2>
-      </div>
-      <div class="home-fc-spotlight" id="homeFeaturedSpotlight" data-active="0">
-        <div class="home-featured-grid" id="homeFeaturedGrid"><!-- cards injected by JS --></div>
-        <div class="home-fc-controls">
-          <button class="home-fc-arrow home-fc-arrow--prev" id="homeFeaturedPrev" type="button" aria-label="Previous collection">
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="12,4 6,10 12,16"/></svg>
-          </button>
-          <div class="home-fc-progress"><div class="home-fc-progress-fill" id="homeFeaturedProgress"></div></div>
-          <div class="home-fc-dots" id="homeFeaturedDots"><!-- dots injected by JS --></div>
-          <button class="home-fc-arrow home-fc-arrow--next" id="homeFeaturedNext" type="button" aria-label="Next collection">
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="8,4 14,10 8,16"/></svg>
-          </button>
+      <!-- ── OFFICIAL PATRONS — leaderboard read-only (déplacé ici sous
+                 Community Pulse pour vivre dans la colonne gauche du layout
+                 principal). Même container/render que le support panel
+                 (cf. supSupportersTable), juste un ID différent
+                 (homeSupportersTable) pour que le rendu peuple les deux
+                 tableaux en parallèle. ── -->
+      <section class="home-section home-patrons-section">
+        <div class="home-section-header">
+          <h2 class="home-section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;vertical-align:-3px;margin-right:6px;color:#00B3FF;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            Official Patrons
+          </h2>
+          <button class="home-section-action" id="homeGoSupport" type="button">Become a patron →</button>
         </div>
-      </div>
-    </section>
+        <p class="sup2-supporters-note">People keeping CRONOS.WTF alive — manual contributions and buyers of <a href="https://crypto.com/nft/collection/2ec243b8746154fd9dc1c892d7f54fe9" target="_blank" rel="noopener">CRONOS.WTF</a> NFTs (live).</p>
+        <div class="sup2-supporters-table-wrap" id="homeSupportersTable">
+          <div class="sup2-no-donors">Loading patrons…</div>
+        </div>
+      </section>
 
-    <section class="home-section home-section--featured-artists">
-      <div class="home-section-header">
-        <h2 class="home-section-title">Featured Artists</h2>
-      </div>
-      <!-- "Get featured" est désormais une slide promo À L'INTÉRIEUR du
-           carousel (cf. buildPromoSlide), plus un bandeau séparé en
-           dessous, pour montrer concrètement à un artiste à quoi son
-           slot ressemblerait. -->
-      <div class="home-creators-grid" id="homeFeaturedCreatorsGrid">
-        <!-- Skeleton slide : silhouette d'une vraie slide artist
-             (banner + portrait rond + nom + stats + 4 mini cols).
-             Remplacé par les vraies slides quand la fetch finit. -->
-        <div class="skel-card" aria-hidden="true">
-          <div class="skel skel-banner" style="aspect-ratio: 3 / 1; border-radius: 0; border: none;"></div>
-          <div class="skel-card-body" style="align-items: center;">
-            <div class="skel-row skel-row--between" style="width: 100%;">
-              <div class="skel skel-text" style="width: 120px;"></div>
-              <div class="skel skel-text" style="width: 50px;"></div>
-            </div>
-            <div class="skel skel-circle" style="width: 96px; height: 96px; margin: 4px 0 4px;"></div>
-            <div class="skel skel-text-lg" style="width: 200px;"></div>
-            <div class="skel skel-text-sm" style="width: 120px;"></div>
-            <div class="skel skel-pill" style="width: 80%; max-width: 360px; height: 32px;"></div>
-            <div class="skel-thumbs-row" style="grid-template-columns: repeat(4, 1fr); width: 100%;">
-              <div class="skel skel-thumb"></div>
-              <div class="skel skel-thumb"></div>
-              <div class="skel skel-thumb"></div>
-              <div class="skel skel-thumb"></div>
-            </div>
-            <div class="skel skel-cta" style="width: 180px;"></div>
+      </div><!-- fin home-col--left -->
+
+      <div class="home-col home-col--right">
+
+      <!-- Featured Collections — single-card spotlight (auto-rotate +
+           hover-pause + manual nav). Cartes injectées dans
+           #homeFeaturedGrid par buildFeatured(). Affiché en colonne
+           droite, au-dessus de Featured Artists. -->
+      <section class="home-section home-section--featured">
+        <div class="home-section-header">
+          <h2 class="home-section-title">Featured Collections</h2>
+        </div>
+        <div class="home-fc-spotlight" id="homeFeaturedSpotlight" data-active="0">
+          <div class="home-featured-grid" id="homeFeaturedGrid"><!-- cards injected by JS --></div>
+          <div class="home-fc-controls">
+            <button class="home-fc-arrow home-fc-arrow--prev" id="homeFeaturedPrev" type="button" aria-label="Previous collection">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="12,4 6,10 12,16"/></svg>
+            </button>
+            <div class="home-fc-progress"><div class="home-fc-progress-fill" id="homeFeaturedProgress"></div></div>
+            <div class="home-fc-dots" id="homeFeaturedDots"><!-- dots injected by JS --></div>
+            <button class="home-fc-arrow home-fc-arrow--next" id="homeFeaturedNext" type="button" aria-label="Next collection">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="8,4 14,10 8,16"/></svg>
+            </button>
           </div>
         </div>
-      </div>
-    </section>
-    </div><!-- fin home-two-col--featured-pair -->
+      </section>
+
+      <section class="home-section home-section--featured-artists">
+        <div class="home-section-header">
+          <h2 class="home-section-title">Featured Artists</h2>
+        </div>
+        <!-- "Get featured" est désormais une slide promo À L'INTÉRIEUR du
+             carousel (cf. buildPromoSlide), plus un bandeau séparé en
+             dessous, pour montrer concrètement à un artiste à quoi son
+             slot ressemblerait. -->
+        <div class="home-creators-grid" id="homeFeaturedCreatorsGrid">
+          <!-- Skeleton slide : silhouette d'une vraie slide artist
+               (banner + portrait rond + nom + stats + 4 mini cols).
+               Remplacé par les vraies slides quand la fetch finit. -->
+          <div class="skel-card" aria-hidden="true">
+            <div class="skel skel-banner" style="aspect-ratio: 3 / 1; border-radius: 0; border: none;"></div>
+            <div class="skel-card-body" style="align-items: center;">
+              <div class="skel-row skel-row--between" style="width: 100%;">
+                <div class="skel skel-text" style="width: 120px;"></div>
+                <div class="skel skel-text" style="width: 50px;"></div>
+              </div>
+              <div class="skel skel-circle" style="width: 96px; height: 96px; margin: 4px 0 4px;"></div>
+              <div class="skel skel-text-lg" style="width: 200px;"></div>
+              <div class="skel skel-text-sm" style="width: 120px;"></div>
+              <div class="skel skel-pill" style="width: 80%; max-width: 360px; height: 32px;"></div>
+              <div class="skel-thumbs-row" style="grid-template-columns: repeat(4, 1fr); width: 100%;">
+                <div class="skel skel-thumb"></div>
+                <div class="skel skel-thumb"></div>
+                <div class="skel skel-thumb"></div>
+                <div class="skel skel-thumb"></div>
+              </div>
+              <div class="skel skel-cta" style="width: 180px;"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      </div><!-- fin home-col--right -->
+    </div><!-- fin home-two-col--main -->
 
     <!-- Market Bot Live Feed — pleine largeur, sous les Featured. -->
     <!-- Market Bot live feed section retirée du home (cf. PR #138). -->
@@ -1713,25 +1735,6 @@
           <div class="home-crypto-picker-list" id="cryptoPickerList"></div>
         </div>
       </dialog>
-    </section>
-
-    <!-- ── OFFICIAL PATRONS — leaderboard read-only sur la home, sans le
-              bouton "I contributed" (réservé au panel Support). Réutilise le
-              même container/render que le support panel (cf. supSupportersTable
-              côté JS), juste un ID différent (homeSupportersTable) pour que
-              le rendu peuple les deux tableaux en parallèle. ── -->
-    <section class="home-section home-patrons-section">
-      <div class="home-section-header">
-        <h2 class="home-section-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;vertical-align:-3px;margin-right:6px;color:#00B3FF;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-          Official Patrons
-        </h2>
-        <button class="home-section-action" id="homeGoSupport" type="button">Become a patron →</button>
-      </div>
-      <p class="sup2-supporters-note">People keeping CRONOS.WTF alive — manual contributions and buyers of <a href="https://crypto.com/nft/collection/2ec243b8746154fd9dc1c892d7f54fe9" target="_blank" rel="noopener">CRONOS.WTF</a> NFTs (live).</p>
-      <div class="sup2-supporters-table-wrap" id="homeSupportersTable">
-        <div class="sup2-no-donors">Loading patrons…</div>
-      </div>
     </section>
 
     <!-- ── UPDATES — changelog (full width, above Pulse) ── -->
@@ -17107,6 +17110,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-19T06:00:00Z',
+            type:  'improvement',
+            title: 'Home layout + topnav polish',
+            text:  'On desktop the home now shows the chat on the left with Community Pulse and the Patrons board stacked below it, and Featured Collections + Featured Artists on the right. Topnav separators harmonised (loupe + tabs all at the same opacity), and the active-tab cyan tint is more visible.'
+        },
         {
             date:  '2026-05-19T05:00:00Z',
             type:  'improvement',
