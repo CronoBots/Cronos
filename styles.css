@@ -33630,6 +33630,10 @@ body { box-sizing: border-box; }
    ET en vue collection (qui réutilise le même profileViewContent). */
 body.view--profile {
     --sidebar-width: 0px;
+    /* Override la variable globale --profile-picture-size (200px par défaut,
+       appliquée via !important par les anciennes règles de la sidebar). On
+       redéfinit ici la valeur sur 3 paliers : mobile / tablette / desktop. */
+    --profile-picture-size: 88px;
 }
 body.view--profile .app-main,
 body.view--profile.view--collection .app-main {
@@ -33660,12 +33664,10 @@ body.view--profile .navbar.navbar--floating-controls {
    Aligné sur .stats-page-title-block du Market Stats panel. */
 .profile-page-title-block {
     text-align: center;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
-/* Profile header en mode "page redesign" — centré, compact. On garde la même
-   classe .profile-header--page mais on ajoute un override doux qui prend la
-   priorité grâce à la spécificité de .profile-page-title-block (cascade). */
+/* Profile header en mode "page redesign" — centré, compact. */
 .profile-page-title-block .profile-header--page {
     display: block;
     width: 100%;
@@ -33673,20 +33675,33 @@ body.view--profile .navbar.navbar--floating-controls {
 .profile-page-title-block .profile-header--page .profile-header-content--center {
     margin: 0 auto;
     padding: 0 16px;
-    gap: 10px;
+    gap: 8px;
     width: min(900px, 100%);
 }
-.profile-page-title-block .profile-header--page .profile-picture--round img {
-    width: 88px;
-    height: 88px;
-    border-radius: 9999px;
-    border: 2px solid rgba(255, 255, 255, 0.18);
-    object-fit: cover;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+
+/* Photo de profil — override des règles globales avec !important nécessaires
+   parce que les anciennes règles ciblent .profile-header--page avec !important
+   (lignes 6597, 6696, 6753 de cette feuille). Taille pilotée par la variable
+   --profile-picture-size définie sur body.view--profile (mobile / tablette /
+   desktop), donc on peut ajuster proprement dans les media queries plus bas. */
+.profile-page-title-block .profile-header--page .profile-picture--round {
+    width: auto !important;
 }
+.profile-page-title-block .profile-header--page .profile-picture--round img {
+    width: var(--profile-picture-size) !important;
+    height: var(--profile-picture-size) !important;
+    border-radius: 9999px !important;
+    border: 2px solid rgba(255, 255, 255, 0.85) !important;
+    object-fit: cover;
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.15),
+        0 6px 16px rgba(0, 0, 0, 0.25),
+        0 0 24px rgba(255, 255, 255, 0.10) !important;
+}
+
 .profile-page-title-block .profile-header--page .username {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: clamp(28px, 3.5vw, 48px);
+    font-size: clamp(24px, 3.2vw, 44px) !important;
     font-weight: 800;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -33695,8 +33710,8 @@ body.view--profile .navbar.navbar--floating-controls {
     margin: 0;
 }
 .profile-page-title-block .profile-header--page .display-name {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.35);
+    font-size: 11px !important;
+    color: rgba(255, 255, 255, 0.4);
     letter-spacing: 0.12em;
     text-transform: uppercase;
     margin: 2px 0 0;
@@ -33708,6 +33723,7 @@ body.view--profile .navbar.navbar--floating-controls {
 .profile-page-title-block .profile-header--page .social-container {
     margin-top: 6px;
     gap: 10px;
+    justify-content: center;
 }
 .profile-page-title-block .profile-header--page .social-icon {
     width: 22px !important;
@@ -33759,7 +33775,7 @@ body.view--profile .navbar.navbar--floating-controls {
 }
 .profile-page-title-block .collection-mode-header .collection-mode-title {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: clamp(24px, 3vw, 40px);
+    font-size: clamp(22px, 3vw, 38px);
     font-weight: 800;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -33782,19 +33798,23 @@ body.view--profile .navbar.navbar--floating-controls {
     border-radius: 4px;
 }
 
-/* ── Barre de filtres : chips horizontaux ──
-   Mêmes paddings que .sb-filters-bar pour matcher le rythme vertical. */
+/* ──────────────────────────────────────────────────────────────────────────
+   Barre de filtres : chips horizontaux façon Sales Bot
+   ──────────────────────────────────────────────────────────────────────────
+   Same paddings que .sb-filters-bar pour le rythme vertical. Chips compacts
+   alignés sur .stats-tr-btn / .stats-cf-btn : 32px de hauteur, fond sombre,
+   bordure fine, état actif cyan.
+   ──────────────────────────────────────────────────────────────────────── */
 .profile-filters-bar {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
     padding: 8px 0 12px;
     margin-bottom: 12px;
 }
 
-/* Container des stat chips — scroll horizontal sur mobile, wrap sur desktop. */
 .profile-stats-chips {
     width: 100%;
 }
@@ -33802,18 +33822,18 @@ body.view--profile .navbar.navbar--floating-controls {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     grid-template-columns: none;
     width: 100%;
 }
 
-/* Stat card → chip horizontal compact. Style aligné sur les pills
-   .stats-tr-btn / .sb-transfer-filter-btn (button group de Sales Bot). */
+/* Stat card → chip horizontal compact. Hauteur, padding et typographie
+   strictement alignés sur .stats-tr-btn (Sales Bot / Market Stats). */
 .profile-stats-chips .stat-card {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 7px 12px;
+    gap: 6px;
+    padding: 0 11px;
     height: 32px;
     box-sizing: border-box;
     background: rgba(255, 255, 255, 0.05);
@@ -33821,15 +33841,19 @@ body.view--profile .navbar.navbar--floating-controls {
     border-radius: 7px;
     text-align: left;
     transition: background 0.15s, border-color 0.15s, color 0.15s;
+    cursor: pointer;
+    flex: 0 0 auto;
 }
 .profile-stats-chips .stat-card .stat-value {
     font-family: 'Geomanist-Bold', sans-serif;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 800;
     line-height: 1;
     color: #fff;
     letter-spacing: 0.02em;
     margin: 0;
+    /* Empêche que la valeur (un nombre court) wrap sur deux lignes. */
+    white-space: nowrap;
 }
 .profile-stats-chips .stat-card .stat-label {
     font-family: 'Geomanist-Bold', sans-serif;
@@ -33838,7 +33862,7 @@ body.view--profile .navbar.navbar--floating-controls {
     line-height: 1;
     margin: 0;
     color: rgba(255, 255, 255, 0.5);
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     white-space: nowrap;
 }
@@ -33848,6 +33872,9 @@ body.view--profile .navbar.navbar--floating-controls {
 }
 .profile-stats-chips .stat-card[data-stat-action]:hover .stat-label {
     color: rgba(255, 255, 255, 0.85);
+}
+.profile-stats-chips .stat-card[data-stat-action]:active {
+    transform: translateY(1px);
 }
 .profile-stats-chips .stat-card.is-active-stat {
     background: rgba(0, 179, 255, 0.12);
@@ -33859,21 +33886,26 @@ body.view--profile .navbar.navbar--floating-controls {
     color: #00B3FF;
 }
 
-/* "Favorite" chips (collection / artist / NFT récent) — affichent un nom long :
-   on autorise plus de largeur et on garde value + label sur deux lignes mini. */
+/* "Favorite" chips (collection / artist / NFT récent) — affichent un nom :
+   on autorise un peu plus de largeur. Le label devient l'eyebrow gris,
+   la valeur le contenu blanc, lecture : "[eyebrow] [name]". */
 .profile-stats-chips .stat-card--full {
-    height: auto;
-    min-height: 32px;
-    padding: 6px 12px;
+    flex: 0 0 auto;
+    height: 32px;
+    padding: 0 11px;
     grid-column: auto;
-    max-width: 280px;
+    max-width: 240px;
+    /* Inverser l'ordre : label (eyebrow) à gauche, value (nom) à droite. */
+    flex-direction: row-reverse;
 }
 .profile-stats-chips .stat-card--full .stat-value {
-    font-size: 12px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #fff;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 160px;
+    max-width: 140px;
 }
 .profile-stats-chips .stat-card--full .stat-label {
     font-size: 9px;
@@ -33934,34 +33966,80 @@ body.view--profile .navbar.navbar--floating-controls {
     max-width: 100% !important;
 }
 
-/* Mobile : padding latéral réduit pour gagner de la place. */
+/* ──────────────────────────────────────────────────────────────────────────
+   RESPONSIVE — 3 paliers : mobile, tablette, desktop
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* Desktop large (≥1101px) : photo plus grande, plus d'air autour du titre. */
+@media (min-width: 1101px) {
+    body.view--profile {
+        --profile-picture-size: 112px;
+    }
+    .profile-page-title-block {
+        margin-bottom: 28px;
+    }
+    .profile-page-inner {
+        padding: clamp(8px, 1vh, 16px) 24px 64px;
+    }
+}
+
+/* Tablette (641-1100px) : photo intermédiaire. */
+@media (min-width: 641px) and (max-width: 1100px) {
+    body.view--profile {
+        --profile-picture-size: 96px;
+    }
+    .profile-page-title-block {
+        margin-bottom: 22px;
+    }
+}
+
+/* Mobile (≤640px) : photo compacte, chips en scroll horizontal. */
 @media (max-width: 640px) {
+    body.view--profile {
+        --profile-picture-size: 76px;
+    }
     .profile-page-inner {
         padding: clamp(4px, 0.6vh, 10px) 12px 64px;
     }
     .profile-page-title-block {
-        margin-bottom: 16px;
+        margin-bottom: 14px;
     }
-    .profile-page-title-block .profile-header--page .profile-picture--round img {
-        width: 72px;
-        height: 72px;
+    .profile-page-title-block .profile-header--page .profile-header-content--center {
+        padding: 0 8px;
+        gap: 6px;
     }
+    /* Chips : scroll horizontal pour ne pas casser la lecture verticale,
+       comme une barre de filtres Sales Bot sur petit écran. */
     .profile-stats-chips .stats-grid {
         flex-wrap: nowrap;
         overflow-x: auto;
         justify-content: flex-start;
         scrollbar-width: none;
-        padding-bottom: 4px;
+        padding: 0 4px 4px;
         -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x proximity;
     }
     .profile-stats-chips .stats-grid::-webkit-scrollbar {
         display: none;
     }
     .profile-stats-chips .stat-card {
         flex-shrink: 0;
+        scroll-snap-align: start;
+    }
+    /* Sur mobile les chips full (nom de collection / artiste / NFT) peuvent
+       être plus longs : on laisse plus de place. */
+    .profile-stats-chips .stat-card--full {
+        max-width: 220px;
+    }
+    .profile-stats-chips .stat-card--full .stat-value {
+        max-width: 130px;
+    }
+    .profile-filters-bar {
+        margin-bottom: 8px;
+        padding: 6px 0 10px;
     }
     .profile-results-wrap {
-        padding: 12px;
+        padding: 12px 8px;
         margin-left: -4px;
         margin-right: -4px;
     }
