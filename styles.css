@@ -12412,13 +12412,15 @@ body.is-profile-loading #profileLoadingOverlay * {
     color: rgba(255,255,255,0.85);
     font-family: 'Geomanist-Bold', sans-serif;
 }
-/* Suffixe après le compteur (ex. "20 displayed") — même look que label
-   mais en case naturelle (pas d'uppercase) pour bien différencier. */
+/* Suffixe après le compteur (ex. "SALES 20 DISPLAYED") — exactement
+   le même style que .stats-summary-label : uppercase, 11px, 0.05em, gris
+   transparent. Demande user : "displayed doit avoir la même écriture et
+   police que SALES". */
 .stats-summary-suffix {
     font-size: 11px;
-    color: rgba(255,255,255,0.4);
-    letter-spacing: 0.04em;
-    text-transform: lowercase;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
 }
 .stats-summary-sep {
     color: rgba(255,255,255,0.15);
@@ -30935,42 +30937,86 @@ body { box-sizing: border-box; }
        2) barre de recherche pleine largeur (sb-search-wrap)
        3) compteur de ventes centré sous la barre de recherche.
        L'inversion d'ordre se fait via `order` plutôt que dans le DOM
-       pour ne pas casser le layout desktop. */
+       pour ne pas casser le layout desktop.
+
+       Layout mobile cible (du haut vers le bas) :
+         Row 1 : sort (Recent | Price | Rank)
+         Row 2 : mode (Sales | Listings | Auctions | All)
+         Row 3 : col-selector | add-collection | alert
+         Row 4 : hide-$1
+         Row 5 : search-bar | view-toggle
+         Row 6 : "SALES 20 DISPLAYED" centré
+
+       Pour mettre le view-toggle (qui est DANS .sb-filters-right en HTML)
+       à côté du search (qui est DANS .sb-filters-left en HTML), on passe
+       les deux wrappers en `display: contents` : leurs enfants deviennent
+       direct flex children de .sb-filters-bar et on les place via `order`
+       sans toucher au DOM. */
     .sb-filters-bar {
         flex-wrap: wrap;
         gap: 7px;
     }
+    /* "Flatten" les 2 wrappers : leurs enfants deviennent direct flex
+       children de .sb-filters-bar — order et flex-basis individuels
+       contrôlent ensuite chaque ligne. */
+    .sb-filters-left,
     .sb-filters-right {
-        order: 1;
-        flex-wrap: wrap;
-        gap: 7px;
-        width: 100%;
+        display: contents;
     }
-    .sb-filters-left {
-        order: 2;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 7px;
+    /* Row 1 : sort group (4 boutons) — full width, déjà à flex-basis 100%
+       via .stats-timerange dans le @media plus haut. */
+    .sb-sort-group { order: 1; }
+    /* Row 2 : mode group — full width. */
+    .sb-mode-group { order: 2; }
+    /* Row 3 : "2 collections" + "Add collection" + Alert sur la même ligne.
+       Le col-selector prend la place restante. Add-collection et Alert
+       gardent leur taille auto. */
+    .stats-col-selector-wrap {
+        order: 3;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
     }
-    .sb-filters-left .sb-result-count {
-        order: 2;
+    .sb-request-wrap {
+        order: 4;
+        flex: 0 0 auto !important;
+    }
+    .sb-alarm-wrap {
+        order: 5;
+        flex: 0 0 auto !important;
+    }
+    /* Row 4 : Hide $1 toggle, seul sur sa ligne. */
+    .sb-hide-dollar-toggle {
+        order: 6;
+        flex-basis: 100% !important;
+    }
+    /* Row 5 : search bar + view-toggle sur la même ligne. Le search
+       prend la place restante (flex 1 1 0), le view-toggle reste auto. */
+    .sb-filters-bar .sb-search-wrap {
+        order: 7;
+        flex: 1 1 0 !important;
+        flex-basis: auto !important;
+        width: auto !important;
+        max-width: none !important;
+        min-width: 0 !important;
+    }
+    .sb-view-toggle {
+        order: 8;
+        flex: 0 0 auto !important;
+    }
+    /* Row 6 : "SALES N DISPLAYED" centré, sous le search/view-toggle. */
+    .sb-result-count {
+        order: 9;
+        flex-basis: 100% !important;
         width: 100%;
-        /* display:flex + justify-content:center pour vraiment centrer le
-           contenu (avant : text-align center ne centrait pas le flex
-           interne .stats-summary-item qui restait flush left). */
         display: flex;
         justify-content: center;
         text-align: center;
     }
-    .sb-filters-left .sb-search-wrap { order: 1; }
-    /* Barres de recherche d'onglet : largeur 100% sur mobile pour
-       qu'elles tiennent toute la largeur de l'écran (au lieu de
-       partager la ligne avec un compteur ou un toggle). */
-    .sb-search-wrap,
+    /* Les autres barres de recherche (Top Collections / Drops) gardent
+       le comportement full-width (elles ne partagent leur ligne avec
+       rien d'autre). */
     .cp-search-wrap,
-    .stats-search-wrap {
+    .stats-search-wrap:not(.sb-search-wrap) {
         width: 100% !important;
         min-width: 0 !important;
         max-width: 100% !important;
