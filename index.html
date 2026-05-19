@@ -3320,17 +3320,6 @@ function debounce(func, wait) {
    getElementById('leftSidebar') retournait null, la fonction était un
    no-op silencieux (early return). */
 
-function toggleMenu(event) {
-    const menu = document.getElementById('navbarMenu');
-    const toggle = document.querySelector('.navbar-toggle');
-    if (menu && toggle) {
-        const isExpanded = menu.classList.toggle('active');
-        toggle.setAttribute('aria-expanded', isExpanded);
-    } else {
-        console.error('Navbar menu or toggle not found', { menu: !!menu, toggle: !!toggle });
-    }
-}
-
 function sanitizeInput(input) {
     return input.replace(/[<>]/g, '').trim().toLowerCase();
 }
@@ -3346,13 +3335,6 @@ function sanitizeFileNameForZip(name, index = 0) {
     return sanitized || `unnamed_nft_${index}`;
 }
 
-
-function normalizeText(text) {
-    if (!text) return '';
-    let normalized = text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
-    normalized = normalized.replace(/\n\s*\n/g, '\n').trim();
-    return normalized;
-}
 
 function stripEmojiForLegend(text) {
     const source = String(text || '');
@@ -5759,13 +5741,6 @@ function isCollageViewActive() {
     return Boolean(cardSize && cardSize.value === 'collage');
 }
 
-function handleDownloadAction() {
-    if (isCollageViewActive()) {
-        return downloadCollage();
-    }
-    return downloadNFTsAsZip();
-}
-
 async function downloadNFTsAsZip() {
     const zip = new JSZip();
     const nftContainer = document.getElementById('nftContainer');
@@ -6535,31 +6510,6 @@ function clearCollageSingleImage(nftContainer) {
     }
 }
 
-function getDrawableDimensions(drawable) {
-    if (!drawable) return { width: 0, height: 0 };
-    if (drawable instanceof ImageBitmap) return { width: drawable.width, height: drawable.height };
-    if (drawable instanceof HTMLImageElement) return { width: drawable.naturalWidth, height: drawable.naturalHeight };
-    if (drawable instanceof HTMLVideoElement) return { width: drawable.videoWidth, height: drawable.videoHeight };
-    return { width: drawable.width || 0, height: drawable.height || 0 };
-}
-
-function drawCover(ctx, drawable, dx, dy, dw, dh) {
-    const { width: sw, height: sh } = getDrawableDimensions(drawable);
-    if (!sw || !sh) return;
-
-    const sAspect = sw / sh;
-    const dAspect = dw / dh;
-
-    if (sAspect > dAspect) {
-        const cropW = sh * dAspect;
-        const sx = (sw - cropW) / 2;
-        ctx.drawImage(drawable, sx, 0, cropW, sh, dx, dy, dw, dh);
-    } else {
-        const cropH = sw / dAspect;
-        const sy = (sh - cropH) / 2;
-        ctx.drawImage(drawable, 0, sy, sw, cropH, dx, dy, dw, dh);
-    }
-}
 
 async function decodeImageFromBlob(blob) {
     if (typeof createImageBitmap === 'function') {
@@ -6946,11 +6896,6 @@ function getStatsBreadcrumbLabel(action) {
     return '';
 }
 
-
-function formatTitleWithActiveStat(baseHtml) {
-    if (!activeStatsBreadcrumbLabel) return baseHtml;
-    return `${baseHtml} / <span class="collection-breadcrumb-active">${activeStatsBreadcrumbLabel}</span>`;
-}
 
 function applyCollectionTitleBreadcrumb() {
     const countContainer = document.getElementById('nftCountContainer');
@@ -10280,11 +10225,6 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
 
         function escapeHtml(s) {
             return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-        }
-
-        function formatTime(ts) {
-            const d = new Date(ts || Date.now());
-            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
         }
 
         // Affichage horodaté aligné : aujourd'hui = "HH:MM", hier = "Yest · HH:MM",
@@ -13705,12 +13645,6 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
     function getFloorFor(colId) {
         return colId ? (_sbFloorByCol[colId] || 0) : 0;
     }
-    // Conservé pour compat (n'est plus utilisé pour le rendu, mais référencé
-    // ailleurs éventuellement). Renvoie 0 si on appelle sans colId.
-    function getActiveFloor() {
-        return 0;
-    }
-
     function fmt(n) {
         const v = Number(n);
         if (!v || isNaN(v)) return '—';
@@ -14921,12 +14855,6 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
 (function() {
     // true = un profil a déjà été chargé dans cette session
     window._pfHasProfile = false;
-
-    function _profileEls() {
-        return document.querySelectorAll(
-            '.profile-section, #nftContainer, #timestamp, #error, #noResults, #profileLoadingOverlay'
-        );
-    }
 
     // Force l'affichage des éléments du contenu profil avec des valeurs explicites
     // (nécessaire car le CSS critique en <head> est chargé après styles.css et gagne
@@ -16902,44 +16830,6 @@ async function sha256hex(str) {
 
     // ── Vue EXPLORER ─────────────────────────────────────────────────────────
     // Un seul onglet qui restaure la dernière vue Explorer (profil ou collection)
-    // ── Vue PROFILS (onglet "Profils") ────────────────────────────────────────
-    function showProfilExplorerView() {
-        // Si un profil est chargé (peu importe la source), le conserver
-        if (window._pfHasProfile || window._pfHasExplorerProfile) {
-            window._pfHasProfile = true;
-            showProfileView();
-            // Re-fetch si le username en DOM ne correspond pas
-            if (window._explorerUsername) {
-                const domUsername = (document.getElementById('username')?.textContent || '').trim();
-                if (domUsername && domUsername.toLowerCase() !== window._explorerUsername.toLowerCase()) {
-                    const usernameInput = document.getElementById('usernameInput');
-                    if (usernameInput) usernameInput.value = window._explorerUsername;
-                    if (typeof fetchProfileAndNFTs === 'function') fetchProfileAndNFTs();
-                }
-            }
-            return;
-        }
-        // Aucun profil → welcome
-        window._pfHasProfile = false;
-        showProfileView();
-    }
-
-    // ── Vue COLLECTIONS (onglet "Collections") ────────────────────────────────
-    function showCollectionExplorerView() {
-        const last = window._lastExplorerView;
-        // Collection déjà chargée → restaurer
-        if (last === 'collection' && window._cpHasCollection) {
-            window.showCollectionPanel(true);
-            return;
-        }
-        // Aucune collection → welcome de la collection
-        window.showCollectionPanel(false);
-    }
-
-    // ── (Ancienne fonction, gardée pour compatibilité) ────────────────────────
-    function showExplorerView() {
-        showProfilExplorerView();
-    }
 
     // ── Vue COLLECTION (chargée depuis search ou featured) ────────────────────
     window.showCollectionPanel = function(skipWelcome) {
@@ -19499,10 +19389,6 @@ function fmtDate(iso) {
   const d = new Date(iso);
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
-function fmtTime(iso) {
-  const d = new Date(iso);
-  return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
-}
 function fmtCountdown(targetIso) {
   const diff = new Date(targetIso) - Date.now();
   if (diff <= 0) return null;
@@ -19521,13 +19407,6 @@ function extractUtilities(desc) {
   const lines = desc.split('\n');
   const emojiRegex = /^[\u{1F300}-\u{1FFFF}\u{2600}-\u{27BF}\u{2300}-\u{23FF}⚡🏆💎🪂🎁🌟💵💰👑🥇🎨🧬🎮🎵🎙📚🎬🗝️🎰🚀⚔️✨🔑🤖📜🔷💠🧿💡🌍]/u;
   return lines.filter(l => emojiRegex.test(l.trim())).map(l => l.trim()).slice(0, 5);
-}
-
-// Extraire les tiers de prix mentionnés dans la description
-function extractPrices(desc) {
-  if (!desc) return [];
-  const matches = [...(desc.matchAll(/(\d+)\s*NFTs?\s*at\s*\$(\d+)/gi))];
-  return matches.slice(0, 3).map(m => `${Number(m[1]).toLocaleString()} × $${m[2]}`);
 }
 
 // Badge creator (avatar + nom + verified)
@@ -22018,33 +21897,6 @@ async function _copyConsoleLog() {
   }
 }
 
-// Toggle between fixed-height (scrollable) and full-height (everything visible).
-function _toggleConsoleExpand() {
-  const log = el_('snapshotProgressLog');
-  const btn = el_('snapshotExpandBtn');
-  if (!log) return;
-  const isExpanded = log.classList.toggle('snap-console-expanded');
-  if (isExpanded) {
-    // Save original maxHeight so we can restore it
-    if (!log.dataset.origMaxHeight) log.dataset.origMaxHeight = log.style.maxHeight || '';
-    log.style.maxHeight = 'none';
-    log.style.height = 'auto';
-    log.style.overflowY = 'visible';
-    if (btn) btn.textContent = '⤡ Collapse';
-  } else {
-    log.style.maxHeight = log.dataset.origMaxHeight || '';
-    log.style.height = '';
-    log.style.overflowY = '';
-    if (btn) btn.textContent = '⤢ Expand';
-  }
-}
-
-// Wipe the on-screen log (devtools console output is preserved).
-function _clearConsoleLog() {
-  const log = el_('snapshotProgressLog');
-  if (log) log.innerHTML = '';
-}
-
 // ───────────────────────────────────────────────────────────────────────────
 //  Snapshot state (module-level, like the original)
 // ───────────────────────────────────────────────────────────────────────────
@@ -24466,8 +24318,6 @@ window.initSnapshotPanel = function() {
         _lastTickerCount = fingerprint;
         renderTickerItems(sales.slice(0, 12));
     }
-
-    function _updateLiveTitle() { /* no-op — subtitle removed */ }
 
     // Exposer un refresh pour le Market Bot (appelé après chaque fetch)
     window._sbTickerRefresh = function() {
