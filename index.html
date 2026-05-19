@@ -14103,6 +14103,40 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
         } catch(e) { return null; }
     }
 
+    /* Seed top200 cache — un seul fetch DiscoverPageTopCollections donne
+       logo + name pour les 200 collections les plus actives. On l'utilise
+       pour afficher les logos du dropdown INSTANTANÉMENT (au lieu d'un
+       per-item GetCollection qui peut prendre 1-2s × N). Les fetches
+       per-item continuent en parallèle pour récupérer le creator data
+       nécessaire au regroupement par artiste — mais le visuel s'affiche
+       déjà via le seed. Memoisé : 1 seul appel par session. */
+    let _topColSeedPromise = null;
+    function _ensureTopColSeed() {
+        if (_topColSeedPromise) return _topColSeedPromise;
+        _topColSeedPromise = (async () => {
+            try {
+                const res = await fetch(graphqlEndpoint, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        operationName: 'DiscoverPageTopCollections',
+                        variables: { cacheId: 'discover-page-top-collections', first: 200 },
+                        query: 'query DiscoverPageTopCollections($cacheId:ID,$first:Int){public(cacheId:$cacheId){navTopCollections(first:$first){id name logo{url} verified}}}'
+                    })
+                });
+                const j = await res.json();
+                const arr = j?.data?.public?.navTopCollections || [];
+                const map = new Map();
+                for (const c of arr) {
+                    if (c?.id) map.set(c.id, c);
+                }
+                return map;
+            } catch (e) {
+                return new Map();
+            }
+        })();
+        return _topColSeedPromise;
+    }
+
     function updateHeaderCol(name, logoUrl) {
         const logo = document.getElementById('sbColLogo');
         const nameEl = document.getElementById('sbColName');
@@ -14114,23 +14148,47 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
     }
 
     // Charge logos + nom + créateur pour chaque collection dans le dropdown.
-    // Une fois TOUTES les collections récupérées, on (re-)groupe par
-    // artiste avec un en-tête cliquable au-dessus de chaque groupe.
+    // 1) On seed d'abord depuis DiscoverPageTopCollections (1 seul fetch
+    //    cacheable pour 200 collections) — logos affichés instantanément.
+    // 2) On lance ensuite les fetches per-item en parallèle pour récupérer
+    //    le creator data (uuid + displayName + verified) nécessaire au
+    //    regroupement par artiste.
+    // 3) Quand tous les creators sont connus, on (re-)groupe.
     async function loadDropdownLogos(listId) {
         const imgs = Array.from(document.querySelectorAll(`#${listId} [data-logo-id]`));
+        if (!imgs.length) return;
+
+        // ── Step 1 : seed logos depuis le top200 (1 RTT total, cacheable CDN)
+        const seed = await _ensureTopColSeed();
+        for (const img of imgs) {
+            const seedCol = seed.get(img.dataset.logoId);
+            if (seedCol?.logo?.url && !img.classList.contains('loaded')) {
+                img.onerror = function () {
+                    img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+                    img.classList.remove('loaded');
+                };
+                img.src = seedCol.logo.url;
+                img.classList.add('loaded');
+                // Patch aussi le nom si placeholder (le seed l'a).
+                const label = img.closest('.sb-col-rich-item');
+                const nameEl = label?.querySelector('.sb-col-rich-name');
+                if (nameEl && nameEl.dataset.placeholder) {
+                    nameEl.textContent = seedCol.name || '';
+                    delete nameEl.dataset.placeholder;
+                }
+            }
+        }
+
+        // ── Step 2 : per-item fetches pour creator data (logo déjà affiché
+        //            si seed hit — le fetch sert juste à hydrater le grouping).
         await Promise.all(imgs.map(async img => {
-            // Skippe uniquement si le creator data est déjà hydraté sur la
-            // checkbox — pas si le logo est simplement affiché (src pré-rempli).
-            // Cela garantit que les collections custom (logo pré-rempli depuis
-            // les suggestions, mais creatorId pas encore connu) sont bien fetchées.
             const label = img.closest('.sb-col-rich-item');
             const cb    = label?.querySelector('.sb-col-cb');
             if (cb?.dataset.creatorId) return; // déjà hydraté — vrai skip
             const col = await fetchColLogo(img.dataset.logoId);
             if (!col) return;
-            if (col.logo?.url) {
-                /* Garde le placeholder transparent (1x1 GIF) si l'URL 404 →
-                   pas d'icône "?" broken-image. */
+            // Logo : si pas encore affiché (seed miss), affiche-le maintenant.
+            if (col.logo?.url && !img.classList.contains('loaded')) {
                 img.onerror = function () {
                     img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
                     img.classList.remove('loaded');
@@ -14138,8 +14196,6 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
                 img.src = col.logo.url;
                 img.classList.add('loaded');
             }
-            // Met à jour le nom (si placeholder) et tague la checkbox avec
-            // les data-creator-* pour pouvoir grouper ensuite.
             if (!label) return;
             const nameEl = label.querySelector('.sb-col-rich-name');
             if (nameEl && nameEl.dataset.placeholder) {
@@ -17083,6 +17139,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-20T08:00:00Z',
+            type:  'improvement',
+            title: 'Faster collection picker',
+            text:  'Sales Bot collection picker shows logos instantly — top 200 collections come in a single fetch instead of one per item.'
+        },
         {
             date:  '2026-05-20T07:00:00Z',
             type:  'improvement',
