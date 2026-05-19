@@ -76,7 +76,7 @@
      downgrade la priorité parce qu'il découvre la font tardivement
      en parcourant la CSS. -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
-<link href="styles.css?v=1779610000" rel="stylesheet"/>
+<link href="styles.css?v=1779620000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -1168,11 +1168,34 @@
       <div class="home-spotlight" id="homeSpotlight" data-active="0">
         <div class="home-spotlight-slides">
 
+          <!-- Sign-in CTA : visible UNIQUEMENT pour les visiteurs déconnectés.
+               Placée en 1ʳᵉ position pour que les visiteurs déconnectés
+               tombent dessus en arrivant sur la home (premier slide du
+               cycle). Caché par défaut (style="display:none") + révélé
+               par initSpotlight quand l'utilisateur est déconnecté.
+               Numéro 08/09 — partagé avec My Profile (signed-in only)
+               qui occupe la même slot dans le cycle authentifié. -->
+          <article class="home-spotlight-slide home-spotlight-slide--signin is-active" data-signed-out-only="1" data-signin-cta="1" data-hint-element="#topnavLoginBtn" data-accent="#f59e0b" style="display:none;--accent:#f59e0b;--accent-strong:#fbbf24;--accent-soft:rgba(245,158,11,0.20);">
+            <svg class="home-spotlight-watermark" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="10" cy="7" r="3.5"/>
+              <path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/>
+              <path d="M15 10l2 2-2 2M17 12h-5"/>
+            </svg>
+            <div class="home-spotlight-slide-inner">
+              <div class="home-spotlight-eyebrow">
+                <span class="home-spotlight-index">08<span class="home-spotlight-index-sep">/</span><span class="home-spotlight-index-total">09</span></span>
+              </div>
+              <h3 class="home-spotlight-title">Sign in to CRONOS.WTF</h3>
+              <p class="home-spotlight-desc">Connect your Crypto.com NFT username to chat with the community and see your own profile in detail — holdings grouped by collection or artist, liked NFTs, full stats. Just your public username, no password needed.</p>
+              <span class="home-spotlight-cta">Sign In <span class="home-spotlight-cta-arrow" aria-hidden="true">→</span></span>
+            </div>
+          </article>
+
           <!-- Profile Explorer + Collection Explorer : mappent à la search bar
                du topnav (à gauche des onglets), donc en tête de cycle après
                Sign-in dans le sens de lecture topnav. Les deux partagent le
                label "01" car elles couvrent la même feature (recherche). -->
-          <article class="home-spotlight-slide is-active" data-tab-target="profil" data-accent="#a78bfa" style="--accent:#a78bfa;--accent-strong:#c4b5fd;--accent-soft:rgba(167,139,250,0.18);">
+          <article class="home-spotlight-slide" data-tab-target="profil" data-accent="#a78bfa" style="--accent:#a78bfa;--accent-strong:#c4b5fd;--accent-soft:rgba(167,139,250,0.18);">
             <svg class="home-spotlight-watermark" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <circle cx="10" cy="7" r="3.5"/>
               <path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/>
@@ -1298,30 +1321,6 @@
             </div>
           </article>
 
-          <!-- Sign-in CTA : visible UNIQUEMENT pour les visiteurs déconnectés.
-               Placée entre la slide Support et Settings — l'auto-cycle
-               présente d'abord les features avant de proposer le sign-in.
-               Caché par défaut (style="display:none") + révélé par
-               initSpotlight quand l'utilisateur est déconnecté. Click →
-               ouvre le modal de connexion (équivalent à un click sur
-               #topnavLoginBtn). data-hint-element : le bouton du topnav qui
-               reçoit le hint visuel quand cette slide est active. -->
-          <article class="home-spotlight-slide home-spotlight-slide--signin" data-signed-out-only="1" data-signin-cta="1" data-hint-element="#topnavLoginBtn" data-accent="#f59e0b" style="display:none;--accent:#f59e0b;--accent-strong:#fbbf24;--accent-soft:rgba(245,158,11,0.20);">
-            <svg class="home-spotlight-watermark" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="10" cy="7" r="3.5"/>
-              <path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/>
-              <path d="M15 10l2 2-2 2M17 12h-5"/>
-            </svg>
-            <div class="home-spotlight-slide-inner">
-              <div class="home-spotlight-eyebrow">
-                <span class="home-spotlight-index">Welcome</span>
-              </div>
-              <h3 class="home-spotlight-title">Sign in to CRONOS.WTF</h3>
-              <p class="home-spotlight-desc">Connect your Crypto.com NFT username to chat with the community and see your own profile in detail — holdings grouped by collection or artist, liked NFTs, full stats. Just your public username, no password needed.</p>
-              <span class="home-spotlight-cta">Sign In <span class="home-spotlight-cta-arrow" aria-hidden="true">→</span></span>
-            </div>
-          </article>
-
           <!-- My Profile CTA : visible UNIQUEMENT pour les visiteurs connectés.
                Position symétrique à l'onglet "My Profile" du topnav (qui n'apparaît
                aussi qu'au login). Caché par défaut + révélé par initSpotlight
@@ -1377,7 +1376,8 @@
               <div class="home-spotlight-progress-fill" id="homeSpotlightProgress"></div>
             </div>
             <div class="home-spotlight-dots" id="homeSpotlightDots">
-              <button class="home-spotlight-dot is-active" type="button" aria-label="Profile Explorer"></button>
+              <button class="home-spotlight-dot home-spotlight-dot--signin is-active" type="button" data-signed-out-only="1" aria-label="Sign in" style="display:none;"></button>
+              <button class="home-spotlight-dot" type="button" aria-label="Profile Explorer"></button>
               <button class="home-spotlight-dot" type="button" aria-label="Collection Explorer"></button>
               <button class="home-spotlight-dot" type="button" aria-label="WTF Community"></button>
               <button class="home-spotlight-dot" type="button" aria-label="Market Stats"></button>
@@ -1385,7 +1385,6 @@
               <button class="home-spotlight-dot" type="button" aria-label="NFT Drops"></button>
               <button class="home-spotlight-dot" type="button" aria-label="Snapshot"></button>
               <button class="home-spotlight-dot" type="button" aria-label="Support"></button>
-              <button class="home-spotlight-dot home-spotlight-dot--signin" type="button" data-signed-out-only="1" aria-label="Sign in" style="display:none;"></button>
               <button class="home-spotlight-dot home-spotlight-dot--myprofil" type="button" data-signed-in-only="1" aria-label="My Profile" style="display:none;"></button>
               <button class="home-spotlight-dot home-spotlight-dot--settings" type="button" aria-label="Settings"></button>
             </div>
@@ -16774,6 +16773,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-21T01:00:00Z',
+            type:  'improvement',
+            title: 'Sign-in slide first when signed out',
+            text:  'Signed-out visitors land on the Sign-in Spotlight slide right away — now numbered 08/09, the same slot My Profile uses once signed in.'
+        },
         {
             date:  '2026-05-21T00:00:00Z',
             type:  'improvement',
