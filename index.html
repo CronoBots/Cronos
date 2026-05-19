@@ -76,7 +76,7 @@
      downgrade la priorité parce qu'il découvre la font tardivement
      en parcourant la CSS. -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
-<link href="styles.css?v=1779199563" rel="stylesheet"/>
+<link href="styles.css?v=1779201263" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -16758,16 +16758,16 @@ async function sha256hex(str) {
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
         {
-            date:  '2026-05-20T13:00:00Z',
-            type:  'feature',
-            title: 'Spotlight: Settings + My Profile slides',
-            text:  'New Settings slide in the Spotlight (sign in / out, certify ownership, translate the site). Signed-out visitors see a Sign-in slide first; signed-in visitors get a My Profile slide explaining what they can do on their own profile (NFTs by collection or artist, liked NFTs, rarity ranks, full stats, bulk download). Sign In and My Profile tabs behave like every other tab again (no permanent blue tint) — the Sign In tab turns cyan while the login modal is open, same feedback as the Settings gear button. The tab you are currently on stays cyan even when the Spotlight cycles to its corresponding slide, so you never lose the "I am here" cue. NFT names, collection names, artist names, profile usernames and chain names (Cronos, Cronos POS) are now protected from translation across the site.'
+            date:  '2026-05-20T14:00:00Z',
+            type:  'fix',
+            title: 'Active tab, chat height, local time',
+            text:  'Active topnav tab stays clearly cyan after login. Mobile chat is taller (more messages visible). Update times below are now shown in your local time instead of UTC.'
         },
         {
-            date:  '2026-05-20T12:00:00Z',
+            date:  '2026-05-20T13:00:00Z',
             type:  'feature',
-            title: 'Sign-in spotlight',
-            text:  'Signed-out visitors now get a Sign-in slide in the Spotlight carousel — quick reminder that signing in unlocks the chat and a detailed view of your own profile.'
+            title: 'Spotlight: Sign-in, My Profile and Settings slides',
+            text:  'New Sign-in, My Profile and Settings slides in the Spotlight, each with a matching topnav hint. NFT, collection, artist, profile and chain names (Cronos, Cronos POS) are no longer translated.'
         },
         {
             date:  '2026-05-20T11:00:00Z',
@@ -17165,8 +17165,12 @@ async function sha256hex(str) {
         const sorted = HOME_UPDATES.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
         list.innerHTML = sorted.map(u => {
             const d = new Date(u.date);
+            /* Affichage en heure locale du visiteur (vs UTC précédemment) :
+               une release "à 13h00 UTC" devient "14h00" pour un user en CET,
+               "08h00" pour un user en NYC. Plus naturel pour situer "c'est
+               nouveau ?" sans calcul mental de fuseau. */
             const datePart = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-            const timePart = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
+            const timePart = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
             const meta = TYPE_META[u.type] || TYPE_META.improvement;
             return (
                 '<li class="home-update-item home-update-item--' + u.type + '">' +
@@ -17175,7 +17179,7 @@ async function sha256hex(str) {
                             '<span class="home-update-badge-ico">' + meta.icon + '</span>' +
                             '<span class="home-update-badge-label">' + meta.label + '</span>' +
                         '</span>' +
-                        '<time class="home-update-date" datetime="' + u.date + '">' + datePart + ' · ' + timePart + ' UTC</time>' +
+                        '<time class="home-update-date" datetime="' + u.date + '">' + datePart + ' · ' + timePart + '</time>' +
                     '</div>' +
                     '<h3 class="home-update-title">' + escapeHtml(u.title) + '</h3>' +
                     '<p class="home-update-text">' + escapeHtml(u.text) + '</p>' +

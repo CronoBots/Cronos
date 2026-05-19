@@ -7345,10 +7345,11 @@ body.is-profile-loading #profileLoadingOverlay * {
 
 .topnav-tab--active {
     color: var(--color1) !important;
-    /* Bg cyan visible mais sobre. Avant à 0.04 (trop subtil — l'utilisateur
-       rapportait que l'effet bleuté ne s'affichait pas tout le temps sur
-       mobile, le bg se confondait avec le fond noir de la topnav). */
-    background: rgba(0, 179, 255, 0.10);
+    /* Bg cyan : remonté à 0.16 et passé en !important pour s'assurer que
+       l'état actif reste visible — un user a rapporté après login que
+       "aucun onglet n'est bleu" sur mobile alors qu'il était sur Home.
+       L'underline cyan ::after est conservé en complément. */
+    background: rgba(0, 179, 255, 0.16) !important;
 }
 
 /* Underline cyan sous le tab actif. On le rend SUR TOUS les tabs avec
@@ -8797,6 +8798,13 @@ body.is-profile-loading #profileLoadingOverlay * {
         flex: 1 1 auto;
         min-height: 0;
     }
+    /* La card v3 interne doit elle aussi remplir le spotlight pour que la
+       Featured Collection atteigne réellement la hauteur du chat (sinon la
+       card s'arrête à la hauteur de son contenu et il y a un vide en bas
+       côté Featured alors que le chat est plus haut). */
+    .home-two-col--main > .home-section--featured .home-fc-spotlight .home-feat-v3 {
+        height: 100%;
+    }
 }
 
 
@@ -9206,13 +9214,13 @@ body.is-profile-loading #profileLoadingOverlay * {
     .home-chat-members-sidebar   { display: none !important; }
     .home-chat-members-btn       { display: flex !important; }
     /* Sur mobile : max-height annulé (cf. ci-dessous) ET on garantit une
-       hauteur de chat utilisable (sinon avec peu de messages la carte se
-       réduisait à ~150px). 65vh = ~520px sur un iPhone 14, suffisamment
-       pour voir 5-7 messages sans scroll interne et sans bouffer toute
-       la home (l'utilisateur peut scroller la page pour voir le reste). */
+       hauteur de chat plus généreuse (un user a rapporté que le cadre du
+       chat était trop petit). 78vh ≈ 625px sur un iPhone 14 → 8-10
+       messages visibles sans scroll interne, tout en laissant assez de
+       place sous le chat pour scroller la home naturellement. */
     .home-community-card {
         max-height: none;
-        min-height: 65vh;
+        min-height: 78vh;
     }
 }
 .home-chat-members-footer {
