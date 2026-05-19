@@ -12,11 +12,17 @@
    - First-person ("my own messages") is fine if natural; third-person is the default.
    - English is the language of HOME_UPDATES even when the rest of our work is in French.
 
-2. **Open a PR** from a fresh branch off `origin/main`. **One PR per user message**, not one PR per modification — if a single user message lists several changes to make, they all go in the SAME PR. Branch naming: `claude/<short-task-name>`.
+2. **Bust caches on every PR**. The site has two cache layers that both need a bump or returning visitors keep seeing the old CSS / SW behavior:
+   - `index.html` line ~79 : `<link href="styles.css?v=XXXXXXXXXX" ...>` — bump the `?v=` query string (use a fresh Unix timestamp, or just `+1` on the existing number).
+   - `sw.js` line ~22 : `const CACHE_VERSION = 'vNN';` — bump to `vNN+1`. The SW `activate` event will purge the previous cache.
+
+   Apply BOTH bumps in every PR that touches `styles.css`, `index.html` JS, or `sw.js`. If a PR only touches `CLAUDE.md` / docs / non-shipped files, skip.
+
+3. **Open a PR** from a fresh branch off `origin/main`. **One PR per user message**, not one PR per modification — if a single user message lists several changes to make, they all go in the SAME PR. Branch naming: `claude/<short-task-name>`.
 
    Once the PR for a user message is opened, do not push follow-up commits to its branch — the user merges PRs within seconds, so later commits land on a closed branch and never reach `main`. If a follow-up request comes in (a NEW user message), **first `git fetch origin` and check the live PR / `main` state on GitHub** (some of your previous PRs may have been merged in the interim, making part of the new work redundant), then open a fresh branch + fresh PR. This was the root cause of multiple lost-commit incidents (#109→#110, #112→#120, #115→#117→#119, #124→#126→#128).
 
-3. **PR description in French** when summarising user-facing changes, with a `## Summary` and a `## Test plan`.
+4. **PR description in French** when summarising user-facing changes, with a `## Summary` and a `## Test plan`.
 
 ## HOME_UPDATES is a public feed
 
