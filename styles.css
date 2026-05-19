@@ -7318,14 +7318,23 @@ body.is-profile-loading #profileLoadingOverlay * {
 
 /* Spotlight hint : quand une slide du Spotlight de la home est
    active, l'onglet du topnav qui pointe vers la même feature reçoit
-   ce highlight subtil. Seule l'icône (svg) passe en blanc — on ne
-   touche pas au background pour rester moins intrusif. Posé/retiré
-   par le carousel Spotlight via la fonction `show()`. !important pour
-   battre la couleur 40% blanc par défaut, MAIS on exclut --active :
-   l'onglet sur lequel l'utilisateur est doit toujours rester cyan
-   (sinon visuellement il "perd" son repère "je suis ici"). */
-.topnav-tab--spotlight-hint:not(.topnav-tab--disabled):not(.topnav-tab--active) {
+   ce highlight subtil. Le SVG passe en blanc. !important pour battre
+   la couleur 40% blanc par défaut.
+   On inclut volontairement --active : si le Spotlight WTF Community
+   est affiché alors que Home est l'onglet actif, on veut que l'icône
+   de Home devienne blanche elle aussi (au lieu de rester cyan), tout
+   en gardant le fond cyan de l'état actif → "blanc sur fond bleu". */
+.topnav-tab--spotlight-hint:not(.topnav-tab--disabled) {
     color: rgba(255, 255, 255, 0.95) !important;
+}
+/* Mobile : ajoute aussi un léger fond derrière l'icône (comme déjà fait
+   pour la loupe mobile), pour rendre le hint plus visible sur les tabs
+   icon-only. Exclu pour --active : le fond cyan de l'onglet actif doit
+   rester intact (le cas Home pendant le Spotlight WTF Community). */
+@media (max-width: 600px) {
+    .topnav-tab--spotlight-hint:not(.topnav-tab--disabled):not(.topnav-tab--active) {
+        background: var(--w-05) !important;
+    }
 }
 
 /* Variante du hint pour les slides Profile/Collection Explorer qui
@@ -22124,7 +22133,10 @@ body { box-sizing: border-box; }
 
 /* ── Gear button ── */
 .topnav-tab--settings {
-    color: #c8d0e8;
+    /* Couleur alignée sur les autres tabs (rgba(255,255,255,0.4)) — avant
+       en #c8d0e8 (gris bleuté) le SVG paraissait sensiblement plus clair
+       et tirait l'œil par rapport à ses voisins. */
+    color: rgba(255, 255, 255, 0.4);
     position: relative;
     /* Centre horizontalement le SVG dans le bouton — seul enfant (pas
        de label texte comme les autres tabs), donc on force le centrage
