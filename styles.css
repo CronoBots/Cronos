@@ -4371,19 +4371,10 @@ body.is-group-stats-view .nft-container--grouped .nft-group-header:first-of-type
   border-bottom: 1px solid var(--w-10) !important;
 }
 
-/* Profile avatar: keep larger size, thinner normal white contour, stronger white halo */
-
-.profile-header--page .profile-picture--round img {
-  width: 260px !important;
-  height: 260px !important;
-  border-radius: 9999px !important;
-  border: 2px solid rgba(255, 255, 255, 0.96) !important;
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.20),
-    0 0 12px rgba(255, 255, 255, 0.20),
-    0 0 24px rgba(255, 255, 255, 0.18),
-    0 0 40px var(--w-14) !important;
-}
+/* Profile avatar : géré désormais par .profile-page-title-block .profile-
+   header--page .profile-picture--round (backdrop centré, opacité réduite,
+   cf. plus bas). Plus de border/box-shadow visible — la photo est en
+   filigrane derrière le titre. */
 
 /* Keep social icons visually balanced */
 
@@ -4443,12 +4434,9 @@ body:not(.is-group-stats-view) #groupLegend[hidden] {
 /* Match non-group stats title sizing to group legend titles */
 
 
-/* Keep the enlarged profile picture size requested by the user */
-
-.profile-header--page .profile-picture--round img {
-  width: 260px !important;
-  height: 260px !important;
-}
+/* (Ancienne règle .profile-header--page .profile-picture--round img qui
+   forçait 260×260 retirée — la photo est désormais un backdrop sizé via
+   --profile-picture-size par .profile-page-title-block plus bas.) */
 
 
 body:not(.is-group-stats-view) #nftCountContainer {
@@ -4492,11 +4480,12 @@ body:not(.is-group-stats-view) #nftCountContainer {
 }
 
 
-.profile-header--page .profile-picture--round img,
-.profile-picture--round img {
-  width: var(--profile-picture-size) !important;
-  height: var(--profile-picture-size) !important;
-}
+/* (Ancienne règle générique sur les img de profile-picture--round retirée
+   — la photo profil page utilise désormais la règle plus spécifique de
+   .profile-page-title-block .profile-header--page .profile-picture--round
+   img qui s'aligne sur le backdrop. La variable --profile-picture-size
+   reste utilisée par d'autres composants — ex. sidebar — quand .view-
+   -profile n'est pas active.) */
 
 
 /* Sidebar search (top, above profile picture) */
@@ -8766,6 +8755,7 @@ body.is-profile-loading #profileLoadingOverlay * {
 @media (min-width: 1100px) {
     .home-two-col--main {
         grid-template-columns: 3fr 2fr;
+        grid-template-rows: 440px auto;
         grid-template-areas:
             "chat featured-col"
             "bottom-left featured-art";
@@ -24856,9 +24846,11 @@ body { box-sizing: border-box; }
 body.view--profile {
     --sidebar-width: 0px;
     /* Override la variable globale --profile-picture-size (200px par défaut,
-       appliquée via !important par les anciennes règles de la sidebar). On
-       redéfinit ici la valeur sur 3 paliers : mobile / tablette / desktop. */
-    --profile-picture-size: 88px;
+       appliquée via !important par les anciennes règles de la sidebar).
+       Redéfinie en grand : la photo est désormais un backdrop centré
+       (cf. .profile-page-title-block .profile-header--page .profile-picture
+        --round plus bas), donc on veut une taille qui domine le titre. */
+    --profile-picture-size: 360px;
 }
 body.view--profile .app-main{
     margin-left: 0 !important;
@@ -24891,61 +24883,117 @@ body.view--profile .navbar.navbar--floating-controls {
     margin-bottom: 20px;
 }
 
-/* Profile header en mode "page redesign" — centré, compact. */
+/* ── Profile header redesign — page-title style avec photo en backdrop ──
+   La photo de profil passe en arrière-plan (position absolute centrée),
+   opacité réduite. Le titre (display name) reprend la signature exacte
+   de .drops-page-title / .snapshot-page-title des autres onglets, le
+   sous-titre celle de .drops-page-sub. La photo est nettement plus
+   grande qu'un avatar pour faire un vrai backdrop visuel. */
 .profile-page-title-block .profile-header--page {
     display: block;
     width: 100%;
 }
 .profile-page-title-block .profile-header--page .profile-header-content--center {
+    position: relative;
     margin: 0 auto;
-    padding: 0 16px;
+    padding: 28px 16px;
     gap: 8px;
     width: min(900px, 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
-/* Photo de profil — override des règles globales avec !important nécessaires
-   parce que les anciennes règles ciblent .profile-header--page avec !important
-   (lignes 6597, 6696, 6753 de cette feuille). Taille pilotée par la variable
-   --profile-picture-size définie sur body.view--profile (mobile / tablette /
-   desktop), donc on peut ajuster proprement dans les media queries plus bas. */
+/* Photo de profil = backdrop centré DERRIÈRE le texte. On override les
+   anciennes règles avec !important (les sélecteurs .profile-picture--round
+   img plus haut posaient des dimensions fixes via !important basé sur la
+   variable --profile-picture-size). */
 .profile-page-title-block .profile-header--page .profile-picture--round {
-    width: auto !important;
-}
-.profile-page-title-block .profile-header--page .profile-picture--round img {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
     width: var(--profile-picture-size) !important;
     height: var(--profile-picture-size) !important;
+    max-width: none !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
+    opacity: 0.32 !important;
+    /* Pas de filtre blur : la photo doit rester reconnaissable selon
+       le user (plus grand et un peu moins opaque = lisible). */
+}
+.profile-page-title-block .profile-header--page .profile-picture--round img {
+    width: 100% !important;
+    height: 100% !important;
     border-radius: 9999px !important;
-    border: 2px solid rgba(255, 255, 255, 0.85) !important;
-    object-fit: cover;
-    box-shadow:
-        0 0 0 1px rgba(255, 255, 255, 0.15),
-        0 6px 16px rgba(0, 0, 0, 0.25),
-        0 0 24px var(--w-10) !important;
+    border: none !important;
+    box-shadow: none !important;
+    object-fit: cover !important;
 }
 
+/* Bloc texte au-dessus du backdrop */
+.profile-page-title-block .profile-header--page .profile-info,
+.profile-page-title-block .profile-header--page .profile-info--center {
+    position: relative !important;
+    z-index: 1 !important;
+    width: 100% !important;
+    max-width: 900px !important;
+    height: auto !important;
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.profile-page-title-block .profile-header--page .username-container {
+    position: static !important;
+    height: auto !important;
+    justify-content: center !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+/* Title — MÊME signature que .drops-page-title / .snapshot-page-title :
+   Geomanist-Bold, clamp(32, 4vw, 56), MAJUSCULES, blanc, letter-spacing
+   0.06em. !important pour battre l'ancienne valeur clamp(24, 3.2vw, 44). */
 .profile-page-title-block .profile-header--page .username {
-    font-family: 'Geomanist-Bold', sans-serif;
-    font-size: clamp(24px, 3.2vw, 44px) !important;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: #fff;
-    line-height: 1.05;
-    margin: 0;
+    font-family: 'Geomanist-Bold', sans-serif !important;
+    font-size: clamp(32px, 4vw, 56px) !important;
+    font-weight: 800 !important;
+    color: #fff !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+    text-align: center !important;
 }
+
+/* Subtitle — MÊME signature que .drops-page-sub : 12px Geomanist-Bold,
+   cyan #00B3FF, letter-spacing 0.1em, MAJUSCULES. !important pour battre
+   l'ancienne couleur gris 0.4 / font-size 11px. */
 .profile-page-title-block .profile-header--page .display-name {
-    font-size: 11px !important;
-    color: rgba(255, 255, 255, 0.4);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    margin: 2px 0 0;
+    position: static !important;
+    font-family: 'Geomanist-Bold', sans-serif !important;
+    font-size: 12px !important;
+    color: #00B3FF !important;
+    letter-spacing: 0.1em !important;
+    text-transform: uppercase !important;
+    margin: 8px 0 0 !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
 }
+
 .profile-page-title-block .profile-header--page .verified-badge {
     width: 18px;
     height: 18px;
 }
 .profile-page-title-block .profile-header--page .social-container {
-    margin-top: 6px;
+    margin-top: 12px;
     gap: 10px;
     justify-content: center;
     display: flex;
@@ -25203,10 +25251,10 @@ body.view--profile .navbar.navbar--floating-controls {
    RESPONSIVE — 3 paliers : mobile, tablette, desktop
    ────────────────────────────────────────────────────────────────────────── */
 
-/* Desktop large (≥1101px) : photo plus grande, plus d'air autour du titre. */
+/* Desktop large (≥1101px) : photo backdrop plus grande, plus d'air. */
 @media (min-width: 1101px) {
     body.view--profile {
-        --profile-picture-size: 112px;
+        --profile-picture-size: 440px;
     }
     .profile-page-title-block {
         margin-bottom: 28px;
@@ -25219,96 +25267,27 @@ body.view--profile .navbar.navbar--floating-controls {
 /* Tablette (641-1100px) : photo intermédiaire. */
 @media (min-width: 641px) and (max-width: 1100px) {
     body.view--profile {
-        --profile-picture-size: 96px;
+        --profile-picture-size: 320px;
     }
     .profile-page-title-block {
         margin-bottom: 22px;
     }
 }
 
-/* Mobile (≤640px) : photo à gauche, identité à droite, chips wrap multi-lignes
-   (toutes visibles d'un coup, plus de scroll horizontal).
-   On utilise CSS Grid plutôt que flex-direction:row pour garantir l'override
-   sans ambiguïté de cascade (les anciennes règles flex-direction:column de
-   .profile-header-content--center auraient pu gagner par source-order). */
+/* Mobile (≤640px) : MÊME layout centré que desktop (photo en backdrop +
+   texte centré au-dessus). Plus de grid avatar-left + info-right. */
 @media (max-width: 640px) {
     body.view--profile {
-        --profile-picture-size: 72px;
+        --profile-picture-size: 260px;
     }
     .profile-page-inner {
         padding: clamp(4px, 0.6vh, 10px) 12px 64px;
     }
     .profile-page-title-block {
         margin-bottom: 14px;
-        text-align: left;
-    }
-
-    /* ── Header profil : layout horizontal via CSS Grid ── */
-    .profile-page-title-block .profile-header--page .profile-header-content--center {
-        display: grid !important;
-        grid-template-areas: "avatar info" !important;
-        grid-template-columns: auto 1fr !important;
-        align-items: center !important;
-        column-gap: 14px !important;
-        row-gap: 0 !important;
-        text-align: left !important;
-        padding: 0 4px !important;
-        margin: 0 !important;
-        width: 100% !important;
-        max-width: none !important;
-        /* Annule flex-direction hérité (au cas où une règle plus spécifique
-           le re-set en column par cascade). */
-        flex-direction: row !important;
-    }
-    .profile-page-title-block .profile-header--page .profile-picture--round {
-        grid-area: avatar !important;
-        width: auto !important;
-        max-width: none !important;
-        flex: 0 0 auto !important;
-        justify-content: flex-start !important;
-        margin: 0 !important;
-    }
-    .profile-page-title-block .profile-header--page .profile-info--center,
-    .profile-page-title-block .profile-header--page .profile-info {
-        grid-area: info !important;
-        flex: 1 1 auto;
-        min-width: 0;
-        align-items: flex-start !important;
-        text-align: left !important;
-        max-width: none !important;
-        gap: 2px;
-        /* Annule position:absolute hérité du layout mobile original. */
-        position: static !important;
-    }
-    .profile-page-title-block .profile-header--page .username-container {
-        position: static !important;
-        justify-content: flex-start !important;
-        flex-wrap: wrap;
-        gap: 6px;
-        margin: 0 !important;
-    }
-    .profile-page-title-block .profile-header--page .username {
-        font-size: clamp(20px, 6vw, 28px) !important;
-        text-align: left !important;
-    }
-    .profile-page-title-block .profile-header--page .display-name {
-        position: static !important;
-        text-align: left !important;
-        margin: 0 !important;
-    }
-    /* Le social-container avait `position:absolute; bottom:0; left:135px` sur
-       mobile dans l'ancien layout. On le ré-ancre en statique dans le grid. */
-    .profile-page-title-block .profile-header--page .social-container {
-        position: static !important;
-        left: auto !important;
-        right: auto !important;
-        bottom: auto !important;
-        justify-content: flex-start !important;
-        margin-top: 4px !important;
+        text-align: center;
     }
     .profile-page-title-block .profile-header--page .profile-bio {
-        text-align: left !important;
-        margin: 6px 0 0 !important;
         font-size: 12px;
     }
 
