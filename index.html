@@ -18686,14 +18686,19 @@ fragment CollectionStatsData on Collection {
             cacheId: 'GetCollectionsPage-' + network + '-' + apiTimeRange + '-' + sortField + '-v' + (verifiedOnly === true ? '1' : '0')
         };
 
-        // Try primary network name, then fallback aliases if 400
-        const networkAliases = {
-            'CRONOS_POS': ['CRO']
-        };
-        const aliases = networkAliases[network] || [network];
-
-        for (const alias of aliases) {
-            const body = Object.assign({}, vars, { networks: [alias] });
+        /* Network canonical mapping — vient de
+           `getPublicSharedConfigs.supportedNetworks` (cf. CRYPTO_NFT_API.md
+           §SupportedNetwork) :
+              id `CRO`    → name "Cronos POS Chain"
+              id `CRONOS` → name "Cronos EVM"
+           Notre UI utilise `CRONOS_POS` comme value de l'<option> (par
+           cohérence avec le reste du code qui s'attend à ce nom), mais
+           l'API GraphQL veut `CRO`. On mappe à la frontière.
+           Avant : alias dict + boucle retry sur 400 → dead code car CRO
+           ne rejette pas. */
+        const apiNetwork = network === 'CRONOS_POS' ? 'CRO' : network;
+        const body = Object.assign({}, vars, { networks: [apiNetwork] });
+        try {
             const res = await fetch(graphqlEndpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -18703,21 +18708,17 @@ fragment CollectionStatsData on Collection {
                     query: QUERY
                 })
             });
-            if (res.status === 400) {
-                console.warn('Network enum "' + alias + '" rejected (400), trying next alias...');
-                continue;
-            }
             if (!res.ok) throw new Error('HTTP ' + res.status + ' - ' + res.statusText);
             const json = await res.json();
             if (json.errors) {
-                console.warn('GraphQL error for ' + alias + ':', json.errors[0]?.message);
-                continue;
+                console.warn('GraphQL error for network ' + apiNetwork + ':', json.errors[0]?.message);
+                return [];
             }
             return (json && json.data && json.data.public && json.data.public.collections) || [];
+        } catch (e) {
+            console.warn('fetchCollections failed for ' + apiNetwork + ':', e.message);
+            return [];
         }
-        // All aliases failed — return empty array (not throw, so other network still renders)
-        console.warn('All aliases exhausted for network:', network);
-        return [];
     }
 
     function formatCRO(val) {
@@ -24175,6 +24176,11 @@ window.initSnapshotPanel = function() {
             };
         }
     }
+
+    // Exposé en global pour permettre aux autres modules (Market Stats etc.)
+    // de partager la même config bootstrap sans dupliquer le fetch +
+    // localStorage cache.
+    window.bootstrapPublicConfigs = bootstrapConfig;
 
     /* ------------------------------------------------------------------ *
      * 3.  Featured collections — DiscoverPageTopCollections
