@@ -14963,8 +14963,6 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
         // (causerait un bug si l'on navigue ensuite vers un autre onglet)
         const w = document.getElementById('pfWelcome');
         if (w) w.style.display = 'none';
-        const ls = document.getElementById('leftSidebar');
-        if (ls) ls.style.setProperty('display', 'none', 'important');
         // appMain reste visible mais vide — _hideAllPanels s'occupe du contenu
     }
 
@@ -14972,9 +14970,6 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
         const w = document.getElementById('pfWelcome');
         if (w) w.style.display = 'none';
         window._pfHasProfile = true;
-        // Remettre la sidebar et appMain visibles
-        const ls = document.getElementById('leftSidebar');
-        if (ls) ls.style.setProperty('display', 'block', 'important');
         const am = document.getElementById('appMain');
         if (am) { am.style.visibility = ''; am.style.pointerEvents = ''; }
         // Restaurer les éléments de contenu profil (cachés par _hideAllPanels + CSS critique)
@@ -14988,8 +14983,6 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
             // Profil déjà chargé : s'assurer que tout est visible
             const w = document.getElementById('pfWelcome');
             if (w) w.style.display = 'none';
-            const ls = document.getElementById('leftSidebar');
-            if (ls) ls.style.setProperty('display', 'block', 'important');
             const am = document.getElementById('appMain');
             if (am) { am.style.visibility = ''; am.style.pointerEvents = ''; }
             // Restaurer profile-section + nftContainer avec valeurs explicites
@@ -16831,9 +16824,7 @@ async function sha256hex(str) {
         // Restaurer visibility + pointerEvents (pouvaient être cachés par showPfWelcome ancienne version)
         const am = document.getElementById('appMain');
         if (am) { am.style.visibility = ''; am.style.pointerEvents = ''; }
-        // Cacher sidebar + welcome profil à chaque changement d'onglet
-        const ls = document.getElementById('leftSidebar');
-        if (ls) ls.style.display = 'none';
+        // Cacher welcome profil à chaque changement d'onglet
         const pfw = document.getElementById('pfWelcome');
         if (pfw) pfw.style.display = 'none';
         document.querySelectorAll('.profile-section, #nftContainer, #timestamp, #error, #noResults, #profileLoadingOverlay').forEach(el => {
@@ -16863,8 +16854,6 @@ async function sha256hex(str) {
     function _showFullscreenPanel(panelEl, onReady) {
         _hideAllPanels();
         _restoreMainContent();
-        const leftSidebar = document.getElementById('leftSidebar');
-        if (leftSidebar) leftSidebar.style.display = 'none';
         const navbar = document.querySelector('.navbar--floating-controls');
         if (navbar) navbar.style.display = 'none';
         if (appMain) {
@@ -16910,8 +16899,6 @@ async function sha256hex(str) {
             });
             const ps = document.querySelector('.profile-section');
             if (ps) ps.style.display = 'none';
-            const ls = document.getElementById('leftSidebar');
-            if (ls) ls.style.display = 'none';
             if (typeof initHomePanel === 'function') initHomePanel();
             // Updates changelog (rendu une seule fois)
             renderHomeUpdates();
@@ -18142,14 +18129,6 @@ async function sha256hex(str) {
         // Marque la vue profil → permet de scoper le gutter CSS uniquement ici
         document.body.classList.add('view--profile');
 
-        // Sidebar : display:block !important pour écraser le CSS critique (#leftSidebar{display:none})
-        const leftSidebar = document.getElementById('leftSidebar');
-        if (leftSidebar) {
-            leftSidebar.style.setProperty('display', 'block', 'important');
-            leftSidebar.style.visibility = '';
-            leftSidebar.style.pointerEvents = '';
-        }
-
         // appMain : retirer le margin-left:0 imposé par les autres vues
         if (appMain) {
             appMain.style.removeProperty('margin-left'); // laisse var(--sidebar-width) du CSS
@@ -18169,8 +18148,6 @@ async function sha256hex(str) {
     // ── Vue STATS ─────────────────────────────────────────────────────────────
     function showStatsView() {
         _hideAllPanels();
-        const leftSidebar = document.getElementById('leftSidebar');
-        if (leftSidebar) leftSidebar.style.display = 'none';
         const navbar = document.querySelector('.navbar--floating-controls');
         if (navbar) navbar.style.display = 'none';
         if (statsPanel) statsPanel.style.display = 'block';
@@ -25942,50 +25919,8 @@ window.initSnapshotPanel = function() {
           natif que Market Bot via la classe partagée .sb-table-wrap.
        ─────────────────────────────────────────────────────────────────── */
 
-    /* ──────────────────────────────────────────────────────────────────────
-       3. SIDEBAR OVERLAY MOBILE — Bouton profil flottant (≤640px)
-          Ouvre la sidebar en overlay en vue profil sur smartphone.
-       ─────────────────────────────────────────────────────────────────── */
-    function initMobileSidebarToggle() {
-        if (window.innerWidth > 640) return;
-        if (document.getElementById('mobileSidebarToggle')) return;
-        var sidebar = document.getElementById('leftSidebar');
-        if (!sidebar) return;
-
-        var btn = document.createElement('button');
-        btn.id = 'mobileSidebarToggle';
-        btn.setAttribute('aria-label', 'Open profile sidebar');
-        btn.setAttribute('type', 'button');
-        btn.style.cssText = [
-            'display:none', 'position:fixed',
-            'bottom:calc(24px + env(safe-area-inset-bottom))',
-            'left:16px', 'z-index:1998',
-            'background:var(--collection-bg,#0b1426)',
-            'border:1px solid rgba(0,179,255,0.35)',
-            'border-radius:50%', 'width:48px', 'height:48px',
-            'align-items:center', 'justify-content:center',
-            'cursor:pointer',
-            'box-shadow:0 4px 20px rgba(0,0,0,0.5)',
-            'color:#00B3FF'
-        ].join(';');
-        btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
-        document.body.appendChild(btn);
-
-        var observer = new MutationObserver(function () {
-            btn.style.display = document.body.classList.contains('view--profile') ? 'flex' : 'none';
-        });
-        observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-
-        btn.addEventListener('click', function () {
-            document.body.classList.toggle('sidebar-open');
-        });
-        document.addEventListener('click', function (e) {
-            if (document.body.classList.contains('sidebar-open') &&
-                !sidebar.contains(e.target) && e.target !== btn) {
-                document.body.classList.remove('sidebar-open');
-            }
-        });
-    }
+    /* initMobileSidebarToggle supprimé : la sidebar n'existe plus dans le
+       DOM (cf. PR #213), la fonction early-returned. */
 
     /* ──────────────────────────────────────────────────────────────────────
        4. ORIENTATION CHANGE — Réinitialise les patches au retournement
@@ -25994,7 +25929,6 @@ window.initSnapshotPanel = function() {
         var sw = document.querySelector('.topnav-search-wrap');
         if (sw) sw.classList.remove('is-mobile-open');
         initMobileSearch();
-        initMobileSidebarToggle();
     }, { passive: true });
 
     /* ──────────────────────────────────────────────────────────────────────
@@ -26002,7 +25936,6 @@ window.initSnapshotPanel = function() {
        ─────────────────────────────────────────────────────────────────── */
     function bootstrap() {
         initMobileSearch();
-        initMobileSidebarToggle();
     }
 
     if (document.readyState === 'loading') {
