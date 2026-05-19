@@ -76,7 +76,7 @@
      downgrade la priorité parce qu'il découvre la font tardivement
      en parcourant la CSS. -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
-<link href="styles.css?v=1779640000" rel="stylesheet"/>
+<link href="styles.css?v=1779650000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -1168,6 +1168,29 @@
       <div class="home-spotlight" id="homeSpotlight" data-active="0">
         <div class="home-spotlight-slides">
 
+          <!-- Sign-in CTA : visible UNIQUEMENT pour les visiteurs déconnectés.
+               Placée en 1ʳᵉ position pour que les visiteurs déconnectés
+               tombent dessus en arrivant sur la home (premier slide du
+               cycle). Caché par défaut (style="display:none") + révélé
+               par initSpotlight quand l'utilisateur est déconnecté.
+               Numéro 08/09 — partagé avec My Profile (signed-in only)
+               qui occupe la même slot dans le cycle authentifié. -->
+          <article class="home-spotlight-slide home-spotlight-slide--signin is-active" data-signed-out-only="1" data-signin-cta="1" data-hint-element="#topnavLoginBtn" data-accent="#f59e0b" style="display:none;--accent:#f59e0b;--accent-strong:#fbbf24;--accent-soft:rgba(245,158,11,0.20);">
+            <svg class="home-spotlight-watermark" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="10" cy="7" r="3.5"/>
+              <path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/>
+              <path d="M15 10l2 2-2 2M17 12h-5"/>
+            </svg>
+            <div class="home-spotlight-slide-inner">
+              <div class="home-spotlight-eyebrow">
+                <span class="home-spotlight-index">08<span class="home-spotlight-index-sep">/</span><span class="home-spotlight-index-total">09</span></span>
+              </div>
+              <h3 class="home-spotlight-title">Sign in to CRONOS.WTF</h3>
+              <p class="home-spotlight-desc">Connect your Crypto.com NFT username to chat with the community and see your own profile in detail — holdings grouped by collection or artist, liked NFTs, full stats. Just your public username, no password needed.</p>
+              <span class="home-spotlight-cta">Sign In <span class="home-spotlight-cta-arrow" aria-hidden="true">→</span></span>
+            </div>
+          </article>
+
           <!-- Profile Explorer + Collection Explorer : mappent à la search bar
                du topnav (à gauche des onglets), donc en tête de cycle après
                Sign-in dans le sens de lecture topnav. Les deux partagent le
@@ -1298,30 +1321,6 @@
             </div>
           </article>
 
-          <!-- Sign-in CTA : visible UNIQUEMENT pour les visiteurs déconnectés.
-               Placée entre Support (07) et Settings (09) dans le DOM — donc
-               numérotée 08/09, same slot que My Profile pour les signed-in.
-               L'attribut is-active ici force ce slide à être le PREMIER affiché
-               à l'arrivée (avant que JS ne ré-applique active basé sur cette
-               classe). Pas de display:none inline → 1ʳᵉ peinture montre déjà
-               Sign-in pour les signed-out (pour les signed-in il flash 1-2
-               frames avant suppression par initSpotlight). -->
-          <article class="home-spotlight-slide home-spotlight-slide--signin is-active" data-signed-out-only="1" data-signin-cta="1" data-hint-element="#topnavLoginBtn" data-accent="#f59e0b" style="--accent:#f59e0b;--accent-strong:#fbbf24;--accent-soft:rgba(245,158,11,0.20);">
-            <svg class="home-spotlight-watermark" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="10" cy="7" r="3.5"/>
-              <path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/>
-              <path d="M15 10l2 2-2 2M17 12h-5"/>
-            </svg>
-            <div class="home-spotlight-slide-inner">
-              <div class="home-spotlight-eyebrow">
-                <span class="home-spotlight-index">08<span class="home-spotlight-index-sep">/</span><span class="home-spotlight-index-total">09</span></span>
-              </div>
-              <h3 class="home-spotlight-title">Sign in to CRONOS.WTF</h3>
-              <p class="home-spotlight-desc">Connect your Crypto.com NFT username to chat with the community and see your own profile in detail — holdings grouped by collection or artist, liked NFTs, full stats. Just your public username, no password needed.</p>
-              <span class="home-spotlight-cta">Sign In <span class="home-spotlight-cta-arrow" aria-hidden="true">→</span></span>
-            </div>
-          </article>
-
           <!-- My Profile CTA : visible UNIQUEMENT pour les visiteurs connectés.
                Position symétrique à l'onglet "My Profile" du topnav (qui n'apparaît
                aussi qu'au login). Caché par défaut + révélé par initSpotlight
@@ -1377,6 +1376,7 @@
               <div class="home-spotlight-progress-fill" id="homeSpotlightProgress"></div>
             </div>
             <div class="home-spotlight-dots" id="homeSpotlightDots">
+              <button class="home-spotlight-dot home-spotlight-dot--signin is-active" type="button" data-signed-out-only="1" aria-label="Sign in" style="display:none;"></button>
               <button class="home-spotlight-dot" type="button" aria-label="Profile Explorer"></button>
               <button class="home-spotlight-dot" type="button" aria-label="Collection Explorer"></button>
               <button class="home-spotlight-dot" type="button" aria-label="WTF Community"></button>
@@ -1385,7 +1385,6 @@
               <button class="home-spotlight-dot" type="button" aria-label="NFT Drops"></button>
               <button class="home-spotlight-dot" type="button" aria-label="Snapshot"></button>
               <button class="home-spotlight-dot" type="button" aria-label="Support"></button>
-              <button class="home-spotlight-dot home-spotlight-dot--signin is-active" type="button" data-signed-out-only="1" aria-label="Sign in"></button>
               <button class="home-spotlight-dot home-spotlight-dot--myprofil" type="button" data-signed-in-only="1" aria-label="My Profile" style="display:none;"></button>
               <button class="home-spotlight-dot home-spotlight-dot--settings" type="button" aria-label="Settings"></button>
             </div>
@@ -13042,16 +13041,7 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
         if (!slides.length) return;
 
         const CYCLE_MS = 6500;       // 6.5s par feature
-        // Active initial : on respecte la classe `is-active` posée dans
-        // le HTML (typiquement sur la slide Sign-in qui doit être affichée
-        // en premier pour les visiteurs déconnectés, même si elle se trouve
-        // à l'index 8 du cycle dans le DOM). Si aucune slide n'a is-active
-        // (cas signed-in où Sign-in a été retirée), on retombe sur 0.
-        let active = (() => {
-            const idx = slides.findIndex(s => s.classList.contains('is-active'));
-            return idx >= 0 ? idx : 0;
-        })();
-        let paused = false;
+        let active = 0;
         let paused = false;
         // Suivi de visibilité — l'auto-cycle ne doit pas avancer si le
         // Spotlight n'est plus à l'écran (user a scrollé vers le bas,
@@ -13353,15 +13343,7 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
         };
         window.addEventListener('cronos:auth', (e) => {
             const action = e.detail?.action;
-            if (action === 'login') {
-                _spliceConditional('[data-signed-out-only]');
-                // Après un sign-in réussi, on remet le cycle à 0 (Profile
-                // Explorer) au lieu de laisser la logique de splice mettre
-                // l'active sur le slide qui a pris la place de Sign-in.
-                // Évite de switcher le hint topnav vers une nouvelle slide
-                // sans rapport avec ce que l'utilisateur vient de faire.
-                if (slides.length) show(0);
-            }
+            if (action === 'login')  _spliceConditional('[data-signed-out-only]');
             if (action === 'logout') _spliceConditional('[data-signed-in-only]');
         });
 
@@ -16792,16 +16774,10 @@ async function sha256hex(str) {
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
         {
-            date:  '2026-05-21T03:00:00Z',
-            type:  'improvement',
-            title: 'Spotlight hint background on every screen',
-            text:  'When the Spotlight passes over a topnav tab, the soft background behind the icon now shows on desktop too (until now it only kicked in on mobile). Same look for the Sign-in tab while the Sign-in slide is on screen.'
-        },
-        {
-            date:  '2026-05-21T02:00:00Z',
-            type:  'improvement',
-            title: 'Spotlight + profile spacing polish',
-            text:  'Sign-in slide is still the first one displayed when signed out, but the arrow keys now follow the cycle properly: right goes to Settings (09), left goes to Support (07). After signing in, the cycle quietly resets to the first slide instead of jumping to a random one. Mobile Spotlight WTF logo is half the size it was. Profile header title and subtitle now share the exact spacing of the other tab titles.'
+            date:  '2026-05-21T04:00:00Z',
+            type:  'fix',
+            title: 'Spotlight rollback',
+            text:  'Rolled back the last two Spotlight tweaks (cycle reorder + topnav hint background on desktop) — back to the previous behavior.'
         },
         {
             date:  '2026-05-21T01:00:00Z',
