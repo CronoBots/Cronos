@@ -76,7 +76,7 @@
      downgrade la priorité parce qu'il découvre la font tardivement
      en parcourant la CSS. -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
-<link href="styles.css?v=1778820000" rel="stylesheet"/>
+<link href="styles.css?v=1779190535" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -16596,6 +16596,12 @@ async function sha256hex(str) {
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
         {
+            date:  '2026-05-20T09:00:00Z',
+            type:  'fix',
+            title: 'Language picker',
+            text:  'Changing the language in Settings now actually applies the translation — it was silently failing.'
+        },
+        {
             date:  '2026-05-20T08:00:00Z',
             type:  'improvement',
             title: 'Faster collection picker',
@@ -24614,24 +24620,22 @@ window.initSnapshotPanel = function() {
     }
 
     /* ──────────────────────── UI ──────────────────────── */
+    /* Le sélecteur de langue est un <select> natif dans le panel Settings
+       (cf. #settingsLangSelect). Le change handler clique sur l'élément
+       .cwtf-lang-option correspondant — ce conteneur invisible héberge ces
+       boutons comme proxies pour applyLanguage(). */
     function buildUI() {
         if (document.getElementById('cwtfLangSwitcher')) return;
 
-        /* Hidden container — keeps .cwtf-lang-option elements for applyLanguage()
-           but renders nothing visible. The Settings gear panel handles the UI. */
         const wrap = document.createElement('div');
         wrap.id = 'cwtfLangSwitcher';
         wrap.setAttribute('data-no-translate', '');
         wrap.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;pointer-events:none;';
-        wrap.innerHTML = `
-            <div id="cwtfLangMenu" role="menu" aria-hidden="true">
-                ${LANGUAGES.map(l => `
-                    <button type="button" class="cwtf-lang-option" data-lang="${l.code}" role="menuitem">
-                        <span class="cwtf-lang-name">${l.name}</span>
-                    </button>
-                `).join('')}
-            </div>
-        `;
+        wrap.innerHTML = LANGUAGES.map(l => `
+            <button type="button" class="cwtf-lang-option" data-lang="${l.code}" role="menuitem">
+                <span class="cwtf-lang-name">${l.name}</span>
+            </button>
+        `).join('');
         document.body.appendChild(wrap);
 
         const loader = document.createElement('div');
@@ -24644,36 +24648,10 @@ window.initSnapshotPanel = function() {
         `;
         document.body.appendChild(loader);
 
-        const btn  = wrap.querySelector('#cwtfLangBtn');
-        const menu = wrap.querySelector('#cwtfLangMenu');
-
-        btn.addEventListener('click', e => {
-            e.stopPropagation();
-            const open = menu.classList.toggle('cwtf-open');
-            btn.classList.toggle('cwtf-lang-btn--open', open);
-            btn.setAttribute('aria-expanded', String(open));
-            menu.setAttribute('aria-hidden', String(!open));
-        });
-        document.addEventListener('click', e => {
-            if (!wrap.contains(e.target)) closeMenu();
-        });
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') closeMenu();
-        });
-
-        function closeMenu() {
-            menu.classList.remove('cwtf-open');
-            btn.classList.remove('cwtf-lang-btn--open');
-            btn.setAttribute('aria-expanded', 'false');
-            menu.setAttribute('aria-hidden', 'true');
-        }
-
-        menu.querySelectorAll('.cwtf-lang-option').forEach(opt => {
+        wrap.querySelectorAll('.cwtf-lang-option').forEach(opt => {
             opt.addEventListener('click', e => {
                 e.stopPropagation();
-                const code = opt.getAttribute('data-lang');
-                closeMenu();
-                applyLanguage(code);
+                applyLanguage(opt.getAttribute('data-lang'));
             });
         });
 
@@ -24681,11 +24659,6 @@ window.initSnapshotPanel = function() {
     }
 
     function updateUI() {
-        const codeEl = document.getElementById('cwtfLangCode');
-        if (codeEl) {
-            const lang = LANGUAGES.find(l => l.code === currentLang) || LANGUAGES[0];
-            codeEl.textContent = lang.code.split('-')[0].toUpperCase();
-        }
         document.querySelectorAll('.cwtf-lang-option').forEach(opt => {
             opt.classList.toggle('cwtf-lang-option--active',
                 opt.getAttribute('data-lang') === currentLang);
