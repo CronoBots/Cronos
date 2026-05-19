@@ -96,17 +96,11 @@
 .navbar.navbar--floating-controls{display:none}
 </style>
 <!-- Librairies JS -->
-<!-- Open Graph (aperçu lien) -->
-<meta content="CRONOS.WTF | Developed by Unscoop" property="og:title"/>
-<meta content="Browse smarter. Collect better" property="og:description"/>
-<meta content="https://CronoBots.github.io/CronoBots/link.png" property="og:image"/>
-<meta content="https://CronoBots.github.io/CronoBots/" property="og:url"/>
-<meta content="website" property="og:type"/>
-<!-- Twitter Card -->
-<meta content="summary_large_image" name="twitter:card"/>
-<meta content="CRONOS.WTF | Developed by Unscoop" name="twitter:title"/>
-<meta content="Browse smarter. Collect better" name="twitter:description"/>
-<meta content="https://www.cronos.wtf/link.png" name="twitter:image"/>
+<!-- (Ancien bloc Open Graph / Twitter Card retiré : il dupliquait celui
+     défini plus haut (lignes ~38-48) avec des URLs obsolètes pointant
+     vers CronoBots.github.io. Comportement non-déterministe selon le
+     scraper — certains gardaient le premier set, d'autres le dernier.
+     On garde uniquement le set initial qui pointe vers cronos.wtf.) -->
 <!-- ── Service worker registration ──
      Inscrit /sw.js après le load event pour ne pas concurrencer la
      première peinture. Le SW pré-cache styles.css + icônes + manifest
@@ -9544,7 +9538,7 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
     }
 
     // ── Featured Creators ─────────────────────────────────────────────────
-    const _fcEsc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const _fcEsc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/\\/g,'&#92;');
     const FEATURED_CREATORS = [
         { username: 'cryptocomnft',        displayName: 'Crypto.com NFT',     role: 'Official Platform',     url: 'https://crypto.com/nft/profile/cryptocomnft?tab=created' },
         { username: 'unscoop',             displayName: 'CRONOS.WTF',         role: 'Platform & Tools',      url: 'https://crypto.com/nft/profile/unscoop?tab=created' },
@@ -12409,6 +12403,9 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
                 // onDisconnect().remove() et fait passer l'utilisateur offline alors
                 // qu'il est toujours sur la page.
                 setInterval(function () {
+                    /* Skip si onglet en arrière-plan — visibilitychange ci-
+                       dessous force déjà un syncPresence au retour. */
+                    if (document.hidden) return;
                     if (fbDb && _myPresenceRef) syncPresence();
                 }, 30000);
 
@@ -12460,8 +12457,11 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
                 });
                 // Refresh périodique du rendu typing pour cleaner les
                 // entrées stale visuellement (sans attendre un nouveau
-                // value event Firebase).
-                setInterval(_renderTypingIndicator, 2000);
+                // value event Firebase). Skip si onglet en arrière-plan.
+                setInterval(function () {
+                    if (document.hidden) return;
+                    _renderTypingIndicator();
+                }, 2000);
 
                 // ── Présence temps réel ──
                 _presenceRef.on('value', snap => {
@@ -14551,6 +14551,11 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
 
         _autoRefreshTimer = setInterval(() => {
             if (_sbHovered) return;
+            /* document.hidden — onglet en arrière-plan ou écran verrouillé :
+               on saute le fetch pour économiser batterie + data sur mobile.
+               Le timer continue mais ne déclenche aucune requête tant que
+               l'onglet n'est pas réactivé. */
+            if (document.hidden) return;
             if (document.getElementById('salesBotPanel')?.style.display !== 'none') loadInitialMulti();
         }, 30000);
     };
@@ -17140,6 +17145,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-20T07:00:00Z',
+            type:  'improvement',
+            title: 'Speed + battery polish',
+            text:  'Faster first paint after a refresh — the service worker now reuses cached files even when the cache-buster query changes. Background tabs no longer poll the chat, sales feed and drops, so the app uses much less battery and data when you switch away. Also dropped a leftover duplicate link-preview block so social previews are more consistent across Facebook / X / Discord.'
+        },
         {
             date:  '2026-05-19T12:00:00Z',
             type:  'improvement',
@@ -21143,8 +21154,10 @@ window.initDropsPanel = async function() {
   refreshLivePackCounts(dropsToRender.live, true);
   refreshLivePackCounts(dropsToRender.soldout, true);
 
-  // Auto-refresh des packs toutes les 3 minutes (sans resamples, inutile)
+  // Auto-refresh des packs toutes les 3 minutes (sans resamples, inutile).
+  // Skip si onglet en arrière-plan (économie batterie + data mobile).
   setInterval(async () => {
+    if (document.hidden) return;
     if (document.getElementById('dropsPanel')?.style.display === 'none') return;
     refreshLivePackCounts(dropsToRender.live, false);
     refreshLivePackCounts(dropsToRender.soldout, false);
@@ -23829,240 +23842,6 @@ window._snapshotRun = () => {
   } else alert('Please paste a collection ID to snapshot.');
 };
 window._snapshotExport = exportCSV;
-
-// Quick self-test — verifies that the API responds and Q_HISTORY works.
-// Exposed as window._snapshotTestBatch.
-window._snapshotTestBatch = async function() {
-  const collectionId = (el_('snapshotColIdInput')?.value || '').trim();
-  if (!collectionId) return;
-  const resultEl = el_('snapshotTestResult');
-  if (resultEl) { resultEl.textContent = 'Testing API connectivity…'; showEl('snapshotTestResult'); }
-  try {
-    // Fire one Q_HISTORY page to verify the API responds and the query is well-formed
-    const data = await gql('SnapHistory',
-      { collectionId, first: 5, after: null, naturesIn: TRANSFER_NATURES },
-      Q_HISTORY);
-    const edges = data?.public?.collection?.eventHistory?.edges || [];
-    if (resultEl) {
-      resultEl.textContent = edges.length > 0
-        ? `✓ API OK — ${edges.length} events returned. Walk would proceed normally.`
-        : '⚠ API responded but no events found for this collection.';
-    }
-    console.log('Self-test result:', data);
-  } catch (e) {
-    if (resultEl) resultEl.textContent = '❌ ' + e.message;
-  }
-};
-
-// END OF SNAPSHOT MODULE v3.5
-
-// Quick self-test — verifies that the API responds and Q_HISTORY works.
-// Exposed as window._snapshotTestBatch.
-window._snapshotTestBatch = async function() {
-  const collectionId = (el_('snapshotColIdInput')?.value || '').trim();
-  if (!collectionId) return;
-  const resultEl = el_('snapshotTestResult');
-  if (resultEl) { resultEl.textContent = 'Testing API connectivity…'; showEl('snapshotTestResult'); }
-  try {
-    // Fire one Q_HISTORY page to verify the API responds and the query is well-formed
-    const data = await gql('SnapHistory',
-      { collectionId, first: 5, after: null, naturesIn: TRANSFER_NATURES },
-      Q_HISTORY);
-    const edges = data?.public?.collection?.eventHistory?.edges || [];
-    if (resultEl) {
-      resultEl.textContent = edges.length > 0
-        ? `✓ API OK — ${edges.length} events returned. Walk would proceed normally.`
-        : '⚠ API responded but no events found for this collection.';
-    }
-    console.log('Self-test result:', data);
-  } catch (e) {
-    if (resultEl) resultEl.textContent = '❌ ' + e.message;
-  }
-};
-
-// END OF SNAPSHOT MODULE v3.5
-
-// Quick self-test — verifies that the API responds and Q_HISTORY works.
-// Exposed as window._snapshotTestBatch.
-window._snapshotTestBatch = async function() {
-  const collectionId = (el_('snapshotColIdInput')?.value || '').trim();
-  if (!collectionId) return;
-  const resultEl = el_('snapshotTestResult');
-  if (resultEl) { resultEl.textContent = 'Testing API connectivity…'; showEl('snapshotTestResult'); }
-  try {
-    // Fire one Q_HISTORY page to verify the API responds and the query is well-formed
-    const data = await gql('SnapHistory',
-      { collectionId, first: 5, after: null, naturesIn: TRANSFER_NATURES },
-      Q_HISTORY);
-    const edges = data?.public?.collection?.eventHistory?.edges || [];
-    if (resultEl) {
-      resultEl.textContent = edges.length > 0
-        ? `✓ API OK — ${edges.length} events returned. Walk would proceed normally.`
-        : '⚠ API responded but no events found for this collection.';
-    }
-    console.log('Self-test result:', data);
-  } catch (e) {
-    if (resultEl) resultEl.textContent = '❌ ' + e.message;
-  }
-};
-
-// END OF SNAPSHOT MODULE v3.5
-
-// Quick self-test — verifies that the API responds and Q_HISTORY works.
-// Exposed as window._snapshotTestBatch.
-window._snapshotTestBatch = async function() {
-  const collectionId = (el_('snapshotColIdInput')?.value || '').trim();
-  if (!collectionId) return;
-  const resultEl = el_('snapshotTestResult');
-  if (resultEl) { resultEl.textContent = 'Testing API connectivity…'; showEl('snapshotTestResult'); }
-  try {
-    // Fire one Q_HISTORY page to verify the API responds and the query is well-formed
-    const data = await gql('SnapHistory',
-      { collectionId, first: 5, after: null, naturesIn: TRANSFER_NATURES },
-      Q_HISTORY);
-    const edges = data?.public?.collection?.eventHistory?.edges || [];
-    if (resultEl) {
-      resultEl.textContent = edges.length > 0
-        ? `✓ API OK — ${edges.length} events returned. Walk would proceed normally.`
-        : '⚠ API responded but no events found for this collection.';
-    }
-    console.log('Self-test result:', data);
-  } catch (e) {
-    if (resultEl) resultEl.textContent = '❌ ' + e.message;
-  }
-};
-
-// END OF SNAPSHOT MODULE v3.5
-
-// Quick self-test — verifies that the API responds and Q_HISTORY works.
-// Exposed as window._snapshotTestBatch.
-window._snapshotTestBatch = async function() {
-  const collectionId = (el_('snapshotColIdInput')?.value || '').trim();
-  if (!collectionId) return;
-  const resultEl = el_('snapshotTestResult');
-  if (resultEl) { resultEl.textContent = 'Testing API connectivity…'; showEl('snapshotTestResult'); }
-  try {
-    // Fire one Q_HISTORY page to verify the API responds and the query is well-formed
-    const data = await gql('SnapHistory',
-      { collectionId, first: 5, after: null, naturesIn: TRANSFER_NATURES },
-      Q_HISTORY);
-    const edges = data?.public?.collection?.eventHistory?.edges || [];
-    if (resultEl) {
-      resultEl.textContent = edges.length > 0
-        ? `✓ API OK — ${edges.length} events returned. Walk would proceed normally.`
-        : '⚠ API responded but no events found for this collection.';
-    }
-    console.log('Self-test result:', data);
-  } catch (e) {
-    if (resultEl) resultEl.textContent = '❌ ' + e.message;
-  }
-};
-
-// END OF SNAPSHOT MODULE v3.5
-
-// Quick self-test — verifies that the API responds and Q_HISTORY works.
-// Exposed as window._snapshotTestBatch.
-window._snapshotTestBatch = async function() {
-  const collectionId = (el_('snapshotColIdInput')?.value || '').trim();
-  if (!collectionId) return;
-  const resultEl = el_('snapshotTestResult');
-  if (resultEl) { resultEl.textContent = 'Testing API connectivity…'; showEl('snapshotTestResult'); }
-  try {
-    // Fire one Q_HISTORY page to verify the API responds and the query is well-formed
-    const data = await gql('SnapHistory',
-      { collectionId, first: 5, after: null, naturesIn: TRANSFER_NATURES },
-      Q_HISTORY);
-    const edges = data?.public?.collection?.eventHistory?.edges || [];
-    if (resultEl) {
-      resultEl.textContent = edges.length > 0
-        ? `✓ API OK — ${edges.length} events returned. Walk would proceed normally.`
-        : '⚠ API responded but no events found for this collection.';
-    }
-    console.log('Self-test result:', data);
-  } catch (e) {
-    if (resultEl) resultEl.textContent = '❌ ' + e.message;
-  }
-};
-
-// END OF SNAPSHOT MODULE v3.5
-
-// Quick self-test — verifies that the API responds and Q_HISTORY works.
-// Exposed as window._snapshotTestBatch.
-window._snapshotTestBatch = async function() {
-  const collectionId = (el_('snapshotColIdInput')?.value || '').trim();
-  if (!collectionId) return;
-  const resultEl = el_('snapshotTestResult');
-  if (resultEl) { resultEl.textContent = 'Testing API connectivity…'; showEl('snapshotTestResult'); }
-  try {
-    // Fire one Q_HISTORY page to verify the API responds and the query is well-formed
-    const data = await gql('SnapHistory',
-      { collectionId, first: 5, after: null, naturesIn: TRANSFER_NATURES },
-      Q_HISTORY);
-    const edges = data?.public?.collection?.eventHistory?.edges || [];
-    if (resultEl) {
-      resultEl.textContent = edges.length > 0
-        ? `✓ API OK — ${edges.length} events returned. Walk would proceed normally.`
-        : '⚠ API responded but no events found for this collection.';
-    }
-    console.log('Self-test result:', data);
-  } catch (e) {
-    if (resultEl) resultEl.textContent = '❌ ' + e.message;
-  }
-};
-
-// END OF SNAPSHOT MODULE v3.5
-
-// Quick self-test — verifies that the API responds and Q_HISTORY works.
-// Exposed as window._snapshotTestBatch.
-window._snapshotTestBatch = async function() {
-  const collectionId = (el_('snapshotColIdInput')?.value || '').trim();
-  if (!collectionId) return;
-  const resultEl = el_('snapshotTestResult');
-  if (resultEl) { resultEl.textContent = 'Testing API connectivity…'; showEl('snapshotTestResult'); }
-  try {
-    // Fire one Q_HISTORY page to verify the API responds and the query is well-formed
-    const data = await gql('SnapHistory',
-      { collectionId, first: 5, after: null, naturesIn: TRANSFER_NATURES },
-      Q_HISTORY);
-    const edges = data?.public?.collection?.eventHistory?.edges || [];
-    if (resultEl) {
-      resultEl.textContent = edges.length > 0
-        ? `✓ API OK — ${edges.length} events returned. Walk would proceed normally.`
-        : '⚠ API responded but no events found for this collection.';
-    }
-    console.log('Self-test result:', data);
-  } catch (e) {
-    if (resultEl) resultEl.textContent = '❌ ' + e.message;
-  }
-};
-
-// END OF SNAPSHOT MODULE v3.5
-
-// Quick self-test — verifies that the API responds and Q_HISTORY works.
-// Exposed as window._snapshotTestBatch.
-window._snapshotTestBatch = async function() {
-  const collectionId = (el_('snapshotColIdInput')?.value || '').trim();
-  if (!collectionId) return;
-  const resultEl = el_('snapshotTestResult');
-  if (resultEl) { resultEl.textContent = 'Testing API connectivity…'; showEl('snapshotTestResult'); }
-  try {
-    // Fire one Q_HISTORY page to verify the API responds and the query is well-formed
-    const data = await gql('SnapHistory',
-      { collectionId, first: 5, after: null, naturesIn: TRANSFER_NATURES },
-      Q_HISTORY);
-    const edges = data?.public?.collection?.eventHistory?.edges || [];
-    if (resultEl) {
-      resultEl.textContent = edges.length > 0
-        ? `✓ API OK — ${edges.length} events returned. Walk would proceed normally.`
-        : '⚠ API responded but no events found for this collection.';
-    }
-    console.log('Self-test result:', data);
-  } catch (e) {
-    if (resultEl) resultEl.textContent = '❌ ' + e.message;
-  }
-};
-
-// END OF SNAPSHOT MODULE v3.5
 
 // Quick self-test — verifies that the API responds and Q_HISTORY works.
 // Exposed as window._snapshotTestBatch.

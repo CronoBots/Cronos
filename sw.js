@@ -19,7 +19,7 @@
 
 'use strict';
 
-const CACHE_VERSION = 'v20';
+const CACHE_VERSION = 'v21';
 const CACHE_NAME    = 'cronos-wtf-' + CACHE_VERSION;
 
 /* Liste des assets statiques pré-cachés à l'install pour offline-ready
@@ -110,7 +110,12 @@ self.addEventListener('fetch', (event) => {
 
     event.respondWith((async () => {
         const cache = await caches.open(CACHE_NAME);
-        const cached = await cache.match(req);
+        /* ignoreSearch: true — la requête depuis index.html arrive avec
+           `?v=1778620000` (cache buster) alors que le precache stocke
+           `/styles.css` sans query string. Sans ce flag, le precache
+           n'est jamais hit au 1er chargement et le SWR fetche cold le
+           fichier. */
+        const cached = await cache.match(req, { ignoreSearch: true });
         const fetchPromise = fetch(req).then(res => {
             /* On ne cache que les réponses 200 OK basic — les
                opaque / 5xx / 404 ne servent à rien. */
