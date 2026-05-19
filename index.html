@@ -3326,7 +3326,6 @@ function toggleMenu(event) {
     if (menu && toggle) {
         const isExpanded = menu.classList.toggle('active');
         toggle.setAttribute('aria-expanded', isExpanded);
-        console.log('Menu toggled:', isExpanded ? 'visible' : 'hidden', { menuDisplay: getComputedStyle(menu).display });
     } else {
         console.error('Navbar menu or toggle not found', { menu: !!menu, toggle: !!toggle });
     }
@@ -3381,8 +3380,6 @@ async function fetchWithCache(key, fetchFn, retries = 3, delay = 1000) {
             clearTimeout(timeoutId);
             if (data) {
                 cache.set(key, data);
-            } else {
-                console.log(`Not caching null response for ${key}`);
             }
             return data;
         } catch (error) {
@@ -4306,11 +4303,6 @@ function populateCreatorFilter(nfts) {
         creatorFilter.appendChild(option);
     });
 
-    console.log('Creator filter populated with:', sortedCreators.map(id => ({
-        id,
-        displayName: creatorCounts[id].displayName,
-        count: creatorCounts[id].count
-    })));
     syncFilterPills();
 }
 
@@ -4366,14 +4358,6 @@ function populateCollectionFilter(nfts) {
 
     // Activer le filtre si des NFTs existent
     collectionFilter.disabled = nfts.length === 0;
-    console.log('Collection filter populated:', {
-        selectedCreator,
-        totalNFTs: nfts.length,
-        collections: sortedCollections,
-        collectionCounts,
-        selectedValue: collectionFilter.value,
-        disabled: collectionFilter.disabled
-    });
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -4486,7 +4470,6 @@ async function fetchProfileAndNFTs() {
 
     const username = sanitizeInput(usernameInput.value.trim());
     if (!username || username.toLowerCase() === currentUsername.toLowerCase()) {
-        console.log('fetchProfileAndNFTs skipped:', { username, currentUsername });
         return;
     }
     // Pulse analytics : profil ouvert (target = username, label = display name
@@ -4494,8 +4477,6 @@ async function fetchProfileAndNFTs() {
     if (typeof window.trackEvent === 'function') {
         window.trackEvent('profile_view', username.toLowerCase(), username);
     }
-
-    console.log('Starting fetchProfileAndNFTs for:', username);
 
     /* Mode skeleton : on n'utilise PAS la classe `is-profile-loading`
        (qui cache tout le contenu de #appMain via !important — relique de
@@ -4678,18 +4659,11 @@ async function fetchProfileAndNFTs() {
             const hasCreators = allNFTs.some(nft => nft.collection?.creator?.id);
             collectionFilter.disabled = !hasCollections; // Désactiver uniquement si aucune collection
             creatorFilter.disabled = !hasCreators; // Désactiver uniquement si aucun créateur
-            console.log('Filter state after population:', {
-                collectionDisabled: collectionFilter.disabled,
-                creatorDisabled: creatorFilter.disabled,
-                hasCollections,
-                collectionOptions: Array.from(collectionFilter.options).map(opt => opt.value)
-            });
 
             const { collection } = parseUrlHash();
             if (collection) {
                 const optionExists = Array.from(collectionFilter.options).some(opt => opt.value === collection);
                 collectionFilter.value = optionExists ? collection : '';
-                console.log('URL collection applied:', { collection, optionExists, selectedValue: collectionFilter.value });
             }
 
             filterNFTs();
@@ -4732,18 +4706,10 @@ function filterNFTs() {
         return;
     }
 
-    console.log('Filtering NFTs with', allNFTs.length, 'assets', {
-        creator: creatorFilter.value,
-        collection: collectionFilter.value,
-        chain: chainFilter.value,
-        curated: curatedFilter.value
-    });
-
     if (!allNFTs || !allNFTs.length) {
         displayNFTs([], '');
         collectionFilter.disabled = true;
         creatorFilter.disabled = true;
-        console.log('No NFTs to filter, collection and creator filters disabled');
         return;
     }
 
@@ -4753,14 +4719,12 @@ function filterNFTs() {
     const creatorValue = creatorFilter.value;
     if (creatorValue) {
         filteredNFTs = filteredNFTs.filter(nft => nft.collection?.creator?.id === creatorValue);
-        console.log('After creator filter:', filteredNFTs.length, 'NFTs');
     }
 
     // Apply collection filter
     const collectionValue = collectionFilter.value;
     if (collectionValue) {
         filteredNFTs = filteredNFTs.filter(nft => (nft.collection?.name || 'Unknown Collection') === collectionValue);
-        console.log('After collection filter:', filteredNFTs.length, 'NFTs');
     }
 
     // Populate the collection filter based on the current creator filter
@@ -4775,14 +4739,6 @@ function filterNFTs() {
     const hasCreators = allNFTs.some(nft => nft.collection?.creator?.id);
     collectionFilter.disabled = !hasCollections;
     creatorFilter.disabled = !hasCreators;
-    console.log('Filter states:', {
-        collectionDisabled: collectionFilter.disabled,
-        creatorDisabled: creatorFilter.disabled,
-        hasCollections,
-        hasCreators,
-        chainDisabled: chainFilter.disabled,
-        curatedDisabled: curatedFilter.disabled
-    });
 
     // Apply chain filter
     if (chainFilter.value) {
@@ -4796,7 +4752,6 @@ function filterNFTs() {
             }
             return true;
         });
-        console.log('After chain filter:', filteredNFTs.length, 'NFTs');
     }
 
     // Apply curated filter
@@ -4805,14 +4760,12 @@ function filterNFTs() {
             const isCurated = nft.isCurated !== undefined ? nft.isCurated : false;
             return curatedFilter.value === 'true' ? isCurated : curatedFilter.value === 'false' ? !isCurated : true;
         });
-        console.log('After curated filter:', filteredNFTs.length, 'NFTs');
     }
 
     // Forced asset filter (used for MOST RECENT NFT)
     if (forcedAssetIdFilter) {
         const targetId = String(forcedAssetIdFilter);
         filteredNFTs = filteredNFTs.filter((nft) => String(nft?.id || '') === targetId);
-        console.log('After forced asset filter:', filteredNFTs.length, 'NFTs');
     }
 
     // Sort NFTs
@@ -4826,7 +4779,6 @@ function filterNFTs() {
         return new Date(b.createdAt) - new Date(a.createdAt);
     });
 
-    console.log('Final filtered NFTs:', filteredNFTs.length, 'for creator:', creatorFilter.value || 'All', 'collection:', collectionValue || 'All');
     displayNFTs(filteredNFTs, collectionValue);
 
     // URL : ne plus polluer l'adresse avec le username + collection.
@@ -4845,11 +4797,6 @@ function displayNFTs(assets, selectedCollection) {
         return;
     }
 
-    console.log(`displayNFTs called at ${new Date().toISOString()}:`, {
-        assetCount: assets.length,
-        selectedCollection: selectedCollection || 'All'
-    });
-
     const seenIds = new Set();
     const uniqueAssets = assets.filter((asset, index) => {
         const key = asset.id || `index-${index}`;
@@ -4864,12 +4811,6 @@ function displayNFTs(assets, selectedCollection) {
         seenIds.add(key);
         return true;
     });
-
-    console.log('Unique assets after deduplication:', uniqueAssets.map(a => ({
-        id: a.id,
-        name: a.name,
-        collectionId: a.collection?.id
-    })));
 
     countContainer.innerHTML = '';
     container.innerHTML = '';
@@ -5795,7 +5736,6 @@ async function downloadSingleNFT(url, name, index) {
         if (!blob || blob.size === 0) {
             throw new Error('Received empty or invalid blob');
         }
-        console.log(`Downloading ${name}: URL=${url}, Content-Type=${contentType}, Status=${response.status}`);
         const sanitizedName = sanitizeFileNameForZip(name, index);
         const fileName = `${sanitizedName}.${extension}`;
         const urlObj = URL.createObjectURL(blob);
@@ -5877,7 +5817,6 @@ async function downloadNFTsAsZip() {
     let processed = 0;
     for (const [index, nft] of filteredNFTs.entries()) {
         if (isDownloadCancelled) {
-            console.log('Download cancelled by user');
             return;
         }
 
@@ -5902,7 +5841,6 @@ async function downloadNFTsAsZip() {
     }
 
     if (isDownloadCancelled) {
-        console.log('Download process aborted');
         return;
     }
 
@@ -6460,7 +6398,6 @@ async function downloadCollage() {
     }
 
     if (window.isDownloading) {
-        console.log('Download already in progress, ignoring new attempt.');
         return;
     }
 
@@ -6802,7 +6739,6 @@ function updateDisplay() {
     // Ignorer les ajustements dynamiques sur mobile (≤ 768px)
     if (window.innerWidth <= 768) {
         nftContainer.style.gridTemplateColumns = '';
-        console.log('Mobile view: Using CSS grid-template-columns for', cardSize);
         return;
     }
 
@@ -6858,8 +6794,6 @@ function updateDisplay() {
     nftContainer.style.display = 'none';
     nftContainer.offsetHeight;
     nftContainer.style.display = 'grid';
-
-    console.log(`updateDisplay (PC): clientWidth=${document.documentElement.clientWidth}px, availableWidth=${availableWidth}px, numColumns=${numColumns}, adjustedColumnWidth=${adjustedColumnWidth}px`);
 }
 
 
@@ -20526,7 +20460,7 @@ async function fetchDropsData() {
         const statusData = await statusRes.json();
         (statusData?.data?.public?.dropStatuses || []).forEach(s => { statusMap[s.dropId] = s.status; });
       } catch(e) {
-        console.log('[Drops] Status fetch failed, classifying by date', e.message);
+        console.warn('[Drops] Status fetch failed, classifying by date', e.message);
       }
     }
 
@@ -20634,7 +20568,7 @@ async function fetchDropsData() {
       endAt: d.endAt
     })) };
   } catch(e) {
-    console.log('[Drops] API unreachable, using fallback data', e.message);
+    console.warn('[Drops] API unreachable, using fallback data', e.message);
     return null;
   }
 }
