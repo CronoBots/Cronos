@@ -76,7 +76,7 @@
      downgrade la priorité parce qu'il découvre la font tardivement
      en parcourant la CSS. -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
-<link href="styles.css?v=1779192600" rel="stylesheet"/>
+<link href="styles.css?v=1779195203" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -1168,7 +1168,30 @@
       <div class="home-spotlight" id="homeSpotlight" data-active="0">
         <div class="home-spotlight-slides">
 
-          <article class="home-spotlight-slide is-active" data-scroll-target="homeCommunitySection" data-accent="#34d399" style="--accent:#34d399;--accent-strong:#6ee7b7;--accent-soft:rgba(52,211,153,0.18);">
+          <!-- Sign-in CTA : visible UNIQUEMENT pour les visiteurs déconnectés.
+               Placée en 1ʳᵉ position pour que les non-connectés tombent dessus
+               en arrivant. Caché par défaut (style="display:none") + révélé
+               par initSpotlight quand l'utilisateur est déconnecté. Click →
+               ouvre le modal de connexion (équivalent à un click sur
+               #topnavLoginBtn). data-hint-element : le bouton du topnav qui
+               reçoit le hint visuel quand cette slide est active. -->
+          <article class="home-spotlight-slide home-spotlight-slide--signin is-active" data-signed-out-only="1" data-signin-cta="1" data-hint-element="#topnavLoginBtn" data-accent="#f59e0b" style="display:none;--accent:#f59e0b;--accent-strong:#fbbf24;--accent-soft:rgba(245,158,11,0.20);">
+            <svg class="home-spotlight-watermark" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="10" cy="7" r="3.5"/>
+              <path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/>
+              <path d="M15 10l2 2-2 2M17 12h-5"/>
+            </svg>
+            <div class="home-spotlight-slide-inner">
+              <div class="home-spotlight-eyebrow">
+                <span class="home-spotlight-index">Welcome</span>
+              </div>
+              <h3 class="home-spotlight-title">Sign in to CRONOS.WTF</h3>
+              <p class="home-spotlight-desc">Connect your Crypto.com NFT username to chat with the community and see your own profile in detail — holdings grouped by collection or artist, liked NFTs, full stats. Just your public username, no password needed.</p>
+              <span class="home-spotlight-cta">Sign In <span class="home-spotlight-cta-arrow" aria-hidden="true">→</span></span>
+            </div>
+          </article>
+
+          <article class="home-spotlight-slide" data-scroll-target="homeCommunitySection" data-accent="#34d399" style="--accent:#34d399;--accent-strong:#6ee7b7;--accent-soft:rgba(52,211,153,0.18);">
             <svg class="home-spotlight-watermark" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M3 5.5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H8.5l-3.5 3v-3H5a2 2 0 0 1-2-2v-6z"/>
               <circle cx="7" cy="8.5" r="0.8"/>
@@ -1294,23 +1317,24 @@
             </div>
           </article>
 
-          <!-- Sign-in CTA : visible UNIQUEMENT pour les visiteurs déconnectés.
-               Caché par défaut (style="display:none") + révélé par initSpotlight
-               quand getCurrentUser() retourne null. Click → ouvre le modal de
-               connexion (équivalent à un click sur #topnavLoginBtn). -->
-          <article class="home-spotlight-slide home-spotlight-slide--signin" data-signed-out-only="1" data-signin-cta="1" data-accent="#f59e0b" style="display:none;--accent:#f59e0b;--accent-strong:#fbbf24;--accent-soft:rgba(245,158,11,0.20);">
+          <!-- Settings CTA : visible pour tous (connecté ou pas). Click → ouvre
+               le panneau Settings (équivalent à un click sur #topnavSettingsBtn).
+               Couvre auth (connexion/déconnexion + certification) et traduction
+               du site dans la langue de l'utilisateur. data-hint-element : le
+               bouton roue dentée du topnav reçoit le hint quand cette slide est
+               active. -->
+          <article class="home-spotlight-slide home-spotlight-slide--settings" data-settings-cta="1" data-hint-element="#topnavSettingsBtn" data-accent="#e879f9" style="--accent:#e879f9;--accent-strong:#f0abfc;--accent-soft:rgba(232,121,249,0.18);">
             <svg class="home-spotlight-watermark" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="10" cy="7" r="3.5"/>
-              <path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/>
-              <path d="M15 10l2 2-2 2M17 12h-5"/>
+              <circle cx="10" cy="10" r="2.5"/>
+              <path d="M10 1.5v3M10 15.5v3M1.5 10h3M15.5 10h3M3.9 3.9l2.1 2.1M14 14l2.1 2.1M3.9 16.1L6 14M14 6l2.1-2.1"/>
             </svg>
             <div class="home-spotlight-slide-inner">
               <div class="home-spotlight-eyebrow">
-                <span class="home-spotlight-index">Welcome</span>
+                <span class="home-spotlight-index">Settings</span>
               </div>
-              <h3 class="home-spotlight-title">Sign in to CRONOS.WTF</h3>
-              <p class="home-spotlight-desc">Connect your Crypto.com NFT username to chat with the community and see your own profile in detail — holdings grouped by collection or artist, liked NFTs, full stats. Just your public username, no password needed.</p>
-              <span class="home-spotlight-cta">Sign In <span class="home-spotlight-cta-arrow" aria-hidden="true">→</span></span>
+              <h3 class="home-spotlight-title">Make it yours</h3>
+              <p class="home-spotlight-desc">Sign in or out, certify ownership of your Crypto.com NFT account, and translate the whole site into your language — French, Spanish, German, Italian, Portuguese, Dutch, Polish, Turkish and more.</p>
+              <span class="home-spotlight-cta">Open Settings <span class="home-spotlight-cta-arrow" aria-hidden="true">→</span></span>
             </div>
           </article>
 
@@ -1326,15 +1350,16 @@
               <div class="home-spotlight-progress-fill" id="homeSpotlightProgress"></div>
             </div>
             <div class="home-spotlight-dots" id="homeSpotlightDots">
-              <button class="home-spotlight-dot is-active" type="button" data-idx="0" aria-label="Slide 1"></button>
-              <button class="home-spotlight-dot" type="button" data-idx="1" aria-label="Slide 2"></button>
-              <button class="home-spotlight-dot" type="button" data-idx="2" aria-label="Slide 3"></button>
-              <button class="home-spotlight-dot" type="button" data-idx="3" aria-label="Slide 4"></button>
-              <button class="home-spotlight-dot" type="button" data-idx="4" aria-label="Slide 5"></button>
-              <button class="home-spotlight-dot" type="button" data-idx="5" aria-label="Slide 6"></button>
-              <button class="home-spotlight-dot" type="button" data-idx="6" aria-label="Slide 7"></button>
-              <button class="home-spotlight-dot" type="button" data-idx="7" aria-label="Slide 8"></button>
-              <button class="home-spotlight-dot home-spotlight-dot--signin" type="button" data-idx="8" data-signed-out-only="1" aria-label="Sign in" style="display:none;"></button>
+              <button class="home-spotlight-dot home-spotlight-dot--signin is-active" type="button" data-signed-out-only="1" aria-label="Sign in" style="display:none;"></button>
+              <button class="home-spotlight-dot" type="button" aria-label="WTF Community"></button>
+              <button class="home-spotlight-dot" type="button" aria-label="Market Stats"></button>
+              <button class="home-spotlight-dot" type="button" aria-label="Sales/Listings Bot"></button>
+              <button class="home-spotlight-dot" type="button" aria-label="NFT Drops"></button>
+              <button class="home-spotlight-dot" type="button" aria-label="Snapshot"></button>
+              <button class="home-spotlight-dot" type="button" aria-label="Support"></button>
+              <button class="home-spotlight-dot" type="button" aria-label="Profile Explorer"></button>
+              <button class="home-spotlight-dot" type="button" aria-label="Collection Explorer"></button>
+              <button class="home-spotlight-dot home-spotlight-dot--settings" type="button" aria-label="Settings"></button>
             </div>
           </div>
           <button class="home-spotlight-arrow" id="homeSpotlightNext" type="button" aria-label="Next">
@@ -13030,7 +13055,15 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
                 ?.classList.remove('topnav-search-wrap--spotlight-hint');
             const homePanel = document.getElementById('homePanel');
             const homeVisible = homePanel && homePanel.style.display !== 'none';
-            if (homeVisible && newTarget) {
+            // data-hint-element : sélecteur d'un élément topnav précis à
+            // highlighter (utilisé par les slides Sign In → #topnavLoginBtn
+            // et Settings → #topnavSettingsBtn qui ne sont pas de simples
+            // tabs avec data-tab). Prioritaire sur data-tab-target.
+            const hintSel = slides[idx]?.dataset.hintElement;
+            if (homeVisible && hintSel) {
+                document.querySelector(hintSel)
+                    ?.classList.add('topnav-tab--spotlight-hint');
+            } else if (homeVisible && newTarget) {
                 if (isExplorerSlide) {
                     // Highlight la search bar (loupe mobile + wrap desktop).
                     // Les deux classes sont posées en même temps — la règle
@@ -13093,7 +13126,11 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
 
         prev?.addEventListener('click', (e) => { e.stopPropagation(); show(active - 1, true); });
         next?.addEventListener('click', (e) => { e.stopPropagation(); show(active + 1, true); });
-        dots.forEach((d, i) => d.addEventListener('click', (e) => { e.stopPropagation(); show(i, true); }));
+        // dots.indexOf(d) au lieu de l'index figé du forEach : si on splice
+        // un dot (ex. retrait du dot Sign In au login), les indices des dots
+        // restants changent, mais le listener doit toujours pointer sur la
+        // bonne slide actuelle.
+        dots.forEach(d => d.addEventListener('click', (e) => { e.stopPropagation(); show(dots.indexOf(d), true); }));
 
         // Swipe horizontal (mobile / trackpad tactile) : touchstart →
         // touchmove → touchend. Si dx > SWIPE_MIN et |dx| > |dy|, on
@@ -13156,6 +13193,12 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
                 // à un click sur le bouton Sign In du topnav).
                 if (slide.dataset.signinCta) {
                     document.getElementById('topnavLoginBtn')?.click();
+                    return;
+                }
+                // Slide Settings → ouvre le panneau Settings (équivalent à
+                // un click sur le bouton roue dentée du topnav).
+                if (slide.dataset.settingsCta) {
+                    document.getElementById('topnavSettingsBtn')?.click();
                     return;
                 }
                 // Slide qui pointe vers une ancre de la home (la section
@@ -16659,6 +16702,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-20T13:00:00Z',
+            type:  'feature',
+            title: 'Spotlight: Settings slide + tab hints',
+            text:  'New Settings slide in the Spotlight (sign in / out, certify ownership, translate the site). Sign-in slide is now the first one signed-out visitors see. Sign In and My Profile tabs behave like every other tab again (no permanent blue tint). NFT names, collection names and artist names are now protected from translation across the site.'
+        },
         {
             date:  '2026-05-20T12:00:00Z',
             type:  'feature',
@@ -24413,10 +24462,30 @@ window.initSnapshotPanel = function() {
         return true;
     }
 
+    /* Classes dont le contenu textuel est TOUJOURS un identifiant qui ne
+       doit JAMAIS être traduit : noms de NFTs, noms de collections, noms
+       d'artistes / pseudonymes utilisateurs. La traduction d'un nom propre
+       casserait la recherche, la navigation et l'identification croisée
+       avec crypto.com/nft (canonique). */
     const NO_TRANSLATE_CLASSES = new Set([
-        'cp-nft-name','dli-pack-name','username','display-name',
-        'collection-mode-title','suggestion-item-name','sb-col-rich-name',
-        'sb-alarm-creator-name','drop-card-creator-name','stats-col-creator','topnav-name',
+        /* Pseudos / display names utilisateurs */
+        'username','display-name','topnav-name',
+        'home-chat-member-name','home-chat-mention-pop-name',
+        'snap-holder-name','profile-legend-name','sb-party-name',
+        /* Noms de NFTs (cartes, modals, preview, listes) */
+        'cp-nft-name','dli-pack-name','dli-sample-name',
+        'drop-card-name','drop-banner-overlay-name','home-fd-card-name',
+        'nft-preview-title','sb-card-name','sb-row-name','tl-name',
+        /* Noms de collections (chat chips, featured, sales bot, snapshot,
+           stats market, top tickers) */
+        'collection-mode-title','collection-mode-name','suggestion-item-name',
+        'home-chat-coll-chip-name','home-chat-coll-pop-name','home-chat-coll-share-name',
+        'home-fa-col-tile-name','home-top-name','home-feat-name','home-feat-v3-name',
+        'sb-col-rich-name','sb-col-group-name','sb-alarm-col-name',
+        'snapshot-collection-banner-name','stats-col-name','cp-an-sale-name',
+        /* Noms d'artistes / creators */
+        'sb-alarm-creator-name','drop-card-creator-name','stats-col-creator',
+        'home-fa-name',
     ]);
     function shouldSkipElement(el) {
         if (!el) return true;
