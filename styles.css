@@ -26326,9 +26326,18 @@ body { box-sizing: border-box; }
 .settings-shortcuts-section {
     /* Hérite du padding/border de .settings-section. */
 }
-/* Masque sur mobile + touch (clavier physique absent). */
-@media (max-width: 768px), (hover: none) {
-    .settings-shortcuts-section { display: none; }
+/* Masque sur mobile + touch (clavier physique absent).
+   On split en 2 règles distinctes (au lieu d'une comma-list `@media
+   (max-width: 768px), (hover: none)`) car certains iOS Safari plus
+   anciens parsaient mal la liste et ignoraient la règle complète.
+   `!important` ajouté pour battre toute spécificité défensivement
+   (notamment si un autre @media plus spécifique force display:flex
+   ou similaire sur .settings-section). */
+@media (max-width: 768px) {
+    .settings-shortcuts-section { display: none !important; }
+}
+@media (hover: none) {
+    .settings-shortcuts-section { display: none !important; }
 }
 /* Summary cliquable — looks like un settings-row light. */
 .settings-shortcuts-summary {
