@@ -3313,48 +3313,9 @@ function debounce(func, wait) {
 }
 
 
-function setupSidebarAutoFit() {
-    const leftSidebar = document.getElementById('leftSidebar');
-    const sidebarMain = leftSidebar?.querySelector('.sidebar-main');
-    const stats = document.getElementById('sidebarStats');
-    if (!leftSidebar || !sidebarMain || !stats) return;
-
-    const applyFit = () => {
-        const isVisible = stats.style.display !== 'none' && stats.offsetParent !== null;
-        const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
-
-        if (!isVisible) {
-            leftSidebar.style.setProperty('--sidebar-stats-scale', '1');
-            leftSidebar.classList.remove('sidebar--compact', 'sidebar--ultra-compact');
-            return;
-        }
-
-        leftSidebar.style.setProperty('--sidebar-stats-scale', '1');
-
-        const mainStyles = window.getComputedStyle(sidebarMain);
-        const paddingBottom = parseFloat(mainStyles.paddingBottom || '0') || 0;
-        const available = Math.max(0, sidebarMain.clientHeight - stats.offsetTop - paddingBottom);
-        const needed = Math.max(1, stats.scrollHeight);
-        const ratio = available / needed;
-
-        leftSidebar.classList.toggle('sidebar--compact', ratio < 0.95 || viewportHeight < 980);
-        leftSidebar.classList.toggle('sidebar--ultra-compact', ratio < 0.86 || viewportHeight < 860);
-    };
-
-    const debounced = debounce(applyFit, 60);
-    window.addEventListener('resize', debounced, { passive: true });
-
-    const mo = new MutationObserver(debounced);
-    mo.observe(leftSidebar, {
-        subtree: true,
-        childList: true,
-        attributes: true,
-        attributeFilter: ['style', 'class']
-    });
-
-    debounced();
-}
-
+/* setupSidebarAutoFit supprimé : la left-sidebar a été retirée du HTML,
+   getElementById('leftSidebar') retournait null, la fonction était un
+   no-op silencieux (early return). */
 
 function toggleMenu(event) {
     const menu = document.getElementById('navbarMenu');
@@ -7514,11 +7475,6 @@ function initPillDropdowns() {
     });
 
     window.addEventListener('scroll', closePillDropdown, { passive: true });
-
-    const leftSidebar = document.getElementById('leftSidebar');
-    if (leftSidebar) {
-        leftSidebar.addEventListener('scroll', closePillDropdown, { passive: true });
-    }
 }
 
 function setCardSizeFromToggle(size) {
@@ -7775,9 +7731,6 @@ function setupEventListeners() {
     });
 
     toggleScrollButtons();
-
-
-    setupSidebarAutoFit();
 }
 
 
@@ -7838,22 +7791,7 @@ function initialize() {
 
 document.addEventListener('DOMContentLoaded', initialize);
 
-// Redirect sidebar scroll to appMain
-(function() {
-    const sidebar = document.getElementById('leftSidebar');
-    const appMain = document.getElementById('appMain');
-    if (!sidebar || !appMain) return;
-    sidebar.addEventListener('wheel', function(e) {
-        e.preventDefault();
-        let delta = e.deltaY;
-        if (e.deltaMode === 1) delta *= 32;
-        else if (e.deltaMode === 2) delta *= appMain.clientHeight;
-        else delta *= 1.2;
-        appMain.scrollBy({ top: delta, behavior: 'instant' });
-    }, { passive: false });
-})();
-
-// Pas de select-on-focus sur usernameInput (champ sidebar caché, géré par topnav)
+// "Redirect sidebar scroll to appMain" supprimé : sidebar plus dans le DOM.
     </script>
 <script>
 (function () {
