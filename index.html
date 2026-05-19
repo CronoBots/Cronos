@@ -76,7 +76,7 @@
      downgrade la priorité parce qu'il découvre la font tardivement
      en parcourant la CSS. -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
-<link href="styles.css?v=1779195203" rel="stylesheet"/>
+<link href="styles.css?v=1779196949" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -15004,10 +15004,16 @@ async function sha256hex(str) {
 
     function openModal() {
         backdrop.style.display = 'flex';
+        /* Highlight cyan du bouton Sign In du topnav pendant que le modal
+           est ouvert — même pattern que .topnav-tab--settings.is-open
+           pour la roue dentée. Sert de feedback "tu es en train de te
+           connecter, c'est ici que ça se passe". Retiré dans closeModal. */
+        if (loginBtn) loginBtn.classList.add('is-open');
         setTimeout(() => input?.focus(), 50);
     }
     function closeModal() {
         backdrop.style.display = 'none';
+        if (loginBtn) loginBtn.classList.remove('is-open');
         if (input) input.value = '';
         if (errorEl) errorEl.style.display = 'none';
         if (submitText) submitText.textContent = 'Go to my profile';
@@ -16706,7 +16712,7 @@ async function sha256hex(str) {
             date:  '2026-05-20T13:00:00Z',
             type:  'feature',
             title: 'Spotlight: Settings slide + tab hints',
-            text:  'New Settings slide in the Spotlight (sign in / out, certify ownership, translate the site). Sign-in slide is now the first one signed-out visitors see. Sign In and My Profile tabs behave like every other tab again (no permanent blue tint). NFT names, collection names and artist names are now protected from translation across the site.'
+            text:  'New Settings slide in the Spotlight (sign in / out, certify ownership, translate the site). Sign-in slide is now the first one signed-out visitors see. Sign In and My Profile tabs behave like every other tab again (no permanent blue tint) — the Sign In tab now turns cyan while the login modal is open, same feedback as the Settings gear button. NFT names, collection names and artist names are now protected from translation across the site.'
         },
         {
             date:  '2026-05-20T12:00:00Z',
