@@ -8501,9 +8501,9 @@ document.addEventListener('DOMContentLoaded', initialize);
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        operationName: 'GetFeatStats',
-                        variables: { id, withStats: true, cacheId: 'GetFeatStats-' + id },
-                        query: `query GetFeatStats($cacheId:ID,$id:ID!,$withStats:Boolean!){public(cacheId:$cacheId){collection(id:$id){id name description verified logo{url} banner{url} creator{username verified avatar{url}} metrics{items owners totalSalesDecimal minSaleListingPriceDecimal listedCollectiblesCount} stats@include(if:$withStats){floorPriceDecimal oneDayVolumeDecimal oneDayVolumeDecimalChange sevenDayVolumeDecimal}}}}`
+                        operationName: 'GetCollection',
+                        variables: { id, withStats: true, cacheId: 'feat-stats-' + id },
+                        query: `query GetCollection($cacheId:ID,$id:ID!,$withStats:Boolean!){public(cacheId:$cacheId){collection(id:$id){id name description verified logo{url} banner{url} creator{username verified avatar{url}} metrics{items owners totalSalesDecimal minSaleListingPriceDecimal listedCollectiblesCount} stats@include(if:$withStats){floorPriceDecimal oneDayVolumeDecimal oneDayVolumeDecimalChange sevenDayVolumeDecimal}}}}`
                     })
                 });
                 const json = await res.json();
@@ -13734,9 +13734,16 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
                 operationName: 'getCollectionEventHistory',
                 variables: (() => {
                     const naturesIn = _sbMode === 'all' ? ['transferred','listed'] : _sbMode === 'auction' ? ['transferred','listed'] : [_sbMode];
+                    /* Head page (after=null) : on rotate le cacheId toutes
+                       les 30s pour ne pas servir de stale data au polling
+                       (les nouvelles ventes arrivent en continu). Pages
+                       cursor-based : cacheId stable (les events anciens ne
+                       bougent plus, cache long terme valide). */
+                    const isHead = !after;
+                    const bucket = isHead ? Math.floor(Date.now() / 30000) : 0;
                     return {
                         collectionId: colId, first: 20, after: after || null, naturesIn,
-                        cacheId: 'getCollectionEventHistory-' + colId + '-' + (after || 'head') + '-' + naturesIn.join(',')
+                        cacheId: 'sb-events-' + colId + '-' + (after || 'head') + '-' + naturesIn.join(',') + (isHead ? '-' + bucket : '')
                     };
                 })(),
                 query: Q
@@ -14519,8 +14526,12 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
 
   // ── Queries ──────────────────────────────────────────────────────────
   // Two separate queries so one failing doesn't block the other
-  const Q_STATS = `query GetCollectionAnalytics($collectionId: ID!) {
-    public {
+  // Renommé `GetCollectionAnalytics` → `GetCollection` (operationName canonique)
+  // + cacheId scopé. La query mixe collection.metrics et collectionMetric,
+  // pas de op canonique exacte mais GetCollection est l'opName le plus proche
+  // et le edge cache de Crypto.com clé sur (operationName, cacheId).
+  const Q_STATS = `query GetCollection($collectionId: ID!, $cacheId: ID) {
+    public(cacheId: $cacheId) {
       collection(id: $collectionId) {
         id
         metrics { listedCollectiblesCount owners items totalSalesDecimal minSaleListingPriceDecimal }
@@ -14530,8 +14541,8 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
       }
     }
   }`;
-  const Q_STATS_EXTENDED = `query GetCollectionAnalyticsExt($collectionId: ID!) {
-    public {
+  const Q_STATS_EXTENDED = `query GetCollection($collectionId: ID!, $cacheId: ID) {
+    public(cacheId: $cacheId) {
       collection(id: $collectionId) {
         id
         stats {
@@ -14839,8 +14850,8 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
     try {
       // Fetch stats + history in parallel, each failure isolated
       const [pub, pubExt, sales] = await Promise.all([
-        gqlAn('GetCollectionAnalytics', { collectionId: colId }, Q_STATS).catch(() => null),
-        gqlAn('GetCollectionAnalyticsExt', { collectionId: colId }, Q_STATS_EXTENDED).catch(() => null),
+        gqlAn('GetCollection', { collectionId: colId, cacheId: 'analytics-' + colId }, Q_STATS).catch(() => null),
+        gqlAn('GetCollection', { collectionId: colId, cacheId: 'analytics-ext-' + colId }, Q_STATS_EXTENDED).catch(() => null),
         fetchSalesHistory(colId, 3).catch(() => [])
       ]);
       // Merge: base metrics + extended stats (may fail independently)
@@ -20681,7 +20692,7 @@ window.initDropsPanel = async function() {
   (async function fetchSupportLiveData() {
     const COL_ID = '2ec243b8746154fd9dc1c892d7f54fe9';
     // Use the exact same query format as the site itself (GetCollectionAssets)
-    const Q = `query GetSupportNFTs($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$sort:[SingleFieldSort!]){
+    const Q = `query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$sort:[SingleFieldSort!]){
       public(cacheId:$cacheId){
         assets(collectionId:$collectionId,first:$first,skip:$skip,sort:$sort){
           id name copies copiesInCirculation
@@ -20700,9 +20711,9 @@ window.initDropsPanel = async function() {
         const r = await fetch('https://crypto.com/nft-api/graphql', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({
-            operationName: 'GetSupportNFTs',
+            operationName: 'GetCollectionAssets',
             query: Q,
-            variables: { collectionId: COL_ID, first: 40, skip, sort: [{ field: 'price', order: 'ASC' }], cacheId: 'GetSupportNFTs-' + COL_ID + '-' + skip }
+            variables: { collectionId: COL_ID, first: 40, skip, sort: [{ field: 'price', order: 'ASC' }], cacheId: 'support-nfts-' + COL_ID + '-' + skip }
           })
         });
         const j = await r.json();
@@ -26437,9 +26448,9 @@ window.initSnapshotPanel = function() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    operationName: 'GetFDSamples',
-                    variables: { collectionId: collectionId, first: 20, skip: 0, cacheId: 'GetFDSamples-' + collectionId },
-                    query: 'query GetFDSamples($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!){public(cacheId:$cacheId){assets(collectionId:$collectionId,first:$first,skip:$skip){cover{url}}}}'
+                    operationName: 'GetCollectionAssets',
+                    variables: { collectionId: collectionId, first: 20, skip: 0, cacheId: 'fd-samples-' + collectionId },
+                    query: 'query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!){public(cacheId:$cacheId){assets(collectionId:$collectionId,first:$first,skip:$skip){cover{url}}}}'
                 })
             });
             var json = await res.json();
