@@ -76,7 +76,7 @@
      downgrade la priorité parce qu'il découvre la font tardivement
      en parcourant la CSS. -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
-<link href="styles.css?v=1779670000" rel="stylesheet"/>
+<link href="styles.css?v=1779680000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -13024,17 +13024,25 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
             const _u = JSON.parse(localStorage.getItem('cronos_logged_user') || 'null');
             _isSignedIn = !!(_u && _u.username);
         } catch (e) { _isSignedIn = false; }
+        // Conditionnel auth : on HIDE (style.display = 'none') au lieu de
+        // RETIRER du DOM. Sinon après un sign-in en cours de session, la
+        // slide opposée (My Profile au login, Sign-in au logout) ne pourrait
+        // pas re-prendre sa place dans le cycle sans clone. En gardant les
+        // deux dans le DOM et en filtrant via display:none, on swap
+        // instantanément à la volée sur l'event cronos:auth.
         root.querySelectorAll('[data-signed-out-only]').forEach(el => {
-            if (_isSignedIn) el.remove();
-            else el.style.display = '';
+            el.style.display = _isSignedIn ? 'none' : '';
         });
         root.querySelectorAll('[data-signed-in-only]').forEach(el => {
-            if (_isSignedIn) el.style.display = '';
-            else el.remove();
+            el.style.display = _isSignedIn ? '' : 'none';
         });
 
-        const slides = Array.from(root.querySelectorAll('.home-spotlight-slide'));
-        const dots   = Array.from(root.querySelectorAll('.home-spotlight-dot'));
+        // Filtrage par display !== 'none' : la slide auth-mismatched reste
+        // dans le DOM mais elle est exclue du cycle.
+        const slides = Array.from(root.querySelectorAll('.home-spotlight-slide'))
+            .filter(s => s.style.display !== 'none');
+        const dots   = Array.from(root.querySelectorAll('.home-spotlight-dot'))
+            .filter(d => d.style.display !== 'none');
         const prev   = document.getElementById('homeSpotlightPrev');
         const next   = document.getElementById('homeSpotlightNext');
         const fill   = document.getElementById('homeSpotlightProgress');
@@ -13183,11 +13191,14 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
 
         prev?.addEventListener('click', (e) => { e.stopPropagation(); show(active - 1, true); });
         next?.addEventListener('click', (e) => { e.stopPropagation(); show(active + 1, true); });
-        // dots.indexOf(d) au lieu de l'index figé du forEach : si on splice
-        // un dot (ex. retrait du dot Sign In au login), les indices des dots
-        // restants changent, mais le listener doit toujours pointer sur la
-        // bonne slide actuelle.
-        dots.forEach(d => d.addEventListener('click', (e) => { e.stopPropagation(); show(dots.indexOf(d), true); }));
+        // dots.indexOf(d) au lieu de l'index figé du forEach : si l'array dots
+        // est rebuild (auth change), l'index d'un dot donné peut changer ;
+        // le listener doit toujours pointer sur le slot actuel.
+        // On attache le listener à TOUS les dots du DOM (y compris cachés)
+        // pour qu'ils soient armés quand ils deviennent visibles via swap auth.
+        root.querySelectorAll('.home-spotlight-dot').forEach(d => {
+            d.addEventListener('click', (e) => { e.stopPropagation(); show(dots.indexOf(d), true); });
+        });
 
         // Swipe horizontal (mobile / trackpad tactile) : touchstart →
         // touchmove → touchend. Si dx > SWIPE_MIN et |dx| > |dy|, on
@@ -13243,7 +13254,9 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
         // Click sur le slide actif → ouvre l'onglet (on délègue au handler
         // existant `[data-tab-target]` qui est wired plus haut). On
         // ignore le click si on vient juste de swiper.
-        slides.forEach((slide) => {
+        // On attache à TOUS les slides du DOM (y compris cachés) pour
+        // que les slides révélés par auth change soient armés.
+        root.querySelectorAll('.home-spotlight-slide').forEach((slide) => {
             slide.addEventListener('click', () => {
                 if (swipedRecently) return;
                 // Slide Sign In → ouvre le modal de connexion (équivalent
@@ -13318,52 +13331,41 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
             });
         });
 
-        // Auth change pendant la session : on retire la slide qui n'a plus
-        // de sens (Sign In au login, My Profile au logout). Retrait du DOM
-        // ET des arrays slides/dots pour que le cycle ne s'arrête plus
-        // dessus (sinon "ghost" 6.5s de vide). On AJUSTE aussi `active` en
-        // fonction de la position splicée :
-        //   • si la slide retirée est AVANT l'active → active--
-        //   • si la slide retirée EST l'active → on retombe sur la slide
-        //     qui prend sa place (sIdx) ou slide 0 si on était à la fin
-        //   • si la slide retirée est APRÈS l'active → active inchangé
-        // Sans ça, après splice, l'index "active" pointerait sur une slide
-        // différente de celle visible juste avant le changement d'auth.
-        // À noter : on ne re-révèle PAS la slide opposée (My Profile au
-        // login, Sign In au logout) car celle-ci a été retirée du DOM par
-        // initSpotlight et ne peut plus être ré-insérée sans clone. Cas
-        // rare en pratique — un reload suffit à retrouver l'état correct.
-        const _spliceConditional = (selector) => {
-            let needsRefresh = false;
-            root.querySelectorAll(selector).forEach(el => {
-                const sIdx = slides.indexOf(el);
-                const dIdx = dots.indexOf(el);
-                if (sIdx >= 0) {
-                    slides.splice(sIdx, 1);
-                    if (sIdx < active) {
-                        active--;
-                    } else if (sIdx === active) {
-                        active = sIdx < slides.length ? sIdx : 0;
-                    }
-                    needsRefresh = true;
-                }
-                if (dIdx >= 0) dots.splice(dIdx, 1);
-                el.remove();
+        // Auth change pendant la session : on TOGGLE la visibilité (au lieu
+        // de retirer du DOM) entre Sign-in (signed-out-only) et My Profile
+        // (signed-in-only). Les deux occupent la même slot 8 dans le cycle —
+        // au login, My Profile prend la place de Sign-in instantanément ;
+        // au logout, l'inverse. On rebuilde ensuite les arrays slides/dots
+        // en filtrant les éléments masqués. `active` reste inchangé : le slot
+        // 8 reste actif, juste son contenu a swappé (Sign-in → My Profile ou
+        // l'inverse), donc le dot 8 reste highlighté (bleu) et le hint
+        // topnav switche automatiquement via show() qui lit data-hint-element
+        // du nouveau slide.
+        const _refreshAuthSlides = (isLogin) => {
+            root.querySelectorAll('[data-signed-out-only]').forEach(el => {
+                el.style.display = isLogin ? 'none' : '';
             });
-            if (needsRefresh && slides.length) show(active);
+            root.querySelectorAll('[data-signed-in-only]').forEach(el => {
+                el.style.display = isLogin ? '' : 'none';
+            });
+            // Rebuild slides/dots arrays — on mutate les const sans réassigner.
+            const newSlides = Array.from(root.querySelectorAll('.home-spotlight-slide'))
+                .filter(s => s.style.display !== 'none');
+            const newDots = Array.from(root.querySelectorAll('.home-spotlight-dot'))
+                .filter(d => d.style.display !== 'none');
+            slides.length = 0; slides.push(...newSlides);
+            dots.length   = 0; dots.push(...newDots);
+            // Le slot précédemment actif reste actif — show(active) re-applique
+            // is-active + hint topnav avec le nouveau contenu du slot.
+            if (slides.length) {
+                if (active >= slides.length) active = 0;
+                show(active);
+            }
         };
         window.addEventListener('cronos:auth', (e) => {
             const action = e.detail?.action;
-            if (action === 'login') {
-                _spliceConditional('[data-signed-out-only]');
-                // Après un sign-in réussi, on remet le cycle au début (Profile
-                // Explorer) au lieu de laisser la logique de splice mettre
-                // active sur la slide qui a pris la place de Sign-in. Évite
-                // que le hint topnav switche vers une feature aléatoire qui
-                // n'a aucun rapport avec ce que l'utilisateur vient de faire.
-                if (slides.length) show(0);
-            }
-            if (action === 'logout') _spliceConditional('[data-signed-in-only]');
+            if (action === 'login')  _refreshAuthSlides(true);
+            if (action === 'logout') _refreshAuthSlides(false);
         });
 
         // Lance le cycle. show(active) au boot pour que les side-effects
@@ -16792,6 +16794,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-19T23:10:00Z',
+            type:  'improvement',
+            title: 'Live sign-in / sign-out Spotlight swap',
+            text:  'Sign in (or sign out) mid-session and the Spotlight swap is instant: slot 08 switches between Sign-in and My Profile without a page refresh, and the active dot stays cyan on the same slot.'
+        },
         {
             date:  '2026-05-19T22:55:00Z',
             type:  'improvement',
