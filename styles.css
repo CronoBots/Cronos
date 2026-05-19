@@ -8790,9 +8790,13 @@ body.is-profile-loading #profileLoadingOverlay * {
     .home-bottom-left-wrap { gap: 20px; }
 }
 
-/* Chat et Featured Collection : hauteur 100% de leur cellule grid pour
-   matcher la stretch. Le max-height: 540px hérité du chat est annulé sur
-   ≥1100px pour laisser le grid décider de la hauteur. */
+/* Desktop : on REMET max-height: 540px sur la card chat. Comme le grid
+   row est en align-items: stretch (défaut) et que Featured Collection a
+   une hauteur naturelle inférieure ou égale, la rangée se cale à 540px
+   et Featured s'étire à cette même hauteur → on retrouve la hauteur
+   d'origine de Featured Collection, et le chat ne déborde plus.
+   Sans ce cap, le natural-height du chat (somme de tous les messages)
+   poussait la rangée du grid très haut, ce qui étirait Featured avec. */
 @media (min-width: 1100px) {
     .home-two-col--main > .home-community-section,
     .home-two-col--main > .home-section--featured {
@@ -8802,7 +8806,7 @@ body.is-profile-loading #profileLoadingOverlay * {
         flex-direction: column;
     }
     .home-two-col--main > .home-community-section .home-community-card {
-        max-height: none;
+        max-height: 540px;
         flex: 1 1 auto;
         min-height: 0;
     }
@@ -8810,10 +8814,6 @@ body.is-profile-loading #profileLoadingOverlay * {
         flex: 1 1 auto;
         min-height: 0;
     }
-    /* La card v3 interne doit elle aussi remplir le spotlight pour que la
-       Featured Collection atteigne réellement la hauteur du chat (sinon la
-       card s'arrête à la hauteur de son contenu et il y a un vide en bas
-       côté Featured alors que le chat est plus haut). */
     .home-two-col--main > .home-section--featured .home-fc-spotlight .home-feat-v3 {
         height: 100%;
     }
@@ -21825,10 +21825,20 @@ body { box-sizing: border-box; }
     
     
 
-    /* Chat — hauteur généreuse pour voir plusieurs messages */
+    /* Chat — hauteur fixe haute (px direct, pas svh : un déclarations
+       svh tombait à invalide sur certains navigateurs et le navigateur
+       retombait sur flex:1 d'un autre bloc → la card ne grandissait pas).
+       max-height: 95vh garde un filet de sécurité si le viewport est plus
+       petit que la valeur fixe. Aussi on force height sur .home-community-
+       section parent : la grille mobile (.home-two-col--main 1fr) n'impose
+       rien sur la rangée, donc la section ne grandit pas toute seule. */
+    .home-community-section {
+        height: auto !important;
+    }
     .home-community-card {
         flex: none !important;
-        height: min(853px, 92svh) !important;
+        height: 700px !important;
+        max-height: 95vh !important;
     }
     .home-community-card .home-chat-messages {
         flex: 1 !important;
@@ -21858,13 +21868,11 @@ body { box-sizing: border-box; }
     
 
     /* ── CHAT ──────────────────────────────────────────────────────────── */
-    /* flex:none empêche flex:1 du CSS de base d'écraser la hauteur fixe.
-       svh (small viewport height) prend en compte la barre d'adresse
-       mobile — évite que le chat dépasse l'écran quand l'UI navigateur
-       est visible. */
+    /* Hauteur en px direct + max-height 95vh fallback (cf. note ≤900px). */
     .home-community-card {
         flex: none !important;
-        height: min(853px, 92svh) !important;
+        height: 700px !important;
+        max-height: 95vh !important;
     }
     .home-community-card .home-chat-messages {
         flex: 1 !important;
@@ -21889,7 +21897,8 @@ body { box-sizing: border-box; }
     .home-spotlight-watermark--logo { width: 330px !important; height: 330px !important; }
     .home-community-card {
         flex: none !important;
-        height: min(746px, 92svh) !important;
+        height: 600px !important;
+        max-height: 95vh !important;
     }
 
 }
