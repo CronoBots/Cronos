@@ -505,58 +505,10 @@
 /* Bouton flottant "?" en bas-gauche — masqué : la liste des raccourcis
    vit maintenant dans le panneau Settings (.settings-shortcuts-section).
    L'utilisateur peut toujours ouvrir la cheat sheet complète avec `?`
-   au clavier. */
+   au clavier. L'élément est conservé dans le DOM (toggle via raccourci),
+   juste invisible. */
 .kbd-hint {
     display: none !important;
-}
-/* (ancien styling .kbd-hint conservé ci-dessous pour référence historique —
-   neutralisé par le display:none ci-dessus.) */
-._kbd-hint-legacy-styling-noop {
-    position: fixed;
-    bottom: 22px;
-    left: 22px;
-    z-index: 9000;
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
-    background: rgba(10, 26, 58, 0.72);
-    border: 1px solid rgba(0, 179, 255, 0.22);
-    color: rgba(255, 255, 255, 0.55);
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    transition: opacity 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
-    opacity: 0.55;
-    padding: 0;
-}
-.kbd-hint:hover {
-    opacity: 1;
-    color: var(--color1);
-    border-color: rgba(0, 179, 255, 0.55);
-    transform: translateY(-1px);
-}
-.kbd-hint:focus-visible {
-    outline: 2px solid var(--color1);
-    outline-offset: 2px;
-}
-.kbd-hint kbd {
-    font-family: 'Geomanist-Bold', monospace;
-    font-size: 13px;
-    color: inherit;
-    background: none;
-    border: none;
-    padding: 0;
-    line-height: 1;
-    display: block;
-}
-/* Sur mobile pas de hint (pas de clavier physique pour utiliser les
-   shortcuts de toute façon). Évite aussi le conflit avec scroll-to-top
-   / scroll-to-bottom déjà fixed sur petit écran. */
-@media (max-width: 768px), (hover: none) {
-    .kbd-hint { display: none; }
 }
 
 /* Indicateur visuel quand on est en pending 'g' (vim-style prefix). */
@@ -5962,186 +5914,8 @@ body.is-group-stats-view .nft-container--grouped .nft-group-header:first-child {
     min-width: 0;
 }
 
-.profile-section.profile-section--legend .group-legend-list {
-    position: relative;
-    width: 100%;
-}
-
-.group-legend-list::before,
-.group-legend-list::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background: rgba(255, 255, 255, 0.10);
-    pointer-events: none;
-}
-
-.group-legend-list::before {
-    left: calc(33.333% - (calc(var(--legend-col-gap) / 6)) - 0.5px);
-}
-
-.group-legend-list::after {
-    left: calc(66.666% + (calc(var(--legend-col-gap) / 6)) - 0.5px);
-}
-
-.group-legend-item {
-    position: relative;
-}
-
-.group-legend-tip {
-    position: absolute;
-    top: 50%;
-    left: 12px;
-    transform: translateY(-50%);
-    width: 18px;
-    height: 18px;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.90);
-    font-size: 11px;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2;
-    box-sizing: border-box;
-}
 
 
-
-/* Rank bubble inside grouped results: identical to legend styling, slightly larger via scaling. */
-.group-legend-tip--result {
-    position: relative;
-    top: auto;
-    left: auto;
-    width: 18px;
-    height: 18px;
-    font-size: 11px;
-    transform: scale(1.18);
-    transform-origin: center;
-    flex: 0 0 auto;
-}
-/* Top 3 (collections + artists) medal styling for the rank bubble. */
-#groupLegend:is([data-legend-mode="collection"], [data-legend-mode="artist"]) .group-legend-item:is([data-rank="1"], [data-rank="2"], [data-rank="3"]) .group-legend-tip {
-    overflow: hidden;
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.22);
-}
-
-#groupLegend:is([data-legend-mode="collection"], [data-legend-mode="artist"]) .group-legend-item:is([data-rank="1"], [data-rank="2"], [data-rank="3"]) .group-legend-tip::after {
-    content: '';
-    position: absolute;
-    top: -8px;
-    left: -6px;
-    width: 14px;
-    height: 34px;
-    transform: rotate(25deg);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0));
-    opacity: 0.55;
-    pointer-events: none;
-}
-
-#groupLegend:is([data-legend-mode="collection"], [data-legend-mode="artist"]) .group-legend-item[data-rank="1"] .group-legend-tip {
-    background: linear-gradient(145deg, #fff3b0 0%, #d4af37 45%, #8a6b00 100%) !important; /* gold */
-    border-color: #d4af37 !important;
-    box-shadow: 0 0 10px rgba(212, 175, 55, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.45) !important;
-    color: rgba(0, 0, 0, 0.92) !important;
-}
-
-#groupLegend:is([data-legend-mode="collection"], [data-legend-mode="artist"]) .group-legend-item[data-rank="2"] .group-legend-tip {
-    background: linear-gradient(145deg, #ffffff 0%, #c0c0c0 45%, #7d7d7d 100%) !important; /* silver */
-    border-color: #c0c0c0 !important;
-    box-shadow: 0 0 10px rgba(192, 192, 192, 0.42), inset 0 1px 2px rgba(255, 255, 255, 0.5) !important;
-    color: rgba(0, 0, 0, 0.92) !important;
-}
-
-#groupLegend:is([data-legend-mode="collection"], [data-legend-mode="artist"]) .group-legend-item[data-rank="3"] .group-legend-tip {
-    background: linear-gradient(145deg, #f2c09a 0%, #cd7f32 45%, #7a3e12 100%) !important; /* bronze */
-    border-color: #cd7f32 !important;
-    box-shadow: 0 0 10px rgba(205, 127, 50, 0.42), inset 0 1px 2px rgba(255, 255, 255, 0.35) !important;
-    color: rgba(0, 0, 0, 0.92) !important;
-}
-
-@media (max-width: 650px) {
-    .group-legend-list {
-        --legend-columns: 1;
-    }
-    .group-legend-list::before,
-    .group-legend-list::after {
-        content: none;
-    }
-}
-
-
-
-.group-legend-list {
-    --legend-col-gap: 10px;
-    --legend-columns: 3;
-    --legend-rows: 1;
-
-    list-style: none;
-    padding: 0;
-    margin: 0;
-
-    display: grid;
-    grid-auto-flow: row;
-    grid-template-columns: repeat(var(--legend-columns), minmax(0, 1fr));
-    grid-template-rows: repeat(var(--legend-rows), auto);
-    gap: 6px var(--legend-col-gap);
-}
-
-
-.group-legend-li {
-    margin: 0;
-    padding: 0;
-}
-
-.group-legend-item {
-    appearance: none;
-    width: 100%;
-    border: none;
-    background: transparent;
-    color: var(--text-dark);
-    border-radius: 0;
-    padding: 8px 8px 8px 44px;
-    cursor: pointer;
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
-    transition: background 0.15s ease;
-    text-align: left;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.group-legend-item:hover {
-    background: rgba(255, 255, 255, 0.03);
-    transform: none;
-}
-
-.group-legend-li:last-child .group-legend-item {
-    border-bottom: none;
-}
-
-/* Médaille emoji (top 3) — neutralise les bg gradient gold/silver/bronze
-   hérités du sélecteur #groupLegend[data-legend-mode=…] [data-rank=N],
-   pour que le glyphe 🥇/🥈/🥉 s'affiche tel quel (style Market Stats). */
-#groupLegend .group-legend-item .group-legend-tip--medal {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    color: inherit !important;
-    font-size: 22px;
-    width: 32px;
-    height: 28px;
-    overflow: visible;
-    text-shadow: none !important;
-}
-#groupLegend .group-legend-item .group-legend-tip--medal::after {
-    content: none !important;
-}
 
 .group-legend-title {
     font-weight: 800;
@@ -6158,32 +5932,6 @@ body.is-group-stats-view .nft-container--grouped .nft-group-header:first-child {
     margin: 0 0 12px 0;
 }
 
-.group-legend-name {
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    font-size: 12px;
-}
-
-.group-legend-count {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 4px;
-    white-space: nowrap;
-    font-size: 12px;
-}
-.group-legend-num {
-    color: var(--text-dark);
-    font-weight: 700;
-    font-size: inherit;
-}
-.group-legend-label {
-    color: var(--color1);
-    font-weight: 700;
-    font-size: inherit;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-}
 
 
 /* v12: Group stats views (Collections/Artists) — shift scroll buttons down one slot (download slot is unused). */
@@ -6201,19 +5949,6 @@ body.is-group-stats-view #scrollToTopButton {
 }
 
 
-/* v12: Legend layout — keep 3 columns on desktop/tablet, 1 column on mobile */
-@media (min-width: 651px) and (max-width: 1100px) {
-    .group-legend-list {
-        --legend-columns: 3;
-    }
-    .group-legend-list::before {
-        left: calc(33.333% - (calc(var(--legend-col-gap) / 6)) - 0.5px);
-    }
-    .group-legend-list::after {
-        left: calc(66.666% + (calc(var(--legend-col-gap) / 6)) - 0.5px);
-        content: "";
-    }
-}
 
 
 
@@ -6370,46 +6105,6 @@ body.is-group-stats-view .nft-container--grouped .nft-group-header:first-child {
     text-transform: none;
     font-variant-numeric: tabular-nums;}
 
-body.is-group-stats-view .nft-group-header:is([data-group-by="collection"], [data-group-by="artist"]):is([data-rank="1"], [data-rank="2"], [data-rank="3"]) .group-legend-tip--result {
-    overflow: hidden;
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.22);
-}
-
-body.is-group-stats-view .nft-group-header:is([data-group-by="collection"], [data-group-by="artist"]):is([data-rank="1"], [data-rank="2"], [data-rank="3"]) .group-legend-tip--result::after {
-    content: '';
-    position: absolute;
-    top: -8px;
-    left: -6px;
-    width: 14px;
-    height: 34px;
-    transform: rotate(25deg);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0));
-    opacity: 0.55;
-    pointer-events: none;
-}
-
-body.is-group-stats-view .nft-group-header:is([data-group-by="collection"], [data-group-by="artist"])[data-rank="1"] .group-legend-tip--result {
-    background: linear-gradient(145deg, #fff3b0 0%, #d4af37 45%, #8a6b00 100%) !important;
-    border-color: #d4af37 !important;
-    box-shadow: 0 0 10px rgba(212, 175, 55, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.45) !important;
-    color: rgba(0, 0, 0, 0.92) !important;
-}
-
-body.is-group-stats-view .nft-group-header:is([data-group-by="collection"], [data-group-by="artist"])[data-rank="2"] .group-legend-tip--result {
-    background: linear-gradient(145deg, #ffffff 0%, #c0c0c0 45%, #7d7d7d 100%) !important;
-    border-color: #c0c0c0 !important;
-    box-shadow: 0 0 10px rgba(192, 192, 192, 0.42), inset 0 1px 2px rgba(255, 255, 255, 0.5) !important;
-    color: rgba(0, 0, 0, 0.92) !important;
-}
-
-body.is-group-stats-view .nft-group-header:is([data-group-by="collection"], [data-group-by="artist"])[data-rank="3"] .group-legend-tip--result {
-    background: linear-gradient(145deg, #f2c09a 0%, #cd7f32 45%, #7a3e12 100%) !important;
-    border-color: #cd7f32 !important;
-    box-shadow: 0 0 10px rgba(205, 127, 50, 0.42), inset 0 1px 2px rgba(255, 255, 255, 0.35) !important;
-    color: rgba(0, 0, 0, 0.92) !important;
-}
-
-
 .nft-group-name {
     display: inline;
 }
@@ -6482,16 +6177,6 @@ body.is-group-stats-view .group-legend {
   padding-bottom: 6px !important;
 }
 
-body.is-group-stats-view .group-legend-list::before,
-body.is-group-stats-view .group-legend-list::after {
-  content: none !important;
-  background: none !important;
-}
-
-body.is-group-stats-view .group-legend-label {
-  text-transform: none !important;
-  letter-spacing: 0.02em;
-}
 
 body.is-group-stats-view .asset-count-bar {
   margin-top: 0 !important;
@@ -6529,15 +6214,6 @@ body.is-group-stats-view .group-legend .group-legend-title {
   text-align: center !important;
 }
 
-/* 2) Legend: never force uppercase on the "NFTs" label */
-.group-legend-label {
-  text-transform: none !important;
-}
-
-/* Favorite collection label: keep "NFTs" casing */
-#statFavoriteCollectionCount {
-  text-transform: none !important;
-}
 
 /* 3) Tighten space AFTER legend separator (below legend block) */
 body.is-group-stats-view .profile-section {
@@ -6556,12 +6232,6 @@ body.is-group-stats-view .nft-container--grouped .nft-group-header:first-of-type
   padding-top: 10px !important;   /* the "space after the bar" you asked to reduce */
 }
 
-/* 5) Remove vertical separators in legend list (defensive) */
-body.is-group-stats-view .group-legend-list::before,
-body.is-group-stats-view .group-legend-list::after {
-  content: none !important;
-  background: none !important;
-}
 
 /* =========================================================
    v14: Legend separator + first group header spacing control
@@ -9258,22 +8928,7 @@ body.profile-no-artist-metrics .left-sidebar .sidebar-stats {
 }
 
 
-/* v19: Slightly reduce group legend collection names to avoid wrapping */
-.group-legend-name {
-    font-size: 11px !important;
-    letter-spacing: 0.02em !important;
-}
 
-.group-legend-count {
-    font-size: 11px !important;
-}
-
-@media (max-width: 1100px) {
-    .group-legend-name,
-    .group-legend-count {
-        font-size: 10.5px !important;
-    }
-}
 
 
 
@@ -11542,9 +11197,6 @@ body.is-group-stats-view #groupLegend[data-legend-mode="all"] {
 /* =========================================================
    FAVORITE COLLECTION: masquer la liste de légende
    ========================================================= */
-#groupLegend[data-legend-override="true"] .group-legend-list {
-    display: none !important;
-}
 
 #groupLegend[data-legend-override="true"] .group-legend-title {
     margin-bottom: 0px !important;
@@ -11562,10 +11214,6 @@ body.is-group-stats-view .app-main:has(#groupLegend[data-legend-override="true"]
     padding-top: var(--group-separator-gap-after-line) !important;
 }
 
-/* Masquer le numéro de rang devant le nom de collection */
-.app-main:has(#groupLegend[data-legend-override="true"]) .nft-group-header .group-legend-tip--result {
-    display: none !important;
-}
 
 /* NFTS COLLECTED: coller la ligne au titre mais garder l'espace standard sous la ligne */
 body.is-group-stats-view .app-main:has(#groupLegend[data-legend-mode="all"]) #nftContainer .nft-group-header:first-child,
@@ -11732,17 +11380,6 @@ body.is-profile-loading #profileLoadingOverlay * {
 }
 
 /* Remonter légèrement le numéro à côté du nom de collection dans les résultats */
-.nft-group-header .group-legend-tip--result {
-    position: relative !important;
-    top: -2px !important;
-}
-
-/* Ordre colonne par colonne dans le tableau de légende */
-.group-legend-list {
-    grid-auto-flow: column !important;
-    grid-template-rows: repeat(var(--legend-rows), auto) !important;
-    grid-template-columns: repeat(var(--legend-columns), minmax(0, 1fr)) !important;
-}
 
 /* Scrollbar toujours visible sur desktop */
 @media (min-width: 1024px) {
@@ -28513,29 +28150,11 @@ a.snap-holder-username:hover {
 }
 
 /* ══════════════════════════════════════════════════════════
-   GRILLE CHAT + LIVE ACTIVITY — live feed demi-largeur
+   GRILLE COMMUNITY PULSE — sous le chat dans la col gauche du
+   home-two-col--main. (L'ancien wrapper .home-two-col--chat-pulse
+   est supprimé du HTML depuis PR #203, ses règles aussi.)
    ══════════════════════════════════════════════════════════ */
-/* ── 2-col CHAT + COMMUNITY PULSE (sa colonne stats) ── */
-.home-two-col--chat-pulse {
-    grid-template-columns: 3fr 2fr;   /* chat ~60%, pulse stats ~40% */
-    align-items: stretch;
-}
-.home-two-col--chat-pulse > .home-section {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-}
-.home-two-col--chat-pulse > .home-section > .home-section-header {
-    flex-shrink: 0;
-}
-.home-two-col--chat-pulse .home-community-card,
-.home-two-col--chat-pulse .home-cp-wrap {
-    flex: 1 1 0;
-    height: auto;
-    min-height: 540px;
-    min-width: 0;
-}
-.home-two-col--chat-pulse .home-cp-wrap {
+.home-community-pulse-section .home-cp-wrap {
     /* Halo cyan unifié home — même cadre que les autres frames. */
     border: 1px solid var(--home-halo-border);
     border-radius: 14px;
@@ -28545,7 +28164,7 @@ a.snap-holder-username:hover {
     display: flex;
     flex-direction: column;
 }
-.home-two-col--chat-pulse .home-cp-content {
+.home-community-pulse-section .home-cp-content {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
@@ -28553,18 +28172,18 @@ a.snap-holder-username:hover {
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 179, 255, 0.25) transparent;
 }
-.home-two-col--chat-pulse .home-cp-content::-webkit-scrollbar { width: 6px; }
-.home-two-col--chat-pulse .home-cp-content::-webkit-scrollbar-track { background: transparent; }
-.home-two-col--chat-pulse .home-cp-content::-webkit-scrollbar-thumb {
+.home-community-pulse-section .home-cp-content::-webkit-scrollbar { width: 6px; }
+.home-community-pulse-section .home-cp-content::-webkit-scrollbar-track { background: transparent; }
+.home-community-pulse-section .home-cp-content::-webkit-scrollbar-thumb {
     background: rgba(0, 179, 255, 0.25);
     border-radius: 3px;
 }
 /* KPIs en colonne narrow → on tasse le grid à 2 colonnes au lieu de 4. */
-.home-two-col--chat-pulse .pulse-kpis {
+.home-community-pulse-section .pulse-kpis {
     grid-template-columns: repeat(2, 1fr);
 }
-/* Charts en full-width dans la colonne droite. */
-.home-two-col--chat-pulse .home-cp-grid {
+/* Charts empilés en full-width dans la section. */
+.home-community-pulse-section .home-cp-grid {
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -28650,7 +28269,6 @@ a.snap-holder-username:hover {
 }
 
 @media (max-width: 860px) {
-    .home-two-col--chat-pulse,
     .home-two-col--market-top { grid-template-columns: 1fr; }
 }
 
@@ -28925,7 +28543,6 @@ body { box-sizing: border-box; }
 
 /* ── Mobile : live feed pleine largeur, colonnes adaptées ── */
 @media (max-width: 860px) {
-    .home-two-col--chat-pulse,
     .home-two-col--market-top {
         grid-template-columns: 1fr !important;
     }
@@ -30068,7 +29685,6 @@ body { box-sizing: border-box; }
        une pastille inline-flex, par exemple), il propage la pression
        jusqu'au container et fait déborder la home à droite. */
     .home-body > .home-section,
-    .home-two-col--chat-pulse > .home-section,
     .home-community-section,
     .home-community-card,
     .home-chat-main,
@@ -34454,20 +34070,6 @@ body.view--profile .navbar.navbar--floating-controls {
    appliquées par les règles existantes (data-rank=1/2/3) — pas de changement
    nécessaire de ce côté.
    ═══════════════════════════════════════════════════════════════════════════ */
-@media (max-width: 650px) {
-    .group-legend-list {
-        --legend-columns: 1 !important;
-    }
-    .group-legend-list::before,
-    .group-legend-list::after {
-        content: none !important;
-    }
-    /* Padding gauche réduit (38px → 34px) pour gagner de la place
-       en colonne unique avec le tip bubble + texte sur une ligne. */
-    .group-legend-item {
-        padding: 10px 12px 10px 36px;
-    }
-}
 
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -34685,38 +34287,6 @@ body.is-profile-skeleton-loading .profile-page-title-block .username:empty::befo
    Les règles existantes (gold/silver/bronze) sont déjà appliquées par
    les sélecteurs `body.is-group-stats-view .nft-group-header[data-rank=…]`.
    On les fait juste un peu plus grosses et plus contrastées. */
-.nft-group-header .group-legend-tip--result {
-    width: 22px;
-    height: 22px;
-    font-size: 12px;
-    border-width: 1.5px;
-}
-body.is-group-stats-view
-    .nft-group-header:is([data-group-by="collection"], [data-group-by="artist"]):is([data-rank="1"], [data-rank="2"], [data-rank="3"])
-    .group-legend-tip--result {
-    /* Ombre plus marquée pour que les médailles soient bien visibles sur le
-       fond sombre — important sur mobile où elles sont petites. */
-    box-shadow:
-        0 0 0 1px rgba(0, 0, 0, 0.35) inset,
-        0 0 14px rgba(212, 175, 55, 0.35),
-        0 2px 6px rgba(0, 0, 0, 0.5) !important;
-}
-body.is-group-stats-view
-    .nft-group-header:is([data-group-by="collection"], [data-group-by="artist"])[data-rank="2"]
-    .group-legend-tip--result {
-    box-shadow:
-        0 0 0 1px rgba(0, 0, 0, 0.35) inset,
-        0 0 14px rgba(192, 192, 192, 0.40),
-        0 2px 6px rgba(0, 0, 0, 0.5) !important;
-}
-body.is-group-stats-view
-    .nft-group-header:is([data-group-by="collection"], [data-group-by="artist"])[data-rank="3"]
-    .group-legend-tip--result {
-    box-shadow:
-        0 0 0 1px rgba(0, 0, 0, 0.35) inset,
-        0 0 14px rgba(205, 127, 50, 0.40),
-        0 2px 6px rgba(0, 0, 0, 0.5) !important;
-}
 
 /* ── Responsive ── */
 @media (max-width: 640px) {
