@@ -26319,9 +26319,47 @@ body { box-sizing: border-box; }
 .settings-lang-select option { background: #0d1830; color: #fff; }
 
 /* ── Keyboard shortcuts (section du panneau Settings — remplace
-      l'ancien bouton flottant .kbd-hint en bas d'écran) ── */
+      l'ancien bouton flottant .kbd-hint en bas d'écran).
+      Collapsible via `<details>` natif : fermé par défaut pour ne pas
+      surcharger le panneau. Masqué entièrement sur mobile / touch
+      devices (aucun clavier physique). ── */
 .settings-shortcuts-section {
     /* Hérite du padding/border de .settings-section. */
+}
+/* Masque sur mobile + touch (clavier physique absent). */
+@media (max-width: 768px), (hover: none) {
+    .settings-shortcuts-section { display: none; }
+}
+/* Summary cliquable — looks like un settings-row light. */
+.settings-shortcuts-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    padding: 2px 0;
+    border-radius: 6px;
+    transition: background 0.13s;
+}
+.settings-shortcuts-summary::-webkit-details-marker { display: none; }
+.settings-shortcuts-summary::marker { content: ''; }
+.settings-shortcuts-summary:hover {
+    background: var(--w-04);
+}
+.settings-shortcuts-summary .settings-section-label {
+    margin-bottom: 0;
+}
+.settings-shortcuts-chevron {
+    color: rgba(255, 255, 255, 0.35);
+    transition: transform 0.18s ease;
+    flex-shrink: 0;
+}
+.settings-shortcuts-section[open] .settings-shortcuts-chevron {
+    transform: rotate(90deg);
+}
+.settings-shortcuts-body {
+    margin-top: 4px;
 }
 .settings-shortcuts-group {
     margin-top: 8px;
