@@ -1294,6 +1294,26 @@
             </div>
           </article>
 
+          <!-- Sign-in CTA : visible UNIQUEMENT pour les visiteurs déconnectés.
+               Caché par défaut (style="display:none") + révélé par initSpotlight
+               quand getCurrentUser() retourne null. Click → ouvre le modal de
+               connexion (équivalent à un click sur #topnavLoginBtn). -->
+          <article class="home-spotlight-slide home-spotlight-slide--signin" data-signed-out-only="1" data-signin-cta="1" data-accent="#f59e0b" style="display:none;--accent:#f59e0b;--accent-strong:#fbbf24;--accent-soft:rgba(245,158,11,0.20);">
+            <svg class="home-spotlight-watermark" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="10" cy="7" r="3.5"/>
+              <path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/>
+              <path d="M15 10l2 2-2 2M17 12h-5"/>
+            </svg>
+            <div class="home-spotlight-slide-inner">
+              <div class="home-spotlight-eyebrow">
+                <span class="home-spotlight-index">Welcome</span>
+              </div>
+              <h3 class="home-spotlight-title">Sign in to CRONOS.WTF</h3>
+              <p class="home-spotlight-desc">Connect your Crypto.com NFT username to chat with the community and see your own profile in detail — holdings grouped by collection or artist, liked NFTs, full stats. Just your public username, no password needed.</p>
+              <span class="home-spotlight-cta">Sign In <span class="home-spotlight-cta-arrow" aria-hidden="true">→</span></span>
+            </div>
+          </article>
+
         </div>
 
         <!-- Controls : prev / progress+dots / next -->
@@ -1314,6 +1334,7 @@
               <button class="home-spotlight-dot" type="button" data-idx="5" aria-label="Slide 6"></button>
               <button class="home-spotlight-dot" type="button" data-idx="6" aria-label="Slide 7"></button>
               <button class="home-spotlight-dot" type="button" data-idx="7" aria-label="Slide 8"></button>
+              <button class="home-spotlight-dot home-spotlight-dot--signin" type="button" data-idx="8" data-signed-out-only="1" aria-label="Sign in" style="display:none;"></button>
             </div>
           </div>
           <button class="home-spotlight-arrow" id="homeSpotlightNext" type="button" aria-label="Next">
@@ -12925,6 +12946,22 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
         if (!root || root.dataset.cwtfSpotlight) return;
         root.dataset.cwtfSpotlight = '1';
 
+        /* Sign-in slide visible UNIQUEMENT pour les visiteurs déconnectés.
+           Quand l'utilisateur est connecté, on retire la slide/dot du DOM
+           pour qu'elles ne soient ni cyclées ni navigables (vs juste hidden
+           — ce qui laisserait un trou dans le carousel et un dot inactif).
+           getCurrentUser n'est pas exposé sur window — on lit localStorage
+           directement comme d'autres blocs <script> du fichier. */
+        let _isSignedIn = false;
+        try {
+            const _u = JSON.parse(localStorage.getItem('cronos_logged_user') || 'null');
+            _isSignedIn = !!(_u && _u.username);
+        } catch (e) { _isSignedIn = false; }
+        root.querySelectorAll('[data-signed-out-only]').forEach(el => {
+            if (_isSignedIn) el.remove();
+            else el.style.display = '';
+        });
+
         const slides = Array.from(root.querySelectorAll('.home-spotlight-slide'));
         const dots   = Array.from(root.querySelectorAll('.home-spotlight-dot'));
         const prev   = document.getElementById('homeSpotlightPrev');
@@ -13115,6 +13152,12 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
         slides.forEach((slide) => {
             slide.addEventListener('click', () => {
                 if (swipedRecently) return;
+                // Slide Sign In → ouvre le modal de connexion (équivalent
+                // à un click sur le bouton Sign In du topnav).
+                if (slide.dataset.signinCta) {
+                    document.getElementById('topnavLoginBtn')?.click();
+                    return;
+                }
                 // Slide qui pointe vers une ancre de la home (la section
                 // Community) — on scroll vers l'élément au lieu d'ouvrir
                 // un autre onglet, puisque la cible vit sur cette page.
@@ -13173,6 +13216,27 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
                         ?.classList.remove('topnav-search-wrap--spotlight-hint');
                 }
             });
+        });
+
+        // Login pendant la session : la slide Sign-in n'a plus de raison
+        // d'être affichée. On la retire du DOM ET des arrays slides/dots
+        // pour que le cycle ne s'arrête plus dessus (sinon "ghost" 6.5s
+        // de vide). Si l'utilisateur était sur cette slide au moment du
+        // login, on retombe sur la 1ère.
+        window.addEventListener('cronos:auth', (e) => {
+            if (e.detail?.action !== 'login') return;
+            let removed = false;
+            root.querySelectorAll('[data-signed-out-only]').forEach(el => {
+                const sIdx = slides.indexOf(el);
+                if (sIdx >= 0) { slides.splice(sIdx, 1); removed = true; }
+                const dIdx = dots.indexOf(el);
+                if (dIdx >= 0) { dots.splice(dIdx, 1); removed = true; }
+                el.remove();
+            });
+            if (removed && slides.length) {
+                if (active >= slides.length) show(0);
+                else show(active);
+            }
         });
 
         // Lance le cycle. show(active) au boot pour que les side-effects
@@ -16595,6 +16659,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-20T12:00:00Z',
+            type:  'feature',
+            title: 'Sign-in spotlight',
+            text:  'Signed-out visitors now get a Sign-in slide in the Spotlight carousel — quick reminder that signing in unlocks the chat and a detailed view of your own profile.'
+        },
         {
             date:  '2026-05-20T11:00:00Z',
             type:  'fix',
