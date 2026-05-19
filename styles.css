@@ -8745,11 +8745,20 @@ body.is-profile-loading #profileLoadingOverlay * {
               patrons stackés)       |
       `align-items: stretch` (default) → chat et featured-collection ont
       la même hauteur (même row), pulse+patrons et featured-artists aussi.
-      Sur écran <1100px : 1 col, sections empilées dans l'ordre du DOM
-      (chat → pulse+patrons → featured-coll → featured-artists). ── */
+      Sur écran <1100px : 1 col, sections empilées dans cet ordre via
+      la propriété `order` :
+         chat → featured-collections → featured-artists → pulse+patrons.
+      L'ordre DOM (chat → pulse → featured-coll → featured-art) est
+      conservé pour le desktop (où grid-area place chaque section). ── */
 .home-two-col--main {
     grid-template-columns: 1fr;
     gap: 16px;
+}
+@media (max-width: 1099px) {
+    .home-two-col--main > .home-community-section          { order: 1; }
+    .home-two-col--main > .home-section--featured          { order: 2; }
+    .home-two-col--main > .home-section--featured-artists  { order: 3; }
+    .home-two-col--main > .home-bottom-left-wrap           { order: 4; }
 }
 @media (min-width: 1100px) {
     .home-two-col--main {
@@ -21809,7 +21818,7 @@ body { box-sizing: border-box; }
     /* Chat — hauteur généreuse pour voir plusieurs messages */
     .home-community-card {
         flex: none !important;
-        height: min(640px, 78svh) !important;
+        height: min(853px, 92svh) !important;
     }
     .home-community-card .home-chat-messages {
         flex: 1 !important;
@@ -21845,7 +21854,7 @@ body { box-sizing: border-box; }
        est visible. */
     .home-community-card {
         flex: none !important;
-        height: min(640px, 78svh) !important;
+        height: min(853px, 92svh) !important;
     }
     .home-community-card .home-chat-messages {
         flex: 1 !important;
@@ -21870,7 +21879,7 @@ body { box-sizing: border-box; }
     .home-spotlight-watermark--logo { width: 330px !important; height: 330px !important; }
     .home-community-card {
         flex: none !important;
-        height: min(560px, 78svh) !important;
+        height: min(746px, 92svh) !important;
     }
 
 }
