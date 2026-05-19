@@ -76,7 +76,7 @@
      downgrade la priorité parce qu'il découvre la font tardivement
      en parcourant la CSS. -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
-<link href="styles.css?v=1779198389" rel="stylesheet"/>
+<link href="styles.css?v=1779199563" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -1285,6 +1285,27 @@
             </div>
           </article>
 
+          <!-- My Profile CTA : visible UNIQUEMENT pour les visiteurs connectés.
+               Position symétrique à l'onglet "My Profile" du topnav (qui n'apparaît
+               aussi qu'au login). Caché par défaut + révélé par initSpotlight
+               quand l'utilisateur est connecté. Click → ouvre directement le
+               profil de l'utilisateur (data-tab-target="myprofil"). -->
+          <article class="home-spotlight-slide home-spotlight-slide--myprofil" data-signed-in-only="1" data-tab-target="myprofil" data-hint-element="#topnavMyProfil" data-accent="#fb7185" style="display:none;--accent:#fb7185;--accent-strong:#fda4af;--accent-soft:rgba(251,113,133,0.20);">
+            <svg class="home-spotlight-watermark" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="10" cy="7" r="3.5"/>
+              <path d="M2.5 17.5c0-3.5 3.36-6.5 7.5-6.5s7.5 3 7.5 6.5"/>
+              <path d="M14 4l1.5 1.5L18 3"/>
+            </svg>
+            <div class="home-spotlight-slide-inner">
+              <div class="home-spotlight-eyebrow">
+                <span class="home-spotlight-index">My Profile</span>
+              </div>
+              <h3 class="home-spotlight-title">Your collection, in detail</h3>
+              <p class="home-spotlight-desc">Everything you own and like on Crypto.com NFT in one place — NFTs grouped by collection or artist, liked NFTs, rarity ranks and full stats. Filter, sort, switch the card size, and bulk-download the artwork as a ZIP or a collage.</p>
+              <span class="home-spotlight-cta">Open My Profile <span class="home-spotlight-cta-arrow" aria-hidden="true">→</span></span>
+            </div>
+          </article>
+
           <article class="home-spotlight-slide" data-tab-target="profil" data-accent="#a78bfa" style="--accent:#a78bfa;--accent-strong:#c4b5fd;--accent-soft:rgba(167,139,250,0.18);">
             <svg class="home-spotlight-watermark" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <circle cx="10" cy="7" r="3.5"/>
@@ -1357,6 +1378,7 @@
               <button class="home-spotlight-dot" type="button" aria-label="NFT Drops"></button>
               <button class="home-spotlight-dot" type="button" aria-label="Snapshot"></button>
               <button class="home-spotlight-dot" type="button" aria-label="Support"></button>
+              <button class="home-spotlight-dot home-spotlight-dot--myprofil" type="button" data-signed-in-only="1" aria-label="My Profile" style="display:none;"></button>
               <button class="home-spotlight-dot" type="button" aria-label="Profile Explorer"></button>
               <button class="home-spotlight-dot" type="button" aria-label="Collection Explorer"></button>
               <button class="home-spotlight-dot home-spotlight-dot--settings" type="button" aria-label="Settings"></button>
@@ -12971,12 +12993,14 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
         if (!root || root.dataset.cwtfSpotlight) return;
         root.dataset.cwtfSpotlight = '1';
 
-        /* Sign-in slide visible UNIQUEMENT pour les visiteurs déconnectés.
-           Quand l'utilisateur est connecté, on retire la slide/dot du DOM
-           pour qu'elles ne soient ni cyclées ni navigables (vs juste hidden
-           — ce qui laisserait un trou dans le carousel et un dot inactif).
-           getCurrentUser n'est pas exposé sur window — on lit localStorage
-           directement comme d'autres blocs <script> du fichier. */
+        /* Slides conditionnelles à l'état auth :
+             • data-signed-out-only : Sign In (visible uniquement déconnecté)
+             • data-signed-in-only  : My Profile (visible uniquement connecté)
+           Quand la condition ne matche pas → retrait DOM (vs juste hidden),
+           sinon le cycle s'arrêterait sur un trou de 6.5s et les dots
+           seraient navigables vers du vide. getCurrentUser n'est pas exposé
+           sur window — on lit localStorage directement comme d'autres blocs
+           <script> du fichier. */
         let _isSignedIn = false;
         try {
             const _u = JSON.parse(localStorage.getItem('cronos_logged_user') || 'null');
@@ -12985,6 +13009,10 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
         root.querySelectorAll('[data-signed-out-only]').forEach(el => {
             if (_isSignedIn) el.remove();
             else el.style.display = '';
+        });
+        root.querySelectorAll('[data-signed-in-only]').forEach(el => {
+            if (_isSignedIn) el.style.display = '';
+            else el.remove();
         });
 
         const slides = Array.from(root.querySelectorAll('.home-spotlight-slide'));
@@ -13261,21 +13289,24 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
             });
         });
 
-        // Login pendant la session : la slide Sign-in n'a plus de raison
-        // d'être affichée. On la retire du DOM ET des arrays slides/dots
-        // pour que le cycle ne s'arrête plus dessus (sinon "ghost" 6.5s
-        // de vide). On AJUSTE aussi `active` en fonction de la position
-        // splicée :
+        // Auth change pendant la session : on retire la slide qui n'a plus
+        // de sens (Sign In au login, My Profile au logout). Retrait du DOM
+        // ET des arrays slides/dots pour que le cycle ne s'arrête plus
+        // dessus (sinon "ghost" 6.5s de vide). On AJUSTE aussi `active` en
+        // fonction de la position splicée :
         //   • si la slide retirée est AVANT l'active → active--
         //   • si la slide retirée EST l'active → on retombe sur la slide
         //     qui prend sa place (sIdx) ou slide 0 si on était à la fin
         //   • si la slide retirée est APRÈS l'active → active inchangé
-        // Sans ça, après splice, l'index "active" pointerait sur une
-        // slide différente de celle visible juste avant le login.
-        window.addEventListener('cronos:auth', (e) => {
-            if (e.detail?.action !== 'login') return;
+        // Sans ça, après splice, l'index "active" pointerait sur une slide
+        // différente de celle visible juste avant le changement d'auth.
+        // À noter : on ne re-révèle PAS la slide opposée (My Profile au
+        // login, Sign In au logout) car celle-ci a été retirée du DOM par
+        // initSpotlight et ne peut plus être ré-insérée sans clone. Cas
+        // rare en pratique — un reload suffit à retrouver l'état correct.
+        const _spliceConditional = (selector) => {
             let needsRefresh = false;
-            root.querySelectorAll('[data-signed-out-only]').forEach(el => {
+            root.querySelectorAll(selector).forEach(el => {
                 const sIdx = slides.indexOf(el);
                 const dIdx = dots.indexOf(el);
                 if (sIdx >= 0) {
@@ -13291,6 +13322,11 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
                 el.remove();
             });
             if (needsRefresh && slides.length) show(active);
+        };
+        window.addEventListener('cronos:auth', (e) => {
+            const action = e.detail?.action;
+            if (action === 'login')  _spliceConditional('[data-signed-out-only]');
+            if (action === 'logout') _spliceConditional('[data-signed-in-only]');
         });
 
         // Lance le cycle. show(active) au boot pour que les side-effects
@@ -16722,8 +16758,8 @@ async function sha256hex(str) {
         {
             date:  '2026-05-20T13:00:00Z',
             type:  'feature',
-            title: 'Spotlight: Settings slide + tab hints',
-            text:  'New Settings slide in the Spotlight (sign in / out, certify ownership, translate the site). Sign-in slide is now the first one signed-out visitors see. Sign In and My Profile tabs behave like every other tab again (no permanent blue tint) — the Sign In tab now turns cyan while the login modal is open, same feedback as the Settings gear button. The tab you are currently on stays cyan even when the Spotlight cycles to its corresponding slide, so you never lose the "I am here" cue. NFT names, collection names, artist names, profile usernames and chain names (Cronos, Cronos POS) are now protected from translation across the site.'
+            title: 'Spotlight: Settings + My Profile slides',
+            text:  'New Settings slide in the Spotlight (sign in / out, certify ownership, translate the site). Signed-out visitors see a Sign-in slide first; signed-in visitors get a My Profile slide explaining what they can do on their own profile (NFTs by collection or artist, liked NFTs, rarity ranks, full stats, bulk download). Sign In and My Profile tabs behave like every other tab again (no permanent blue tint) — the Sign In tab turns cyan while the login modal is open, same feedback as the Settings gear button. The tab you are currently on stays cyan even when the Spotlight cycles to its corresponding slide, so you never lose the "I am here" cue. NFT names, collection names, artist names, profile usernames and chain names (Cronos, Cronos POS) are now protected from translation across the site.'
         },
         {
             date:  '2026-05-20T12:00:00Z',
