@@ -76,7 +76,7 @@
      downgrade la priorité parce qu'il découvre la font tardivement
      en parcourant la CSS. -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
-<link href="styles.css?v=1779600000" rel="stylesheet"/>
+<link href="styles.css?v=1779610000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -4237,15 +4237,16 @@ function updateProfileUI(profileData, profileTotals = null) {
     // Header refondu : la BIG title (#username, stylée comme un page-title
     // d'onglet) montre le displayName en MAJUSCULES si dispo, sinon le
     // username brut. Le sous-titre (#displayName, petit + cyan) montre le
-    // username avec un @ devant. Si pas de displayName, on cache le sous-
-    // titre pour éviter d'afficher la même valeur deux fois ("MATT" + "@matt").
+    // username SANS @ (signature .drops-page-sub-like). Si pas de display
+    // name, on cache le sous-titre pour éviter d'afficher la même valeur
+    // deux fois ("MATT" + "matt").
     const _rawUsername    = profileData.username || 'Unknown';
     const _rawDisplayName = (profileData.displayName || '').trim();
     currentUsername    = profileData.username || '';
     currentDisplayName = _rawDisplayName || _rawUsername;
     username.textContent = (_rawDisplayName || _rawUsername).toUpperCase();
     if (_rawDisplayName) {
-        displayName.textContent = '@' + _rawUsername;
+        displayName.textContent = _rawUsername;
         displayName.style.display = 'block';
     } else {
         displayName.textContent = '';
@@ -16773,6 +16774,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-21T00:00:00Z',
+            type:  'improvement',
+            title: 'Profile header polish + chat/Featured exact match',
+            text:  'Profile pages: bigger photo behind the title (less faded), display name and username now match the page-title style used on Support / Snapshot / etc. The @ is dropped from the username subtitle. Mobile profile is centered again (photo + names + bio + socials), no more left-aligned strip. Desktop chat row is now locked to the exact same height as Featured Collection (no more mismatch).'
+        },
         {
             date:  '2026-05-20T23:00:00Z',
             type:  'fix',
