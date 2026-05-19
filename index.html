@@ -76,7 +76,7 @@
      downgrade la priorité parce qu'il découvre la font tardivement
      en parcourant la CSS. -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
-<link href="styles.css?v=1779196949" rel="stylesheet"/>
+<link href="styles.css?v=1779198389" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -437,8 +437,8 @@
   </select>
   <select aria-label="Chains" id="chainFilter" tabindex="-1">
     <option value="">ALL CHAINS</option>
-    <option value="CRONOS">CRONOS</option>
-    <option value="CRONOS_POS">CRONOS POS CHAIN</option>
+    <option value="CRONOS" data-no-translate>CRONOS</option>
+    <option value="CRONOS_POS" data-no-translate>CRONOS POS</option>
   </select>
   <select aria-label="Curations" id="curatedFilter" tabindex="-1">
     <option value="">ALL CURATIONS</option>
@@ -652,11 +652,11 @@
           </div>
           <div aria-label="Filter Cronos" class="stat-card" data-stat-action="chain:CRONOS" role="button" tabindex="0">
             <div class="stat-value" id="statCronos">0</div>
-            <div class="stat-label">CRONOS NFTs</div>
+            <div class="stat-label"><span data-no-translate>CRONOS</span> NFTs</div>
           </div>
           <div aria-label="Filter Cronos POS" class="stat-card" data-stat-action="chain:CRONOS_POS" role="button" tabindex="0">
             <div class="stat-value" id="statCronosPos">0</div>
-            <div class="stat-label">CRONOS POS NFTs</div>
+            <div class="stat-label"><span data-no-translate>CRONOS POS</span> NFTs</div>
           </div>
         </div>
       </section>
@@ -2320,8 +2320,8 @@
           <button class="stats-tr-btn" data-range="ALL" type="button">ALL</button>
         </div>
         <div class="stats-chain-filter" id="statsChainFilter">
-          <button class="stats-cf-btn" data-chain="CRONOS" type="button">Cronos</button>
-          <button class="stats-cf-btn" data-chain="CRO" type="button">Cronos POS</button>
+          <button class="stats-cf-btn" data-chain="CRONOS" type="button" data-no-translate>Cronos</button>
+          <button class="stats-cf-btn" data-chain="CRO" type="button" data-no-translate>Cronos POS</button>
           <button class="stats-cf-btn stats-cf-btn--active" data-chain="ALL" type="button">ALL</button>
         </div>
         <div class="stats-verified-filter" id="statsVerifiedFilter">
@@ -2442,7 +2442,7 @@
       <div aria-live="polite" class="nft-preview-counter" id="nftPreviewCounter"></div>
       <div class="nft-preview-badges">
         <span class="nft-preview-badge" id="nftPreviewMediaType">IMAGE</span>
-        <span class="nft-preview-badge nft-preview-badge--accent" id="nftPreviewChain">CRONOS</span>
+        <span class="nft-preview-badge nft-preview-badge--accent" id="nftPreviewChain" data-no-translate>CRONOS</span>
       </div>
     </div>
     <div class="nft-preview-stage-shell">
@@ -13264,22 +13264,33 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
         // Login pendant la session : la slide Sign-in n'a plus de raison
         // d'être affichée. On la retire du DOM ET des arrays slides/dots
         // pour que le cycle ne s'arrête plus dessus (sinon "ghost" 6.5s
-        // de vide). Si l'utilisateur était sur cette slide au moment du
-        // login, on retombe sur la 1ère.
+        // de vide). On AJUSTE aussi `active` en fonction de la position
+        // splicée :
+        //   • si la slide retirée est AVANT l'active → active--
+        //   • si la slide retirée EST l'active → on retombe sur la slide
+        //     qui prend sa place (sIdx) ou slide 0 si on était à la fin
+        //   • si la slide retirée est APRÈS l'active → active inchangé
+        // Sans ça, après splice, l'index "active" pointerait sur une
+        // slide différente de celle visible juste avant le login.
         window.addEventListener('cronos:auth', (e) => {
             if (e.detail?.action !== 'login') return;
-            let removed = false;
+            let needsRefresh = false;
             root.querySelectorAll('[data-signed-out-only]').forEach(el => {
                 const sIdx = slides.indexOf(el);
-                if (sIdx >= 0) { slides.splice(sIdx, 1); removed = true; }
                 const dIdx = dots.indexOf(el);
-                if (dIdx >= 0) { dots.splice(dIdx, 1); removed = true; }
+                if (sIdx >= 0) {
+                    slides.splice(sIdx, 1);
+                    if (sIdx < active) {
+                        active--;
+                    } else if (sIdx === active) {
+                        active = sIdx < slides.length ? sIdx : 0;
+                    }
+                    needsRefresh = true;
+                }
+                if (dIdx >= 0) dots.splice(dIdx, 1);
                 el.remove();
             });
-            if (removed && slides.length) {
-                if (active >= slides.length) show(0);
-                else show(active);
-            }
+            if (needsRefresh && slides.length) show(active);
         });
 
         // Lance le cycle. show(active) au boot pour que les side-effects
@@ -16712,7 +16723,7 @@ async function sha256hex(str) {
             date:  '2026-05-20T13:00:00Z',
             type:  'feature',
             title: 'Spotlight: Settings slide + tab hints',
-            text:  'New Settings slide in the Spotlight (sign in / out, certify ownership, translate the site). Sign-in slide is now the first one signed-out visitors see. Sign In and My Profile tabs behave like every other tab again (no permanent blue tint) — the Sign In tab now turns cyan while the login modal is open, same feedback as the Settings gear button. NFT names, collection names and artist names are now protected from translation across the site.'
+            text:  'New Settings slide in the Spotlight (sign in / out, certify ownership, translate the site). Sign-in slide is now the first one signed-out visitors see. Sign In and My Profile tabs behave like every other tab again (no permanent blue tint) — the Sign In tab now turns cyan while the login modal is open, same feedback as the Settings gear button. The tab you are currently on stays cyan even when the Spotlight cycles to its corresponding slide, so you never lose the "I am here" cue. NFT names, collection names, artist names, profile usernames and chain names (Cronos, Cronos POS) are now protected from translation across the site.'
         },
         {
             date:  '2026-05-20T12:00:00Z',
@@ -24477,7 +24488,10 @@ window.initSnapshotPanel = function() {
         /* Pseudos / display names utilisateurs */
         'username','display-name','topnav-name',
         'home-chat-member-name','home-chat-mention-pop-name',
-        'snap-holder-name','profile-legend-name','sb-party-name',
+        'snap-holder-name','snap-holder-username','snapshot-username',
+        'login-modal-sug-username','profile-legend-name','sb-party-name',
+        /* Noms de chains (Cronos, Cronos POS — toujours en propre) */
+        'stats-col-chain-inline',
         /* Noms de NFTs (cartes, modals, preview, listes) */
         'cp-nft-name','dli-pack-name','dli-sample-name',
         'drop-card-name','drop-banner-overlay-name','home-fd-card-name',
