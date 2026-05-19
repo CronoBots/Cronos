@@ -6797,23 +6797,6 @@ function autosizePillToContent(pillEl, { maxWidth = 520 } = {}) {
     }
 }
 
-/**
- * Makes the dropdown menu wide enough for the longest option (and at least as wide as the pill).
- */
-function autosizePillDropdownToOptions(pillEl) {
-    if (!pillDropdownMenuEl || !pillEl) return;
-
-    const minW = Math.ceil(pillEl.getBoundingClientRect().width);
-    const buttons = Array.from(pillDropdownMenuEl.querySelectorAll('.pill-dropdown-option'));
-    const maxOpt = buttons.reduce((acc, btn) => Math.max(acc, btn.scrollWidth || 0), 0);
-
-    const left = Math.round(pillDropdownMenuEl.getBoundingClientRect().left);
-    const viewportMax = Math.max(240, window.innerWidth - left - 10);
-    const desired = Math.min(Math.max(minW, maxOpt + 24), viewportMax);
-
-    pillDropdownMenuEl.style.width = `${desired}px`;
-}
-
 function syncFilterPills() {
     const mappings = [
         ['creatorFilter', 'pillTextCreator'],
@@ -6942,121 +6925,6 @@ function setActiveStatsBreadcrumbFromAction(action) {
     applyCollectionTitleBreadcrumb();
 }
 
-
-/**
- * Renders select menus in a fixed dropdown positioned under the pill (never above).
- */
-let pillDropdownMenuEl = null;
-let pillDropdownCurrent = null;
-
-function ensurePillDropdownMenu() {
-    if (pillDropdownMenuEl) return pillDropdownMenuEl;
-    pillDropdownMenuEl = document.createElement('div');
-    pillDropdownMenuEl.className = 'pill-dropdown-menu';
-    pillDropdownMenuEl.style.display = 'none';
-    document.body.appendChild(pillDropdownMenuEl);
-    return pillDropdownMenuEl;
-}
-
-function closePillDropdown() {
-    if (!pillDropdownMenuEl) return;
-    pillDropdownMenuEl.style.display = 'none';
-    pillDropdownMenuEl.innerHTML = '';
-    pillDropdownCurrent = null;
-}
-
-function positionPillDropdown(pillEl) {
-    const rect = pillEl.getBoundingClientRect();
-    const top = Math.round(rect.bottom + 6);
-    const left = Math.round(rect.left);
-    const width = Math.round(rect.width);
-    const maxHeight = Math.max(80, Math.floor(window.innerHeight - top - 10));
-    pillDropdownMenuEl.style.top = `${top}px`;
-    pillDropdownMenuEl.style.left = `${left}px`;
-    pillDropdownMenuEl.style.width = `${width}px`;
-    pillDropdownMenuEl.style.maxHeight = `${maxHeight}px`;
-}
-
-function buildPillDropdownOptions(selectEl) {
-    pillDropdownMenuEl.innerHTML = '';
-    Array.from(selectEl.options || []).forEach((opt) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'pill-dropdown-option';
-        btn.textContent = opt.textContent || '';
-        btn.title = btn.textContent;
-        btn.setAttribute('role', 'option');
-        btn.setAttribute('aria-selected', opt.value === selectEl.value ? 'true' : 'false');
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            selectEl.value = opt.value;
-            selectEl.dispatchEvent(new Event('change', { bubbles: true }));
-            closePillDropdown();
-        });
-        pillDropdownMenuEl.appendChild(btn);
-    });
-}
-
-function openPillDropdown(pillEl, selectEl) {
-    ensurePillDropdownMenu();
-    if (pillDropdownCurrent?.selectEl === selectEl && pillDropdownMenuEl.style.display !== 'none') {
-        closePillDropdown();
-        return;
-    }
-
-    pillDropdownCurrent = { pillEl, selectEl };
-    buildPillDropdownOptions(selectEl);
-    positionPillDropdown(pillEl);
-
-    pillDropdownMenuEl.style.display = 'block';
-    autosizePillDropdownToOptions(pillEl);
-}
-
-function enhancePillSelect(selectId) {
-    const selectEl = document.getElementById(selectId);
-    const pillEl = document.querySelector(`.select-pill[data-pill-for="${selectId}"]`);
-    if (!selectEl || !pillEl) return;
-
-    pillEl.classList.add('select-pill--enhanced');
-    pillEl.setAttribute('role', 'button');
-    pillEl.tabIndex = 0;
-
-    selectEl.classList.add('pill-native-select');
-    selectEl.tabIndex = -1;
-    selectEl.setAttribute('aria-hidden', 'true');
-
-    const open = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        openPillDropdown(pillEl, selectEl);
-    };
-
-    pillEl.addEventListener('click', open);
-    pillEl.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-            open(e);
-        } else if (e.key === 'Escape') {
-            closePillDropdown();
-        }
-    });
-
-    const observer = new MutationObserver(() => {
-        if (pillDropdownCurrent?.selectEl === selectEl && pillDropdownMenuEl?.style.display !== 'none') {
-            buildPillDropdownOptions(selectEl);
-            positionPillDropdown(pillEl);
-        }
-        syncFilterPills();
-    });
-    observer.observe(selectEl, { childList: true, subtree: true });
-}
-
-
-function openPillFromStats(selectId) {
-    const selectEl = document.getElementById(selectId);
-    const pillEl = document.querySelector(`.select-pill[data-pill-for="${selectId}"]`);
-    if (!selectEl || !pillEl) return;
-    openPillDropdown(pillEl, selectEl);
-}
 
 function beginStatsPanelTransition() {
     const mainPanel = document.getElementById('appMain');
@@ -7338,26 +7206,6 @@ function setupStatsCardInteractions() {
 
 }
 
-
-function initPillDropdowns() {
-    ['creatorFilter', 'collectionFilter', 'chainFilter', 'curatedFilter'].forEach(enhancePillSelect);
-
-    document.addEventListener('click', (e) => {
-        if (!pillDropdownMenuEl || pillDropdownMenuEl.style.display === 'none') return;
-        const target = e.target;
-        const clickedInsideMenu = pillDropdownMenuEl.contains(target);
-        const clickedOnPill = pillDropdownCurrent?.pillEl?.contains(target);
-        if (!clickedInsideMenu && !clickedOnPill) closePillDropdown();
-    });
-
-    window.addEventListener('resize', () => {
-        if (pillDropdownCurrent?.pillEl && pillDropdownMenuEl?.style.display !== 'none') {
-            positionPillDropdown(pillDropdownCurrent.pillEl);
-        }
-    });
-
-    window.addEventListener('scroll', closePillDropdown, { passive: true });
-}
 
 function setCardSizeFromToggle(size) {
     const cardSize = document.getElementById('cardSize');
