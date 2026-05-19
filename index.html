@@ -572,6 +572,7 @@
               <span class="verified-badge" id="verifiedBadge" role="img" aria-label="Verified account" title="Verified account" style="display: none;"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M22.5 12.5l-2.4-2.7.3-3.6-3.5-.8-1.8-3.1L12 3.7 8.9 2.3 7.1 5.4l-3.5.8.3 3.6L1.5 12.5l2.4 2.7-.3 3.6 3.5.8 1.8 3.1L12 21.3l3.1 1.4 1.8-3.1 3.5-.8-.3-3.6 2.4-2.7zm-12 4.5L6 12.5l1.6-1.6 2.9 2.9 6-6L18.1 9.4l-7.6 7.6z" fill="currentColor"/></svg></span>
             </div>
             <p class="display-name" id="displayName"></p>
+            <div class="profile-bio" id="profileBio" style="display: none;"></div>
             <div class="social-container" id="socialContainer" style="display: none;">
               <p id="croLink" style="display: none;">
                 <a href="#" id="croUrl" rel="noopener noreferrer" target="_blank" title="Visit Crypto.com/NFT Profile">
@@ -594,7 +595,6 @@
                 </a>
               </p>
             </div>
-            <div class="profile-bio" id="profileBio" style="display: none;"></div>
           </div>
         </div>
       </div>
@@ -1293,7 +1293,7 @@
                 <span class="home-spotlight-index">07<span class="home-spotlight-index-sep">/</span><span class="home-spotlight-index-total">09</span></span>
               </div>
               <h3 class="home-spotlight-title">Support WTF</h3>
-              <p class="home-spotlight-desc">No ads, no trackers, no paywalls — CRONOS.WTF runs on caffeine, code and patrons. Hop on board, get your name on the homepage and help shape what we build next for the whole Cronos NFT scene.</p>
+              <p class="home-spotlight-desc">No ads, no trackers, no paywalls — CRONOS.WTF runs on caffeine, code and patrons. Every chart, alert and snapshot stays free thanks to a handful of collectors who keep the lights on. Hop on board.</p>
               <span class="home-spotlight-cta">Become a Patron <span class="home-spotlight-cta-arrow" aria-hidden="true">→</span></span>
             </div>
           </article>
@@ -4234,11 +4234,23 @@ function updateProfileUI(profileData, profileTotals = null) {
         return;
     }
 
-    username.textContent = profileData.username || 'Unknown';
-    currentUsername = profileData.username || '';
-    displayName.textContent = (profileData.displayName || '').toUpperCase();
-    displayName.style.display = profileData.displayName ? 'block' : 'none';
-    currentDisplayName = profileData.displayName || profileData.username || 'Unknown';
+    // Header refondu : la BIG title (#username, stylée comme un page-title
+    // d'onglet) montre le displayName en MAJUSCULES si dispo, sinon le
+    // username brut. Le sous-titre (#displayName, petit + cyan) montre le
+    // username avec un @ devant. Si pas de displayName, on cache le sous-
+    // titre pour éviter d'afficher la même valeur deux fois ("MATT" + "@matt").
+    const _rawUsername    = profileData.username || 'Unknown';
+    const _rawDisplayName = (profileData.displayName || '').trim();
+    currentUsername    = profileData.username || '';
+    currentDisplayName = _rawDisplayName || _rawUsername;
+    username.textContent = (_rawDisplayName || _rawUsername).toUpperCase();
+    if (_rawDisplayName) {
+        displayName.textContent = '@' + _rawUsername;
+        displayName.style.display = 'block';
+    } else {
+        displayName.textContent = '';
+        displayName.style.display = 'none';
+    }
 
     verifiedBadge.style.display = profileData.verified === true ? 'inline-flex' : 'none';
     profilePicture.src = profileData.avatar?.url || '';
@@ -16761,6 +16773,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-20T21:00:00Z',
+            type:  'improvement',
+            title: 'Profile header redesign + Support text',
+            text:  'Profile pages: display name now sits as the page title (uppercase, like every other tab), with @username below as the cyan subtitle. Avatar slides behind as a soft backdrop, bio and social links sit centered below. Support slide pitch rewritten.'
+        },
         {
             date:  '2026-05-20T20:00:00Z',
             type:  'improvement',

@@ -2268,30 +2268,13 @@ a:hover {
 /* =========================================================
    Profile header: smaller avatar + username
    ========================================================= */
-.profile-picture--round img{
-    width: 220px;
-    height: 128px;
-    border-width: 3px;
-}
-
-.profile-header-content--center .username{
-    font-size: 28px;
-}
-
+/* Anciennes tailles avatar/username surchargées : la refonte du header
+   (cf. .profile-header-content--center plus bas) place la photo en
+   backdrop et donne au titre le format page-title des autres tabs.
+   On garde uniquement la taille du verified-badge. */
 .profile-header-content--center .verified-badge{
     width: 18px;
     height: 18px;
-}
-
-@media (max-width: 520px) {
-    .profile-picture--round img{
-        width: 220px;
-        height: 112px;
-    }
-
-    .profile-header-content--center .username{
-        font-size: 24px;
-    }
 }
 
 /* =========================================================
@@ -2633,38 +2616,56 @@ button.select-pill--reset .select-pill-icon svg {
     height: 16px;
 }
 
-/* === Profile header: centered avatar + username below === */
+/* === Profile header refondu — page-title style ===
+   Layout : photo de profil placée DERRIÈRE (background) avec opacité
+   réduite, titre (displayName en MAJUSCULES) au premier plan stylé
+   comme les autres page-titles (drops/snapshot/stats), sous-titre
+   cyan (@username), puis bio + socials centrés horizontalement en
+   dessous. */
 .profile-header-content--center {
+    position: relative;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 10px;
     margin: 16px auto 10px;
-    padding: 0 16px;
+    padding: 24px 16px;
     width: min(900px, 100%);
 }
 
-.profile-picture--round {
-    display: flex;
-    justify-content: center;
+/* Photo de profil = backdrop centré, derrière le texte, opacité basse
+   pour ne pas gêner la lecture du titre. blur léger pour adoucir et
+   éviter qu'un visage net en arrière-plan ne distraie. */
+.profile-header-content--center .profile-picture--round {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: clamp(240px, 38%, 360px);
+    height: clamp(240px, 38%, 360px);
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.18;
+    filter: blur(3px);
+}
+
+.profile-header-content--center .profile-picture--round img {
     width: 100%;
-}
-
-.profile-picture--round img {
-    width: 220px;
-    height: 132px;
+    height: 100%;
     border-radius: 9999px;
-    border: 2px solid rgba(255, 255, 255, 0.22);
+    border: none;
+    box-shadow: none;
     object-fit: cover;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
 }
 
+/* Bloc texte au-dessus du backdrop */
 .profile-info--center,
 .profile-header-content--center .profile-info {
+    position: relative;
+    z-index: 1;
     width: 100%;
     max-width: 900px;
     height: auto;
-    position: static;
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -2679,25 +2680,45 @@ button.select-pill--reset .select-pill-icon svg {
     width: 100%;
 }
 
+/* Title — MÊME signature que .drops-page-title / .snapshot-page-title :
+   Geomanist-Bold, gros, MAJUSCULES, blanc, letter-spacing 0.06em. */
 .profile-header-content--center .username {
-    font-size: 34px;
-    line-height: 1.1;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: clamp(32px, 4vw, 56px);
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     margin: 0;
+    line-height: 1;
 }
 
+/* Subtitle — MÊME signature que .drops-page-sub : 12px cyan MAJUSCULES. */
 .profile-header-content--center .display-name {
     position: static;
-    margin: 0;
-    font-size: 16px;
+    font-family: 'Geomanist-Bold', sans-serif;
+    font-size: 12px;
+    color: #00B3FF;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 8px 0 0;
     line-height: 1.2;
 }
 
+/* Bio sous le titre, centrée, largeur lisible */
+.profile-header-content--center .profile-bio {
+    margin: 14px 0 0;
+    max-width: 600px;
+    text-align: center;
+}
+
+/* Socials sous la bio */
 .profile-header-content--center #socialContainer {
     display: flex;
     gap: 10px;
     justify-content: center;
     align-items: center;
-    margin-top: 4px;
+    margin-top: 12px;
 }
 
 .profile-header-content--center .social-icon {
@@ -2707,13 +2728,9 @@ button.select-pill--reset .select-pill-icon svg {
 }
 
 @media (max-width: 520px) {
-    .profile-picture--round img {
-        width: 220px;
-        height: 116px;
-    }
-
-    .profile-header-content--center .username {
-        font-size: 34px;
+    .profile-header-content--center .profile-picture--round {
+        width: clamp(200px, 60%, 280px);
+        height: clamp(200px, 60%, 280px);
     }
 }
 
@@ -2795,29 +2812,19 @@ body {
 
 
 /* =========================================================
-   Profile header (below navbar): smaller avatar/username/social
+   Profile header (below navbar) — la taille du titre, du sous-titre
+   et de l'avatar est gouvernée par .profile-header-content--center
+   (cf. plus haut) qui utilise le style page-title des autres onglets.
+   Pas d'override de font-size ici — sinon l'effet "titre comme les
+   autres tabs" est perdu.
    ========================================================= */
 .profile-header--page .profile-header-content--center {
     margin-top: 10px;
 }
 
-.profile-header--page .profile-picture--round img {
-    width: 220px;
-    height: 88px;
-    border-width: 2px;
-}
-
-.profile-header--page .username {
-    font-size: 22px;
-}
-
 .profile-header--page .verified-badge {
     width: 16px;
     height: 16px;
-}
-
-.profile-header--page .display-name {
-    font-size: 14px;
 }
 
 .profile-header--page .social-icon {
@@ -2827,19 +2834,6 @@ body {
 }
 
 @media (max-width: 520px) {
-    .profile-header--page .profile-picture--round img {
-        width: 220px;
-        height: 76px;
-    }
-
-    .profile-header--page .username {
-        font-size: 20px;
-    }
-
-    .profile-header--page .display-name {
-        font-size: 13px;
-    }
-
     .profile-header--page .social-icon {
         width: 18px !important;
         height: 18px !important;
