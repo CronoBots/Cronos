@@ -14084,10 +14084,12 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
         try {
             const res = await fetch(graphqlEndpoint, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ operationName: 'GetColLogo', variables: { id, cacheId: 'GetColLogo-' + id },
+                body: JSON.stringify({ operationName: 'GetCollection', variables: { id, cacheId: 'colLogo-' + id },
                     // Étend pour récupérer aussi creator → permet de grouper
-                    // les collections par artiste dans le dropdown.
-                    query: 'query GetColLogo($cacheId:ID,$id:ID!){public(cacheId:$cacheId){collection(id:$id){name logo{url} creator{uuid id displayName username verified}}}}' })
+                    // les collections par artiste dans le dropdown. Renommé
+                    // de GetColLogo → GetCollection (operationName canonique
+                    // Crypto.com) pour bénéficier du edge cache.
+                    query: 'query GetCollection($cacheId:ID,$id:ID!){public(cacheId:$cacheId){collection(id:$id){name logo{url} creator{uuid id displayName username verified}}}}' })
             });
             const j = await res.json();
             return j?.data?.public?.collection || null;
@@ -16714,8 +16716,8 @@ async function sha256hex(str) {
         try {
             const res = await fetch(graphqlEndpoint, {
                 method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({operationName:'GetColLogo', variables:{id:'5855701d43bc9a7fea90bd254ebd4b6e', cacheId:'GetColLogo-5855701d43bc9a7fea90bd254ebd4b6e-logo'},
-                    query:'query GetColLogo($cacheId:ID,$id:ID!){public(cacheId:$cacheId){collection(id:$id){logo{url}}}}'})
+                body: JSON.stringify({operationName:'GetCollection', variables:{id:'5855701d43bc9a7fea90bd254ebd4b6e', cacheId:'colLogo-darkLions'},
+                    query:'query GetCollection($cacheId:ID,$id:ID!){public(cacheId:$cacheId){collection(id:$id){logo{url}}}}'})
             });
             const j = await res.json();
             const url = j?.data?.public?.collection?.logo?.url;
@@ -18043,7 +18045,7 @@ async function sha256hex(str) {
     const _resolvingCollectionNames = new Set();
     async function _resolveCollectionNames(ids) {
         if (!Array.isArray(ids) || !ids.length) return;
-        const Q = `query GetCollectionName($cacheId:ID,$id:ID!){public(cacheId:$cacheId){collection(id:$id){id name}}}`;
+        const Q = `query GetCollection($cacheId:ID,$id:ID!){public(cacheId:$cacheId){collection(id:$id){id name}}}`;
         await Promise.all(ids.map(async id => {
             if (_resolvingCollectionNames.has(id)) return;
             _resolvingCollectionNames.add(id);
@@ -18053,9 +18055,9 @@ async function sha256hex(str) {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        operationName: 'GetCollectionName',
+                        operationName: 'GetCollection',
                         query: Q,
-                        variables: { id, cacheId: 'GetCollectionName-' + id }
+                        variables: { id, cacheId: 'collName-' + id }
                     })
                 });
                 const json = await res.json();
@@ -21513,8 +21515,11 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 // silent partial-data responses from the API (v3.0 bug).
 
 // Collection header (banner, name, creator, floor, volume).
-const Q_COLLECTION_INFO = `query SnapCollectionInfo($collectionId:ID!){
-  public{collection(id:$collectionId){
+// Renommé en `GetCollection` (operationName canonique Crypto.com) +
+// cacheId pour bénéficier du edge cache, au lieu de notre `SnapCollectionInfo`
+// custom qui ratait toujours le cache.
+const Q_COLLECTION_INFO = `query GetCollection($collectionId:ID!,$cacheId:ID){
+  public(cacheId:$cacheId){collection(id:$collectionId){
     id name verified
     logo{url} banner{url}
     creator{id displayName username verified avatar{url}}
@@ -21523,16 +21528,18 @@ const Q_COLLECTION_INFO = `query SnapCollectionInfo($collectionId:ID!){
   }}}`;
 
 // Live metrics (totalSupply for upfront page-count parallelization).
-const Q_COLLECTION_METRIC = `query SnapCollectionMetric($collectionId:ID!){
-  public{collectionMetric(id:$collectionId){
+// Renommé `SnapCollectionMetric` → `GetCollectionMetric` (canonique).
+const Q_COLLECTION_METRIC = `query GetCollectionMetric($collectionId:ID!,$cacheId:ID){
+  public(cacheId:$cacheId){collectionMetric(id:$collectionId){
     totalSupply totalSalesCount owners
     minSaleListingPriceDecimal minAuctionListingPriceDecimal
   }}}`;
 
 // All assets in a collection (paginated). Owner is NOT on this query — we get
 // it from `editions(assetId:)` in phase C.
-const Q_ALL_ASSETS = `query SnapAllAssets($collectionId:ID,$first:Int!,$skip:Int!){
-  public{assets(collectionId:$collectionId,first:$first,skip:$skip){
+// Renommé `SnapAllAssets` → `GetCollectionAssets` (canonique).
+const Q_ALL_ASSETS = `query GetCollectionAssets($collectionId:ID,$first:Int!,$skip:Int!,$cacheId:ID){
+  public(cacheId:$cacheId){assets(collectionId:$collectionId,first:$first,skip:$skip){
     id name copies copiesInCirculation
     offerableEditionId
     defaultListingV2{ editionId salePriceDecimalUSD }
@@ -21547,8 +21554,9 @@ const Q_ALL_ASSETS = `query SnapAllAssets($collectionId:ID,$first:Int!,$skip:Int
 // only" (verified empirically with v3.5 telemetry on Cryptonauts Vol 2).
 // We MUST pass an explicit list of transfer-like natures (TRANSFER_NATURES
 // constant below) to actually receive ownership-change events.
-const Q_HISTORY = `query SnapHistory($collectionId:ID!,$first:Int!,$after:String,$naturesIn:[String!]){
-  public{collection(id:$collectionId){id eventHistory(first:$first,after:$after,naturesIn:$naturesIn){
+// Renommé `SnapHistory` → `getCollectionEventHistory` (canonique).
+const Q_HISTORY = `query getCollectionEventHistory($collectionId:ID!,$first:Int!,$after:String,$naturesIn:[String!],$cacheId:ID){
+  public(cacheId:$cacheId){collection(id:$collectionId){id eventHistory(first:$first,after:$after,naturesIn:$naturesIn){
     edges{node{nature createdAt
       asset{id}
       edition{index}
@@ -21563,8 +21571,9 @@ const Q_HISTORY = `query SnapHistory($collectionId:ID!,$first:Int!,$after:String
 // holders never transferred). Built as aliased batched queries to amortize
 // the per-alias cost overhead (~17/alias) — kept conservative to stay under
 // the API's 250 cost limit.
-const Q_EDITIONS_BY_ASSET = `query SnapEditionsByAsset($assetId:ID!,$first:Int!){
-  public{editions(assetId:$assetId,first:$first,skip:0,isDropLast:false){
+// Renommé `SnapEditionsByAsset` → `getEditionsByAssetId` (canonique).
+const Q_EDITIONS_BY_ASSET = `query getEditionsByAssetId($assetId:ID!,$first:Int!,$cacheId:ID){
+  public(cacheId:$cacheId){editions(assetId:$assetId,first:$first,skip:0,isDropLast:false){
     totalCount
     editions{
       id index
@@ -21578,8 +21587,9 @@ const Q_EDITIONS_BY_ASSET = `query SnapEditionsByAsset($assetId:ID!,$first:Int!)
 // `latestPurchasedEdition.id` already fetched in Phase B as an entry point,
 // then call editionEvents(editionId:) to get the full event history including
 // the `withdrawn` event with its `user` field — the off-platform owner.
-const Q_EDITION_EVENTS = `query SnapEditionEvents($editionId:ID!){
-  public{editionEvents(editionId:$editionId){
+// Renommé `SnapEditionEvents` → `EditionEvents` (canonique).
+const Q_EDITION_EVENTS = `query EditionEvents($editionId:ID!,$cacheId:ID){
+  public(cacheId:$cacheId){editionEvents(editionId:$editionId){
     nature createdAt
     toUser{uuid username displayName verified isCreator avatar{url}}
     user{uuid username displayName verified isCreator avatar{url}}
@@ -22202,8 +22212,8 @@ async function runSnapshot(collectionId) {
     logPhase('PHASE A — Bootstrap');
     setTxt('snapshotProgressText', 'Phase A — Collection info');
     const [infoData, metricData] = await Promise.all([
-      gql('SnapCollectionInfo',   { collectionId }, Q_COLLECTION_INFO).catch(e => ({ __error: e.message })),
-      gql('SnapCollectionMetric', { collectionId }, Q_COLLECTION_METRIC).catch(e => ({ __error: e.message })),
+      gql('GetCollection',       { collectionId, cacheId: 'snap-coll-info-' + collectionId }, Q_COLLECTION_INFO).catch(e => ({ __error: e.message })),
+      gql('GetCollectionMetric', { collectionId, cacheId: 'snap-coll-metric-' + collectionId }, Q_COLLECTION_METRIC).catch(e => ({ __error: e.message })),
     ]);
     if (infoData?.__error) logStep(`⚠ Collection info failed: ${infoData.__error}`, 'warn');
     if (metricData?.__error) logStep(`⚠ Collection metric failed: ${metricData.__error}`, 'warn');
@@ -22251,8 +22261,8 @@ async function runSnapshot(collectionId) {
       const tasks = [];
       for (let i = 0; i < pageCount; i++) {
         const skip = i * SNAP_CONF.ASSET_PAGE_SIZE;
-        tasks.push(() => gql('SnapAllAssets',
-          { collectionId, first: SNAP_CONF.ASSET_PAGE_SIZE, skip },
+        tasks.push(() => gql('GetCollectionAssets',
+          { collectionId, first: SNAP_CONF.ASSET_PAGE_SIZE, skip, cacheId: 'snap-assets-' + collectionId + '-' + skip },
           Q_ALL_ASSETS));
       }
       const pages = await runConcurrent(tasks, SNAP_CONF.ASSET_PAGE_CONCURRENCY,
@@ -22288,8 +22298,8 @@ async function runSnapshot(collectionId) {
         const probeSkip = allAssets.length;  // start from where we stopped
         logStep(`Probing extra page at skip=${probeSkip} (got ${allAssets.length} < hint ${totalSupplyHint})…`, 'detail');
         try {
-          const extra = await gql('SnapAllAssets',
-            { collectionId, first: SNAP_CONF.ASSET_PAGE_SIZE, skip: probeSkip },
+          const extra = await gql('GetCollectionAssets',
+            { collectionId, first: SNAP_CONF.ASSET_PAGE_SIZE, skip: probeSkip, cacheId: 'snap-assets-' + collectionId + '-' + probeSkip },
             Q_ALL_ASSETS);
           const batch = extra?.public?.assets || [];
           batch.forEach(a => allAssets.push(a));
@@ -22318,8 +22328,8 @@ async function runSnapshot(collectionId) {
         const wave = [];
         for (let k = 0; k < SNAP_CONF.ASSET_PAGE_CONCURRENCY; k++) {
           const s = skip + k * SNAP_CONF.ASSET_PAGE_SIZE;
-          wave.push(() => gql('SnapAllAssets',
-            { collectionId, first: SNAP_CONF.ASSET_PAGE_SIZE, skip: s },
+          wave.push(() => gql('GetCollectionAssets',
+            { collectionId, first: SNAP_CONF.ASSET_PAGE_SIZE, skip: s, cacheId: 'snap-assets-' + collectionId + '-' + s },
             Q_ALL_ASSETS));
         }
         const waveResults = await Promise.all(wave.map(t => t().catch(e => ({ __error: e.message }))));
@@ -22644,7 +22654,7 @@ async function runSnapshot(collectionId) {
           }
           secondaryAttempted++;
           try {
-            const d = await gql('SnapEditionEvents', { editionId: edId }, Q_EDITION_EVENTS);
+            const d = await gql('EditionEvents', { editionId: edId, cacheId: 'snap-ee-' + edId }, Q_EDITION_EVENTS);
             const events = d?.public?.editionEvents || [];
 
             // Walk newest-first to find the current owner.
@@ -22889,7 +22899,7 @@ async function runSnapshot(collectionId) {
             continue;
           }
           try {
-            const d = await gql('SnapEditionEvents', { editionId: edId }, Q_EDITION_EVENTS);
+            const d = await gql('EditionEvents', { editionId: edId, cacheId: 'snap-ee-' + edId }, Q_EDITION_EVENTS);
             const events = d?.public?.editionEvents || [];
 
             // Walk events (newest-first) to find the most recent event where
@@ -23112,8 +23122,8 @@ async function walkOwnersAndDates(collectionId, supplyHint, onProgress) {
     pages++;
     let data;
     try {
-      data = await gql('SnapHistory',
-        { collectionId, first: SNAP_CONF.HISTORY_PAGE_SIZE, after: cursor || null, naturesIn: TRANSFER_NATURES },
+      data = await gql('getCollectionEventHistory',
+        { collectionId, first: SNAP_CONF.HISTORY_PAGE_SIZE, after: cursor || null, naturesIn: TRANSFER_NATURES, cacheId: 'snap-hist-' + collectionId + '-' + (cursor || 'head') },
         Q_HISTORY);
       consecutiveFailures = 0;
     } catch (e) {
@@ -23727,9 +23737,9 @@ window._snapshotRun = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            operationName: 'GetCollectionName',
-            query: 'query GetCollectionName($cacheId:ID,$id:ID!){public(cacheId:$cacheId){collection(id:$id){name}}}',
-            variables: { id, cacheId: 'GetCollectionName-' + id + '-snap' }
+            operationName: 'GetCollection',
+            query: 'query GetCollection($cacheId:ID,$id:ID!){public(cacheId:$cacheId){collection(id:$id){name}}}',
+            variables: { id, cacheId: 'collName-snap-' + id }
           })
         })
         .then(r => r.json())
@@ -23754,8 +23764,8 @@ window._snapshotTestBatch = async function() {
   if (resultEl) { resultEl.textContent = 'Testing API connectivity…'; showEl('snapshotTestResult'); }
   try {
     // Fire one Q_HISTORY page to verify the API responds and the query is well-formed
-    const data = await gql('SnapHistory',
-      { collectionId, first: 5, after: null, naturesIn: TRANSFER_NATURES },
+    const data = await gql('getCollectionEventHistory',
+      { collectionId, first: 5, after: null, naturesIn: TRANSFER_NATURES, cacheId: 'snap-hist-test-' + collectionId },
       Q_HISTORY);
     const edges = data?.public?.collection?.eventHistory?.edges || [];
     if (resultEl) {
