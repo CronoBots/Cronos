@@ -19114,13 +19114,24 @@ a.snap-holder-username:hover {
      - max-height 360px : sur écrans larges (carde 1200px+), évite
        que le hero prenne trop de hauteur et écrase le content. */
 .home-fc-spotlight .home-feat-v3-hero {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
+    /* Hero désormais en flow (relative) — il occupe le haut de la
+       card avec son aspect-ratio 3/1, puis le content flow JUSTE
+       en dessous (plus de overlay). overflow:visible pour laisser
+       le portrait dépasser en bas (logo à cheval 50/50). */
+    position: relative;
+    width: 100%;
     aspect-ratio: 3 / 1;
-    overflow: hidden;
+    overflow: visible;
+    flex-shrink: 0;
     z-index: 0;
+}
+/* Clip wrapper : isole l'image + le bg flou + le tint dans les
+   bounds de la bannière (le bg en scale(1.4) déborderait sinon
+   avec overflow:visible sur le hero). */
+.home-fc-spotlight .home-feat-v3-hero-clip {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
 }
 .home-fc-spotlight .home-feat-v3-hero-img {
     /* Hero zone et image partagent le ratio 3/1 → `cover` remplit
@@ -19147,15 +19158,20 @@ a.snap-holder-username:hover {
 /* Identity = nom + verified + creator, centré sous le portrait dans
    le content (flux normal). Miroir de .home-fa-identity pour Featured
    Artists. Plus d'overlay absolute sur la bannière. */
+/* Identity = nom + creator, centrés horizontalement ET verticalement
+   DANS la bannière (overlay absolu sur le hero). */
 .home-fc-spotlight .home-feat-v3-identity {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 4px;
-    width: 100%;
-    max-width: 640px;
-    margin: 0 auto;
+    padding: 0 16px;
     text-align: center;
+    pointer-events: none;
 }
 /* Content wrapper : contient TOUT (eyebrow, portrait, identity, stats,
    desc, showcase, browse) en flex column. Comme le hero est en
@@ -19163,6 +19179,9 @@ a.snap-holder-username:hover {
    de la card et flow par-dessus le hero — l'identity (eyebrow + logo +
    nom + creator) apparait donc visuellement SUR la bannière, miroir
    exact de .home-fa-content. */
+/* Content wrapper : démarre JUSTE en dessous de la bannière (le hero
+   est maintenant en flow, plus en absolute). padding-top élargi pour
+   laisser la place au portrait qui dépasse de 44px sous la bannière. */
 .home-fc-spotlight .home-feat-v3-content {
     position: relative;
     z-index: 1;
@@ -19170,36 +19189,35 @@ a.snap-holder-username:hover {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 14px 16px 16px;
+    padding: 56px 16px 16px;
     align-items: stretch;
     min-width: 0;
 }
 
-/* Portrait wrapper — sert juste à isoler le logo pour le centrer
-   horizontalement, miroir de .home-fa-portrait pour Featured Artists. */
+/* Portrait : carré, border-radius identique au cadre de la card
+   (16px), positionné en bas-gauche de la bannière à cheval 50/50
+   sur le bord bas du hero. */
 .home-fc-spotlight .home-feat-v3-portrait {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 2px;
+    position: absolute;
+    left: 20px;
+    bottom: -44px;
+    width: 88px;
+    height: 88px;
+    z-index: 3;
+    margin: 0;
     flex-shrink: 0;
 }
-/* Logo collection : maintenant un portrait CIRCULAIRE centré (joue le
-   rôle de l'avatar artiste), halo blanc doux — miroir exact de
-   .home-fa-avatar. Plus d'absolute / chevauchement de bannière :
-   il vit dans le content comme premier élément visuel sous l'eyebrow.
-   border-radius: 50% pour le rond complet, halo box-shadow blanc. */
 .home-fc-spotlight .home-feat-v3-logo {
-    width: 96px;
-    height: 96px;
-    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
     object-fit: cover;
     border: 1.5px solid rgba(255, 255, 255, 0.9);
     box-shadow: 0 0 16px rgba(255, 255, 255, 0.45),
                 0 0 30px rgba(255, 255, 255, 0.18);
     background: rgba(11, 20, 38, 0.9);
     display: block;
-    margin: 4px 0 4px;
+    margin: 0;
     transition: box-shadow 0.3s ease;
 }
 /* Override le hover générique .home-feat-v3:hover .home-feat-v3-logo
@@ -19329,15 +19347,23 @@ a.snap-holder-username:hover {
    (qui est en position:absolute background). Miroir exact de
    .home-fa-eyebrow. */
 .home-fc-spotlight .home-feat-v3-eyebrow {
+    /* Overlay sur la bannière, en haut. On garde l'alignement
+       space-between (label gauche, numéro droite) avec un padding
+       latéral équivalent à celui du portrait pour ne pas chevaucher
+       avec ce dernier. */
+    position: absolute;
+    top: 10px;
+    left: 16px;
+    right: 16px;
+    z-index: 2;
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    padding: 0 0 6px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+    padding: 0;
+    border-bottom: none;
     margin: 0;
-    min-height: 22px;
-    width: 100%;
-    flex-shrink: 0;
+    min-height: 0;
+    pointer-events: none;
 }
 /* Text-shadow doux sur label/num/total : assure la lisibilité
    sur bannières claires sans halo dur. */
@@ -19666,33 +19692,33 @@ a.snap-holder-username:hover {
        écrans. */
     /* Pas d'override hero ici — le min-height: 220px global du hero
        garantit déjà une zone bannière suffisante sur petit écran. */
-    .home-fc-spotlight .home-feat-v3-content { padding: 12px 12px 14px; gap: 10px; }
-    .home-fc-spotlight .home-feat-v3-portrait { margin-top: 0; }
-    /* Logo collection mobile = MÊME taille que .home-fa-avatar (96px).
-       L'utilisateur veut un alignement strict FC ↔ FA sur les tailles
-       photo de profil. PR précédente avait réduit à 78px en mobile —
-       restauré à 96px. */
-    .home-fc-spotlight .home-feat-v3-logo {
-        width: 96px;
-        height: 96px;
-        border-radius: 50%;
-        margin: 2px 0 2px;
+    /* padding-top mobile = 48px pour clear le portrait (76px → 38px
+       de débord) + un peu d'air. */
+    .home-fc-spotlight .home-feat-v3-content { padding: 48px 12px 14px; gap: 10px; }
+    /* Portrait carré 76×76 sur mobile (au lieu de 88×88) — moins
+       écrasant sur petite card. Débord = 38px en dessous du hero. */
+    .home-fc-spotlight .home-feat-v3-portrait {
+        left: 14px;
+        bottom: -38px;
+        width: 76px;
+        height: 76px;
     }
-    /* Name : passe à clamp(20, 5vw, 24) sur mobile pour plus de
-       présence en tant que titre principal. À 360px viewport,
-       5vw = 18 → clamp à 20px. À 720px (limite media query),
-       5vw = 36 → clamp à 24px. */
-    .home-fc-spotlight .home-feat-v3-name { font-size: clamp(20px, 5vw, 24px); }
+    .home-fc-spotlight .home-feat-v3-logo {
+        width: 100%;
+        height: 100%;
+        border-radius: 14px;
+        margin: 0;
+    }
+    .home-fc-spotlight .home-feat-v3-name { font-size: clamp(18px, 4.5vw, 22px); }
     .home-fc-spotlight .home-feat-v3-creator { gap: 6px; font-size: 10.5px; }
     .home-fc-spotlight .home-feat-v3-creator-avatar { width: 22px; height: 22px; }
-    /* Eyebrow mobile : padding-right 6px (au lieu de 0) pour que
-       "01 / 04" ne touche pas le bord droit. font-size remonté à
-       10/13/10.5 pour plus de présence vs la précédente version
-       (9/12/10) qui paraissait maigre. */
     .home-fc-spotlight .home-feat-v3-eyebrow {
-        padding: 0 6px 5px 6px;
+        top: 8px;
+        left: 12px;
+        right: 12px;
+        padding: 0;
         margin: 0;
-        min-height: 20px;
+        min-height: 0;
     }
     .home-fc-spotlight .home-feat-v3-eyebrow-label { font-size: 10px; letter-spacing: 0.18em; }
     .home-fc-spotlight .home-feat-v3-eyebrow-num   { font-size: 13px; }
@@ -20005,9 +20031,9 @@ a.snap-holder-username:hover {
    slides. Hover sur la card → rotation +90° (clin d'œil au pattern
    précédent), conservé pour ne pas perdre la signature visuelle. */
 .home-fc-spotlight .home-feat-v3-cta-portrait {
-    width: 96px;
-    height: 96px;
-    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
     border: 1.5px solid rgba(255, 255, 255, 0.9);
     box-shadow: 0 0 16px rgba(255, 255, 255, 0.45),
                 0 0 30px rgba(255, 255, 255, 0.18);
@@ -20042,7 +20068,7 @@ a.snap-holder-username:hover {
 .home-fc-spotlight .home-feat-v3-cta-desc {
     -webkit-line-clamp: 4;
     max-width: 480px;
-    margin: 4px auto 0;
+    margin: auto;
 }
 
 .home-feat-v3-cta-links {
