@@ -8825,14 +8825,15 @@ body.is-profile-loading #profileLoadingOverlay * {
         contain: size;
     }
     .home-two-col--main > .home-section--featured .home-fc-spotlight {
-        flex: 1 1 auto;
-        /* min-height 680px : floor commun à toutes les collections en
-           desktop pour que la card Featured rende à la même hauteur
-           quelle que soit la longueur de la description. Le banner
-           (aspect 3/1) + identity + stats + showcase + browse + paddings
-           tiennent confortablement dans 680, et la desc (flex: 1)
-           remplit l'espace restant en restant centrée verticalement. */
-        min-height: 680px;
+        /* height EXPLICITE (pas juste min-height) : sans hauteur fixe
+           sur le parent, le `height: 100%` du `.home-feat-v3` enfant
+           se résout en `auto` (= content size), et il n'y a alors
+           PAS de free space en flex column → le flex:1 de la desc
+           ne peut pas absorber et stats/showcase remontent sous
+           l'identity. Avec une hauteur fixe ici, .home-feat-v3 a
+           bien 680px à distribuer entre ses enfants. */
+        flex: none;
+        height: 680px;
     }
     .home-two-col--main > .home-section--featured .home-fc-spotlight .home-feat-v3 {
         height: 100%;
@@ -19153,18 +19154,19 @@ a.snap-holder-username:hover {
        qu'elle reste subordonnée à l'identity centré. */
     filter: blur(1.5px) brightness(0.68) saturate(1.1);
 }
-/* Tint qui fade le hero vers le bas pour garantir la lisibilité du
-   nom de collection + creator qui apparaissent maintenant SUR la
-   bannière (bas du hero), miroir exact de .home-fa-hero-tint. Top
-   transparent (l'image reste claire pour l'eyebrow), opaque sombre
-   en bas (transition propre vers le content). */
+/* Tint très léger qui fade le hero vers le bas pour garantir la
+   lisibilité du nom de collection + creator (text-shadow déjà fort
+   sur le nom). Beaucoup plus discret qu'avant pour que la bannière
+   1500×500 soit affichée presque entièrement visible — l'ancien
+   tint 92→100% opaque au bas masquait la moitié inférieure de
+   l'image. */
 .home-fc-spotlight .home-feat-v3-hero-tint {
     background: linear-gradient(
         180deg,
-        rgba(8, 14, 28, 0.10) 0%,
-        rgba(8, 14, 28, 0.45) 55%,
-        rgba(8, 14, 28, 0.92) 95%,
-        rgba(8, 14, 28, 1.00) 100%);
+        rgba(8, 14, 28, 0.00) 0%,
+        rgba(8, 14, 28, 0.05) 55%,
+        rgba(8, 14, 28, 0.30) 95%,
+        rgba(8, 14, 28, 0.45) 100%);
 }
 /* (Ancien .home-feat-v3-hero-wrap retiré — le logo n'est plus en
     overlap absolute, il vit maintenant comme portrait centré dans
