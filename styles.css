@@ -8825,15 +8825,8 @@ body.is-profile-loading #profileLoadingOverlay * {
         contain: size;
     }
     .home-two-col--main > .home-section--featured .home-fc-spotlight {
-        /* height EXPLICITE (pas juste min-height) : sans hauteur fixe
-           sur le parent, le `height: 100%` du `.home-feat-v3` enfant
-           se résout en `auto` (= content size), et il n'y a alors
-           PAS de free space en flex column → le flex:1 de la desc
-           ne peut pas absorber et stats/showcase remontent sous
-           l'identity. Avec une hauteur fixe ici, .home-feat-v3 a
-           bien 680px à distribuer entre ses enfants. */
-        flex: none;
-        height: 680px;
+        flex: 1 1 auto;
+        min-height: 0;
     }
     .home-two-col--main > .home-section--featured .home-fc-spotlight .home-feat-v3 {
         height: 100%;
@@ -19127,42 +19120,45 @@ a.snap-holder-username:hover {
     right: 0;
     aspect-ratio: 3 / 1;
     min-height: 220px;
-    /* max-height supprimée : la bannière garde son ratio 3:1 natif
-       à toutes les largeurs (avant cap à 360px qui rendait le box
-       plus large que 3:1 sur grand écran → image source écrasée
-       avec bandes ou crop). */
+    max-height: 360px;
     overflow: hidden;
     z-index: 0;
+    /* Pas de border-bottom : le tint fade vers le dark en bas du hero
+       fait office de transition propre vers le content (miroir
+       Featured Artists). Avec une border, on aurait eu un trait
+       visible au milieu de la card quand le hero est plus grand que
+       la zone identity. */
 }
 .home-fc-spotlight .home-feat-v3-hero-img {
-    /* cover : l'image remplit la box dans les 2 axes. Quand le
-       hero a un aspect ≠ 3:1 (cas où min-height 220 force un box
-       plus carré qu'attendu sur cartes étroites), `cover` garantit
-       que TOUTE LA HAUTEUR du visuel est exploitée et que les
-       éventuels débords sont rognés sur les côtés (acceptable
-       selon la demande user — pas grave si on perd les bords
-       gauche/droite). Quand l'aspect du box == 3:1 (cas standard
-       PC), cover == contain, l'image entière s'affiche. */
-    background-size: cover;
+    /* contain : la bannière est affichée ENTIÈRE dans la zone hero
+       (pas de crop latéral ni vertical). Sur mobile où le hero
+       devient ~320×220 mais la bannière source fait 1500×500 (3:1),
+       cover croppait les bords gauche/droite — l'utilisateur voyait
+       en bordure des wordmarks tronqués ("FT COLLE", "MU"). Avec
+       contain, l'image entière s'affiche centrée, et les bandes
+       restantes (haut/bas si bannière plus large que hero ratio,
+       gauche/droite si plus haute) sont remplies par le hero-bg
+       flou qui vit derrière (z-index inférieur). */
+    background-size: contain;
     background-repeat: no-repeat;
     background-position: center center;
-    /* Blur léger pour que l'image reste subordonnée à l'identity
-       au-dessus. */
+    /* Blur plus léger maintenant que l'image est entière (visible
+       de haut en bas). On a juste besoin d'un voile doux pour
+       qu'elle reste subordonnée à l'identity centré. */
     filter: blur(1.5px) brightness(0.68) saturate(1.1);
 }
-/* Tint très léger qui fade le hero vers le bas pour garantir la
-   lisibilité du nom de collection + creator (text-shadow déjà fort
-   sur le nom). Beaucoup plus discret qu'avant pour que la bannière
-   1500×500 soit affichée presque entièrement visible — l'ancien
-   tint 92→100% opaque au bas masquait la moitié inférieure de
-   l'image. */
+/* Tint qui fade le hero vers le bas pour garantir la lisibilité du
+   nom de collection + creator qui apparaissent maintenant SUR la
+   bannière (bas du hero), miroir exact de .home-fa-hero-tint. Top
+   transparent (l'image reste claire pour l'eyebrow), opaque sombre
+   en bas (transition propre vers le content). */
 .home-fc-spotlight .home-feat-v3-hero-tint {
     background: linear-gradient(
         180deg,
-        rgba(8, 14, 28, 0.00) 0%,
-        rgba(8, 14, 28, 0.05) 55%,
-        rgba(8, 14, 28, 0.30) 95%,
-        rgba(8, 14, 28, 0.45) 100%);
+        rgba(8, 14, 28, 0.10) 0%,
+        rgba(8, 14, 28, 0.45) 55%,
+        rgba(8, 14, 28, 0.92) 95%,
+        rgba(8, 14, 28, 1.00) 100%);
 }
 /* (Ancien .home-feat-v3-hero-wrap retiré — le logo n'est plus en
     overlap absolute, il vit maintenant comme portrait centré dans
@@ -19453,10 +19449,9 @@ a.snap-holder-username:hover {
 }
 
 /* Description : sur PC on affiche la description entière (pas de
-   line-clamp ni de bouton Read more). Texte centré verticalement
-   dans l'espace libre entre le creator et le cadre des stats.
-   Sur mobile (cf. media query <= 720px) on remet un line-clamp 3
-   lignes pour borner la hauteur sur petit écran. */
+   line-clamp ni de bouton Read more). Sur mobile (cf. media query
+   <= 720px) on remet un line-clamp 3 lignes pour borner la hauteur
+   sur petit écran. */
 .home-fc-spotlight .home-feat-v3-desc {
     margin: 4px 0 0;
     padding: 0;
@@ -19466,20 +19461,6 @@ a.snap-holder-username:hover {
     line-height: 1.5;
     color: rgba(255, 255, 255, 0.7);
     text-align: center;
-    /* flex: 1 1 0 → la desc aspire l'espace libre dans le content
-       (flex column), poussant stats + showcase + browse en bas.
-       display: grid avec align-content: center → la single auto row
-       qui contient le texte est centrée verticalement dans le
-       container. grid-template-columns: 1fr force la column en
-       pleine largeur pour que le texte wrap normalement.
-       Plus fiable que `display: flex` qui crée un item anonyme
-       autour du texte avec un rendu pas toujours visible dans tous
-       les navigateurs. */
-    flex: 1 1 0;
-    min-height: 0;
-    display: grid;
-    grid-template-columns: 1fr;
-    align-content: center;
 }
 /* État expanded (legacy, pour mobile où la desc peut être pliée) :
    retire le clamp. */
@@ -19548,14 +19529,14 @@ a.snap-holder-username:hover {
     cursor: pointer;
     user-select: none;
     padding: 9px 26px;
-    /* Margin classique 14px top — c'est désormais la desc (flex: 1)
-       qui aspire tout l'espace libre et pousse stats + showcase +
-       browse en bas en bloc. Avant on avait `margin-top: auto` ici
-       pour pousser le browse vers le bas, mais en flex layout les
-       auto margins absorbent le free space AVANT le flex-grow → la
-       desc ne pouvait jamais grandir, ce qui cassait le centrage
-       vertical et désolidarisait browse de stats/showcase. */
-    margin: 14px 16px 0;
+    /* margin-top: auto → pousse le CTA en bas de la card. Le grid
+       carousel force toutes les slides à la hauteur de la plus
+       grande (grid-area:1/1) ; les slides plus courtes (Loaded
+       Mushroom sans Total stat, get-featured slot…) auraient sinon
+       un trou visible en bas. Avec auto, l'espace libre se loge
+       AU-DESSUS du CTA (entre le showcase et le CTA) au lieu de
+       LAISSER un grand vide visible après. */
+    margin: auto 16px 0;
     background: rgba(0, 179, 255, 0.12);
     border: 1px solid rgba(0, 179, 255, 0.38);
     border-radius: 8px;
@@ -19597,11 +19578,7 @@ a.snap-holder-username:hover {
     background: rgba(11, 20, 38, 0.35);
     border: 1px solid var(--w-06);
     border-radius: 10px;
-    /* `flex: none` (auparavant `flex: 1`) — le showcase reste à sa
-       hauteur naturelle au lieu de grandir pour remplir l'espace.
-       C'est maintenant la desc qui pousse (flex: 1), ce qui fait
-       remonter les 2 cadres + browse en bloc en bas de la card. */
-    flex: none;
+    flex: 1;
     /* Réserve la place du contenu (label + 1 rangée de 8 vignettes
        carrées) DÈS le chargement pour éviter le layout shift. */
     min-height: 130px;
@@ -19750,9 +19727,7 @@ a.snap-holder-username:hover {
     /* Mobile : on remet un line-clamp 3 lignes sur la desc (espace
        vertical limité) + on réactive le bouton Read more pour la
        déplier. La règle PC (au-dessus) n'a pas de clamp pour qu'on
-       voie la description en entier sur grand écran. Reset aussi
-       les flex/grid PC : sur mobile la desc reste à sa hauteur
-       naturelle (display:-webkit-box pour le clamp). */
+       voie la description en entier sur grand écran. */
     .home-fc-spotlight .home-feat-v3-desc {
         margin: 2px 0;
         font-size: 12px;
@@ -19762,9 +19737,6 @@ a.snap-holder-username:hover {
         -webkit-box-orient: vertical;
         overflow: hidden;
         text-overflow: ellipsis;
-        flex: 0 1 auto;
-        grid-template-columns: initial;
-        align-content: initial;
     }
     .home-fc-spotlight .home-feat-v3-desc-toggle { display: block; }
     .home-fc-spotlight .home-feat-v3-showcase { padding: 10px; margin: 0; min-height: 100px; }
