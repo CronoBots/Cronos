@@ -76,7 +76,7 @@
      downgrade la priorité parce qu'il découvre la font tardivement
      en parcourant la CSS. -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
-<link href="styles.css?v=1779944000" rel="stylesheet"/>
+<link href="styles.css?v=1779945000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -8369,7 +8369,6 @@ document.addEventListener('DOMContentLoaded', initialize);
                     <div class="home-feat-v3-hero-bg"></div>
                     <div class="home-feat-v3-hero-img"></div>
                     <div class="home-feat-v3-hero-tint"></div>
-                    <span class="home-feat-v3-change" style="display:none;"></span>
                 </div>
                 <!-- Eyebrow "FEATURED COLLECTION · 01 / 04" — overlay
                      haut-droit sur la bannière. -->
@@ -8697,20 +8696,6 @@ document.addEventListener('DOMContentLoaded', initialize);
                 descEl.style.display = '';
             } else {
                 descEl.style.display = 'none';
-            }
-        }
-
-        // 24h change badge — only shown when there's been recent activity
-        const change = Number(data.stats?.oneDayVolumeDecimalChange) || 0;
-        const badge = card.querySelector('.home-feat-v3-change');
-        if (badge) {
-            if (vol24 > 0 && Math.abs(change) >= 0.1) {
-                badge.style.display = '';
-                badge.classList.toggle('home-feat-v3-change--up',   change > 0);
-                badge.classList.toggle('home-feat-v3-change--down', change < 0);
-                badge.textContent = (change > 0 ? '↑ +' : '↓ ') + Math.abs(change).toFixed(1) + '%';
-            } else {
-                badge.style.display = 'none';
             }
         }
 
@@ -16765,6 +16750,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-20T17:00:00Z',
+            type:  'improvement',
+            title: 'Featured Collection: even bigger logo + badge removed',
+            text:  'Logo bumped to 144px (120px mobile). The 24h change badge in the banner is fully removed (markup and code), not just hidden.'
+        },
         {
             date:  '2026-05-20T16:30:00Z',
             type:  'improvement',
