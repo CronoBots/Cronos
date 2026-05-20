@@ -19127,31 +19127,27 @@ a.snap-holder-username:hover {
     right: 0;
     aspect-ratio: 3 / 1;
     min-height: 220px;
-    max-height: 360px;
+    /* max-height supprimée : la bannière garde son ratio 3:1 natif
+       à toutes les largeurs (avant cap à 360px qui rendait le box
+       plus large que 3:1 sur grand écran → image source écrasée
+       avec bandes ou crop). */
     overflow: hidden;
     z-index: 0;
-    /* Pas de border-bottom : le tint fade vers le dark en bas du hero
-       fait office de transition propre vers le content (miroir
-       Featured Artists). Avec une border, on aurait eu un trait
-       visible au milieu de la card quand le hero est plus grand que
-       la zone identity. */
 }
 .home-fc-spotlight .home-feat-v3-hero-img {
-    /* contain : la bannière est affichée ENTIÈRE dans la zone hero
-       (pas de crop latéral ni vertical). Sur mobile où le hero
-       devient ~320×220 mais la bannière source fait 1500×500 (3:1),
-       cover croppait les bords gauche/droite — l'utilisateur voyait
-       en bordure des wordmarks tronqués ("FT COLLE", "MU"). Avec
-       contain, l'image entière s'affiche centrée, et les bandes
-       restantes (haut/bas si bannière plus large que hero ratio,
-       gauche/droite si plus haute) sont remplies par le hero-bg
-       flou qui vit derrière (z-index inférieur). */
-    background-size: contain;
+    /* cover : l'image remplit la box dans les 2 axes. Quand le
+       hero a un aspect ≠ 3:1 (cas où min-height 220 force un box
+       plus carré qu'attendu sur cartes étroites), `cover` garantit
+       que TOUTE LA HAUTEUR du visuel est exploitée et que les
+       éventuels débords sont rognés sur les côtés (acceptable
+       selon la demande user — pas grave si on perd les bords
+       gauche/droite). Quand l'aspect du box == 3:1 (cas standard
+       PC), cover == contain, l'image entière s'affiche. */
+    background-size: cover;
     background-repeat: no-repeat;
     background-position: center center;
-    /* Blur plus léger maintenant que l'image est entière (visible
-       de haut en bas). On a juste besoin d'un voile doux pour
-       qu'elle reste subordonnée à l'identity centré. */
+    /* Blur léger pour que l'image reste subordonnée à l'identity
+       au-dessus. */
     filter: blur(1.5px) brightness(0.68) saturate(1.1);
 }
 /* Tint très léger qui fade le hero vers le bas pour garantir la
@@ -19470,19 +19466,20 @@ a.snap-holder-username:hover {
     line-height: 1.5;
     color: rgba(255, 255, 255, 0.7);
     text-align: center;
-    /* flex: 1 1 0 → la desc devient le seul item qui aspire l'espace
-       libre dans le content (flex column). Stats + showcase + browse
-       restent à leur hauteur naturelle et sont du coup poussés en
-       bas en bloc.
-       display: flex + flex-direction: column + justify-content: center
-       → centre verticalement le texte (qui devient un item anonyme
-       prenant toute la largeur) dans la zone grandie. text-align
-       gère le centrage horizontal du texte à l'intérieur. */
+    /* flex: 1 1 0 → la desc aspire l'espace libre dans le content
+       (flex column), poussant stats + showcase + browse en bas.
+       display: grid avec align-content: center → la single auto row
+       qui contient le texte est centrée verticalement dans le
+       container. grid-template-columns: 1fr force la column en
+       pleine largeur pour que le texte wrap normalement.
+       Plus fiable que `display: flex` qui crée un item anonyme
+       autour du texte avec un rendu pas toujours visible dans tous
+       les navigateurs. */
     flex: 1 1 0;
     min-height: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: 1fr;
+    align-content: center;
 }
 /* État expanded (legacy, pour mobile où la desc peut être pliée) :
    retire le clamp. */
@@ -19753,10 +19750,9 @@ a.snap-holder-username:hover {
     /* Mobile : on remet un line-clamp 3 lignes sur la desc (espace
        vertical limité) + on réactive le bouton Read more pour la
        déplier. La règle PC (au-dessus) n'a pas de clamp pour qu'on
-       voie la description en entier sur grand écran. Reset aussi le
-       flex:1 PC + le display:flex/justify-content : sur mobile la
-       desc reste à sa hauteur naturelle (display:-webkit-box pour
-       le clamp). */
+       voie la description en entier sur grand écran. Reset aussi
+       les flex/grid PC : sur mobile la desc reste à sa hauteur
+       naturelle (display:-webkit-box pour le clamp). */
     .home-fc-spotlight .home-feat-v3-desc {
         margin: 2px 0;
         font-size: 12px;
@@ -19767,8 +19763,8 @@ a.snap-holder-username:hover {
         overflow: hidden;
         text-overflow: ellipsis;
         flex: 0 1 auto;
-        flex-direction: initial;
-        justify-content: initial;
+        grid-template-columns: initial;
+        align-content: initial;
     }
     .home-fc-spotlight .home-feat-v3-desc-toggle { display: block; }
     .home-fc-spotlight .home-feat-v3-showcase { padding: 10px; margin: 0; min-height: 100px; }
