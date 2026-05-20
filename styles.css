@@ -19119,27 +19119,18 @@ a.snap-holder-username:hover {
     left: 0;
     right: 0;
     aspect-ratio: 3 / 1;
-    min-height: 220px;
-    max-height: 360px;
     overflow: hidden;
     z-index: 0;
-    /* Pas de border-bottom : le tint fade vers le dark en bas du hero
-       fait office de transition propre vers le content (miroir
-       Featured Artists). Avec une border, on aurait eu un trait
-       visible au milieu de la card quand le hero est plus grand que
-       la zone identity. */
+    /* Pas de min/max-height : la zone hero respecte STRICTEMENT
+       le ratio 3/1 (= ratio natif des bannières 1500×500). On veut
+       voir la bannière en entier, donc la hauteur doit suivre la
+       largeur de la card sans contrainte qui casserait le ratio. */
 }
 .home-fc-spotlight .home-feat-v3-hero-img {
-    /* Bannière source 1500×500 (3:1). On veut TOUJOURS voir
-       l'intégralité de la HAUTEUR de la bannière (sur PC comme
-       sur mobile). `auto 100%` scale l'image pour que sa hauteur
-       remplisse exactement la zone hero — la largeur suit
-       proportionnellement, et si la zone est plus large que
-       l'image (zoom min-height côté mobile), les bandes latérales
-       sont comblées par le hero-bg flou en dessous. Aucune perte
-       verticale de la bannière, quelle que soit la dimension de
-       la card. */
-    background-size: auto 100%;
+    /* Hero zone et image partagent le ratio 3/1 → `cover` remplit
+       parfaitement la zone sans crop ni letterboxing. La bannière
+       1500×500 est donc visible en entier. */
+    background-size: cover;
     background-repeat: no-repeat;
     background-position: center center;
     /* Blur plus léger maintenant que l'image est entière (visible
@@ -19398,11 +19389,15 @@ a.snap-holder-username:hover {
     /* Layout grid 3 colonnes (6 stats → 2 rangées équilibrées),
        même rendu sur PC et mobile : pas de pill arrondie 999px ni
        de séparateurs verticaux entre stats — chaque cellule respire
-       avec le gap. Coins arrondis "card" à 14px (= mobile). */
+       avec le gap. Coins arrondis "card" à 14px (= mobile).
+       margin-top: auto → pousse le bloc stats + showcase + browse
+       en bas de la card, "collé" au bouton Browse. La desc reste
+       proche de l'identity en haut, l'espace libre se loge entre
+       desc et stats. */
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8px 10px;
-    margin: 12px 16px 0;
+    margin: auto 16px 0;
     padding: 10px 14px;
     background: rgba(11, 20, 38, 0.55);
     /* Bordure renforcée : cyan subtil cohérent avec les autres frames
@@ -19529,14 +19524,12 @@ a.snap-holder-username:hover {
     cursor: pointer;
     user-select: none;
     padding: 9px 26px;
-    /* margin-top: auto → pousse le CTA en bas de la card. Le grid
-       carousel force toutes les slides à la hauteur de la plus
-       grande (grid-area:1/1) ; les slides plus courtes (Loaded
-       Mushroom sans Total stat, get-featured slot…) auraient sinon
-       un trou visible en bas. Avec auto, l'espace libre se loge
-       AU-DESSUS du CTA (entre le showcase et le CTA) au lieu de
-       LAISSER un grand vide visible après. */
-    margin: auto 16px 0;
+    /* margin-top fixe (pas auto) : c'est .home-feat-v3-stats qui
+       absorbe maintenant l'espace libre avec margin-top:auto. Le
+       browse reste donc collé au showcase qui est collé aux stats,
+       tout le bloc inférieur (stats → showcase → browse) glué en
+       bas de la card. */
+    margin: 14px 16px 0;
     background: rgba(0, 179, 255, 0.12);
     border: 1px solid rgba(0, 179, 255, 0.38);
     border-radius: 8px;
@@ -19578,7 +19571,11 @@ a.snap-holder-username:hover {
     background: rgba(11, 20, 38, 0.35);
     border: 1px solid var(--w-06);
     border-radius: 10px;
-    flex: 1;
+    /* Pas de flex:1 ici : le showcase suit naturellement les stats
+       et reste collé au bouton Browse. C'est .home-feat-v3-stats
+       qui a margin-top:auto pour pousser le bloc bas (stats →
+       showcase → browse) en bas de la card. */
+    flex: 0 0 auto;
     /* Réserve la place du contenu (label + 1 rangée de 8 vignettes
        carrées) DÈS le chargement pour éviter le layout shift. */
     min-height: 130px;
@@ -19714,7 +19711,9 @@ a.snap-holder-username:hover {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 8px 10px;
-        margin: 0;
+        /* margin-top:auto → bloc stats + showcase + browse collé en
+           bas de la card (idem PC). */
+        margin: auto 0 0;
         padding: 10px 12px;
         font-size: 10px;
         border-radius: 14px;
@@ -19738,9 +19737,10 @@ a.snap-holder-username:hover {
     .home-feat-v3-showcase-label { font-size: 9px; letter-spacing: 0.15em; }
     .home-fc-spotlight .home-feat-v3-browse {
         padding: 8px 20px;
-        /* margin-top: auto pour pousser le CTA en bas même en mobile
-           (égalise les heights de toutes les slides). */
-        margin: auto 0 0;
+        /* margin-top fixe : c'est .home-feat-v3-stats qui absorbe
+           l'espace libre côté mobile aussi. Le browse reste collé
+           au showcase. */
+        margin: 12px 0 0;
         font-size: 10px;
     }
     /* Tile verticale resserrée sur mobile : padding texte réduit,
