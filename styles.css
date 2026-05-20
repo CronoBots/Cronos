@@ -19395,20 +19395,20 @@ a.snap-holder-username:hover {
    sheet éditorial), séparés par fins traits verticaux. Wrap autorisé
    sur écran étroit pour que les 6 stats restent lisibles. */
 .home-fc-spotlight .home-feat-v3-stats {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
+    /* Layout grid 3 colonnes (6 stats → 2 rangées équilibrées),
+       même rendu sur PC et mobile : pas de pill arrondie 999px ni
+       de séparateurs verticaux entre stats — chaque cellule respire
+       avec le gap. Coins arrondis "card" à 14px (= mobile). */
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px 10px;
     margin: 12px 16px 0;
-    padding: 9px 16px;
+    padding: 10px 14px;
     background: rgba(11, 20, 38, 0.55);
-    /* Bordure renforcée : passe de var(--w-06) (presque
-       invisible) à rgba(0,179,255,0.22) (cyan subtil) — cohérent
-       avec le style "frame" des autres cards home. Demande user :
-       "les bordures des stats et exemples ne se voient pas assez". */
+    /* Bordure renforcée : cyan subtil cohérent avec les autres frames
+       home. */
     border: 1px solid rgba(0, 179, 255, 0.22);
-    border-radius: 999px;
+    border-radius: 14px;
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 11px;
     letter-spacing: 0.06em;
@@ -19419,13 +19419,12 @@ a.snap-holder-username:hover {
 .home-fc-spotlight .home-feat-v3-stat {
     display: inline-flex;
     align-items: baseline;
+    justify-content: center;
     gap: 5px;
     /* Reset des règles du fallback card (.home-feat-v3-stat avec
        flex:1, flex-direction:column, align-items:center) qui
-       interfèreraient sur le rendu inline pill. flex: 0 0 auto
-       est CRUCIAL — sinon le fallback flex:1 force chaque stat à
-       prendre 1/6 de la largeur du pill et avec white-space:nowrap
-       le texte déborde et chevauche les voisins (= mobile broken). */
+       interfèreraient sur le rendu inline. flex: 0 0 auto + grid
+       cell suffit pour aligner proprement. */
     flex: 0 0 auto;
     flex-direction: row;
     padding: 0;
@@ -19442,21 +19441,17 @@ a.snap-holder-username:hover {
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.01em;
 }
+/* Séparateurs verticaux désactivés — le grid 3-col + gap fait déjà
+   la séparation visuelle. On garde l'élément dans le DOM (HTML
+   simple, pas besoin de toucher), mais display:none côté CSS. */
 .home-fc-spotlight .home-feat-v3-stat-sep {
-    width: 1px;
-    height: 11px;
-    background: rgba(255, 255, 255, 0.15);
-    display: inline-block;
-    flex-shrink: 0;
-    /* Reset du fallback (align-self:stretch + margin:4px 0) qui
-       étirerait le séparateur sur toute la hauteur du pill et le
-       décalerait verticalement. */
-    align-self: center;
-    margin: 0;
+    display: none;
 }
 
-/* Description : traitée en pull-quote magazine avec filet cyan
-   vertical à gauche. line-clamp à 3 lignes pour borner la hauteur. */
+/* Description : sur PC on affiche la description entière (pas de
+   line-clamp ni de bouton Read more). Sur mobile (cf. media query
+   <= 720px) on remet un line-clamp 3 lignes pour borner la hauteur
+   sur petit écran. */
 .home-fc-spotlight .home-feat-v3-desc {
     margin: 4px 0 0;
     padding: 0;
@@ -19466,25 +19461,20 @@ a.snap-holder-username:hover {
     line-height: 1.5;
     color: rgba(255, 255, 255, 0.7);
     text-align: center;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
-/* État expanded : retire le clamp, affiche la desc complète. Toggle
-   via le bouton .home-feat-v3-desc-toggle (Read more / Read less). */
+/* État expanded (legacy, pour mobile où la desc peut être pliée) :
+   retire le clamp. */
 .home-fc-spotlight .home-feat-v3-desc.is-expanded {
     -webkit-line-clamp: unset;
     display: block;
     overflow: visible;
     text-overflow: clip;
 }
-/* Bouton "Read more / Read less" — affiché sous la desc uniquement
-   si la desc overflow le clamp 3 lignes (calcul JS dans
-   renderFeatStats). Style discret cyan, transition douce. */
+/* Bouton "Read more / Read less" — caché sur PC (description
+   affichée en entier sans clamp), affiché sur mobile (cf. media
+   query <= 720px) où la desc est clampée à 3 lignes. */
 .home-fc-spotlight .home-feat-v3-desc-toggle {
-    display: block;
+    display: none;
     margin: 4px auto 0;
     padding: 4px 10px;
     background: transparent;
@@ -19734,11 +19724,21 @@ a.snap-holder-username:hover {
         justify-content: center;
     }
     .home-fc-spotlight .home-feat-v3-stat strong { font-size: 12px; }
+    /* Mobile : on remet un line-clamp 3 lignes sur la desc (espace
+       vertical limité) + on réactive le bouton Read more pour la
+       déplier. La règle PC (au-dessus) n'a pas de clamp pour qu'on
+       voie la description en entier sur grand écran. */
     .home-fc-spotlight .home-feat-v3-desc {
         margin: 2px 0;
         font-size: 12px;
         padding: 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
+    .home-fc-spotlight .home-feat-v3-desc-toggle { display: block; }
     .home-fc-spotlight .home-feat-v3-showcase { padding: 10px; margin: 0; min-height: 100px; }
     .home-feat-v3-showcase-label { font-size: 9px; letter-spacing: 0.15em; }
     .home-fc-spotlight .home-feat-v3-browse {
