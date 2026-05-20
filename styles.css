@@ -8807,16 +8807,22 @@ body.is-profile-loading #profileLoadingOverlay * {
         flex-direction: column;
     }
     .home-two-col--main > .home-community-section .home-community-card {
-        /* Plus de max-height : la card chat s'aligne sur la hauteur de
-           la row (= hauteur naturelle du Featured Collection grâce au
-           stretch). Le scroll des messages reste interne via
-           .home-chat-messages { overflow-y: auto }. Le 540px du base
-           .home-community-card est annulé ici (sinon la card resterait
-           cappée sous la hauteur du Featured ≈ 600-700px). */
+        /* La hauteur de la row 1 doit être dictée par le Featured
+           Collection seul (taille naturelle, sans scroll), et le chat
+           stretche pour matcher. Problème : sans contrainte, le
+           cumul des messages chat (intrinsic max-content) pousse la
+           row à plusieurs milliers de px et c'est featured qui finit
+           étiré → l'inverse de ce qu'on veut.
+           Solution : `contain: size` sur la card chat → ses
+           descendants n'entrent plus dans le calcul d'auto-size de la
+           grid track. Côté layout interne, rien ne change (la card
+           reçoit sa hauteur via align-items: stretch du grid, puis
+           chat-main flex:1 + messages overflow:auto se débrouillent). */
         height: 100%;
         max-height: none;
         flex: 1 1 auto;
         min-height: 0;
+        contain: size;
     }
     .home-two-col--main > .home-section--featured .home-fc-spotlight {
         flex: 1 1 auto;
@@ -20354,11 +20360,12 @@ a.snap-holder-username:hover {
     --watermark-opacity: 0.32;
     object-fit: contain;
     object-position: center;
-    /* ~1.2x vs le watermark vectoriel de base — le logo PNG embossé
-       demande un poil plus de présence que les SVG line-art, mais sans
-       déborder du cadre poster. */
-    width: clamp(340px, 44vw, 500px);
-    height: clamp(340px, 44vw, 500px);
+    /* Aligné sur la taille des watermarks vectoriels des autres slides
+       (clamp 280→420). Le logo PNG embossé n'a plus besoin d'être
+       sur-dimensionné — son opacité 0.32 (vs 0.18 pour le vectoriel)
+       lui donne déjà assez de présence à cette taille. */
+    width: clamp(260px, 33vw, 380px);
+    height: clamp(260px, 33vw, 380px);
 }
 /* L'épaisseur du trait scale naturellement avec la taille du SVG —
    pas de vector-effect:non-scaling-stroke (qui rendrait l'icône
@@ -20576,7 +20583,7 @@ a.snap-holder-username:hover {
     .home-spotlight-title { font-size: clamp(26px, 5vw, 40px); }
     .home-spotlight-desc { font-size: 13px; max-width: 480px; -webkit-line-clamp: 5; }
     .home-spotlight-watermark { width: clamp(240px, 36vw, 340px); height: clamp(240px, 36vw, 340px); }
-    .home-spotlight-watermark--logo { width: clamp(290px, 44vw, 410px); height: clamp(290px, 44vw, 410px); }
+    .home-spotlight-watermark--logo { width: clamp(220px, 33vw, 320px); height: clamp(220px, 33vw, 320px); }
 }
 @media (max-width: 600px) {
     .home-spotlight-slide { padding: 24px 20px 72px; }
@@ -20589,7 +20596,7 @@ a.snap-holder-username:hover {
     .home-spotlight-desc { font-size: 12.5px; line-height: 1.5; max-width: 320px; -webkit-line-clamp: 4; }
     .home-spotlight-cta { font-size: 10.5px; padding: 8px 16px; letter-spacing: 0.12em; }
     .home-spotlight-watermark { width: 260px; height: 260px; --watermark-opacity: 0.10; }
-    .home-spotlight-watermark--logo { width: 320px; height: 320px; }
+    .home-spotlight-watermark--logo { width: 260px; height: 260px; }
     .home-spotlight-controls { padding: 0 14px; gap: 8px; }
     .home-spotlight-arrow { width: 32px; height: 32px; }
     .home-spotlight-dot.is-active { width: 22px; }
@@ -21922,7 +21929,7 @@ body { box-sizing: border-box; }
     .home-spotlight-title { font-size: 24px !important; }
     .home-spotlight-desc  { max-width: 260px !important; -webkit-line-clamp: 4 !important; }
     .home-spotlight-watermark { width: 220px !important; height: 220px !important; --watermark-opacity: 0.10 !important; }
-    .home-spotlight-watermark--logo { width: 270px !important; height: 270px !important; }
+    .home-spotlight-watermark--logo { width: 220px !important; height: 220px !important; }
     .home-community-card {
         flex: none !important;
         height: 600px !important;
