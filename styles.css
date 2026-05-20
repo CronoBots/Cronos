@@ -19456,11 +19456,9 @@ a.snap-holder-username:hover {
 
 /* Description : sur PC on affiche la description entière (pas de
    line-clamp ni de bouton Read more). Texte centré verticalement
-   dans l'espace libre entre le creator et le cadre des stats : la
-   desc prend `flex: 1` et le texte est centré via display:flex +
-   align/justify center. Sur mobile (cf. media query <= 720px) on
-   remet un line-clamp 3 lignes pour borner la hauteur sur petit
-   écran. */
+   dans l'espace libre entre le creator et le cadre des stats.
+   Sur mobile (cf. media query <= 720px) on remet un line-clamp 3
+   lignes pour borner la hauteur sur petit écran. */
 .home-fc-spotlight .home-feat-v3-desc {
     margin: 4px 0 0;
     padding: 0;
@@ -19470,13 +19468,18 @@ a.snap-holder-username:hover {
     line-height: 1.5;
     color: rgba(255, 255, 255, 0.7);
     text-align: center;
-    /* Centrage vertical de la desc dans l'espace libre entre le
-       creator (au-dessus) et le cadre des stats (en-dessous).
-       Le flex: 1 fait grandir le bloc desc à toute la hauteur
-       disponible, et align-items: center centre le texte. */
-    flex: 1 1 auto;
+    /* flex: 1 1 0 → la desc devient le seul item qui aspire l'espace
+       libre dans le content (flex column). Stats + showcase + browse
+       restent à leur hauteur naturelle et sont du coup poussés en
+       bas en bloc.
+       display: flex + flex-direction: column + justify-content: center
+       → centre verticalement le texte (qui devient un item anonyme
+       prenant toute la largeur) dans la zone grandie. text-align
+       gère le centrage horizontal du texte à l'intérieur. */
+    flex: 1 1 0;
+    min-height: 0;
     display: flex;
-    align-items: center;
+    flex-direction: column;
     justify-content: center;
 }
 /* État expanded (legacy, pour mobile où la desc peut être pliée) :
@@ -19546,14 +19549,14 @@ a.snap-holder-username:hover {
     cursor: pointer;
     user-select: none;
     padding: 9px 26px;
-    /* margin-top: auto → pousse le CTA en bas de la card. Le grid
-       carousel force toutes les slides à la hauteur de la plus
-       grande (grid-area:1/1) ; les slides plus courtes (Loaded
-       Mushroom sans Total stat, get-featured slot…) auraient sinon
-       un trou visible en bas. Avec auto, l'espace libre se loge
-       AU-DESSUS du CTA (entre le showcase et le CTA) au lieu de
-       LAISSER un grand vide visible après. */
-    margin: auto 16px 0;
+    /* Margin classique 14px top — c'est désormais la desc (flex: 1)
+       qui aspire tout l'espace libre et pousse stats + showcase +
+       browse en bas en bloc. Avant on avait `margin-top: auto` ici
+       pour pousser le browse vers le bas, mais en flex layout les
+       auto margins absorbent le free space AVANT le flex-grow → la
+       desc ne pouvait jamais grandir, ce qui cassait le centrage
+       vertical et désolidarisait browse de stats/showcase. */
+    margin: 14px 16px 0;
     background: rgba(0, 179, 255, 0.12);
     border: 1px solid rgba(0, 179, 255, 0.38);
     border-radius: 8px;
@@ -19749,7 +19752,9 @@ a.snap-holder-username:hover {
        vertical limité) + on réactive le bouton Read more pour la
        déplier. La règle PC (au-dessus) n'a pas de clamp pour qu'on
        voie la description en entier sur grand écran. Reset aussi le
-       flex:1 PC : sur mobile la desc reste à sa hauteur naturelle. */
+       flex:1 PC + le display:flex/justify-content : sur mobile la
+       desc reste à sa hauteur naturelle (display:-webkit-box pour
+       le clamp). */
     .home-fc-spotlight .home-feat-v3-desc {
         margin: 2px 0;
         font-size: 12px;
@@ -19760,7 +19765,7 @@ a.snap-holder-username:hover {
         overflow: hidden;
         text-overflow: ellipsis;
         flex: 0 1 auto;
-        align-items: initial;
+        flex-direction: initial;
         justify-content: initial;
     }
     .home-fc-spotlight .home-feat-v3-desc-toggle { display: block; }
