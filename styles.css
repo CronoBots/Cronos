@@ -19130,16 +19130,16 @@ a.snap-holder-username:hover {
        la zone identity. */
 }
 .home-fc-spotlight .home-feat-v3-hero-img {
-    /* contain : la bannière est affichée ENTIÈRE dans la zone hero
-       (pas de crop latéral ni vertical). Sur mobile où le hero
-       devient ~320×220 mais la bannière source fait 1500×500 (3:1),
-       cover croppait les bords gauche/droite — l'utilisateur voyait
-       en bordure des wordmarks tronqués ("FT COLLE", "MU"). Avec
-       contain, l'image entière s'affiche centrée, et les bandes
-       restantes (haut/bas si bannière plus large que hero ratio,
-       gauche/droite si plus haute) sont remplies par le hero-bg
-       flou qui vit derrière (z-index inférieur). */
-    background-size: contain;
+    /* Bannière source 1500×500 (3:1). On veut TOUJOURS voir
+       l'intégralité de la HAUTEUR de la bannière (sur PC comme
+       sur mobile). `auto 100%` scale l'image pour que sa hauteur
+       remplisse exactement la zone hero — la largeur suit
+       proportionnellement, et si la zone est plus large que
+       l'image (zoom min-height côté mobile), les bandes latérales
+       sont comblées par le hero-bg flou en dessous. Aucune perte
+       verticale de la bannière, quelle que soit la dimension de
+       la card. */
+    background-size: auto 100%;
     background-repeat: no-repeat;
     background-position: center center;
     /* Blur plus léger maintenant que l'image est entière (visible
@@ -19724,21 +19724,16 @@ a.snap-holder-username:hover {
         justify-content: center;
     }
     .home-fc-spotlight .home-feat-v3-stat strong { font-size: 12px; }
-    /* Mobile : on remet un line-clamp 3 lignes sur la desc (espace
-       vertical limité) + on réactive le bouton Read more pour la
-       déplier. La règle PC (au-dessus) n'a pas de clamp pour qu'on
-       voie la description en entier sur grand écran. */
+    /* Mobile : la description est affichée EN ENTIER comme sur PC.
+       Pas de line-clamp, pas de bouton Read more — l'utilisateur
+       veut voir tout le texte sans avoir à déplier (côté card
+       Featured Collection, mobile + desktop alignés). */
     .home-fc-spotlight .home-feat-v3-desc {
         margin: 2px 0;
         font-size: 12px;
         padding: 0;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        text-overflow: ellipsis;
     }
-    .home-fc-spotlight .home-feat-v3-desc-toggle { display: block; }
+    .home-fc-spotlight .home-feat-v3-desc-toggle { display: none !important; }
     .home-fc-spotlight .home-feat-v3-showcase { padding: 10px; margin: 0; min-height: 100px; }
     .home-feat-v3-showcase-label { font-size: 9px; letter-spacing: 0.15em; }
     .home-fc-spotlight .home-feat-v3-browse {
