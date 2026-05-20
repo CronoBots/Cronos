@@ -19390,14 +19390,13 @@ a.snap-holder-username:hover {
        même rendu sur PC et mobile : pas de pill arrondie 999px ni
        de séparateurs verticaux entre stats — chaque cellule respire
        avec le gap. Coins arrondis "card" à 14px (= mobile).
-       margin-top: auto → pousse le bloc stats + showcase + browse
-       en bas de la card, "collé" au bouton Browse. La desc reste
-       proche de l'identity en haut, l'espace libre se loge entre
-       desc et stats. */
+       Pas de margin-top:auto ici : c'est la desc (margin: auto 0)
+       qui absorbe l'espace libre au-dessus, ce qui pousse stats +
+       showcase + browse en bas de la card collés entre eux. */
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8px 10px;
-    margin: auto 16px 0;
+    margin: 0 16px;
     padding: 10px 14px;
     background: rgba(11, 20, 38, 0.55);
     /* Bordure renforcée : cyan subtil cohérent avec les autres frames
@@ -19443,12 +19442,15 @@ a.snap-holder-username:hover {
     display: none;
 }
 
-/* Description : sur PC on affiche la description entière (pas de
-   line-clamp ni de bouton Read more). Sur mobile (cf. media query
-   <= 720px) on remet un line-clamp 3 lignes pour borner la hauteur
-   sur petit écran. */
+/* Description : clamp 4 lignes (avec ellipsis si dépassement), pas
+   de bouton Read more. Centrée verticalement entre l'identity
+   (name + creator) et le cadre des stats grâce à margin: auto 0 —
+   les deux marges auto absorbent à parts égales l'espace libre
+   au-dessus et en dessous, ce qui : (1) centre la desc dans le
+   creux du milieu, (2) pousse stats + showcase + browse en bas
+   de la card. */
 .home-fc-spotlight .home-feat-v3-desc {
-    margin: 4px 0 0;
+    margin: auto 0;
     padding: 0;
     font-family: 'Geomanist', sans-serif;
     font-style: italic;
@@ -19456,6 +19458,11 @@ a.snap-holder-username:hover {
     line-height: 1.5;
     color: rgba(255, 255, 255, 0.7);
     text-align: center;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 /* État expanded (legacy, pour mobile où la desc peut être pliée) :
    retire le clamp. */
@@ -19711,9 +19718,9 @@ a.snap-holder-username:hover {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 8px 10px;
-        /* margin-top:auto → bloc stats + showcase + browse collé en
-           bas de la card (idem PC). */
-        margin: auto 0 0;
+        /* Pas de margin-top:auto : c'est la desc (margin: auto 0)
+           qui centre verticalement et pousse le bloc bas. */
+        margin: 0;
         padding: 10px 12px;
         font-size: 10px;
         border-radius: 14px;
@@ -19723,12 +19730,10 @@ a.snap-holder-username:hover {
         justify-content: center;
     }
     .home-fc-spotlight .home-feat-v3-stat strong { font-size: 12px; }
-    /* Mobile : la description est affichée EN ENTIER comme sur PC.
-       Pas de line-clamp, pas de bouton Read more — l'utilisateur
-       veut voir tout le texte sans avoir à déplier (côté card
-       Featured Collection, mobile + desktop alignés). */
+    /* Mobile : on garde le clamp 4 lignes (hérité du desktop) et on
+       resserre juste la taille de typo. La règle desktop applique
+       déjà display:-webkit-box, -webkit-line-clamp:4, etc. */
     .home-fc-spotlight .home-feat-v3-desc {
-        margin: 2px 0;
         font-size: 12px;
         padding: 0;
     }
