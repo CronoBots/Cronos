@@ -76,7 +76,7 @@
      downgrade la priorité parce qu'il découvre la font tardivement
      en parcourant la CSS. -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
-<link href="styles.css?v=1779840000" rel="stylesheet"/>
+<link href="styles.css?v=1779850000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -8407,16 +8407,10 @@ document.addEventListener('DOMContentLoaded', initialize);
                 </div>
                 <!-- Description : présentée juste après l'identity et
                      AVANT les stats. Donne un contexte éditorial sur
-                     la collection avant les chiffres.
-                     PC : flex:1 sur cet élément → la desc grandit
-                     pour aspirer tout l'espace libre entre l'identity
-                     et le bloc stats/showcase/browse en bas (texte
-                     centré verticalement). Pour que le grow marche
-                     même quand l'API n'a pas encore renvoyé de
-                     description (ou si la collection n'en a pas), on
-                     laisse l'élément TOUJOURS visible en flow — vide
-                     visuellement mais grandissant comme spacer. */
-                <p class="home-feat-v3-desc" data-desc></p>
+                     la collection avant les chiffres. Cachée tant que
+                     l'API n'a pas renvoyé de texte. Clamp à 3 lignes
+                     côté CSS. -->
+                <p class="home-feat-v3-desc" data-desc style="display:none;"></p>
                 <!-- Stats en pastille inline — chaque chiffre porte son label
                      directement à côté (style éditorial type "fact sheet").
                      5 stats (FC) ↔ 5 stats (FA) pour cohérence visuelle.
@@ -8761,11 +8755,7 @@ document.addEventListener('DOMContentLoaded', initialize);
                     }
                 });
             } else {
-                // Pas de description : on garde l'élément en flow
-                // (vide) pour que son flex:1 PC continue d'aspirer
-                // l'espace libre et de pousser stats/showcase/browse
-                // en bas. Texte vide → aucun visuel.
-                descEl.textContent = '';
+                descEl.style.display = 'none';
                 const toggle = card.querySelector('.home-feat-v3-desc-toggle');
                 if (toggle) toggle.style.display = 'none';
             }
@@ -16837,28 +16827,10 @@ async function sha256hex(str) {
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
         {
-            date:  '2026-05-20T09:10:00Z',
+            date:  '2026-05-20T10:00:00Z',
             type:  'fix',
-            title: 'Featured Collection desc back + banner fills full height',
-            text:  'Description was rendering invisible with the flex centering trick — switched to a CSS grid layout that handles wrapped text more predictably. Banner also fills its full height now (background-size: cover), with sides cropped instead of left/right black bands.'
-        },
-        {
-            date:  '2026-05-20T08:50:00Z',
-            type:  'fix',
-            title: 'Featured Collection: real fixed height + visible banner',
-            text:  'The Featured Collection card now has a real fixed height so the description finally fills the middle space and pushes the stats / "From the collection" frames to the bottom near the Browse button. The dark fade over the banner is also much lighter so the full 1500×500 cover image is visible.'
-        },
-        {
-            date:  '2026-05-20T08:35:00Z',
-            type:  'fix',
-            title: 'Featured Collection description visible again',
-            text:  'Fixed the regression where the description disappeared and the stats / "From the collection" frames stayed at the top instead of clustering at the bottom. The Browse button had a margin-top: auto that was absorbing all the free space before the description could grow into it.'
-        },
-        {
-            date:  '2026-05-20T08:20:00Z',
-            type:  'improvement',
-            title: 'Featured Collection — fixed-height layout',
-            text:  'On desktop the Featured Collection card now has a consistent height across all collections (banner at the top in its full 3:1 ratio, stats + showcase frames + Browse button clustered at the bottom). The description sits in the middle and is vertically centered between the creator line and the stats frame.'
+            title: 'Rolled back the latest Featured Collection tweaks',
+            text:  'The last few iterations on the Featured Collection card were doing more harm than good. Back to the version from earlier today — stats on 3 columns, full description on desktop, mobile clamped.'
         },
         {
             date:  '2026-05-20T08:00:00Z',
