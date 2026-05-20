@@ -76,7 +76,7 @@
      downgrade la priorité parce qu'il découvre la font tardivement
      en parcourant la CSS. -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
-<link href="styles.css?v=1779700000" rel="stylesheet"/>
+<link href="styles.css?v=1779720000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -1417,17 +1417,14 @@
         <div class="home-section-header">
           <h2 class="home-section-title">WTF CHAT</h2>
           <div class="home-chat-header-right">
-            <button class="home-chat-members-btn" id="homeChatMembersBtn" type="button" aria-label="Show members" style="display:none;">
+            <!-- Badge membres : même bouton sur PC et mobile (point vert
+                 + nombre d'utilisateurs en ligne + icône users). Click :
+                 sur mobile ouvre la modal slide-up, sur PC bascule
+                 l'affichage de la sidebar online/offline du chat. -->
+            <button class="home-chat-members-btn" id="homeChatMembersBtn" type="button" aria-label="Toggle members" style="display:none;">
               <span class="home-chat-stat-dot home-chat-stat-dot--online" id="homeMobileMemberDot"></span>
               <span id="homeMobileMemberCount">0</span>
               <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="7" cy="7" r="3"/><path d="M1 17c0-2.8 2.7-5 6-5"/><circle cx="14" cy="8" r="2.5"/><path d="M11 17c0-2.4 2-4 3-4s3 1.6 3 4"/></svg>
-            </button>
-            <!-- Toggle sidebar membres (PC uniquement). Persistance localStorage
-                 cwtf-chat-sidebar-hidden. État "shown" = icône panneau avec rail
-                 droit visible ; "collapsed" = icône panneau sans rail droit. -->
-            <button class="home-chat-sidebar-toggle" id="homeChatSidebarToggle" type="button" aria-label="Hide members" title="Hide members">
-              <svg class="home-chat-sidebar-icon-shown" width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="15" height="13" rx="2"/><line x1="13" y1="3.5" x2="13" y2="16.5"/></svg>
-              <svg class="home-chat-sidebar-icon-hidden" width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="15" height="13" rx="2"/></svg>
             </button>
             <span class="home-community-live" id="homeChatStatus" hidden>connecting…</span>
           </div>
@@ -9846,16 +9843,39 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
         const status  = document.getElementById('homeChatStatus');
         if (!msgs) return;
 
-        // ── Modal membres mobile — open / close ──────────────────────────
+        // ── Bouton membres — mobile ouvre la modal, PC bascule la sidebar ─
         (function() {
             const btn   = document.getElementById('homeChatMembersBtn');
             const modal = document.getElementById('homeChatMembersModal');
             const close = document.getElementById('homeChatMembersClose');
+            const card  = document.querySelector('.home-community-card');
             if (!btn || !modal) return;
+            // Persistance de l'état "sidebar masquée" en PC (mobile n'utilise
+            // pas la sidebar inline — toujours en modal slide-up).
+            const SIDEBAR_HIDDEN_KEY = 'cwtf-chat-sidebar-hidden';
+            const isPC = () => window.matchMedia('(min-width: 701px)').matches;
+            const applyPCState = () => {
+                let hidden = false;
+                try { hidden = localStorage.getItem(SIDEBAR_HIDDEN_KEY) === '1'; } catch (_) {}
+                btn.classList.toggle('is-collapsed', hidden && isPC());
+                card?.classList.toggle('has-sidebar-collapsed', hidden && isPC());
+            };
+            applyPCState();
+            // Au resize : repasse en mode PC → restaure l'état persisté ;
+            // repasse en mode mobile → nettoie has-sidebar-collapsed (la
+            // sidebar mobile est de toute façon planquée par media query).
+            window.addEventListener('resize', applyPCState);
             btn.addEventListener('click', e => {
                 e.stopPropagation();
-                modal.classList.add('is-open');
-                modal.removeAttribute('aria-hidden');
+                if (isPC()) {
+                    let hidden = false;
+                    try { hidden = localStorage.getItem(SIDEBAR_HIDDEN_KEY) === '1'; } catch (_) {}
+                    try { localStorage.setItem(SIDEBAR_HIDDEN_KEY, hidden ? '0' : '1'); } catch (_) {}
+                    applyPCState();
+                } else {
+                    modal.classList.add('is-open');
+                    modal.removeAttribute('aria-hidden');
+                }
             });
             close?.addEventListener('click', () => {
                 modal.classList.remove('is-open');
@@ -12472,27 +12492,6 @@ query GetCollectionAssets($cacheId:ID,$collectionId:ID,$first:Int!,$skip:Int!,$w
             _refreshSoundToggleUI();
             // Feedback audible quand on l'active.
             if (_soundEnabled) _playNotificationSound();
-        });
-        // Toggle sidebar membres (PC) : bascule la colonne online/offline.
-        // Persisté en localStorage cwtf-chat-sidebar-hidden ('1' = caché).
-        const SIDEBAR_HIDDEN_KEY = 'cwtf-chat-sidebar-hidden';
-        const sidebarBtn = document.getElementById('homeChatSidebarToggle');
-        const chatCard  = document.querySelector('.home-community-card');
-        const _applySidebarState = () => {
-            let hidden = false;
-            try { hidden = localStorage.getItem(SIDEBAR_HIDDEN_KEY) === '1'; } catch (_) {}
-            sidebarBtn?.classList.toggle('is-collapsed', hidden);
-            chatCard?.classList.toggle('has-sidebar-collapsed', hidden);
-            const label = hidden ? 'Show members' : 'Hide members';
-            sidebarBtn?.setAttribute('aria-label', label);
-            sidebarBtn?.setAttribute('title', label);
-        };
-        _applySidebarState();
-        sidebarBtn?.addEventListener('click', () => {
-            let hidden = false;
-            try { hidden = localStorage.getItem(SIDEBAR_HIDDEN_KEY) === '1'; } catch (_) {}
-            try { localStorage.setItem(SIDEBAR_HIDDEN_KEY, hidden ? '0' : '1'); } catch (_) {}
-            _applySidebarState();
         });
         // Reset du badge non-lus dès que l'utilisateur clique sur Home.
         document.querySelector('.topnav-tab[data-tab="collections"]')
@@ -16827,6 +16826,12 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
+        {
+            date:  '2026-05-20T07:15:00Z',
+            type:  'improvement',
+            title: 'Members badge on desktop + full Featured card',
+            text:  'Same little green-dot members badge that mobile already had now sits on the desktop chat header — click hides or shows the online column. Featured Collection is now shown in full (no internal scroll), and the chat card stretches to the same height.'
+        },
         {
             date:  '2026-05-20T06:50:00Z',
             type:  'improvement',
