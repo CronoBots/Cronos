@@ -8755,7 +8755,13 @@ body.is-profile-loading #profileLoadingOverlay * {
 @media (min-width: 1100px) {
     .home-two-col--main {
         grid-template-columns: 3fr 2fr;
-        grid-template-rows: 440px auto;
+        /* row 1 = auto pour que Featured Collection puisse afficher
+           TOUT son contenu (hero + identity + stats + showcase +
+           controls) sans scroll interne. Le chat est en align-items:
+           stretch (défaut grid), donc sa hauteur s'aligne sur celle
+           du Featured naturellement et les messages débordent en
+           scroll interne. */
+        grid-template-rows: auto auto;
         grid-template-areas:
             "chat featured-col"
             "bottom-left featured-art";
@@ -8801,7 +8807,14 @@ body.is-profile-loading #profileLoadingOverlay * {
         flex-direction: column;
     }
     .home-two-col--main > .home-community-section .home-community-card {
-        max-height: 440px;
+        /* Plus de max-height : la card chat s'aligne sur la hauteur de
+           la row (= hauteur naturelle du Featured Collection grâce au
+           stretch). Le scroll des messages reste interne via
+           .home-chat-messages { overflow-y: auto }. Le 540px du base
+           .home-community-card est annulé ici (sinon la card resterait
+           cappée sous la hauteur du Featured ≈ 600-700px). */
+        height: 100%;
+        max-height: none;
         flex: 1 1 auto;
         min-height: 0;
     }
@@ -9122,53 +9135,16 @@ body.is-profile-loading #profileLoadingOverlay * {
     display: flex; align-items: center; gap: 8px;
 }
 
-/* ── Toggle sidebar membres (PC uniquement) ── Petit bouton dans le
-   header du chat, à droite du status. Cliquer bascule l'affichage
-   de la colonne online/offline. Persisté via localStorage. */
-.home-chat-sidebar-toggle {
-    flex-shrink: 0;
-    width: 28px;
-    height: 28px;
-    border-radius: 7px;
-    background: var(--w-04);
-    border: 1px solid var(--w-08);
-    color: rgba(255, 255, 255, 0.55);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    transition: background 0.18s, border-color 0.18s, color 0.18s;
-}
-.home-chat-sidebar-toggle:hover {
-    background: var(--w-07);
-    border-color: rgba(255, 255, 255, 0.18);
-    color: rgba(255, 255, 255, 0.9);
-}
-.home-chat-sidebar-toggle .home-chat-sidebar-icon-shown  { display: block; }
-.home-chat-sidebar-toggle .home-chat-sidebar-icon-hidden { display: none; }
-.home-chat-sidebar-toggle.is-collapsed {
-    color: #00B3FF;
-    background: rgba(0, 179, 255, 0.08);
-    border-color: rgba(0, 179, 255, 0.32);
-}
-.home-chat-sidebar-toggle.is-collapsed .home-chat-sidebar-icon-shown  { display: none; }
-.home-chat-sidebar-toggle.is-collapsed .home-chat-sidebar-icon-hidden { display: block; }
-/* Mobile : géré par homeChatMembersBtn (modal slide-up), le toggle PC
-   n'a pas de sens — on le cache. */
-@media (max-width: 700px) {
-    .home-chat-sidebar-toggle { display: none !important; }
-}
-/* Quand la card a sidebar-collapsed posé : on planque la colonne membres
-   en desktop. Sur mobile la sidebar est déjà cachée par la media query,
-   pas de conflit. */
-.home-community-card.has-sidebar-collapsed .home-chat-members-sidebar {
-    display: none !important;
-}
-
-/* ── Bouton badge membres (visible mobile uniquement) ── */
+/* ── Badge membres — pill avec point vert + nombre d'utilisateurs en
+   ligne + icône users. Visible sur PC ET mobile (l'inline display:none
+   du markup est libéré par JS quand le 1ᵉʳ payload members arrive).
+   Click sur mobile : ouvre la modal slide-up. Click sur PC : bascule
+   la sidebar online/offline. */
 .home-chat-members-btn {
-    display: none;
+    /* display: flex par défaut — visible sur PC ET mobile. Le markup
+       a un inline display:none qui est nettoyé par JS au 1ᵉʳ payload
+       members (cf. homeMobileMemberCount update). */
+    display: flex;
     align-items: center; gap: 5px;
     background: rgba(0,179,255,0.08);
     border: 1px solid rgba(0,179,255,0.25);
@@ -9178,9 +9154,22 @@ body.is-profile-loading #profileLoadingOverlay * {
     font-family: 'Geomanist-Bold', sans-serif;
     font-size: 11px; font-weight: 800; letter-spacing: 0.04em;
     cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
-.home-chat-members-btn:hover { background: rgba(0,179,255,0.15); border-color: rgba(0,179,255,0.5); }
+.home-chat-members-btn:hover { background: rgba(0,179,255,0.15); border-color: rgba(0,179,255,0.5); color: rgba(255,255,255,0.95); }
+/* État "sidebar masquée" (PC uniquement, posé par JS au click) : le
+   badge passe en plein cyan pour signaler qu'un click le rouvrira. */
+.home-chat-members-btn.is-collapsed {
+    background: rgba(0,179,255,0.2);
+    border-color: rgba(0,179,255,0.55);
+    color: #fff;
+}
+/* Quand la card a sidebar-collapsed posé : on planque la colonne membres
+   en desktop. Sur mobile la sidebar est déjà cachée par la media query,
+   pas de conflit. */
+.home-community-card.has-sidebar-collapsed .home-chat-members-sidebar {
+    display: none !important;
+}
 
 /* ── Modal membres mobile — slide-up depuis le bas ── */
 .home-chat-members-modal {
