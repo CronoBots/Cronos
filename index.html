@@ -76,7 +76,7 @@
      downgrade la priorité parce qu'il découvre la font tardivement
      en parcourant la CSS. -->
 <link as="font" crossorigin="" href="Geomanist-Bold.woff2" rel="preload" type="font/woff2" fetchpriority="high"/>
-<link href="styles.css?v=1779941000" rel="stylesheet"/>
+<link href="styles.css?v=1779850000" rel="stylesheet"/>
 <style>
 /* Critical — FOUC prevention : tout cacher avant que le JS init */
 .login-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
@@ -8361,45 +8361,55 @@ document.addEventListener('DOMContentLoaded', initialize);
         //      • STATS pill, DESC pull-quote, SHOWCASE, CTA (zone sombre).
         card.innerHTML = `
             <div class="home-feat-v3-hero">
-                <!-- Clip wrapper : isole le background blur scale(1.4)
-                     dans les bounds de la bannière. La hero en elle-même
-                     est overflow:visible pour laisser le portrait
-                     dépasser en bas. -->
-                <div class="home-feat-v3-hero-clip">
-                    <div class="home-feat-v3-hero-bg"></div>
-                    <div class="home-feat-v3-hero-img"></div>
-                    <div class="home-feat-v3-hero-tint"></div>
-                    <span class="home-feat-v3-change" style="display:none;"></span>
-                </div>
-                <!-- Eyebrow "FEATURED COLLECTION · 01 / 04" — overlay
-                     haut-droit sur la bannière. -->
+                <!-- bg/img laissés VIDES à l'init. Hydratés par
+                     updateFeaturedCardStats avec la VRAIE bannière
+                     (data.banner.url) ou fallback sur le logo si
+                     vraiment pas de bannière. Évite de voir le logo
+                     de la collection (carré) étiré ou zoom comme une
+                     bannière pendant le délai avant le fetch — l'utilisateur
+                     ne le voulait pas (cf. Loaded Lions). -->
+                <div class="home-feat-v3-hero-bg"></div>
+                <div class="home-feat-v3-hero-img"></div>
+                <div class="home-feat-v3-hero-tint"></div>
+                <span class="home-feat-v3-change" style="display:none;"></span>
+            </div>
+            <div class="home-feat-v3-content">
+                <!-- Eyebrow "FEATURED COLLECTION · 01 / 04" — premier
+                     enfant du content. Apparait visuellement SUR la
+                     bannière car le content flow par-dessus le hero
+                     (position:absolute), miroir exact de Featured Artist. -->
                 <div class="home-feat-v3-eyebrow">
                     <span class="home-feat-v3-eyebrow-label">Featured Collection</span>
                     <span class="home-feat-v3-eyebrow-num">${num}<span class="home-feat-v3-eyebrow-total"> / ${totalS}</span></span>
                 </div>
-                <!-- Identity = nom de collection + creator, centrés
-                     horizontalement ET verticalement DANS la bannière. -->
+                <!-- Portrait : logo collection circulaire halo blanc, joue
+                     le rôle de l'avatar de Featured Artists. Centré
+                     dans le content (sous la bannière, sans chevauchement). -->
+                <div class="home-feat-v3-portrait">
+                    <img class="home-feat-v3-logo" src="${safeLogo}" alt="" loading="lazy" decoding="async" onerror="this.style.opacity='0.25';this.style.background='rgba(255,255,255,0.05)';"/>
+                </div>
+                <!-- Identity = nom de collection (gros, centré) + creator
+                     (cyan, petit) sous le portrait. Miroir de .home-fa-identity.
+                     Le verified-slot reste accroché au creator (sémantiquement
+                     c'est l'artiste qui est vérifié, pas la collection) — cf.
+                     commentaire JS ligne ~8606 dans renderFeatStats. -->
                 <div class="home-feat-v3-identity">
                     <span class="home-feat-v3-name-row">
                         <span class="home-feat-v3-name">${col.name || '—'}</span>
                     </span>
                     <span class="home-feat-v3-creator home-feat-v3-creator--loading">
+                        <!-- Avatar mini de l'artiste créateur (slot hydraté
+                             par renderFeatStats avec data.creator.avatar.url) -->
                         <span class="home-feat-v3-creator-avatar-slot"></span>
                         <span class="home-feat-v3-creator-text">Loading…</span>
                         <span class="home-feat-v3-verified-slot"></span>
                     </span>
                 </div>
-                <!-- Portrait : logo carré (border-radius identique au
-                     cadre de la card), positionné à GAUCHE et à cheval
-                     sur le bord bas de la bannière (50% au-dessus,
-                     50% en dessous). -->
-                <div class="home-feat-v3-portrait">
-                    <img class="home-feat-v3-logo" src="${safeLogo}" alt="" loading="lazy" decoding="async" onerror="this.style.opacity='0.25';this.style.background='rgba(255,255,255,0.05)';"/>
-                </div>
-            </div>
-            <div class="home-feat-v3-content">
-                <!-- Description : centrée verticalement entre le creator
-                     (dans la bannière) et le cadre des stats. Clamp 4 lignes. -->
+                <!-- Description : présentée juste après l'identity et
+                     AVANT les stats. Donne un contexte éditorial sur
+                     la collection avant les chiffres. Cachée tant que
+                     l'API n'a pas renvoyé de texte. Clamp à 3 lignes
+                     côté CSS. -->
                 <p class="home-feat-v3-desc" data-desc style="display:none;"></p>
                 <!-- Stats en pastille inline — chaque chiffre porte son label
                      directement à côté (style éditorial type "fact sheet").
@@ -8483,13 +8493,20 @@ document.addEventListener('DOMContentLoaded', initialize);
         // même rythme vertical que les 4 slides FEATURED.
         card.innerHTML = `
             <div class="home-feat-v3-hero">
-                <div class="home-feat-v3-hero-clip">
-                    <div class="home-feat-v3-hero-bg"></div>
-                    <div class="home-feat-v3-hero-tint"></div>
-                </div>
+                <div class="home-feat-v3-hero-bg"></div>
+                <div class="home-feat-v3-hero-tint"></div>
+            </div>
+            <div class="home-feat-v3-content">
                 <div class="home-feat-v3-eyebrow">
                     <span class="home-feat-v3-eyebrow-label">Featured Slot</span>
                     <span class="home-feat-v3-eyebrow-num">Open</span>
+                </div>
+                <!-- Portrait : "+" cyan dans un cercle halo blanc, joue
+                     le rôle du logo collection sur les autres slides. -->
+                <div class="home-feat-v3-portrait">
+                    <div class="home-feat-v3-cta-portrait" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                    </div>
                 </div>
                 <div class="home-feat-v3-identity">
                     <span class="home-feat-v3-name-row">
@@ -8499,14 +8516,13 @@ document.addEventListener('DOMContentLoaded', initialize);
                         <span class="home-feat-v3-creator-text">Contact me to claim it</span>
                     </span>
                 </div>
-                <div class="home-feat-v3-portrait">
-                    <div class="home-feat-v3-cta-portrait" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                    </div>
-                </div>
-            </div>
-            <div class="home-feat-v3-content">
                 <p class="home-feat-v3-desc home-feat-v3-cta-desc">Put your Crypto.com NFT collection in front of every visitor of cronos.wtf — banner, logo, stats and a strip of your best pieces, right next to Loaded Lions. DM me on Discord or X and let's get yours featured.</p>
+                <!-- Placeholder Read more invisible — réserve la
+                     hauteur du bouton "Read more" que les autres
+                     slides peuvent avoir, pour que la CTA card ait
+                     la même hauteur de zone desc qu'elles. -->
+                <button class="home-feat-v3-desc-toggle" type="button"
+                        style="visibility:hidden;" aria-hidden="true" tabindex="-1">Read more</button>
                 <!-- Stats "ghost" : 6 entrées dans le MÊME ordre que
                      les slides FEATURED (Supply · Owners · Floor ·
                      Listed · 24h Vol · Volume). Pas hydratées (pas
@@ -8689,16 +8705,59 @@ document.addEventListener('DOMContentLoaded', initialize);
             window._cwtfAnimateSlide(card);
         }
 
-        // Description — injectée si l'API la renvoie. Affichée EN
-        // ENTIER sur PC et mobile (plus de mode Read more / clamp).
+        // Description — injectée si l'API la renvoie. CSS clamp 3 lignes
+        // par défaut. Si le texte déborde du clamp (souvent sur mobile
+        // où une ligne contient moins de caractères), un bouton "Read
+        // more" expand inline (toggle .is-expanded). Sur desktop où la
+        // desc tient déjà en 3 lignes, le bouton reste caché.
         const descEl = card.querySelector('[data-desc]');
         const desc   = (data.description || '').trim();
         if (descEl) {
             if (desc) {
                 descEl.textContent = desc;
                 descEl.style.display = '';
+                descEl.classList.remove('is-expanded');
+                // Mesure post-layout : si la desc déborde du clamp 3
+                // lignes → bouton "Read more" cliquable. Si elle tient
+                // déjà, on garde QUAND MÊME le bouton dans le DOM mais
+                // en visibility:hidden — il occupe l'espace mais n'est
+                // pas visible/cliquable. Sans ça, les cards avec desc
+                // courte (Loaded Mushroom) étaient ~24 px plus courtes
+                // que celles avec Read more (Loaded Pixel) → vide
+                // visible entre les samples et le Browse CTA.
+                requestAnimationFrame(() => {
+                    const overflows = descEl.scrollHeight > descEl.clientHeight + 1;
+                    let toggle = card.querySelector('.home-feat-v3-desc-toggle');
+                    if (!toggle) {
+                        toggle = document.createElement('button');
+                        toggle.type = 'button';
+                        toggle.className = 'home-feat-v3-desc-toggle';
+                        toggle.textContent = 'Read more';
+                        toggle.addEventListener('click', (ev) => {
+                            ev.stopPropagation();
+                            const expanded = descEl.classList.toggle('is-expanded');
+                            toggle.textContent = expanded ? 'Read less' : 'Read more';
+                        });
+                        descEl.insertAdjacentElement('afterend', toggle);
+                    }
+                    toggle.style.display = '';
+                    if (overflows) {
+                        toggle.style.visibility = 'visible';
+                        toggle.setAttribute('aria-hidden', 'false');
+                        toggle.removeAttribute('tabindex');
+                        toggle.textContent = 'Read more';
+                    } else {
+                        // Bouton conservé dans le flow pour réserver
+                        // sa hauteur → toutes les cards alignées.
+                        toggle.style.visibility = 'hidden';
+                        toggle.setAttribute('aria-hidden', 'true');
+                        toggle.setAttribute('tabindex', '-1');
+                    }
+                });
             } else {
                 descEl.style.display = 'none';
+                const toggle = card.querySelector('.home-feat-v3-desc-toggle');
+                if (toggle) toggle.style.display = 'none';
             }
         }
 
@@ -16767,36 +16826,6 @@ async function sha256hex(str) {
      *  sa propre entrée — soit on étend, soit on n'écrit rien.
      * ══════════════════════════════════════════════════════════════════════ */
     const HOME_UPDATES = [
-        {
-            date:  '2026-05-20T14:30:00Z',
-            type:  'improvement',
-            title: 'Featured Collection: new banner layout',
-            text:  'Collection logo is now a square at the bottom-left, straddling the banner edge (same shape as the card frame). The collection name and creator sit centered inside the banner.'
-        },
-        {
-            date:  '2026-05-20T14:00:00Z',
-            type:  'improvement',
-            title: 'Featured Collection: cleaner banner',
-            text:  'Reverted the taller banner — back to the 3:1 native ratio. The dark fade at the bottom of the banner is also gone, so the image stops with a clean edge.'
-        },
-        {
-            date:  '2026-05-20T13:00:00Z',
-            type:  'improvement',
-            title: 'Featured Collection: description clamped to 4 lines, centered',
-            text:  'Collection descriptions are now capped at 4 lines (ellipsis past that) and vertically centered between the creator line and the stats frame.'
-        },
-        {
-            date:  '2026-05-20T12:30:00Z',
-            type:  'improvement',
-            title: 'Featured Collection: full banner + bottom-aligned stats',
-            text:  'The 1500×500 banner is now visible in its entirety (strict 3:1 frame). Stats and the "From the collection" block sit flush at the bottom, right above the Browse button.'
-        },
-        {
-            date:  '2026-05-20T12:00:00Z',
-            type:  'improvement',
-            title: 'Featured Collection: full description + taller banner',
-            text:  'Collection descriptions are now shown in full on mobile and desktop, no more Read more. The banner scales so its full height is always visible.'
-        },
         {
             date:  '2026-05-20T10:00:00Z',
             type:  'fix',
